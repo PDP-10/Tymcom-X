@@ -1,0 +1,166 @@
+P034N.MEM							 Page  1
+Significant changes to TYMCOM-X between P034/K and P034/N
+
+  I.  Reliability
+
+    A.  Uptime (crash causes eliminated)
+	1.  TALK message to a frame in the process of logging out.
+	2.  CORE command clearing an active user high-segment.
+	3.  Address error using previous context registers causing an
+	    executive page map failure.
+	4.  GETSEG which destroyed I/O state while performing old-style
+	    buffered I/O.  [XBASIC]
+	5.  Mapping pages into a file in a directory that is over quota.
+	6.  FRMOP .FOCFH doing an executive XCT of HRRM to from exec
+	    registers to user registers failing and writing instead to
+	    the exec registers.  [Hardware ECO missing!]  Code changed.
+	7.  Releasing (removing) context pages for another frame.
+	8.  Improper output on bad port with garbaged LDBOUT bits.
+	9.  Catch loop in DDB linkages which caused a system hang.
+       10.  Tape read errors on F3s caused by improper page calculation.
+
+    B.  Operational Efficiency  (Refer to memo to Operations Centers)
+	1.  Modified ONCE and ONCDSK commands and messages to aid the
+	    operations staff in performing the correct functions.
+	2.  Fixed pack-set ID on virgin packs during a system re-build.
+	3.  Removed all code referring to obsolete SWAP space when a
+	    refresh or rebuild is required for a pack-set or strucure.
+	4.  Amplified many console messages during system restart.
+	5.  Added the NETWORK command and modified operation of CONSOLE
+	    command in ONCE to flag the use of TYMNET (default) or the
+	    CTY when bringing the system up in any available mode.
+	6.  Allowed CHANGE SYSTEM on hosts with micro-node bases to set
+	    the system number between 1 and 99999.  Affects KS-10 & F3.
+	7.  Changed CONSOLE mode to allow all commands to be entered
+	    in either upper or lower case.  Added (^Z?) help message.
+
+    C.  Added cache-sweep in crash code so that the crash dump will
+	reflect the same data in memory that the CPU saw at the time
+	of the crash.  [KL-10 only].
+
+    D.  Performance
+	1.  More dynamic allocation of internal data structures to take
+	    advantage of the epanding size of available memory.
+	2.  Force updating of the home pages as an integral part of a
+	    REFRESH to avoid inconsistancy problems at system startup.
+	3.  Added INACTIVITY TIMOUT feature to logout a frame after a
+	    specified period with no activity.  (See below for more).
+	4.  Added new hang flag to hard-kill a frame without detaching.
+	5.  Default SNOOP feature "off", changeable in DDT at startup.
+	6.  Prevent race condition with yellow balls and interrupts.
+	7.  Fixup test for disk unit off-line for F3 processor only.
+	8.  Don't clear the cache sweep done flag on KL-10 since the
+	    operating system always waits for the sweep to complete.
+	9.  Added LOGOUT ON STOP feature to force a LOGOUT on a frame
+	    if it stops for any reason.  Set with SETPRV (CALLI -11).
+       10.  Increase the default Open Files per Frame to accomodate the
+	    systems with more than 1 Meg. of available memory.
+       11.  Allow executive free-core to automatically expand to use all
+	    of the available executive memory after startup.
+P034N.MEM							 Page  2
+Significant changes to TYMCOM-X between P034/K and P034/N
+
+
+  I.  Reliability (continued)
+
+    E.  Security
+	1.  Added CL.DMP flag to CLOSE UUO for TITO to set the file-
+	    dumped bit without possibly losing data during an update.
+	2.  Zap the current circuit when "frame capacity exceeded" is
+	    detected upon network LOGIN so as to prevent confusion.
+	3.  Check frame license for same or greater capabilities in
+	    the source frame when attaching to another frame.
+	4.  Return maximum current license on a file instead of none
+	    when attempting to set greater file license.
+	5.  Give special (!) prompt instead of (.) in PDP mode when a
+	    user has any license set.
+
+    F.  Maintenance of Sources
+	1.  Correction of incorrect MACRO definitions and calls.
+	2.  Removal of "Special"-Externals from the sources.
+	3.  Reorganization of symbols for less complicated references.
+	4.  Correction of typographical errors in code.
+	5.  Simplification and reorganization of configuration symbols.
+	6.  Formula radix correction to prevent F3 tape crashes.
+	7.  Removed obsolete swapping code and various obsolete tables.
+	8.  Eliminated module ERRMSG by merging it with module ERRCON.
+
+
+ II.  Performance
+
+    A.  Speed improvement
+	1.  Added CHANIO 47 (.CHVMP) to map a private page into a file.
+
+    B.  Frame handling UUOs
+	1.  Added FRMOP 41 (.FOSTP) to simulate an <ESC> on a frame.
+	2.  Added FRMOP 42 (.FOFCF) to force a special command.
+	3.  Added FRMOP 43 (.FOCPC) to change the project code.
+	4.  Added FLSTOP (CALLI -147) to stop with a halt status 4,,7.
+	5.  Added FLEXIT (CALLI -142) to exit with a halt status 4,,2.
+	6.  Fixed FRMOP 22 (.FOSVA) to read the start offset correctly.
+
+    C.  Changed FRMOP .FOCFM (Create Frame) to new a format which allows
+	the changed privilege bits and license bits of the parent to be
+	passed to the child frame.  The LOGINN program may also be run
+	for user validation at this time.
+
+    D.  Added INACTIVITY TIMEOUT feature at request of COEES.  A frame
+	with this feature enabled will be logged off after the specified
+	(or default) time limit in minutes, set by the SET AUTOLOGOUT
+	command, SETINA (CALLI -146) or SETPRV (CALLI -11).  The current
+	timeout limit may be read with .GTINA (GETTAB -55).
+
+    E.  Added Special Command Mode (SCM) to run the users Restricted
+	Command Mode (RCM) program for un-recognized monitor commands.
+	Settable with SETPRV (CALLI -11) and SETRCF (CALLI -57).  With
+	this change the monitor command running the RCM or SCM will be
+	found in SIXBIT in user register 1 to avoid a double rescan.
+
+P034N.MEM							 Page  3
+Significant changes to TYMCOM-X between P034/K and P034/N
+
+
+III.  Accounting
+
+    A.  TRU scaling added for value-added and royalty products.
+
+    B.  Fixed FRMOP 1 (.FOCFM) to pass the project code to the child.
+
+    C.  Fixed FRMOP 1 (.FOCFM) to write an accounting record using the
+	proper supervisor information (node/port of origin) for the
+	newly created frame.
+
+
+ IV.  Miscellaneous features
+
+    A.  New or Changed commands
+	1.  Change UNDEL command to UNDELETE for ease of use.
+	2.  Added PCOM and DCOM command to run the PCOM program.
+	3.  Deleted the obsolete PCHECK command.
+	4.  Added USESTAT command to display incremental frame data.
+	5.  Added TTY [NO] RTCOMP to allow (^T) to force USESTAT on a
+	    running frame.  [Only works in PDP mode] (AUXCAL 101).
+	6.  SET [NO]AUTOLOGUT to set or clear INACTIVITY TIMEOUT time.
+	7.  TALK GAN to allow OPER (OP license) or an account supervisor
+	    to issue a TALK message to all users in the appropriate GAN.
+
+    B.  Miscellaneous
+	1.  Add internal counters for OHT disk-page processing.
+	2.  Provide better handling of own %UPT lock.
+	3.  Update various text messages to refer to frames.
+	4.  Correct the CHANIO function range check.
+	5.  Handle page argument of -1 for various mapping calls.
+	6.  Increase the network terminal ID code (TIC) field to 5 bits.
+	7.  Change monitor "TRANSMISSION ERROR" message to "I/O ERROR".
+	8.  Allow ATTACH UUO to simulate a continue command upon attach.
+	9.  Correct misplaced scanner timing routines to use the proper
+	    locations so that users may GETTAB their values.
+
+    C.  Processor specific changes
+	1.  Modified interrupt table initialization for KS processors.
+	2.  Changed F3 processor check instructions to accomodate the
+	    new microcode making the F3 look more like a KL-10.
+	3.  Only for negotiate BLOCK I/O ports on VARIAN bases (KI/KL)s.
+	4.  Fix clock-timer during ONCE/FILES when refreshing a KS disk.
+
+

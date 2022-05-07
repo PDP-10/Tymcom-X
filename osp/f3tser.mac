@@ -1,0 +1,1520 @@
+TITLE F3TSER TAPE SERVICE FOR TAPES FOUND ON F3 PROCESSORS
+SUBTTL
+
+;This hack written by Daniel S. Blom, based on FTASER.MAC and TRHKON.MAC.
+;BASED ON MAGSER.MAC
+
+ENTRY F3TSER
+F3TSER:
+
+;EXTERNALS:
+
+EXTERN TMX0CB,MAGDDS,TU0CB,MTUDBL,TIBTBL,BITTBL
+EXTERN MTREQ,MTAVAL,MTWAIT,JBTABT,MAGSAV
+EXTERN TKBIUN,TKBCUN
+EXTERN DEVUDB,DEVCNT,DEVFNJ,DEVDWC
+EXTERN DEVER1,DEVDIO,DEVMD1
+EXTERN TUBDDB,UNITYP,TUBHC,TUBKDB,TUYTMN,TUYTUN,TUBIWC,TUBS
+EXTERN TUBEC,TUBSB
+EXTERN TUBICW,TUBCOM
+
+EXTERN SETHNG,PIOMOD,CPOPJ,CPOPJ1,WAIT1,SETIOD
+EXTERN HNGSTP,JBTIOA,PJOBN,SYDNM4,SYDCOM,JBTLIC
+EXTERN DSKPIF,DSKPIN,PAGWAK,PGYDIO
+EXTERN TUBIFC,TUBCNT,TUBCLS,TUBER1,TUBER2
+EXTERN MAGCHN
+
+;Unit characteeristics.  Those marked with '*' are also stored in
+; Lh(UNITYP) in the UDB of a unit.  The others are only returned
+; by the UGETF uuo.
+WRPROT==400000	;Write protected (DSWRL on)
+LOADPT==40000	;Tape at load point
+TAPEIN==20000	;Tape at EOT.
+TRK9==100	;* 9 track tape
+DS1600==10	;* 1600cpi
+DS800==4	;* 800cpi
+;Bits in DEVIOS (which is frequently cached in S):
+SFDONE==10000	;SF/BSF finished.
+HASCTL==20000	;Job using this channel has controller locked.
+HNGTAP==40000
+IOLEND==1000
+
+;These are the only entry points:
+    INTERN MAGINT,MAGDSP,MAGINI,SYDTMX
+
+    MSKCTD: XWD 777777,740000	;MASK TO CHANGE THE COUNT BYTE
+				;FROM THE DDB INTO A NUMBER.
+    MSKCTU: XWD 777777,774000	;MASK TO CHANGE THE COUNT BYTE
+				;FROM UNIT CMD WORD INTO A NUMBER.
+    MSKMMD==777760		;MASKS OUT ALL BUT MEM ADDR
+				;FROM DDB WORDS.
+    MSKMMU==777700		;MASKS OUT ALL BUT MEM ADDR
+				;FROM UNIT CMD WORDS.
+    DATASZ: XWD 777777,774000	;-(2**11).
+
+OLDCTL==1
+
+
+;DEFINITIONS FOR F3 TAPE CONTROL
+
+OPDEF MTRS [726000,,0]		;READ STATUS
+	;AC/COUNT FROM LAST IOWD IN 1-15, ABSOLUTE MA
+	; OF LAST WORD TRANSFERRED IN LAST DATA TRANSFER IN 16-35
+
+	;E/STATUS BITS AS FOLLOWS:
+
+	ANYERR==1B0		;SET IF ANY ERROR OR EOF WAS SEEN
+	  EOF==1B1		;END OF FILE PASSED OVER ON READ.
+				;PHYSICAL EOT SEEN ON WRITE.
+	  PARERR==1B2		;PARITY ERROR
+	  LENERR==1B3		;LENGTH ERROR
+	  TIMOUT==1B4		;MICROCODE TIMED OUT TRANSFER.
+	  OVRRUN==1B5		;OVERRUN
+	    ERRMSK==PARERR!LENERR!TIMOUT!OVRRUN
+
+	ONLINE==1B12		;SELECTED UNIT IS ONLINE
+	RIP==1B13		;REWIND IN PROGRESS
+	WP==1B14		;WRITE PROTECTED
+	LODPNT==1B15		;LOAD POINT
+	READY==1B16		;UNIT IS READY
+	EOT==1B17		;PHYSICAL END OF TAPE ENCOUNTERED
+				;ONLY ON IF RIGHT AT EOT. DOESNT
+				;STAY ON FOR READ WHEN EOT PASSES BY. DON'T
+				; CHECK FOR WRITE, CHECK EOF INSTEAD.
+	INTREQ==1B18		;INERRUPT REQUEST
+	CTLAVL==1B19		;CONTROL FREE
+
+;BITS 20-32 REFLECT LAST MTOP DONE.
+
+	PIA==7B35		;AS USUAL, PI ASSIGNMENT
+
+OPDEF MTOP [727000,,0]		;PERFORM TAPE OPERATION
+		;AC/FIRST CHANNEL COMMAND WORD IF DATA XFER OPERATION.
+		;FORMAT OF COMMAND WORDS:
+	CCWJMP==1B0		;IF SET, ADDRESS IS JUMP ADDRESS
+	CCWCNT==377760,,0	;MASK FOR COUNT (WORD OR BYTE)
+	CCWADR==17,,777777	;MASK FOR ADDRESS (SHOULD BE 22 BITS, ONLY 20 HERE)
+
+		;E - IMMEDIATE VALUE USED TO DO COMMAND, BITS AS FOLLOWS:
+
+	EVNPAR==1B20		;EVEN PARITY
+	XFRMOD==3B23		;TRANSFER MODE
+	  XFRCDM==0B23		;WORD CORE DUMP MODE
+	  XFRBYT=1B23		;IBM 4 8 BIT BYTE MODE
+	UNIT==3B25		;UNIT
+	CMD==17B29		;COMMAND FIELD
+	  F.REWI==0
+	  F.RO==1		;REWIND AND PUT OFF LINE (UNLOAD)
+	  F.WTM==2		;WRITE TAPE MARK
+	  F.EG==3		;ERASE GAP
+	  F.SKR==4		;SKIP ONE REC FORWARD
+	  F.BSR==5		;BACKSPACE OVER LAST RECORD
+;	  F.SFR==6		;SKIP FORWARD TO TAPE MARK (NOT USED SO DOESN'T TIE UP CONTROL)
+;	  F.SBR==7		;SKIP BACKWARD TO LAST TAPE MARK (ALSO NOT USED)
+	  F.RF==10		;READ A RECORD
+	  F.WF==11		;WRITE A RECORD.
+	DENS==7B32		;DENSITY TO USE
+	  DN200==0
+	  DN556==1
+	  DN800==2
+	  DN1600==3
+	  DN6250==4
+
+	PIA==7B35		;PI ASSIGNMENT
+
+OPDEF MTSZ [730000,,0]		;CONSZ FOR TAPE STATUS
+
+OPDEF MTSO [731000,,0]		;CONSO FOR TAPE STATUS
+
+
+
+;Dispatch table used by device independent routines.
+
+ 	PHASE -2
+DDO:	JRST TMXWRT
+DDI:	JRST TMXRED
+	DEPHASE
+MAGDSP:	PHASE 0
+DDXZ:	DSPSIZ
+DDINT:	POPJ	P,
+DBYT:	4400,,4400
+DVSIZ:	MOVEI T1,MAGDDS
+DINI:	JRST MAGINI
+DHNG:	JRST TMXHNG
+DRL:	JRST TMXREL
+DCL:	JRST TMXCLS
+DOU:	JRST TMXWRT
+DIN:	JRST TMXRED
+DZAP:	POPJ	P,
+DGTRD:	JRST TMXGRD
+DMT:	JRST FTAPE
+DGF:	JRST TMXUGF
+	DSPSIZ==.-1
+	DEPHASE
+
+
+
+COMMENT ;@@SUBROUTNE MAGINI
+INITIALIZE F3 TAPE CONTROL AND DRIVES. SETS LH(UNITYP) TO 0 IF
+DRIVE IS OFF LINE, OR TO DS800+DS1600 IF IT IS ONLINE.
+
+@@DESTROYS T1,T2,T2.
+@@CALLED BY SYSINI WITH THE PI SYSTEM OFF.
+@@;
+
+MAGINI:	PUSH	P,U
+	HRRZ	U,DEVUDB(F)
+	HRRZ	T3,TUBKDB(U)	;GET KDB ADDR IN T3
+	MOVE	T2,TKBIUN(T3)		;GET AOBJN POINTER TO UDBS
+
+MAGIN1:	MOVE	U,(T2)
+	PUSH	P,T2		;SAVE T2, GETST RETURNS STATUS IN IT
+	PUSHJ	P,GETST		;GET TAPE STATUS WORD IN T1
+	TLNN	T1,(ONLINE)	;ONLINE?
+	TDZA	T1,T1		;NO
+	MOVEI	T1,DS1600+DS800
+	HRLZM	T1,UNITYP(U)	;EITHER 0 IF OFFLINE OR DENSITIES
+	POP	P,T2		;RESTORE AOBJN POINTER
+	AOBJN	T2,MAGIN1
+	POP	P,U		;RSTORE U
+	POPJ	P,		;AND RETURN.
+
+
+
+COMMENT %@@SUBROUTINE TMXREL
+RELEAS uuo.
+Waits for I/O to complete for the unit and then clears function in progress
+(the halves of devfnj), and devsts.
+@@ENTRY Expects F=DDB.
+@@ACCUM SETS S TO DEVIOS.
+@@CALLS WAIT1.
+@@CALLED UUO. @@%
+
+TMXREL:	PUSHJ	P,WAIT1		;Wait until device stops
+	SETZM DEVFNJ(F)		;No byte adjustment
+	SETZM DEVMD1(F)		;Turn off IBM compatability
+	MOVEM S,DEVIOS(F)	;Save S.
+	SETZM DEVSTS(F)
+	POPJ	P,
+
+
+
+COMMENT %@@SUBROUTINE TMXCLS
+Process CLOSE uuo.
+If output has been done, an attempt is made to
+write two tape marks (logical eot) on the tape and then to
+backspace over one of them.  This routine does nothing if
+output hasn't been done.
+@@EXPECTS F=DDB.
+@@DESTROYS all but U, F.
+@@CALLS WAIT1, FT1CM2 (PART OF THE TMXPE ROUTINE), SAVAIL,
+FHGSTP, AND ITS OWN INTERNAL ROUTINE TMXCL6.
+@@ERRORS If the tape is write locked, just exit (ioimpm has
+been set at interrupt level.).
+@@CALLED UUO. @@%
+
+TMXCLS:	TLNN F,OUTPB		;Were we doing output?
+	 POPJ	P,			;No, nothing to do.
+	PUSHJ	P,WAIT1		;Yes, wait for device to stop.
+	MOVEI M,I.WTM		;Write tape mark.
+	HRRZ U,DEVUDB(F)
+	PUSHJ	P,TMXCL6
+	TRNE S,IOIMPM		;Write locked?
+	 POPJ	P,			;Yes, just return.
+	MOVEI M,I.WTM		;No, write second mark
+	PUSHJ	P,TMXCL6
+	MOVEI M,I.BSR		;Backup one record.
+	PUSHJ	P,TMXCL6
+	TRZ S,IODEND		;Clear EOF.
+	MOVEM S,DEVIOS(F)
+	POPJ	P,
+
+TMXCL6:	PUSHJ	P,SAVAIL		;See if it's online
+TMXCL7:	PUSHJ	P,GETCTL		;Grab controller.
+	PUSHJ	P,FT1CM2		;Start function
+	PUSHJ	P,WAIT1		;Wait for operation to complete.
+	TDNN S,[HNGTAP,,IODERR+IODTER]	;Trouble?
+	 POPJ	P,			;N, return.
+TMXCL8:	PUSHJ	P,FHGSTP		;Yes, tell the user.
+	MOVE S,DEVIOS(F)
+	TLNE S,HNGTAP		;Still hung?
+	 JRST TMXCL8		;Yes, try again.
+	JRST TMXCL7		;No, try operation again.
+
+
+
+COMMENT %@@SUBROUTINE TMXHNG
+Call here from once a second code in UUOCON after PDVCNT
+field counts to zero.  Current implementation gives
+127. seconds between calls here.
+If IOACT has been on through 2 calls, we say the
+device is hung.
+@@EXPECTS F=DDB.
+@@DESTROYS T1, T2.
+@@EXIT Skip returns unless it thinks the device is hung, in
+which case it cleans up some locations and then non-skip
+returns.
+@@CALLS SETHNG, SDCIOA, AND CPOPJ.
+@@%
+
+DEFINE DSKOFF <WRPI DSKPIF>
+DEFINE DSKON <WRPI DSKPIN>
+
+
+TMXHNG:
+	DSKOFF
+	MOVE S,DEVIOS(F)
+	TRNN S,IOACT		;Did an interrupt sneak in?
+	 JRST TMXHC2		;Yes, say not hung
+	PUSH P,U
+	HRRZ U,DEVUDB(F)	;U=UDB
+	HRRZ T2,TUBKDB(U)	;T2=KDB
+	HRRZ T1,UNITYP(U)	;Is this the second time here?
+	JUMPN T1,TMXHN8		;J-Yes, in which case we say it's hung.
+	AOJ T1,			;Count times through here.
+	HRRM T1,UNITYP(U)
+TMXHCT:	PUSHJ	P,SETHNG		;Reset hung count
+TMXHC3:	POP P,U
+TMXHC2:	DSKON
+	MOVEM	S,DEVIOS(F)	;MAKE SURE ANY CHANGED BITS ARE STORED INTO DDB
+				;(IOACT, HASCTL)
+	JRST CPOPJ1
+
+TMXHN8:	AOS TUBHC(U)		;Say it's hung
+	TLZE S,HASCTL
+	 PUSHJ	P,RELCTL
+	HRRZS DEVER1(F)		;Turn off error processing
+	SETZM TUBER1(U)		;Clear error rec. state.
+	HRRZ	J,TUBKDB(U)	;GET KONTROLLER DATA BLOCK
+	CAMN	U,TKBCUN(J)	;IS THIS CURRENT UNIT?
+	SETZM	TKBCUN(J)	;YES, NOT ANY LONGER.
+	PUSH	P,T3
+	PUSHJ	P,GETST
+	MOVEM	T1,TUBSB(U)	;PUT INTO UDB.
+	POP	P,T3
+IFN OLDCTL,<
+	TPCONO	100+MAGCHN	;STOP THE TAPE.
+>
+IFE OLDCTL,<PRINTX DON'T KNOW HOW TO CLEAR DRIVE IN NEW CTL>
+	PUSHJ	P,SDCIOA		;Unlock pages if I/O, and clear fcn
+	SOS -1(P)		;Setup for single return
+	JRST TMXHC3
+
+COMMENT %@@SUBROUTINE SDCIOA/SDCIO2
+Decrement the "don't swap while
+ioact" count (JBTIOA) AND say no function is in progress.
+1. Clear the function code in the Lh(DEVFNJ).
+2. For read and write functions, decrease JBTIOA for the job.
+@@ENTRY F=DDB, T1=function in progress.
+@@DESTROYS T1, T2.
+@@CALLS SYSCRS.
+@@CALLED UUO, I-level. @@%
+
+SDCIOA:	HLRZ T1,DEVFNJ(F)	;Get function which the device just finished.
+	CAIGE T1,FTC		;Data transfer command?
+	 JRST SDCIO4		;No, just say no current operation.
+SDCIO2:	LDB T1,PJOBN		;Yes, one less reason why he's locked in core
+	SOS JBTIOA(T1)
+SDCIO3:	PUSHJ	P,DDIO		;Mark I/O done on all pages.
+SDCIO4:	HRRZS DEVFNJ(F)		;Remember function finished.
+	POPJ	P,
+
+;HERE FROM ONCE A SECOND CODE FOR EACH TAPE WITH IOACT ON.
+; CHECK TO SEE IF TAPE IS REWINDING, IF SO FAKE AN IUPT
+; IN CASE IT IS FINISHED. THIS IS A TEMPORARY HACK!!!!!!
+
+PRINTX CHECK FOR DRIVE DROPPING OFFLINE TOO.
+
+F3TRWC::HLRZ	T1,DEVFNJ(F)	;GET FUNCTION
+	CAIE	T1,I.REWI
+	CAIN	T1,I.RO		;IF REWIND OR REWIND OFF LINE
+	JRST	.+2		;IS
+	POPJ	P,		;NOT
+	SETOM	REWFLG		;THEN FAKE AN INTERRUPT. MAY OR MAY NOT BE DONE.
+	WRPI	LI.REQ+1_<7-MAGCHN>
+	POPJ	P,
+
+REWFLG:	0
+
+COMMENT #
+@@SUBROUTINE DDIO
+Decrement PGYDIO for pages from DEVDIO to the end of the list.
+Calls PAGWAK to wake waiters for the page if PGYDIO goes to zero.
+@@DESTROYS T1, T2.
+@@ #
+
+DDIO:	PUSH P,T4
+	HRRZ T4,DEVDIO(F)	;T4/ Address of list.
+	SKIPN T1,(T4)		;Anything there?
+	 JRST POPT4J		;No.
+	PUSH P,PG
+	PUSH P,J
+DECDI2:	PUSHJ	P,BUFKRN		;Free pages specified by IOWDs up to next 0.
+	LDB T2,PIOMOD		;Done if D or DR.
+	CAIL T2,DR
+	 JRST .+3
+	SKIPE T1,1(T4)		;B - need 2 consequative 0s to finish.
+	 AOJA T4,DECDI2
+	POP P,J
+	POP P,PG
+POPT4J:	POP P,T4
+	POPJ	P,
+
+COMMENT #
+@@SUBROUTINE BDIO
+Decrease the I/O use count on all pages specified by the list of IOWDs
+pointed at by DEVDIO.  Wakes jobs waiting for pages which
+are no longer unavailable by virtue of being used in tape I/O.
+@@ #
+
+BDIO:	PUSH P,T1
+	PUSH P,T2
+	PUSH P,T4
+	PUSH P,PG
+	PUSH P,J
+	HRRZ T4,DEVDIO(F)	;T4:=Address of list of IOWDs comprising xfr
+	SKIPN T1,(T4)
+	 STOPCD
+	PUSHJ	P,BUFKRN		;Process until next 0 word
+	MOVEI T4,1(T4)		;Skip over 0
+	HRRM T4,DEVDIO(F)
+	POP P,J
+	POP P,PG
+	POP P,T4
+	POP P,T2
+	POP P,T1
+	POPJ	P,
+
+
+;Routine used by BDIO AND DDIO.
+;Enter with T1 the contents of the IOWD pointed at by T4.
+;Go through the vector of IOWDs, starting with the one at c(T4) and
+; decrease the I/O active count for each page, waking up jobs waiting
+; for the pages if it goes to 0.
+;Leaves T4 pointing to the next 0 word in the vector.
+;Destroys T1, T2, T4, PG, J.
+BUFKRN:	PUSHJ	P,DPL		;Decrement lock count for this page.
+	MOVEI T4,1(T4)
+	SKIPE T1,(T4)
+	 JRST BUFKRN
+	POPJ	P,
+
+;Decrement lock count for page pointed to by IOWD in T1.
+DPL:	AOJ T1,			;-COUNT AND ADDRESS-1+1.
+	LDB PG,[POINT 13,T1,26] ;GET PHYSICAL PAGE NUMBER.
+	LDB T1,PGYDIO		;GET DIRECT I/O COUNT.
+	SOSGE T1		;SHOULD BE NON-ZERO.
+	 STOPCD
+	DPB T1,PGYDIO
+	SKIPN T1		;Still doing I/O on this page?
+	 PJRST PAGWAK		;No, wake up waiters, if any.
+	POPJ	P,
+
+
+
+COMMENT %@@SUBROUTINE SYDTMX
+SYSDVF UUO.
+@@%
+
+SYDTMX:	AOJ M,			;POINT M TO THE UNIT NAME.
+	UMOVE T1,(M)		;T1/ UNIT NAME.
+	MOVE T2,TMX0CB+TKBIUN	;Pointer to vector of UDB addresses
+	JUMPN T1,FTDVF2		;J-Don't want the first unit
+	MOVEI U,TU0CB		;First UDB.
+	JRST FTDVF7
+FTDVF2:	SKIPN U,(T2)
+	 JRST SYDNM4
+	HRRZ U,TUBDDB(U)
+	CAMN T1,DEVNAM(U)	;Is this the name we're looking for?
+	 JRST FTDVF5		;J-Yes.
+	AOBJN T2,FTDVF2		;No, try another unit
+	JRST SYDNM4		;None left.
+FTDVF5:	SKIPN U,1(T2)		;We're supposed to get the first after that
+	 JRST SYDNM4		;There isn't one.
+FTDVF7:	HRRZ T1,TUBDDB(U)	;Get the name of the unit
+	MOVE T1,DEVNAM(T1)
+	UMOVEM T1,(M)		;Save its name.
+	MOVEI T1,MTUDBL		;T1:=Length of UDB
+	MOVSI T2,LICSYS
+	TDNN T2,JBTLIC(J)
+	 JRST CPOPJ1
+	SOJLE P1,CPOPJ1
+	AOJA M,SYDCOM
+
+
+
+COMMENT %@@SUBROUTINE TMXUGF
+UGETF UUO.
+
+If Rh(E)=0,	Return the byte count of the last user record filled to
+		E+1.
+	 1,	Return Min(6,Lh(E)) words of 0 starting at E.
+	 2,	Return the following into E+1:
+			Bit 0: Hardware write locked
+			Bits 1&2: always 0
+			Bit 3: Copy of DS.BOT
+			Bit 4: Copy of DS.EOT
+			Bit 5: Always 0 (IBM compatible)
+			Bit 12: Always 0 (7 track)
+			Bits 13-17: 14 (1600/800 cpi)
+
+@@ENTRY M=E, F=DDB.
+@@ACCUM SAVES F AND M.  OTHER ACS MAY BE DESTROYED.
+@@CALLS WAIT1, SGTDEV, FHGSTP.
+@@ERRORS Any of the following cause E+1 to be set to -1:
+1. E does not have one of the forms described under purpose.
+2. Rh(E)=0 and the mode is neitherl D nor DR.
+3. Rh(E)=1 and LH(E)<1.
+@@CALLED UUO. @@%
+
+TMXUGF:	UHRRZ T3,(M)		;Function type
+	CAIG T3,2		;Legal?
+	 JRST FFUGF2		;Yes.
+FFUERR:	XCTTU <SETOM 1(M)>	;Flag error by setting E+1:=-1;
+	POPJ	P,
+
+FFUGF2:	PUSHJ	P,WAIT1		;Wait for device to stop
+FFUGF3:	HRRZ U,DEVUDB(F)	;UDB
+	HLRZ T1,UNITYP(U)	;Set unit characteristics
+	JRST @[EXP UGET0,UGET1,UGET2](T3)	;Process function
+    ;Function 0.
+UGET0:	LDB T1,PIOMOD		;Mode D or DR?
+	CAIGE T1,DR
+	 JRST FFUERR		;No.
+	MOVE T1,DEVDWC(F)	;Yes, give user the byte count
+FFUSTO:	UMOVEM T1,1(M)
+	POPJ	P,
+    ;Function 1.
+UGET1:	SETZB T1,T2		;Since this function makes no sense, return 0.
+	XCTTU <DMOVEM T1,1(M)>
+	XCTTU <DMOVEM T1,1(M)>
+	XCTTU <DMOVEM T1,1(M)>
+	POPJ	P,
+    ;Function 2
+UGET2:	JUMPN T1,FFUS2		;Is the unit available?
+FFUS1:	PUSHJ	P,SGTDEV		;No, try to get it.
+	 JRST FFUS2		;Got it.
+	PUSHJ	P,FHGSTP		;Tell the user it's hung.
+	MOVE S,DEVIOS(F)
+	JRST FFUS1		;Loop until the problem has been fixed.
+FFUS2:	PUSHJ	P,GETCTL		;Get back controller.
+	PUSHJ	P,GETST		;GET STATUS OF UNIT WHOSE UDB IS IN U
+	HRLZI T2,14		;1600/800 cpi density
+	TLNE	T1,(WP)		;WRITE PROTECTED?
+	 TLO T2,WRPROT		;YES
+	TLNE	T1,(LODPNT)	;AT LOAD POINT?
+	 TLO T2,LOADPT
+	TLNE	T1,(EOT)	;AT END OF TAPE?
+	 TLO T2,TAPEIN		;(MUST BE EXACTLY THERE FOR THIS BIT TO BE ON)
+	UMOVEM T2,1(M)		;Give the status to the user
+	PJRST RELCTL		;Give up controller
+
+
+
+COMMENT %@@SUBROUTINE FTAPE
+MTAPE uuo.
+
+0 Wait	10 Go to LEOT  100 Core dump mode
+1 REW	11 REW/UNL     101 4 8-bit bytes per word mode
+3 WTM	13 ERG
+6 SKR	16 SKF
+7 BSR	17 BSF
+@@ENTRY M=E, F=DDB, S=DEVIOS.
+An additional entry point is FT1CM2.
+@@ACCUM Saves F. Others may be destroyed. Sets U=UDB and S=DEVIOS.
+@@CALLS WAIT1, CPOPJ, SAVAIL, UNISE0, SUBRGO, AND ITS INTERNAL
+ROUTINE FT1CM2.
+@@CALLED UUO. @@%
+
+    ;Dispatch table for functions. Odd in Lh.
+FTPTBL:	FT1CMD,,MTPERR
+	FT1CMD,,MTPERR
+	MTPERR,,MTPERR
+	FT1CMD,,FT1CMD
+	FT1CMD,,FTLEOT
+	FT1CMD,,MTPERR
+	MTPERR,,MTPERR
+	FT1CMD,,FT1CMD
+
+FTAPE:	PUSHJ	P,WAIT1		;Wait until device finished.
+	HRRZI M,(M)		;Nothing to do if funtion 0.
+	JUMPE M,CPOPJ
+
+FTP2:	PUSHJ	P,SAVAIL		;Make sure unit is available
+	HLRZ T1,UNITYP(U)	;Unit characteristics
+	CAIL M,100		;9 track function ?
+	 JRST FT9TRK		; yes
+	TRNE M,777760		;<100, so must be in [0,17]
+	 JRST MTPERR		;No.
+FTP6:	ROT M,-1		;Go to function dependent code.
+	SKIPL M
+	 SKIPA T1,FTPTBL(M)
+	  HLRZ T1,FTPTBL(M)
+	JRST (T1)
+
+    ;Here if the function is illegal.
+MTPERR:	TRO S,IOIMPM		;Mark illegal.
+	JRST FTOUT		;Store S in DEVIOS and return
+
+    ;Set status flags for 9 track operation. (F=76,77,100).
+FT9TRK:	CAILE M,101		;Legal function
+	JRST MTPERR		;no
+	LDB T1,[POINT 2,M,35]	;Yes.  Set up mode information.
+	HRRM T1,DEVMD1(F)
+	HLLZS DEVFNJ(F)		;No byte adjustment.
+FTOUT:	MOVEM S,DEVIOS(F)	;Save S.
+	POPJ	P,
+   
+FT1TBL:	PHASE 1
+I.REWI:!F.REWI,,CPOPJ		;1
+I.WTM:!	F.WTM,,CPOPJ		;2
+I.SKR:!	F.SKR,,CPOPJ		;3 Need to set up FC for these two.
+I.BSR:!	F.BSR,,CPOPJ		;4
+I.RO:!	F.RO,,CPOPJ		;5
+I.EG:!	F.EG,,CPOPJ		;6
+I.SF:!	F.SKR,,FTSKB2		;7 These two implemented as SKR/BSR
+I.BF:!	F.BSR,,FTSKB2		;10 until error (tape mark hit).
+FTC:!
+I.RF:!	F.RF,,			;11
+I.WF:!	F.WF,,			;12
+	DEPHASE
+
+    ;Simple functions: REW,WTM,SKR,BSR,REW&UNL,ERG,SKF,BSF ->
+    ;(1,3,6,7,11,13,16,17)
+FT1CMD:	SKIPG M
+	 AOJ M,			;(S+0,S+1,3,S+3,S+4,S+5,7,S+7) ->
+				; (1,2,3,4,5,6,7,10)
+	PUSHJ	P,GETCTL		;Grab the controller
+	PUSH P,M		;In case completes before return
+	PUSHJ	P,FT1CM2		;Issue drive command.
+	POP P,M
+	HRRZS M
+	CAIE M,I.REWI		;Rewind or rewind offline.
+	 CAIN M,I.RO
+	  PUSHJ	P,RELCTL		;Y.  Don't need controller anymore.
+	POPJ	P,
+FT1CM2:	SETZM	DEVCNT(F)	;Interrupt level repeat count gets cleared.
+
+;ENTER HERE IF DEVCNT IS SETUP FOR ITERATIONS
+
+FT1CM3:	HRLM M,DEVFNJ(F)	;Remember what this unit's doing.
+	HRRZ	U,DEVUDB(F)
+	HRRZ	J,TUBKDB(U)	;SETUP U AND J
+	MOVE T1,FT1TBL-1(M)
+	PUSHJ	P,(T1)		;Perform any special setup needed for this fcn
+	PJRST SUBRGO		;Start device.
+;Here to skip over a file forwards or backwards.  This is
+; implemented as a number of skip record operations.
+; Rescheduling is allowed so that a job skipping a single
+; large file can't tie up the tape controller indefinately.
+FTSKB2:	SUB P,[1,,1]		;flush return to FT1CM2.
+FTSKBL:	MOVEI	T2,^D10		;SKIP 10 RECORDS AT A TIME
+	MOVEM	T2,DEVCNT(F)	;IRP LEVEL DECREMENTS THIS.
+	HRRZ U,DEVUDB(F)
+	MOVEM S,DEVIOS(F)
+	PUSHJ	P,SUBRGO		;Start device.
+	PUSHJ	P,WAIT1		;Wait until finished
+	MOVE S,DEVIOS(F)
+	TLNE S,SFDONE		;I level say tape mark or eot?
+	 POPJ	P,			;Yes, so finished.
+FTSKB4:	PUSHJ	P,SAVAIL	;MAKE SURE ITS STILL ONLINE
+	LDB	T1,PJOBN	;SEE IF HES TRYING TO STOP IT
+	MOVE	T1,JBTSTS##(T1)
+	TLNN	T1,CNTRLC
+	JRST	FTSKB3
+	MOVE	J,JOB##	;SETUP J FOR STOP1
+	PUSHJ	P,STOP1##
+	PUSHJ	P,WSCHED##
+	HRRZ	J,TUBKDB(U)	;GET J BACK TO KON DATA BLOCK
+	JRST	FTSKB4		;GO CHECK AGAIN
+FTSKB3:	PUSHJ	P,GETCTL		;No, get controller.
+	HRLM M,DEVFNJ(F)
+	JRST FTSKBL		; ... and try another bunch of skrs.
+;LEOT (10).
+;
+;    1. BSR over possible tape mark.
+;    2. SKF.  If it's EOT, we're done.  Otherwise, we've seen 1 tape mark.
+;    3. SKR.  If it's EOT, we're done.  If it's an EOF, we're done also and
+;	have seen 2 tape marks in a row.  Otherwise, go to 2.
+;    4. BSR over the last of the two consequative tape marks we saw.
+
+FTLEOT:	PUSHJ	P,GETCTL		;Grab controller.
+	MOVEI M,I.BSR		;1. BSR
+	PUSHJ	P,FT1CM2
+	PUSHJ	P,WAIT1
+FTLEO1:	PUSHJ	P,GETCTL		;Get controller.
+	MOVEI M,I.SF		;2. SKF	
+	PUSHJ	P,FT1CM2
+	PUSHJ	P,WAIT1
+	TLNE S,IOLEND		;EOT?
+	 POPJ	P,			;Yes
+	PUSHJ	P,GETCTL		;get controller
+	MOVEI M,I.SKR		;3. SKR
+	PUSHJ	P,FT1CM2
+	PUSHJ	P,WAIT1
+	TDNN S,[XWD IOLEND,IODEND]	;EOT/EOF?
+	 JRST FTLEO1		;No,loop.
+	TRNN S,IODEND		;EOF?
+	 POPJ	P,			;No, so it's EOT.
+	PUSHJ	P,GETCTL		;Get controller.
+	MOVEI M,I.BSR		;4. BSR to leave tape after 1st of 2 tape marks
+	JRST FT1CM2		; at its end.
+
+
+
+COMMENT %@@SUBROUTINE TMXRED/WRT
+Read and write the tape.
+In buffered mode if a transfer of 0 words is specified, the routine returns.
+Otherwise it starts the device and returns.
+@@ENTRY S=DEVIOS, F=DDB.
+@@ACCUM SAVES F AND M.  OTHERS MAY BE DESTROYED.  Sets U=UDB, S=DEVIOS.
+@@CALLS SAVAIL, WAIT1, SRFX, AND SDCIO2.
+@@ERRORS CERTAIN BAD DDB LISTS (SEE SRFX.).
+@@CALLED UUO. @@%
+
+TMXRED:	TLZA S,IO		;Remember if read or write.
+TMXWRT:	 TLO S,IO
+	PUSHJ	P,SAVAIL		;Check the unit is available.
+	HRRZ T1,DEVCLS(F)	;Start from the beginning of the list
+	HRRM T1,DEVDIO(F)	; for busy page calculations.
+	HLRZ T1,UNITYP(U)	;Unit characteristics.
+	PUSHJ	P,WAIT1		;Wait until device stops.
+	PUSHJ	P,GETCTL		;Get controller.
+	LDB T1,PIOMOD		;Mode.
+	CAIL T1,DR		;D or DR?
+	 TLZN S,IOBEG		;Y; new IOWD?
+	  SKIPA			;NvN
+	SETZM DEVDWC(F)		;Y&Y; remember nothing transferred yet.
+	SETZM DEVCNT(F)		;Not continuing IOWD processing.
+	HRRZ U,DEVUDB(F)
+	SETZM TUBER1(U)		;Not yet in error recovery.
+	 MOVEI T1,I.RF		;Remember what we're doing.
+	TLNE S,IO
+	 MOVEI T1,I.WF
+	HRLM T1,DEVFNJ(F)
+	LDB T2,PJOBN		;Prevent user from being swapped.
+	AOS JBTIOA(T2)
+	PUSHJ	P,SRFX		;Set up registers for transfer.
+	 JRST TMXRW1		;Start operation.
+	AOS DEVABC(F)		;B mode, empty buffer.
+	PUSHJ	P,FREBUF
+	Pushj	P,Relctl	;Release MT lock
+	PJRST SDCIO2
+TMXRW1:	PUSHJ	P,SUBRG1		;Start operation.
+	POPJ	P,
+
+;GETCTL, RELCTL.  Handle interlocking for tape controller.
+;Enter with DDB adr in F.  Leave GETCTL with controller
+; locked, HASCTL set, JBTABT set to RELCTL.
+; Leave RELCTL with controller unlocked.  Usually called
+; at interrupt level after completion of the operation.
+GETCTL:	AOSE MTREQ
+	 PUSHJ	P,MTWAIT
+	PUSH P,J
+	LDB J,PJOBN		;Get user's job #
+	MOVEI T1,RELCTL
+	HRRZM T1,JBTABT(J)	;Set abort location.
+	POP P,J
+	TLO S,HASCTL	;Remember we have conroller.
+	POPJ	P,
+RELCTL:	SOSL MTREQ
+	 SETOM MTAVAL
+	PUSH P,J
+	LDB J,PJOBN		;Get user's job #
+	SETZM JBTABT(J)		;Clear abort location.
+	POP P,J
+	POPJ	P,
+
+
+
+COMMENT %@@SUBROUTINE SGTDEV
+See if a tape is now available although it wasn't when the system
+came up.  Sets Lh(UNITYP) as appropriate if the device is
+available.  Skips if the unit remains unavailable.
+@@ENTRY U=UDB, F=DDB.
+@@CALLS SUBRSN, SUBRG2, WAIT1, SFISKN, AND SFISUN.
+@@CALLED UUO. @@%
+
+SGTDEV: PUSH P,T3
+	PUSH P,P2
+	PUSH	P,T2		;GETST SMASHES T2
+	PUSHJ	P,GETCTL		;Get controller.
+	PUSHJ	P,GETST		;GET TAPE STATUS IN T1
+	TLNN	T1,(ONLINE)
+	 JRST SGTDE1		;J-No
+	MOVEI T3,DS800+DS1600	;Yes, set up unit information
+	HRLZM T3,UNITYP(U)	;Clear hung counter.
+SGTDE0:	PUSHJ	P,RELCTL		;Release controller.
+	POP	P,T2
+	POP P,P2
+	POP P,T3
+	POPJ	P,
+SGTDE1:	AOS -3(P)		;Skip return-unit still unavailable
+	JRST SGTDE0
+
+
+
+COMMENT %@@SUBROUTINE SAVAIL
+Unit now online?
+	No: Tell user via FHGSTP, loop until it is.
+	Yes: Check HNGTAP in DEVIOS.
+		Not set: Return.
+		Set: Check status to see if intervention still
+		   required.  If so, tell the user via HNGSTP,
+		   and continue checking HNGTAP.  If not, return.
+@@ENTRY F=DDB.
+@@DESTROYS S, T4. (U is set to UDB and S to DEVIOS).
+@@CALLS SGTDEV, FHGSTP, SUBRSN, AND WAIT1.
+@@CALLED UUO.@@%
+
+SAVAIL:	PUSH P,T1
+	HRRZ U,DEVUDB(F)	;U=UDB
+
+    ;Check that the unit is online.
+SAVAL2:	PUSHJ	P,SGTDEV		;See if it is there now.
+	 JRST SAVAL4
+	PUSHJ	P,FHGSTP		;Nope.  Tell the user and try again.
+	JRST SAVAL2
+
+    ;Here when the unit is online.
+SAVAL4:	MOVE S,DEVIOS(F)	;Is HNGTAP set?
+	TLNN S,HNGTAP
+	 JRST SAVAL8		;No.
+	PUSHJ	P,FHGSTP		;Yes, tell user.
+	JRST SAVAL4
+SAVAL8:	POP P,T1
+	POPJ	P,
+
+TMXGRD: PUSH P,T3
+	PUSH P,T4
+	PUSHJ	P,SAVAIL
+	POP P,T4
+	POP P,T3
+	POPJ	P,
+
+
+
+SUBTTL INTERRUPT PROCESSING
+
+;U=UDB, F=DDB, J=KDB, S=DEVIOS.
+
+;The code assumes that tape operations may not be overlapped.  All
+; routines which perform tape operations must wait until the previous
+; one, if any, has finished; one way to do this is to call WAIT1.
+
+MAGINT:
+IFN OLDCTL,<SKIPA>
+IFE OLDCTL,<	MTSO	INTREQ>		;ANY INTERRUPT FOR TAPE?
+	JRST	.
+IFN OLDCTL,<
+	TPCNSO	10
+	SKIPE	REWFLG
+	JRST	.+2
+	JRST	MAGINT+1	;NOT FOR US
+	SETZM	REWFLG		;IN CASE IT WAS SET
+	TPCNSO	10		;SEE IF INTERRUPT FLAG IS SET
+	JRST	.+2		;NO, JUST REWIND FLAG.
+	TPCONO 20+MAGCHN>	;CLEAR THE INTERRUPT FLAG.
+
+	JSR	MAGSAV		;SAVE ACS
+	MOVEI J,TMX0CB		;KDB.  Here we set up the record pointers.
+	PUSHJ	P,CHKCUN		;Check current unit.
+	PUSHJ	P,CHKSSC		;Check for rewind complete.
+	POPJ	P,		;RETURN FROM INTERRUPT
+
+;Interrupt by unit controller is currently talking to.
+; WHEN DEBUGGING MULTI DRIVES WATCH OUT FOR INTERPLAY BETWEEN REWINDS AND XFERS.
+; TRIED TO FIX THIS BY CHECKING READY, BUT MAY NEED MORE CHECKING.
+CHKCUN:	SKIPN U,TKBCUN(J)	;Waiting for this unit?
+	 POPJ	P,
+	MOVE F,TUBDDB(U)	;Get DDB associated with this unit.
+	MOVE S,DEVIOS(F)	;Get device status.
+	PUSHJ	P,GETST		;GET STATUS OF THIS UNIT IN T1
+	MOVE	T3,T1		;GET STATUS INTO T3 FOR ROUTINES BELOW
+	TLNN	T3,(READY)	;IS UNIT READY?
+	POPJ	P,		;NO, HASN'T INTERRUPTED YET.
+	SETZM	TKBCUN(J)	;YES, NO LONGER WAITING FOR THIS UNIT.
+	HLRZ M,DEVFNJ(F)	;Most recent function issued.
+	SKIPE T1,TUBER1(U)	;Doing error recovery?
+	 JRST (T1)		;Co-routine call.
+	JUMPN M,@ODD-1(M)	;Function done interrupt service.
+	POPJ	P,
+
+;Check for rewind start/finish or drives offline.
+CHKSSC:	MOVE T1,TKBIUN(J)	;Pointer to vector of UDB adrs.
+CHKRW4:	PUSH P,T1
+	HRRZ U,(T1)		;U:=UDB
+	CAMN U,TKBCUN(J)	;Handled specially.
+	 JRST CHKRW3
+	HRRZ F,TUBDDB(U)	;F:=DDB
+	MOVE S,DEVIOS(F)	;S:=DDB.DEVIOS
+	PUSHJ	P,GETST		;READ STATUS OF THIS UNIT
+	MOVE	T3,T1		;T1 IS USED LATER
+	PUSHJ	P,CHKOFL		;Process MOL state changes.
+	HRRZ T2,TUBS(U)		;Expecting rewind done int?
+	JUMPE T2,CHKRW3
+	HLRZ T4,TUBS(U)
+	TLNN	T3,(READY)	;UNIT CAN'T BE DONE IF READY NOT SET
+	 JUMPN T4,CHKRW3
+	HLLZS TUBS(U)
+	TLNN	T3,(LODPNT)	;IF NOT AT LOAD POINT, SOMETHING WENT WRONG.
+	  JRST CHKRW1		;WAKE USER.
+	TRO S,IOBOT
+	TDZ S,[XWD IOLEND,IOTEND]	;Update our idea of the status.
+	HLRZ M,DEVFNJ(F)	;Load function identifier
+	PUSHJ	P,MTDONE	;OK, WAKE UP USER AND RELEASE CONTROL
+	JRST CHKRW3
+CHKRW1:	PUSHJ	P,INTERR
+CHKRW3:	POP P,T1
+	AOBJN T1,CHKRW4
+	POPJ	P,
+;Here to check for unit changing MOL state.
+CHKOFL:	HLRZ T2,TUBS(U)
+	JUMPE T2,CHKOF1		;JUMP IF THOUGHT IT WAS OFFLINE
+	TLNN	T3,(ONLINE)	;SKIP IF UNIT NOT ON LINE
+	HRRZS TUBS(U)
+	POPJ	P,
+CHKOF1:	TLNE	T3,(ONLINE)	;SKIP IF UNIT IS ONLINE
+	HRROS TUBS(U)
+	POPJ	P,
+	
+
+    ;Here when an operation is complete.
+MTDONE:	TLNE S,IOW
+	 PUSHJ	P,SETIOD		;Wake up waiter since device has finished.
+	HLRZ M,DEVFNJ(F)
+	CAIE M,I.REWI
+	 CAIN M,I.RO
+	  JRST MTDON1
+	TLZE S,HASCTL		;Have controller?
+	 PUSHJ	P,RELCTL		;Y, no longer need it.
+MTDON1:	TRZ S,IOACT
+	MOVEM S,DEVIOS(F)
+	PJRST	SDCIOA		;Unlock pages if xfr, say no current operation.
+
+FXDSM1:	PUSHJ	P,FSTHNG		;Reset hung timeout vars & mark unit as idle.
+	POPJ	P,
+
+;This table maps between the operation code stored in Lh(DEVFNJ) and the
+; I-level routine to be called when an interrupt is received after the
+; operation has been initiated.
+ODD:	PHASE 1
+I.REWI:![JSR SYSCRS]		;1 Rewind (handled specially)
+I.WTM:!	OD.WTM			;2 Write Tape Mark
+I.SKR:!	OD.SKR			;3 Skip Record
+I.BSR:!	OD.BSR			;4 Backspace Record
+I.RO:!	OD.RO			;5 Rewind Offline
+I.EG:!	OD.EG			;6 Erase gap
+I.SF:!	OD.SF			;7 Skip file
+I.BF:!	OD.BF			;10 Backspace file
+I.RF:!	OD.RF			;11 Read forward
+I.WF:!	OD.WF			;12 Write forward
+	DEPHASE
+
+OD.RO:	TLNE	T3,(PARERR!LENERR) ;ANY ERRORS?
+	JRST	INTERR		;YES, LET USER KNOW SOMETHING WENT WRONG
+	JRST	MTDONE		;NO, WAKE USER AND RETURN.
+OD.BF:	TLNN	T3,(LODPNT)	;FINISHED IF GET TO LOAD POINT
+OD.SF:	TLNE	T3,(PARERR!LENERR) ;ERRORS?
+	  TLOA S,SFDONE		;Yes, flag finished.
+	   TLZ S,SFDONE		;No, flag need to do some more.
+	TLNE	T3,(EOT!EOF)	;PHYSICAL OR LOGICAL END OF TAPE ENCOUNTERED?
+	 TLO S,SFDONE
+OD.SKR: OD.BSR:
+	TDZ	S,[IOLEND,,IOTEND]	;ALWAYS CLEAR EOT ON THESE READ TYPE OPS
+
+	TLNE	T3,(EOF)	;ON READ FUNCTIONS, THIS MEANS EOF.
+	 TDO S,[IOEND,,IODEND]
+	JRST	MTICE0
+OD.EG:OD.WTM:
+	TLNE	T3,(EOF)	;ON WRITE FUNCTIONS, EOF MEANS REACHED EOT.
+	 TDOA S,[IOLEND,,IOTEND]
+	  TDZ S,[IOLEND,,IOTEND]
+MTICE0:	TLNE	T3,(LODPNT)
+	 TRO S,IOBOT
+	TLNN	S,IOLEND!SFDONE	;DON'T DO ANY MORE IF ERRORS.
+	SOSG	DEVCNT(F)	;GO TO MTDONE IF NO MORE OF THESE TO DO.
+	JRST	MTDONE
+	JRST	SUBRG1		;GO START UP SAME OPERATION AGAIN.
+
+INTERR:	TRO S,IODERR		;Yes, flag error for higher level routines.
+	PUSHJ	P,RECDER		;Record device error for CHKPNT.
+	JRST MTDONE
+
+
+OD.RF:	TLNE	T3,(EOF)	;EOF THIS TIME?
+	JRST	RWDON3		;YES, DON'T MESS UP USER'S BUFFER.
+	PUSH	P,T2
+	MOVE	T2,@TUBICW(U)	;GET FIRST COMMAND
+	ANDI	T2,777		;GET ADDRESS WITHIN PAGE
+	TRO	T2,%ONC		;GET ADDRESS TO BLT TO
+	HRLI	T2,MAGBUF	;WHERE TO BLT FROM
+	MOVE	T1,TUBIWC(U)	;GET COUNT
+	ADDI	T1,-1(T2)	;LAST ADDRESS TO BLT TO IN T1
+	BLT	T2,(T1)		;TRANSFER DATA TO USER SPACE.
+	POP	P,T2		;RESTORE T2.
+
+OD.WF:
+RWDON3:	TLNN	T3,(ERRMSK)	;ERRORS?
+	JRST RWDON1		;NO
+    ;Here when reading/writing complete, device errors.
+    ;IOBKTL should be set if the user request is less than the record size.
+
+	TLNN	T3,(LENERR)	;IS LENGTH ERROR ON?
+	JRST	RWERR		;NO, SOME OTHER ERROR, ALL OTHERS ARE REAL
+	TLNE	T3,(ERRMSK-LENERR-OVRRUN)
+	JRST	RWERR		;IF LENGTH ERROR ON, SO IS OVERRUN. ANYTHING
+				; ELSE IS A REAL ERROR.
+	LDB	T1,[POINT 14,T2,13]	;GET COUNT FROM STATUS
+	CAMGE	T1,TUBIWC(U)	;(DON'T THINK IT CAN BE GREATER)
+				;IF LENGTH ERROR AND WE READ AS MUCH AS REQUESTED,
+	TRO	S,IOBKTL	;THEN WE LOST DATA FROM THE RECORD - SET IOBKTL.
+
+RWDON2:
+RWDON1:	CAIE	M,I.RF		;READ?
+	JRST	RWDON4		;NO,WRITE
+	TLNN	T3,(EOF)	;READ. EOF SEEN?
+	JRST	RD		;NO, JUST NORMAL STUFF.
+	TDO	S,[IOEND,,IODEND] ;YES, TELL USER
+	SETZM	DEVCNT(F)	;DON'T TRY TO READ ANYTHING ELSE.
+	JRST	RD		;AND GO FINISH.
+
+RWDON4:	TLNE	T3,(EOF)	;WRITE. EOF BIT MEANS SAW EOT WHILE WRITING.
+	TDO	S,[IOLEND,,IOTEND]
+	
+    ;Writing complete.
+	LDB T2,PIOMOD
+	CAIGE T2,DR		;Buffered mode?
+	 PUSHJ	P,FREBUF		;Yes, free buffer.
+IOC:	SKIPN DEVCNT(F)		;More to do?
+	 JRST MTDONE		;No, operation complete.
+IOC0:	PUSHJ	P,SRFX		;Yes, set up to do it.
+	 JRST [ PUSHJ	P,SUBRG1
+		JRST IOC1]
+	  JRST MTDONE		;Here if buffered mode and nothing to do.
+IOC1:	TLNN S,IOW		;Is the user waiting for I/O to complete?
+	 POPJ	P,			;No, dismiss.
+	LDB T2,PIOMOD		;Yes, wake him up if it's buffered mode.
+	CAIGE T2,DR
+	 PUSHJ	P,SETIOD
+	POPJ	P,			;Dismiss.
+    ;Reading complete.
+RD:	LDB T2,PIOMOD		;Get software mode.
+	CAIGE T2,DR		;Buffered?
+	 JRST RDB		;Yes.
+	PUSHJ	P,SDMPCT		;Set DEVDWC.
+	JRST IOC		;See if there's more to do.
+RDB:	PUSHJ	P,FREBUF		;Free buffer.
+	PUSHJ	P,SBUFCT		;Set DEVBWC.
+	SKIPE DEVCNT(F)		;More to do?
+	 JRST IOC0		;Yes, start work on the next buffer.
+	JRST MTDONE		;No.
+
+
+;Here to free pages involved in a buffered mode I/O operation.
+FREBUF:	AOS DEVABC(F)
+	JRST BDIO
+
+;Here to increment DEVDWC by the number of words transferred because of
+; the last D or DR mode operation.
+SDMPCT:	PUSHJ	P,CNTWDS
+	ADDM T1,DEVDWC(F)
+	POPJ	P,
+
+;After a B mode transfer, compute how many words were actually transferred.
+SBUFCT:	PUSHJ	P,CNTWDS
+	HRRZ T2,DEVBWC(F)
+	MOVEM	T1,(T2)
+	AOJ T2,
+	HRRM T2,DEVBWC(F)
+	POPJ	P,
+
+;Return in T1 the words transferred by the last transfer.
+CNTWDS:	
+	PUSHJ	P,GETST		;TERMINATION WORD IN T2
+	TLNE	T1,(EOF)	;IF EOF SEEN,
+	TDZA	T1,T1		;THEN NO DATA WAS XFERRED.
+	LDB	T1,[POINT 13,T2,13] ;GET TOTAL COUNT
+	POPJ	P,		;AND RETURN.
+
+;Here to start or continue error recovery procedure after transfer
+; done interrupt.
+ERGO:	MOVEM T1,TUBER1(U)
+	PUSHJ	P,SUBRG1
+	POPJ	P,
+ERGO1:	MOVEM T1,TUBER1(U)
+	POPJ	P,
+
+RWERR:
+	CAIE M,I.RF
+	 JRST WRERR
+
+;GO TO RDLOSE HERE ON FATAL ERRORS (MEMORY PARITY, ETC)
+	MOVEI T1,24		;20. retries.
+	MOVEM T1,TUBER2(U)
+RDERR:	MOVEI M,I.BSR		;Backup one record.
+	PUSHJ	P,FT1CM2
+	JSP T1,ERGO1
+	TLNE	T3,(ERRMSK)
+	  JRST RDLOSE
+	MOVE T1,TUBCNT(U)	;Retry read operation.
+	MOVEM T1,DEVCNT(F)
+	MOVE T1,TUBCLS(U)
+	MOVEM T1,DEVCLS(F)
+	PUSHJ	P,SRFX
+	 JFCL
+	MOVEI T1,I.RF
+	HRLZM T1,DEVFNJ(F)
+	JSP T1,ERGO
+	TLNN	T3,(ERRMSK-LENERR)
+	JRST	RDWON		;LENGTH ERROR OK HERE.
+RDERR2:	SOSG TUBER2(U)		;Out of retries?
+	 JRST RDLOSE
+	JRST RDERR
+
+PRINTX WHAT HAPPENS ON MEMORY PARITY?
+WRERR:	MOVEI T1,24		;Number of retries.
+	MOVEM T1,TUBER2(U)
+
+;CODE TO NOT WRITE GAP OVER NOISE RECORDS USED TO BE HERE, NOISE RECORDS
+; NOT IGNORED BY FOONLY HARDWARE.
+
+WRERR1:	LDB	T3,[POINT 2,S,^D28] ;GET DENSITY
+	CAIE	T3,1
+	CAIN	T3,2
+	TDZA	T3,T3		;800 BPI, T3/0
+	MOVEI	T3,1		;0 OR 3, 1600BPI, T3/1
+	MOVE	T2,TUBIWC(U)	;GET NUMBER OF WORDS WE TRIED TO WRITE
+	ADD	T2,[EXP <^D800*6>/^D50,<^D1600*6>/^D50](T3) ;ALLOW FOR .6 INCH GAP
+	IDIV	T2,[EXP ^D800/<5*3>,^D1600/<5*3>](T3) ;GET NUMBER OF GAPS TO WRITE
+	AOJ T2,			;ROUND UP TO BE SAFE.
+	MOVEM	T2,TUBIFC(U)	;SAVE COUNT OF ERASE GAPS IN TUBIFC
+	MOVEI M,I.BSR		;Back over record just written.
+	PUSHJ	P,FT1CM2
+	JSP T1,ERGO1
+	TLNE	T3,(ERRMSK)
+	  JRST WRLOSE
+WRERR2: MOVEI M,I.EG		;Erase tape.
+	PUSHJ	P,FT1CM2	;DEVCNT SETUP SO CALL FT1CM2
+	JSP T1,ERGO1
+	TLNE	T3,(ERRMSK)
+	  JRST WRLOSE
+	SOSLE	TUBIFC(U)
+	  JRST	WRERR2		;NOT ENOUGH YET.
+
+WRERR3: MOVE T1,TUBCNT(U)
+	MOVEM T1,DEVCNT(F)
+	MOVE T1,TUBCLS(U)
+	MOVEM T1,DEVCLS(F)
+	PUSHJ	P,SRFX
+	 JFCL
+	HRLZI M,I.WF
+	MOVEM M,DEVFNJ(F)
+	JSP T1,ERGO
+	TLNN	T3,(ERRMSK-LENERR)
+	 JRST WRWON
+	SOSG TUBER2(U)
+	 JRST WRLOSE
+	JRST WRERR1
+
+;HERE WHEN ERROR RECOVERY DIDN'T WORK.
+RDLOSE:	SKIPA M,[I.RF]
+WRLOSE:	 MOVEI M,I.WF
+	HRLM M,DEVFNJ(F)
+PRINTX HOW ABOUT READY, NEED TO CHECK THAT? ARE THERE ANY DETECTABLE DEVICE ERRORS?
+	TLNN	T3,(PARERR!TIMOUT)
+	 TROA S,IODERR		;Say device in error
+	  TRO S,IODTER		;Say medium fouled up.
+	TRNE S,IODERR		;Device error?
+	 PUSHJ	P,RECDER		;Y, log it for CHKPNT.
+	SETZM TUBER1(U)
+	JRST RWDON2
+;Here to record a device error for CHKPNT to look at.
+RECDER:	HRRZ U,DEVUDB(F)
+	AOS TUBEC(U)		;One more device error.
+	MOVEM	T3,TUBSB(U)
+	POPJ	P,
+;HERE WHEN ERROR RECOVERY SUCCEEDED IN COMPLETING OPERATION.
+RDWON:	MOVEI	M,I.RF
+	HRLM	M,DEVFNJ(F)
+	SETZM	TUBER1(U)
+	JRST	OD.RF
+
+WRWON:	 MOVEI M,I.WF
+	HRLM M,DEVFNJ(F)
+	SETZM TUBER1(U)
+	JRST	OD.WF
+
+
+
+SUBTTL UTILITY SUBROUTINES.
+
+COMMENT %@@SUBROUTINE RSBO
+Reset status in S and UDB before operation is initiated.
+@@EXPECTS U=UDB, F=DDB.
+@@CALLS FSTHNG.
+@@%
+
+RSBO:	TRZ S,IOBOT
+	TRZ S,IOIMPM!IODERR!IODTER!IOBKTL!IODEND!IOBOT
+	PUSH P,T1
+	PUSH P,T2
+	PUSH P,P3
+	HRRZ J,TUBKDB(U)	;KDB.
+	TRO S,IOACT		;Set S to reflect the start of I/O.
+	TLNN S,IOLEND
+	 TRZA S,IOTEND
+	  TRO S,IOTEND
+	MOVEM S,DEVIOS(F)	;Save S.
+	PUSHJ	P,FSTHNG		;Reset hung device vars & clear previous fcn.
+	SETZM DEVER1(F)		;No error status.
+	POP P,P3
+	POP P,T2
+	POP P,T1
+	POPJ	P,
+
+COMMENT %@@SUBROUTINE SUBRGO
+Start device performing opertion specififed by Lh(DEVFNJ).
+@@DESTROYS T2.
+@@ENTRY U=UDB, F=DDB.
+@@CALLS SUBRS0, RSBO.
+@@%
+
+SUBRGO: PUSHJ	P,RSBO
+SUBRG1:	HLRZ T1,DEVFNJ(F)	;Function code.
+	HLRZ T1,FT1TBL-1(T1)	;Device command for this code.
+	CAIE T1,F.RO
+	 CAIN T1,F.REWI
+	  JRST SUBRG2
+	DSKOFF
+	HRRZ	T2,TUBKDB(U)	;GET KDB ADDRESS
+	HRRZM U,TKBCUN(T2)	;REMEMBER CURRENT UNIT XFERRING
+SUBRG3:	MOVEI	P2,MAGCHN	;GET READY TO CONSTRUCT COMMAND
+	DPB	T1,[POINT 4,P2,29] ;SET FUNCTION FIELD
+	LDB	T2,TUYTUN
+	DPB	T2,[POINT 2,P2,25] ;UNIT NUMBER
+	LDB	T2,[POINT 2,DEVMD1(F),35] ;GET MODE
+	CAIN	T2,1		;IF IBM MODE,
+	TRO	P2,XFRBYT	;DO IT IN BYTE MODE
+	TRNE	S,IOPAR		;EVEN PARITY?
+	TRO	P2,EVNPAR	;YES, SET IT
+	LDB	T2,[POINT 2,S,28] ;GET DENSITY
+	SKIPN	T2		;IF ZERO,
+	MOVEI	T2,3		;USE HIGHEST
+	MOVE	T2,DENTBL-1(T2) ;GET DENSITY SETTING
+	DPB	T2,[POINT 3,P2,32] ;PUT IT IN COMMAND
+	MOVE	T2,TUBICW(U)	;GET INITIAL CONTROL WORD
+IFE OLDCTL,<
+	MTOP	T2,(P2)		;START THE THING GOING
+>;END IFE OLDCTL
+IFN OLDCTL,<PUSHJ P,OLDMOP>
+	DSKON
+	POPJ	P,
+SUBRG2:	DSKOFF			;Here on rewind.
+	HLLOS TUBS(U)
+	JRST	SUBRG3
+
+IFE OLDCTL,<
+GETST:	LDB	T1,TUYTUN	;GET TAPE UNIT NUMBER
+	LSH	T1,^D35-^D25	;PUT IT INTO BIT 24 AND 25
+	MTRS	T2,T1		;GET STATUS INTO T1, TERMINATION STATUS IN T2
+	POPJ	P,		;AND RETURN.
+>;END IFE OLDCTL
+IFN OLDCTL,<
+GETST:	JRST	OLDSTS>
+
+
+COMMENT %@@SUBROUTINE FSTHNG
+Reset the hung timeout variables for the device
+@@ENTRY U=UDB, F=DDB.
+@@CALLS SETHNG.
+@@CALLED UUO, I-level. @@%
+
+FSTHNG:	HLLZS UNITYP(U)		;CLEAR THE PREV WAS WAIT FLAG.
+	PJRST SETHNG		;RESET THE HUNG TIME.
+
+COMMENT %@@SUBROUTINE FHGSTP
+Save some ACs and call HNGSTP, which tells the user that the device
+he wants to use isn't ready.
+@@ENTRY F=DDB.
+@@DESTROYS T4.
+@@CALLED UUO. @@%
+
+FHGSTP:	PUSH P,U
+	PUSH P,PG
+	PUSH P,W
+	PUSH P,M
+	PUSH P,T1
+	PUSH P,T2
+	PUSH P,T3
+	PUSHJ	P,HNGSTP
+	POP P,T3
+	POP P,T2
+	POP P,T1
+	POP P,M
+	POP P,W
+	POP P,PG
+	POP P,U
+	POPJ	P,
+
+
+
+COMMENT %@@SUBROUTINE UNISE0
+Set up TC register before a transfer.
+@@ENTRY S=DEVIOS, U=UDB, F=DDB.
+@@DESTROYS T1.
+@@CALLED UUO. @@%
+
+;Density, index by software density minus 1.
+DENTBL:	EXP	DN800		;1 - 800BPI
+	EXP	DN800		;2 - 800BPI
+	EXP	DN1600		;3 - 1600BPI
+
+
+
+COMMENT %@@SUBROUTINE SRFX
+In DEVCLS(F) is a pointer to a vector of "IOWDS" each of which is in the
+format: bits 0-13: ones complement word count which specifies at
+most one page; bits 14-35: one less than the first core address to be
+used for this transfer.  The vector is terminated by a 0 word in D and DR
+modes; in B mode, after each buffer is a 0 word and a second 0 word appears
+after the last buffer.  Note that in B and D modes, the virtual core addresses
+to be used in a single transfer must be contiguous.
+In D mode, the entire list is done in one transfer.
+In DR mode, the list is stepped through
+and 200 word records are read or written; successive transfers are
+initiated at I-level (using DEVCNT as the state variable).  In B mode,
+records are the same size as the buffers.
+At I-level, the job is awakened after each buffer is trasferrd in B mode;
+it is left in IOW until the entire transfer is finished in D or DR mode.
+@@ENTRY F=DDB.
+@@DESTROYS T1, T2, U.
+@@CALLS SYSCRS, STODTS, SDTCAL, AND RSBO.
+@@ERRORS CERTAIN ILLEGAL DDB LISTS (TOO LARGE A BUFFER, A
+ZERO DATA COUNT FOR D OR DR MODES) CAUSE A CALL TO SYSCRS.
+@@CALLED UUO, I-level. @@%
+PRINTX IF COUNT DIFFERENT FROM XFER REQUEST IN B MODE, WORD COUNT NOT STORED INTO BUFFER.
+
+SRFX:	PUSH P,P2
+	PUSH P,T4
+	PUSH P,M
+	PUSH P,PG
+	HRRZ	U,DEVUDB(F)
+	MOVE T1,DEVCNT(F)	;Save for error recovery.
+	MOVEM T1,TUBCNT(U)
+	MOVE T1,DEVCLS(F)
+	MOVEM T1,TUBCLS(U)
+	SKIPN T1,DEVCNT(F)	;Continuing?
+	 MOVE T1,DEVCLS(F)	;No.
+	SKIPN T4,(T1)		;Get the IOWD.
+	 STOPCD
+	LDB M,[POINT 14,T4,13]	;Number of words to do on this page.
+	SKIPE DEVCNT(F)
+	 HLRZ M,DEVCNT(F)
+	TDO	M,MSKCTD	;TURN INTO REAL -VE NUMBER
+	LDB PG,PIOMOD		;Get mode.
+	CAIN PG,DR		;Different code for different modes
+	 JRST SRFDR
+	CAIE PG,D
+	 JRST SRFB
+
+    ;D mode.  One transfer uses the whole space specified by the vector.
+	PUSHJ	P,SETADR
+	JRST SRTDON
+
+    ;B mode.  One record is transferred per buffer.
+SRFB:	TRNN	M,37777		;IF NO WORDS TO XFER
+	JRST	SRFB1		;JUMP.
+	PUSHJ	P,SETADR
+	JRST SRFDR0
+	
+SRFB1:	SKIPE 1(T1)		;Only legal if this is last word in the list
+	 STOPCD
+	SETZM DEVCNT(F)		;Not continuing
+	AOS	-4(P)		;GIVE SKIP RETURN TO HIGHER ROUTINE TO SAY NO DATA
+	JRST	SRTDN1		;AND POP STUFF OFF STACK.
+
+    ;DR mode.  Record size is at most 200 words.
+SRFDR:	PUSHJ	P,SETADR
+	JUMPN M,SRFDR1		;Any more left on this IOWD?
+SRFDR0:	AOJ T1,			;No, move on to the next.
+	SKIPN (T1)		;Have we reached the end of the vector?
+	 TDZA T1,T1		;No, zero continuation word.  I-level will
+				; wake up the job.
+	  LDB M,[POINT 14,(T1),13]	;Yes, this many words to transfer.
+SRFDR1:	HRRZM T1,DEVCNT(F)	;Set up for I-level continuation.
+	HRLM M,DEVCNT(F)
+;	JRST SRTDON
+
+SRTDON:	PUSHJ	P,RSBO		;Set flags in S, clear DDB error variables.
+SRTDN1:	POP P,PG
+	POP P,M
+	POP P,T4
+	POP P,P2
+	POPJ	P,
+
+;ROUTINE SETADR
+; BUILDS TAPE CHANNEL COMMAND LIST
+;
+;ENTER WITH T1/ADDR (IN DDB) OF IOWD TO START WITH
+;	M/ NEGATIVE COUNT OF NUMBER OF WORDS TO DO ON FIRST IOWD
+;FOR DR MODE, RETURNS WITH
+;	T1/ADDR IN DDB OF NEXT IOWD TO DO
+;	M/ NEGATIVE COUNT OF NUMBER OF WORDS TO DO ON THIS IOWD
+;
+;FOR D AND B MODES, ALL DDB IOWDS ARE PROCESSED UP TO THE FIRST
+; ZERO AND M IS RETURNED 0.
+;TUBIWC IS SET TO THE TOTAL NUMBER OF WORDS ATTEMPTING TO TRANSFER
+;
+;USES T1-T4, PG, P2
+
+
+SETADR:	HRRZS	T1		;CLEAR OUT LH
+	SETZM	TUBIWC(U)	;GET READY TO ADD IN COUNTS
+	MOVEI	P2,TUBCOM(U)	;ADDRESS OF WHERE TO BUILD COMMAND LIST
+	TLO	P2,(CCWJMP)
+	MOVEM	P2,TUBICW(U)	;REMEMBER WHERE COMAND LIST IS
+SETAD1:	LDB	T2,[POINT 14,(T1),13] ;GET COUNT OF THIS IOWD
+	TDO	T2,MSKCTD	;TURN INTO A REAL -VE COUNT
+	LDB	T4,[POINT 22,(T1),35] ;GET ADDRESS-1
+	MOVMS	T2		;GET +COUNT OF TOTAL WORDS IN THIS IOWD
+	ADDI	T4,1(T2)	;GET LAST WORD TO XFER TO + 1
+	ADD	T4,M		;GET FIRST ADDRESS TO XFER TO
+	LDB	T3,PIOMOD
+	CAIE	T3,DR		;IF DR MODE
+	JRST	SETAD2		;NOT
+	MOVM	T3,M		;GET NUMBER OF WORDS MORE THIS WILL BE
+	ADD	T3,TUBIWC(U)	;GET TOTAL WORD COUNT THIS XFER WILL BE
+	CAIG	T3,200		;MORE THAN 200 WORDS?
+	JRST	SETAD2		;NO, JUST ADD ANOTHER CHANNEL COMMAND LIST
+	MOVEI	T3,200		;GET HOW MANY TO DO IN THIS IOWD
+	SUB	T3,TUBIWC(U)
+	DPB	T3,[POINT 13,T4,13] ;PUT COUNT WHICH WILL BRING US TO 200 IN
+	ADDM	T3,TUBIWC(U)	;TUBIWC WILL GET SET TO 200.
+	ADD	M,T3		;M IS NEW NEG NUMBER OF WORDS LEFT TO DO.
+	MOVEM	T4,(P2)		;STORE ANOTHER IOWD
+SETADO:	SETZM	1(P2)		;MAKE LAST CHANNEL COMMAND WORD A HALT
+	POPJ	P,		;AND RETURN.
+
+;HERE IF B OR D MODES, OR IF DR AND TOTAL COUNT WILL NOT EXCEED 200 YET.
+
+SETAD2:	MOVM	T3,M		;GET NUMBER OF WORDS LEFT TO DO
+	DPB	T3,[POINT 13,T4,13] ;SET
+	MOVEM	T4,(P2)		;STORE ANOTHER IOWD
+	ADDM	T3,TUBIWC(U)	;THIS MANY MORE TO EXPECT TO HAVE XFERRED
+	SKIPN	M,1(T1)		;ANY MORE IOWDS TO DO?
+	AOJA	T1,SETADO	;NO, RETURN WITH M ZEROED AND T1 POINTING TO IOWD 1 PAST LAST ONE WE DID.
+	AOS	T1		;YES, POINT OT IT
+	LDB	M,[POINT 14,(T1),13] ;SETUP M FOR NEW NUMBER OF WORDS TO DO
+	TDO	M,MSKCTD	;TURN INTO REAL NUMBER
+	AOJA	P2,SETAD1	;POINT TO PLACE TO STORE NEXT IOWD AND CONTINUE.
+	LIT
+
+
+IFN OLDCTL,<
+;TEMP ROUTINE TO DRIVE OLD F3 TAPE CONTROL.
+; CONVERTS A COMMAND WORD FOR NEW CONTROL TO OLD CONTROL,
+; SETS UP SOME EXEC VIRTUAL LOCATIONS SO CAN DO THE TRANSFER.
+
+EXTERNAL EPT,EPTEBR
+
+OPDEF OMTOP [726000,,0]
+OPDEF OMTWR [731000,,0]
+OPDEF OMTRD [732000,,0]
+OPDEF OMTRS [727000,,0]
+OPDEF TPCONI [733000,,0]
+OPDEF TPCONO [734000,,0]
+OPDEF TPCNSO [735000,,0]
+OPDEF TPDATI [736000,,0]
+
+OLDMOP:	PUSH	P,T1
+	PUSH	P,T2
+	PUSH	P,T3
+	PUSH	P,T4
+	TPCNSO	100000		;1B18 = OVERRUN, 1B19 = CONTROL BUSY, 1B20=FORMATTER
+				; BUSY
+	JRST	.+2		;OK.
+	STOPCD			;SOMETHING WRONG - WE STARTED XFER WHEN ONE WAS GOING.S
+
+	TPCONO	120+MAGCHN	;CLEAR FORMATTER, INTERRUPT FLAG, SET PI ASSIGNMENT
+
+	LDB	T1,[POINT 4,P2,29]	;GET COMMAND CODE
+	XCT	XTAB(T1)	;SETUP T1 WITH PROPER CONTROL FUNCTION
+				;OR CRASH IF UNIMPLEMENTED
+	OMTOP	T2,(T1)		;DO THE FUNCTION.
+	JRST	OLDOUT		;BYE.
+
+OLDRW:	MOVE	T4,TUBICW(U)	;GET ADDRESS OF COMMAND LIST
+	MOVE	T3,[POINT 18,EPT+<%ONC/1000/2>,-1+^D18*<<%ONC/^O1000>&1>]
+				;PLACE TO SETUP STUFF
+OLDRW1:	SKIPN	T1,(T4)		;GET NEXT COMMAND WORD
+	JRST	OLDCDN		;COMMANDS DONE.
+	LDB	T2,[POINT 13,T1,26] ;GET PAGE NUMBER
+	TRO	T2,PGE.A!PGE.W	;MAKE WRITEABLE AND ACCESSIBLE
+	IDPB	T2,T3		;PUT INTO THE MAP
+	AOJA	T4,OLDRW1
+OLDCDN:	CLRPTA			;CLEAR PAGE TABLE
+	MOVE	T1,@TUBICW(U)	;GET FIRST COMMAND AGAIN
+	ANDI	T1,777		;GET PLACE TO START WITHIN FIRST PAGE
+	TRO	T1,%ONC		;VIRTUAL ADDRESS TO START
+	MOVE	T2,T1		;GET ADDRESS
+	MOVE	T3,TUBIWC(U)	;GET WORD COUNT
+	TRNE	P2,XFRMOD	;0 MEANS NORMAL
+	JRST	[OMTOP 50	;SET IBM BYTE MODE
+		 JRST .+2]
+	OMTOP	51		;SET TO REGULAR PDP10 WORD MODE
+	WRPI	LI.PIF
+	LDB	T4,[POINT 4,P2,29] ;GET COMMAND AGAIN
+	MOVEI	T1,MAGBUF	;GET BUFFER ADDRESS
+	CAIE	T4,F.RF
+	JRST	OLDWRT
+	OMTRD	T1,@TUBIWC(U)	;START THE READ
+	JRST	OLDOUT		;AND RETURN.
+OLDWRT:	HRLS	T2		;GET USER BUFFER,,0
+	HRRI	T2,MAGBUF	;WRITE TO BLT USR BUFFER TO
+	ADDI	T3,-1(T2)	;LAST ADDR IN MAGBUF TO BLT TO
+	BLT T2,(T3)	;GET DATA INTO MAGBUF
+	OMTWR	T1,@TUBIWC(U)	;START THE WRITE
+OLDOUT:	WRPI	LI.PIN		;TURN PI BACK ON
+	POP	P,T4
+	POP	P,T3
+	POP	P,T2
+	POP	P,T1
+	POPJ	P,
+
+
+
+XTAB:	MOVEI	T1,0		;RWIND IS SAME
+	MOVEI	T1,0		;REWIND AND UNLOAD BECOMS REWIND
+	MOVEI	T1,1		;WRITE EOF
+	MOVEI	T1,13		;ERASE GAP
+	MOVEI	T1,5		;FORWARD SPACE
+	MOVEI	T1,6		;BACKWARD SPACE
+	STOPCD		;CAN'T DO SPACE FILE
+	STOPCD		;OR BACK SPACE FILE
+	JRST	OLDRW		;READ
+	JRST	OLDRW		;WRITE
+
+OLDSTS:	TPDATI	T1		;GET TRANSFER STATUS BITS
+	MOVE	T2,T1		;COPY SO GET JUST ADDR
+	TLZ	T2,777760	;GET 22 BIT ADDRESS
+	SUBI	T2,MAGBUF	;GET COUNT OF WORDS XFERRED
+	LSH	T2,^D35-^D13	;PUT INTO BIT 13.
+	OMTRS	T3		;GET STATUS OF TAPE DRIVE
+	HRLZS	T3		;PUT BITS INTO LH
+	IOR	T1,T3		;GET 0-13 STATUS BITS.
+	TPCNSO	400000		;SKIP IF OVERRUN IS ON
+	POPJ	P,		;AND RETURN.
+	TLO	T1,(ANYERR!OVRRUN)
+	POPJ	P,		;RETURN.
+
+;REPLACE GETST ROUTINE WITH OLDSTS
+;REPLACE MTSO WITH SKIPN MAGFLG
+;REPLACE MTOP WITH PUSHJ TO OLDMOP
+
+MAGBUF:	BLOCK	^D32*1000	;BUFFER FOR OLD CTL
+>;END IFN OLDCTL
+
+
+	END
+  be

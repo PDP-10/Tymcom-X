@@ -1,0 +1,1391 @@
+TITLE DZKON - Simulate a Tymnet Base and Remote using DZ11s and the CTY
+SUBTTL DSB
+SALL
+
+IFKMC<
+	BYP1==^D9		;RIGHTMOST BIT POSITION OF FIRST BYTE
+	BYP2==^D17	;   0F SECOND BYTE OF A BUFFER RING WORD
+	BYP3==^D27	;      THIRD BYTE
+	BYP4==^D35	;      LAST BYTE POSITION IN A BUF RING WD
+	OPDEF	UUILDB	[101000,,0]	;KMC ILDB
+	OPDEF	UUIDPB	[102000,,0]	;KMC IDPB
+	DEFINE	TYPI(TYPE)		;FOR LOADING TYPES WITH A
+	<TYPE_^D8>			;	MOVSI INSTR
+>;END IFKMC
+IFNKMC<
+	BYP1==^D7		;RIGHTMOST BIT POSITION OF FIRST BYTE
+	BYP2==^D15	;   0F SECOND BYTE OF A BUFFER RING WORD
+	BYP3==^D23	;      THIRD BYTE
+	BYP4==^D31	;      LAST BYTE POSITION IN A BUF RING WD
+	OPDEF	UUILDB	[ILDB 0]	;NORMAL ILDB
+	OPDEF	UUIDPB	[IDPB 0]	;NORMAL IDPB
+	DEFINE	TYPI(TYPE)		;FOR LOADING TYPES WITH A
+	<TYPE_^D10>			;	MOVSI INSTR
+>;END IFNKMC
+;Macros which generate code to save/restore acs in right place on entering
+; an interrupt routine.
+DEFINE SAVEAC(NAME)<
+	TBSAVE NAME'TBV
+	MOVEM 17,NAME'SV+17
+	HRRZI 17,NAME'SV
+	BLT 17,NAME'SV+16
+	MOVE P,NAME'PDP
+>
+DEFINE RESTAC(NAME)<
+	MOVSI 17,NAME'SV
+	BLT 17,17
+	TBSET NAME'TBV
+>
+
+;This hack written by Daniel S. Blom, based on the CTYSIM program by WFW.
+;The description of the Tymnet protocol used was the paper,
+; "Tymnet Interface Guide," Charles Landau, 11/77, Tymshare internal
+; publication, and the source code for the PDP-10 Host-Base interface.
+
+;Configuration information:
+DZNUM==1			;Number of DZ-11s on the system
+MAXDZ==4			;Maximum number of DZ-11s hardware will support
+
+	Entry	DZINI
+
+
+;The DZ-11 configuration table consists of one word entries for
+; each line on each DZ-11. It should be built using the DZLIN
+; macro to define an entry; its arguments are named as follows:
+; REMOTE: 1 iff this is a dial in line (should test for CAR on/off).
+; DZN: DZ-11 number of this port.
+; LN: Line number within DZ-11 of this port.
+; SPEED: Number representing the speed of the line as follows:
+;	Number	Speed in baud
+;	  0	    50
+;	  1	    75
+;	  2	   110
+;	  3	   134.5
+;	  4	   150
+;	  5	   300
+;	  6	   600
+;	  7	  1200
+;	 10	  1800
+;	 11	  2000
+;	 12	  2400
+;	 13	  3600
+;	 14	  4800
+;	 15	  7200
+;	 16	  9600
+; FILL: Number of fill characters to send on this line after a CR has
+;	been sent.  This number must be in the range 0:15.
+DEFINE DZLIN (DZN,LN,REMOTE,SPEED,FILL) <
+	BYTE (1) REMOTE (3) DZN,LN (4) SPEED,FILL
+>
+DCTABL:	DZLIN 0,0,1,5,0
+	DZLIN 0,1,1,5,0
+	DZLIN 0,2,0,5,0
+	DZLIN 0,3,0,7,0
+	DZLIN 0,4,0,16,0
+	DZLIN 0,5,0,16,0
+	DZLIN 0,6,0,16,0
+	DZLIN 0,7,0,16,0
+NCDLIN==.-DCTABL
+
+DCTDN:	POINT 3,DCTABL(T1),3
+DCTLN:	POINT 3,DCTABL(T1),6
+DCTSPE:	POINT 4,DCTABL(T1),10
+DCTFIL:	POINT 4,DCTABL(T1),14
+
+TBCC==2*74		;Ticks between polling state of carrier on Dz-11s.
+TBSC==20		;Ticks between polling the Dz-11 silos.
+TBDEC==3*74		;Ticks between checks for entering deferred
+			; echo mode.
+
+OPDEF CALL [PUSHJ P,]
+OPDEF RET [POPJ P,]
+OPDEF SAVE [PUSH P,]
+OPDEF REST [POP P,]
+OPDEF ADJSP [105000000000]
+
+DEFINE IOREG(REGISTERNAME,OFFSET,BITNAMES,MSB)
+<BIT==100000
+IFNB <MSB>,<BIT==MSB>
+IFNB <OFFSET>,<REGISTERNAME'OFS==OFFSET>
+IRP BITNAMES,<REGISTERNAME'BITNAMES==BIT
+BIT==BIT/2
+>>
+
+;DZ-11 register offsets, bit assignments.  See DZ11 user's guide
+; (EK-DZ110-UG-001) for semantics.
+IOREG (CSR,0,<TRDY,TIE,SA,SAE,,,,,RDONE,RIE,MSE,CLR,MAINT>)
+IOREG (RBU,2,<DV,OVE,FE,PE>)
+IOREG (LPR,2,<RO,FD,FC,FB,FA,OP,PE,SC,CLB,CLA,LC,LB,LA>,10000)
+IOREG (TCR,4,<>)
+IOREG (TDR,6,<>)
+IOREG (MSR,6,<>)
+
+EXTERN CTYIWD,CTYOWD,TIBTBL,APRCHN,BITTBL
+EXTERN MSKORG,MSKIRG,IRING,ORING,ORP620,IRP620
+EXTERN ORPPDP,IRPPDP,CH6,CH7,SYSCRS,CRSCHK,KEYSET
+EXTERN CPOPJ,CPOPJ1,CONFIG,EPT
+
+
+;This code is called once every CH7 interrupt and decides when it's
+; time to perform various polling tasks:
+; 1. Start processing the output ring if necessary;
+; 2. Check for carrier lost or new connection made (every TBCC interrupts);
+; 3. Empty the silo into the input ring if necessary (every TBSC interrupts);
+; 4. Check for block mode input timeouts (not yet implemented).
+; 5. Check for lines which can enter deferred echo mode (every
+;    TBDEC interrupts).
+;CH7 interrupts at least once every tick.
+DZPINT::SKIPA
+	 0
+	SAVEAC(DZP)
+;1. Is there anything in the output ring?
+	MOVE T1,ORPPDP		;Note race here is irrelevant.
+	SKIPN TTACT		;Any lines active?
+	 CAMN T1,ORP620		;Output ring empty?
+	  JRST DZPLK2		;YvY.  Nothing to do-I-level will handle.
+	SETOM SOTFLG		;Remember what event occurred.
+	SETOM PERFLG
+;2. Check for carrier lost or new connection.
+DZPLK2:	SOSL TBNCC		;Time to check?
+	 JRST DZPLK3		;No.
+	MOVEI T1,TBCC
+	MOVEM T1,TBNCC
+	SETOM CARFLG
+	SETOM PERFLG
+DZPLK3:	SOSL TBNSC		;Time to check for carrier transitions?
+	 JRST DZPLK4
+	MOVEI T1,TBSC
+	MOVEM T1,TBNSC
+	SETOM SILFLG
+	SETOM PERFLG
+;4. Check for block mode input timeouts.
+DZPLK4:
+;5. Check for lines which can switch to deferred echo mode.
+DZPLK5:	SOSL TBNDEC		;Time for enter de check?
+	 JRST DZPLK6
+	MOVEI T1,TBDEC
+	MOVEM T1,TBNDEC
+	SETOM DEFLG
+	SETOM PERFLG
+DZPLK6:	SKIPE PERFLG 		;Anything to do?
+	 WRPI LI.REQ+1_<7-6>	;Y, initiate level 6 interrupt.
+	RESTAC(DZP)
+	JRST DZPINT+1
+
+;This routine runs at level 6 and is initiated by the level 7 routine when
+; it decides some periodic action must be taken.
+PERINT::SKIPN PERFLG		;Is this for us?
+	 0
+	SAVEAC(PER)
+	WRPI LI.CPP+1_<7-6>	;Yes, clear request.
+	SETZM PERFLG
+	SKIPE SOTFLG		;Need to check the output ring?
+	 SKIPE TTACT		;Only if not device done interrupt driven.
+	  SKIPA
+	   CALL PROOR		;Yes, do so.
+    ;Check carrier transitions if needed.
+PER2:	SKIPN CARFLG
+	 JRST PER3
+	MOVSI P1,-DZNUM		;Dz-11 number.
+	SETZ P4,		;Port number.
+PER21:	MOVSI P2,-8		;Line number on current Dz-11.
+	MOVE P3,DZBATB(P1)	;Get base address of this DZ-11.
+	RDIO P3,MSROFS(P3)	;Read its modem status register.
+PER22:	HRRZI T2,(P4)		;Ignore connections involving unconfigured
+	LDB T1,LCTYP		; lines.
+	CAIN T1,LT.UNU
+	 AOJA P4,PER24
+	MOVE T4,LINCHR(P4)	;Update the system's idea of the status.
+	TDNN P3,TIBTBL+8(P2)
+	 TLNN T4,LCCAR
+	  JRST PER23
+    ;Carrier is actually off; the last time we checked it was on.
+	LDB T3,LCOS		;Get current state.
+	CAIN T3,OS.HU		;Hanging up the line?
+	 JRST PER22A
+	CALL FLUBUF		;Clear buffers for this line.
+	ROT T2,-8-8
+	TLO T2,(<BYTE (8) 13>)	;Circuit zapper.
+	CALL DWIIR
+	 AOJA P4,PER24		;Get it next time around.
+PER22A:	MOVEI T3,OS.IDL		;Line is now idle.
+	DPB T3,LCOS
+	MOVE T2,DZBATB(P1)	;Make sure DTR is on.
+	MOVE T3,TIBTBL+8(P2)
+	BSIO T3,TCROFS(T2)
+	MOVSI T4,LCCAR+LCLGI
+	ANDCAM T4,LINCHR(P4)
+	AOJA P4,PER24
+PER23:	TDNE P3,TIBTBL+8(P2)
+	 TLNE T4,LCCAR
+	  AOJA P4,PER24
+    ;Carrier is actually on; the last time we checked it was off.
+	TLO T4,LCCAR
+	MOVEM T4,LINCHR(T2)	;Save new status.
+	MOVE T1,LINOT(T2)
+	MOVEM T1,LINOP(T2)
+	MOVEI T1,NOBIOB
+	MOVEM T1,LINCOU(T2)
+	MOVEI T1,IS.BD		;Enter baud detect mode.
+	DPB T1,LCIS
+	AOJ P4,
+PER24:	AOBJN P2,PER22
+	AOBJN P1,PER21
+    ;Check silos if needed.
+PER3:	SKIPN SILFLG
+	 JRST PER4
+	MOVSI P1,-DZNUM
+PER31:	MOVE T4,DZBATB(P1)
+	CALL DZRI
+	AOBJN P1,PER31
+    ;Check to see if lines can enter deferred echo mode.
+PER4:	SKIPN DEFLG
+	 JRST PER5
+	MOVSI P4,-NDZLIN-1	;-Number of lines to check,,0
+PER41:	
+PER42:	AOBJN P4,PER41
+PER5:	SETZM SOTFLG
+	SETZM CARFLG
+	SETZM SILFLG
+	SETZM DEFLG
+	RESTAC(PER)
+	JRST PERINT+1
+
+;This routine runs at PI level 6 and handles DZ-11 interrupts.
+;1. If a line gives the ready for output interrupt, check its output
+;		ring.  If the ring has characters yet to be output,
+;		send them and dismiss the interrupt.  If not, call the
+;		the routine which processes the output ring.  Upon return,
+;		if there is output to be done to this line, start it;
+;		otherwise, clear the line active bit for the line.
+;2. If the silo full interrupt is given, empty the silo by putting characters
+;		into the Base-Host ring.  If the input ring fills, count
+;		and ignore the extra characters; later on, install code
+;		to put black balls in the input ring in this case;
+
+
+;Note: the code assumes that the following maps are inverses:
+; 1. F:Port # -> (DZ-11 base address)x(DZ-11 line number),
+;		 F(P) = (DZ0BAS+(P & 70)/10, P and 7)
+; 2. G:(DZ-11 base address)x(DZ-11 line number) -> Port #,
+;		 G(D,L) = (D-DZ0BAS) DIV 10 + L
+DEFINE LOSER(X) <	;;Silly restrictions on use of concatination operator.
+DZ'X'INT>
+
+ZZ==0
+REPEAT MAXDZ,<
+LOSER(\ZZ)::	0
+	DMOVEM T3,DZSV+3
+	MOVE T4,DZBATB+ZZ
+	JSP T3,DZINT
+ZZ==ZZ+1
+>
+
+DZINT:	AOSE DZLOCK		;CHECK TO SEE IF CODE REENTERS.
+	 JRST 4,.	
+	TBSAVE DZTBV		;save the current time base value
+	SUBI T3,4
+	HRRM T3,ITDDI		;Instruction to dismiss the DZ-11 interrupt.
+	DMOVEM T1,DZSV+1	;Save the rest of the ACs.
+	MOVEM P,DZSV
+	MOVE P,DZPDP
+	RDIO T1,CSROFS(T4)	;Read the status.
+	SAVE T1
+	SAVE T4
+	TRNE T1,CSRTRDY		;Transmitter ready?
+	 CALL DZXI		;Yes, try to send it a character.
+	REST T4
+	REST T1
+	TRNE T1,CSRSA		;Silo full?
+	 CALL DZRI		;Yes, empty it.
+DZDIS:	MOVE P,DZSV
+	DMOVE T1,DZSV+1
+	DMOVE T3,DZSV+3
+	SETOM DZLOCK	
+	TBSET DZTBV		;reset the time base for charging
+ITDDI:	JEN @0
+DZXI:	LDB T2,[100300,,T1]	;Get port requesting ce.
+	ADDI T2,-DZ0BAS(T4)
+	ANDI T2,37
+ 	JRST OUTDON
+DZRI:	RDIO T1,RBUOFS(T4)	;Remove a word.
+	TRNN T1,RBUDV		;This bit is off when the queue is empty.
+	 RET
+	TRNE T1,RBUOVE+RBUFE+RBUPE	;Error?
+	 AOS NEI		;Yes, count it.
+	LDB T2,[100300,,T1]	;Line.
+	ADDI T2,-DZ0BAS(T4)
+	ANDI T2,37
+	ANDI T1,377
+	CALL INPDON		;Put character into input ring.
+	 RET			;Out of space, quit and hope it frees up.
+	JRST DZRI
+
+;This routine is initiated by the APR interrupt handler whenever
+; an APR interrupt occurs for input ready or output done on the CTY.
+CONINT::SKIPN DZINF		;Are we supposed to look at this?
+	 0			;No, try next routine.
+	SAVEAC(CON)
+	SETZM DZINF		;Clear flag.
+	WRPI LI.CPP+1_<7-6>	;Clear interrupt request.
+	SKIPE T1,CTYIWD		;Input done?
+	 TRNN T1,CTYIVL
+	  JRST CONODP
+	SETZM CTYIWD
+	ANDI T1,CTYOCH
+	CALL CTYIDN
+	 JFCL
+CONODP:	MOVSI T1,LCACT		;Expecting output done interrupt?
+	TDNE T1,LINCHR+CTYLIN
+	 SKIPE T1,CTYOWD	;Output done?
+	  SKIPA
+	   CALL CTYODN
+	RESTAC(CON)
+	JRST CONINT+1
+
+CTYODN:	MOVEI T2,CTYLIN
+;This routine is called when a line gives a transmitter ready interrupt,
+; or when it is desired to start output to the CTY.  Also, after ^O on
+; a line with output currently active, this routine resets the output state
+; to idle.
+;It gives the device another character to be output if it can, or terminates
+; output processing for the line.  The latter operation requires turning
+; off the line enable bit if this is a DZ-11.
+OUTDON:	LDB T3,LCOS		;Get output state.
+OUTDO0:	JRST @.+1(T3)
+	 EXP O.IDL,O.RNG,O.STR,O.FIL,O.BMOD,O.STR,O.HU,O.FOO
+O.FOO:	RET
+O.FIL:	HRRZ T3,LINFCR(T2)
+	SOJL T3,FILDON		;J-All fill characters have been sent.
+	HRRM T3,LINFCR(T2)	;save decremented fill count
+	MOVEI T1,377
+	JRST SNDBYT
+FILDON:	HLRZ T3,LINFCR(T2)
+	DPB T3,LCOS
+	JRST OUTDO0
+O.RNG:	CALL ORILDB		;Get a byte from the ring
+	 JRST OUTDO1		;None left, try a higher level buffer.
+	TRZN T1,400		;Is this a block output request?
+	 JRST SNDBYT		;No, send off byte.
+	LSH T1,8
+	PUSH P,T1
+	CALL ORILDB		;Get low order byte of count.
+	 STOPCD
+	LDB T3,[100100,,T1]	;Sign bit distinguishes between login/bio.
+	ANDI T1,377
+	IORM T1,(P)
+	MOVE T1,[EXP OS.LGI,OS.OP](T3)
+	DPB T1,LCOS
+	MOVE T1,[EXP 440700,001100](T3)
+	HRLM T1,LINV2(T2)
+	POP P,LINV1(T2)
+	PUSH P,[221100+T2,,LINV2]
+REPEAT 2,<CALL ORILDB
+	 STOPCD
+	IDPB T1,(P)>
+	ADJSP P,-1
+O.STR:	SOSGE LINV1(T2)		;Any bytes left?
+	 JRST OUTDO2		;No.
+	ILDB T1,LINV2(T2)
+SNDBYT:	LDB T3,LCTYP
+	CALL @[EXP SNDCTY,SNDDZ,SNDFOO,SNDFOO](T3)
+	CAIE T1,15		;Does the byte just output require fill chars?
+	 RET			;No, all finished
+	LDB T1,LCFIL		;Yes, set fill count
+	JUMPE T1,CPOPJ
+	LDB T3,LCOS
+	HRL T1,T3
+	MOVEM T1,LINFCR(T2)
+	MOVEI T1,OS.FIL
+	DPB T1,LCOS
+	RET
+O.IDL: O.HU:
+	LDB T3,LCTYP		;Here when stopping output on active line.
+	JRST @ODTBL(T3)
+OUTDO1:	MOVEI T1,OS.IDL		;Mark line as idle
+	DPB T1,LCOS
+	PUSH P,T2
+	CALL PROOR		;Process some of the Host-Base ring.
+	POP P,T2
+	LDB T3,LCOS		;Any output for this line?
+	LDB T1,LCTYP
+	JUMPE T3,@ODTBL(T1)	;J-No, clear line active flag.
+	JRST OUTDO0		;Yes, hop to it, Charlie.
+ODTBL:	EXP OD.CTY,OD.DZ,OD.FOO,OD.FOO
+OUTDO2:	LDB T1,LCOS		;Get current output state.
+	CAIN T1,OS.LGI		;Outputting login greeting?
+	 JRST O.RNG		;Yes, try ring next.
+	STOPCD			;Block mode not supported yet.
+	MOVEI T1,OS.BMD		;Block mode output finished, tell the host.
+	DPB T1,LCOS
+O.BMOD:	ROT T2,-8
+	TLO T2,(<BYTE (8) 45>)
+	CALL DWIIR
+	 JSR SYSCRS		;Better not happen frequently.
+	LDB T2,[POINT 8,T2,15]
+	JRST OUTDO1
+;Here when output complete on a line.
+OD.CTY:	SOS TTACT		;One less active line.
+	MOVSI T1,LCACT
+	ANDCAM T1,LINCHR(T2)
+OD.FOO: RET
+OD.DZ:	SOS TTACT		;One less active line.
+	MOVSI T1,LCACT
+	ANDCAM T1,LINCHR(T2)	;Remember line enable not set.
+	LSHC T2,-3
+	LSH T3,-41
+	MOVE T1,TIBTBL(T3)
+	MOVE T3,DZBATB(T2)
+	BCIO T1,TCROFS(T3)	;Clear line enable bit.
+	RET
+
+;Line output ring buffer routines.
+;Try to get a byte from the output ring.  Skip if could, with the byte in T1;
+; single return otherwise.
+ORILDB:	MOVE T3,LINOT(T2)
+	CAMN T3,LINOP(T2)	;Empty ring?
+	 RET
+	ILDB T1,T3
+	CAMN T3,LINTOR(T2)	;Reached the top of the ring?
+	 MOVE T3,LINTOR-1(T2)	;Yes, take the next byte from its start.
+	MOVEM T3,LINOT(T2)
+	AOS LINCOU(T2)
+	JRST CPOPJ1
+;Deposit the 9 bit byte in T1 in the output ring.
+ORIDPB:	SOSGE LINCOU(T2)
+	 JSR SYSCRS
+	IDPB T1,LINOP(T2)
+	MOVE T1,LINOP(T2)
+	CAMN T1,LINTOR(T2)	;Reached the top of the ring?
+	 MOVE T1,LINTOR-1(T2)	;Yes, put the next byte at its start.
+	MOVEM T1,LINOP(T2)
+	RET
+
+CTYIDN:	MOVEI T2,CTYLIN
+;I-level routine to handle an input character in T1 from line in T2.
+;DZRI assumes T4 is preserved.  Skip if the input ring wasn't full.
+;Count the character as lost and single-return if it was.
+INPDON:	LDB T3,LCIS		;Get input state
+	JRST @.+1(T3)
+	 EXP I.IDL,I.LGI,I.ESC,I.BD
+I.LGI:	MOVEI T3,(T1)
+	ANDI T3,177
+	CAIE T3,";"		;Echo up to delimiter.
+	 CAIGE T3,40
+	  JRST ILGI1		;Delimiter: stop echoing.
+	CALL ECHO
+	JRST ID1
+ECHO:	PUSH P,T1		;Echo character.
+	PUSH P,T2
+	CALL ORIDPB
+	CALL STOUT
+	POP P,T2
+	POP P,T1
+	RET
+ILGI1:	MOVEI T3,IS.IDL		;Normal state.
+	DPB T3,LCIS
+	JRST ID1
+I.BD:	LDB T3,LCTYP
+;;;	CAIE T3,LT.DZ		;Only set LPR for DZ lines.
+	 JRST BD3
+	ANDI T1,377		;Get char received
+	MOVSI T3,-NRCTLP	;Map to LPR setting.
+BD1:	XOR T1,RCTLPR(T3)
+	TRNN T1,-1
+	 JRST BD2		;Found it.
+	XOR T1,RCTLPR(T3)
+	AOBJN T3,BD1
+	RET			;Not found, remain in BD state.
+;Received character to LPR setting mapping.
+;Rh: received character.  Lh: LPR setting.
+RCTLPR:	0
+NRCTLPR==.-RCTLPR
+BD2:	HLRZ T1,RCTLPR(T3)	;Set software speed.
+	DPB T1,LCSPE		;And hardware.
+	MOVEI T3,(T2)
+	ANDI T3,7
+	TRO T3,LPRRO+3*LPRCLA
+	CAIN T1,2		;110 baud?
+	 TRO T3,LPRSC		;Yes, 2 stop bits.
+	DPB T1,[100400,,T3]
+	WRIO T3,@LPROFS(T4)
+    ;Here when baud rate set.
+BD3:	CALL TYPGRE		;Start out greeting,
+	MOVE T1,T2		;Send login message for port.
+	MOVSI T2,(<BYTE (8) 6>)
+	DPB T1,[POINT 8,T2,15]	;Login on this port.
+	PUSHJ P,DWIIR
+	 JSR SYSCRS
+	XOR T2,[BYTE (8) 202,0,14,13]	;Terminal type 14.
+	PUSHJ P,DWIIR
+	 JSR SYSCRS
+	MOVE T2,[BYTE (8) 27]
+	PUSHJ P,DWIIR
+	 JSR SYSCRS
+	MOVE T2,T1
+	MOVSI T1,LCLGI
+	IORM T1,LINCHR(T2)
+	MOVEI T1,IS.LGI		;Prepare to accept login message.
+	DPB T1,LCIS
+	RET
+I.IDL:	CAIE T1,"Z"-100		;Check for escape character.
+	 CAIN T1,"Z"-100+200
+	  JRST IDSE		;Yep, change state.
+ID1:	MOVEI T3,LCDE		;Deferred echoing?
+	TDNN T3,LINCHR(T2)
+	 CALL INPECH		;No, echo character if possible.
+	ROT T2,-8-8		;Construct a single byte data packet.
+	TLO T2,(<BYTE (8) 201>)
+	DPB T1,[POINT 8,T2,23]
+	PUSHJ P,DWIIR		;Store in Base-Host ring.
+	 AOSA NLIC		;No space left in input ring.  Count lost char.
+	  AOS (P)
+	RET
+INPECH:	PUSH P,T1		;Can this character be echoed by us?
+	MOVSI T3,LCACT
+	TDNE T3,LINCHR(T2)
+	 JRST INPEC1		;No--line doing output.
+	LDB T3,[POINT 2,T1,30]
+	ANDI T1,37
+	MOVE T1,BITTBL(T1)
+	TDNE T1,CET(T3)
+	 JRST INPEC1		;No--special character.
+	POP P,T1		;Yes, echo it.
+	JRST ECHO
+CET:	<-1>+1B10+1B13	;all control characters but CR and LF.
+	EXP 0,0
+	1B27+1B30+1B31	;right brace, tilde, rubout.
+INPEC1:	PUSH P,T2		;Can't echo, enter deferred echo mode.
+	ROT T2,-8-8
+	TLO T2,(<BYTE (8) 14>)
+	CALL DWIIR
+	 STOPCD
+	POP P,T2
+	POP P,T1
+	MOVEI T3,LCDE
+	IORM T3,LINCHR(T2)
+	RET
+
+I.ESC:	ANDI T1,177
+	MOVEI T3,IS.IDL		;Reset state.
+	DPB T3,LCIS
+	CAIN T1,"B"
+DZBRK:	 RET			;Traditional breakpoint location.
+	CAIN T1,"S"-100
+	 JRST CTRLS
+	CAIN T1,"Q"-100
+	 JRST CTRLQ
+	CAIN T1,"O"
+	 JRST CTRLO
+	CAIN T1,"H"
+	 JRST HNGUP		;Reset line.
+	CAIL T1,"0"
+	 CAILE T1,"9"
+	  JRST DZBRK1		;Treat as normal char.
+	SUBI T1,"0"
+	DPB T1,LCFIL		;Set number of fill characters.
+	RET
+DZBRK1:	CALL ID1
+	 RET
+	RET
+
+CTRLS:	MOVEI T1,LCOH
+	TDNE T1,LINCHR(T2)
+	 RET
+	IORM T1,LINCHR(T2)
+	ROT T2,-8-8
+	TLO T2,(<BYTE (8) 10>)	;Backpressure on.
+	CALL DWIIR
+	 STOPCD
+	RET
+
+CTRLQ:	MOVEI T1,LCOH
+	TDNN T1,LINCHR(T2)
+	 RET
+	ANDCAM T1,LINCHR(T2)
+	ROT T2,-8-8
+	TLO T2,(<BYTE (8) 11>)	;Backpressure off.
+	CALL DWIIR
+	 STOPCD
+	RET
+
+HANGLN:	MOVEI T3,OS.HU
+	DPB T3,LCOS
+	JRST FB1
+CTRLO:	MOVSI T3,LCDO		;^O, flush current & discard future output.
+	XORM T3,LINCHR(T2)
+FLUBUF:	MOVEI T3,OS.IDL		;If line is currently active, Xmit done
+	DPB T3,LCOS		; will reset state.
+FB1:	MOVE T3,LINOT(T2)
+	MOVEM T3,LINOP(T2)
+	MOVEI T3,NOBIOB
+	MOVEM T3,LINCOU(T2)
+	SETZM LINV1(T2)
+	RET
+	
+IDSE:	MOVEI T3,IS.ESC		;Remember we have seen the escape character.
+	DPB T3,LCIS
+	RET
+
+HNGUP:	MOVE T1,T2
+	MOVSI T2,(<BYTE (8) 13>)	;Circuit zapper.
+	DPB T1,[POINT 8,T2,15]
+	MOVSI T3,LCLGI
+	TDNE T3,LINCHR(T1)	;Ignore if not logged in.
+	 PUSHJ P,DWIIR
+	  RET
+	RET
+
+;Try to deposit the word in T2 in the Base-Host ring (IRING).  Skip if there
+; was space and the word has been deposited; single return if not.
+DWIIR:	MOVE T3,IRP620
+	AOJ T3,
+	ANDI T3,MSKIRG
+	CAMN T3,IRPPDP		;Is there space in the input ring?
+	 RET			;No, indicate so.
+	SAVE T2			;T2 MUST BE RETURNED UNCHANGED
+	SAVE T3			;Can't do EXCH because of race possibility.
+IFKMC<
+	LSH	T2,-2		;SHIFT RIGHT 2
+	HRRZ	T3,T2		;T3 = RIGHT HALF
+	LSH	T3,-2		;SHIFT RIGHT HALF RIGHT 2 MORE BITS
+	HRR	T2,T3		;T2 GETS NEW RIGHT HALF
+>;END IFKMC
+	MOVE T3,IRP620
+	MOVEM T2,IRING(T3)
+	REST IRP620
+	REST T2			;RESTORE T2
+	AOS (P)
+	RET
+
+	;PUT ORING WORD INTO T2 IN NON-KMC FORMAT
+LWFOR:	MOVE T2,ORING(T4)	;T2 <- NEXT WORD IN ORING
+IFKMC<
+	LSH	T2,2		;SHIFT LEFT 2
+	HLL	T2,ORING(T4)	;LAY IN THE LEFT HALF AGAIN
+	LSH	T2,2		;NOW T2 LOOKS LIKE KL's ORING WORD
+>;END IFKMC
+	POPJ	P,
+;Here to process packets in the Host-Base ring (ORING).
+PROOR:	SKIPA T4,ORP620		;Output ring pointer.
+PROOR1:	 ANDI T4,MSKORG
+	CAMN T4,ORPPDP		;Is the ring empty?
+	 JRST ORDONE		;Yes.
+	LDB T1,[POINT 8,ORING(T4),BYP1]	;Get type of this packet.
+	CAIG T1,SZODS		;Special, data, or illegal?
+	 XCT CTOSPC(T1)		;Special.
+	TRZN T1,200
+	 JSR SYSCRS		;Illegal.
+	LDB T2,[POINT 8,ORING(T4),BYP2]	;Data.
+
+;Now see what line it is going to and behave accordingly:
+; 1. CTY: put it in the line's output ring, send backpressure if the
+;		ring is too full, and start output on line if possible.
+; 2. DZ-11: put it in the output ring, send backpressure if it's too full,
+;		set line enable bit for the line if it's not already set.
+;		I-level routines will start the output.
+; 3. Aux circuit: copy directly into the input ring as input data going
+;		into the line on the other end of this circuit.  If the
+;		input ring is full, quit processing the output ring; this
+;		effectively waits until there is enough space.
+	LDB T3,LCTYP		;Process data according to the type of line
+	JRST @.+1(T3)
+	 EXP O.CTY,O.DZ,O.AUX,O.FOO
+
+O.AUX:	LDB T3,LCAUX		;What's the connection?
+	JUMPE T3,SKPDPK		;None, spurious output.
+;Turn data packet starting at ORING(T4) into data packet for input ring
+; of line in T3.
+	MOVEM T1,CTOCNT
+	MOVEI T2,ORING(T4)
+	HRLI T2,(<POINT 8,0,BYP2>)
+	MOVEM T2,CTOPNT
+	AOJ T1,
+	LSH T1,-1
+	PUSHJ P,CIRFS		;Is there space in the input ring?
+	 JRST ORDONE		;No, quit.
+	MOVSI T2,(BYTE (8) 202)
+	DPB T3,[POINT 8,T2,15]
+CFOIL:	SOSGE CTOCNT
+	 JRST CFOIL1
+	UUILDB T1,CTOPNT
+	DPB T1,[POINT 8,T2,23]
+	SOSGE CTOCNT
+	 JRST CFOIL2
+	UUILDB T1,CTOPNT
+	DPB T1,[POINT 8,T2,31]
+	PUSHJ P,DWIIR
+	 STOPCD
+	JRST CFOIL
+
+CFOIL2:	TLC T2,(BYTE (8) 3)	;Last packet is odd.
+	PUSHJ P,DWIIR
+	 STOPCD
+CFOIL1:	HRRZ T4,CTOPNT
+	SUBI T4,ORING
+SKT3:	AOJA T4,PROOR1	;CONTINUE
+
+;Skip over a data packet.  T4/ Packet start. T1/ Number of data bytes.
+SKPDPK:	SUBI T1,2		;The first 2 data bytes fit in the first word
+	SOJL T1,[AOJA T4,PROOR1]
+	LSH T1,-2		;Number of words in packet - 2
+	ADDI T4,1(T1)
+	AOJA T4,PROOR1
+
+;Here to dispose of a data packet going to a real terminal.
+;T1/ Number of bytes in the packet.  T2/ Line number.
+O.DZ: O.CTY:
+	MOVSI T3,LCDO
+	TDNE T3,LINCHR(T2)
+	 JRST SKPDPK		;Skip data packet.
+	CAMLE T1,LINCOU(T2)	;Room?
+	 JRST ORDONE		;No, terminate output ring processing.
+	HRRZI T3,(T1)		;Number of data bytes.
+	HRLI T4,(<POINT 8,0,BYP2>)
+CDPIOR:	ADDI T4,ORING
+	UUILDB T1,T4
+	SUBI T4,ORING
+	CALL ORIDPB
+	AND T4,[-1,,MSKORG]
+	SOJG T3,CDPIOR
+	CALL STOUT		;Start up line if it's not already active.
+	AOJA T4,PROOR1		;Back for more.
+
+;Set the line enable bit for the DZ-11 line specified by the port number in T2.
+;Destroys T2, T1.
+SDLE:	HRRZS T2
+	MOVSI T1,LCACT
+	IORM T1,LINCHR(T2)
+	ROTC T1,-3
+	MOVE T2,DZBATB(T2)
+	LSH T1,-41
+	MOVE T1,TIBTBL(T1)
+	BSIO T1,TCROFS(T2)
+	RET
+
+ORDONE:	MOVEM T4,ORP620
+	RET
+
+;Low level output routines. T1/ Char.  T2/ Line.  T1 27-35 must be preserved
+; and T2 must be wholly preserved.
+;Send a character to the CTY.
+SNDCTY:	ANDI T1,CTYOCH
+	TRO T1,CTYOVL
+	MOVEM T1,CTYOWD
+	WRAPR LP.SSF+LP.I8C+APRCHN	;Kick the 8080
+	TRZ T1,CTYOVL
+	RET
+;Send a byte to a DZ-11 line.  T1/ Byte T2/ Line number
+SNDDZ:	HRRZI T3,DZ0BAS(T2)
+	HRLI T3,DZUBA
+	TRZ T3,7
+	ANDI T1,377
+	WRIO T1,TDROFS(T3)
+	RET
+SNDFOO:	RET
+
+SAVT1:	0			;SAVE T1
+
+
+
+;Vector of special output packets for Host-Base protocol.
+;If the output ring processor encounters a packet of type N, the Nth
+; element of the vector is XCTed.
+DEFINE IGNORE(LENGTH)<
+IFE LENGTH-1,<AOJA T4,PROOR1>
+IFE LENGTH-2,<AOJA T4,[AOJA T4,PROOR1]>>
+CTOSPC:	;Instruction	;Packet type
+	JSR SYSCRS	;0 Undefined
+	IGNORE 1	;1 Host is open
+	IGNORE 1	;2 Host is Shut
+	JSR SYSCRS	;3 Undefined
+	JSR SYSCRS	;4     "
+	JSR SYSCRS	;5     "
+	JSR SYSCRS	;6     "
+	JSR SYSCRS	;7     "
+	JRST P.BON	;10 Backpressure On
+	JRST P.BOFF	;11 Backpressure Off
+	JRST P.CG	;12 Character Gobbler
+	JRST P.CZ	;13 Circuit Zapper
+	JSR SYSCRS	;14 Enter deferred echo mode
+	JSR SYSCRS	;15 Leave deferred echo mode
+	IGNORE 1	;16 Green Ball
+	IGNORE 1	;17 Red Ball
+	JRST P.YELL	;20 Yellow Ball
+	JRST P.ORAN	;21 Orange Ball
+	JSR SYSCRS	;22 Hang Character
+	JSR SYSCRS	;23 Enter transparency mode
+	JSR SYSCRS	;24 Leave transparency mode
+	JSR SYSCRS	;25 Undefined
+	JRST P.SR	;26 Supervisor Request
+	JSR SYSCRS	;27 Undefined
+	JRST P.SLC	;30 Supervisor login character
+	JSR SYSCRS	;31 Test pattern probe
+	JSR SYSCRS	;32 Undefined
+	IGNORE 2	;33 Host sad
+	IGNORE 1 	;34 Echo on
+	IGNORE 1	;35 Echo off
+	IGNORE 1	;36 Set terminal characteristics
+	IGNORE 1	;37 Probe terminal characteristics
+	JSR SYSCRS	;40 Undefined
+	IGNORE 1	;41 Set host number
+	IGNORE 1	;42 Supervisor clock request
+	JSR SYSCRS	;43 Undefined
+REPEAT 0,<;Code not yet finished.
+	JRST P.IBMO	;44 Initiate block mode output
+	JSR SYSCRS	;45 Block mode output complete
+	JRST P.IBMI	;46 Initiate block mode input
+	JSR SYSCRS	;47 Block mode input terminated--out of buffer space
+	JSR SYSCRS	;50 Block mode input terminated--end of transmission
+	JSR SYSCRS	;51 Block mode input terminated--timeout by base
+	JRST P.RBIT	;52 Request block mode input termination
+	JSR SYSCRS	;53 Block mode input terminated by host request
+	JRST P.RBOT	;54 Request block mode output termination
+	JSR SYSCRS	;55 Block mode output terminated by host request
+	JRST P.NBIP	;56 Negotiate for number of block I/O ports
+>;REPEAT 0,
+SZODS==.-CTOSPC-1
+
+
+
+REPEAT 0,<
+;Block mode I/O
+P.IBMO:	LDB T2,[POINT 8,ORING(T4),BYP2]	;Destination port number
+	LDB T3,LCTYP
+	CAIN T3,LT.AUX
+	 JSR SYSCRS
+	MOVEI T1,5
+	CAMLE T1,LINCOU(T2)
+	 JRST ORDONE
+;code to put request into output ring
+	JRST PROOR1
+P.RBOT:	
+P.NBIP:	LDB T2,[POINT 8,ORING(T4),BYP2]	;Destination port number
+	LDB T3,LCTYP
+	CAIE T3,LT.AUX
+	 JRST PNBIP1
+;send request over aux circuit.
+>;REPEAT 0,
+
+
+
+;Simulate a supervisor to allow building of Auxiliary Circuits.
+;Circuits can only be built to ourselves (for obvious reasons).
+P.SR:	AOSE SUPBF		;The Host can only have one dialogue at a time
+	 JRST SUPBSY		;Sorry, busy.
+	MOVE T1,[POINT 7,AXSTR]
+	MOVEM T1,AXSTRP
+	MOVEI T1,^D12
+	MOVEM T1,AXCNT
+	SETOM AXNUM		;Remember state.
+	PUSHJ P,LWFOR		;Load Word From ORing(T4) into t2
+	TLO T2,(<BYTE (8) 1>)	;Turn it into good response.
+	JRST RSPOUT
+SUPBSY:	PUSHJ P,LWFOR		;Load Word From ORing(T4) into t2
+	TDO T2,[BYTE (8) 1,0,1]
+	JRST RSPOUT
+
+P.SLC:	LDB T1,[POINT 7,ORING(T4),BYP3]	;Supervisor login character.
+	CAIE T1,15
+	 CAIN T1,";"
+ 	  JRST P.SLC3		;End of login string
+	SKIPL AXNUM
+	 JRST P.SLC2		;Continue reading system number
+	CAIN T1,":"
+	 JRST P.SLC1		;Commence reading system number
+	SOSL AXCNT		;Save as part of user name if there's room
+	 IDPB T1,AXSTRP
+	AOJA T4,PROOR1
+
+P.SLC1:	SETZM AXNUM
+	AOJA T4,PROOR1
+
+P.SLC2:	CAIG T1,"9"		;Ignore non digits
+	 CAIGE T1,"0"
+	  AOJA T4,PROOR1
+	MOVE T2,AXNUM
+	IMULI T2,12
+	ADDI T2,-"0"(T1)
+	MOVEM T2,AXNUM
+	AOJA T4,PROOR1
+
+P.SLC3:	LDB T1,[POINT 7,CONFIG,13]
+	LDB T2,[POINT 7,CONFIG,20]	;Find Host's system number
+	SUBI T1,"0"
+	IMULI T1,12
+	ADDI T1,-"0"(T2)
+	CAME T1,AXNUM
+	 JRST SUPSYW		;Host can talk only to itself
+	MOVEI T1,^D13
+	SUB T1,AXCNT
+	LSH T1,-1
+	ADDI T1,5		;Get space in input ring required
+	PUSHJ P,CIRFS		;Check size
+	 JRST ORDONE		;No, say finished, will reenter.
+	MOVEI T1,0
+	IDPB T1,AXSTRP
+	PUSHJ P,GETPRT		;Now get 2 ports for the circuit
+	 JRST SUPSYW		;All are busy.  Say the system is unavailable.
+	PUSH P,T2
+	CALL GETPRC
+	 JRST SUPSWP
+	HRRZ T1,(P)
+	EXCH T1,T2
+	DPB T1,LCAUX
+	EXCH T1,T2
+	DPB T1,LCAUX
+	MOVSI T3,(<BYTE (8) 7>)	;Internally initiated new circuit
+	DPB T1,[POINT 8,T3,15]
+	LDB T2,[POINT 8,ORING(T4),BYP2]	;Get port of requester.
+	DPB T2,[POINT 8,T3,23]	;And put in port request.
+	MOVE T2,T2
+	PUSHJ P,DWIIR
+	 STOPCD
+	MOVSI T2,(BYTE (8) 27)	;Supervisor response.
+	LDB T3,[POINT 8,ORING(T4),BYP2]
+	DPB T3,[POINT 8,T2,15]
+	PUSHJ P,DWIIR		;Say no error.
+	 STOPCD
+	MOVSI T2,(BYTE (8) 6)	;Externally initiated new circuit.
+	DPB T1,[POINT 8,T2,15]	;Now log in new port.
+	PUSHJ P,DWIIR
+	 STOPCD
+	MOVSI T2,(BYTE (8) 202)
+	DPB T1,[POINT 8,T2,15]
+	PUSHJ P,DWIIR
+	 STOPCD
+	PUSHJ P,DWIIR
+	 STOPCD
+	MOVE T3,[POINT 7,AXSTR]
+	MOVEM T3,AXSTRP
+STRLP:	ILDB T3,AXSTRP
+	JUMPE T3,STRLP2
+	DPB T3,[POINT 8,T2,23]
+	ILDB T3,AXSTRP
+	JUMPE T3,STRLP3
+	DPB T3,[POINT 8,T2,31]
+	PUSHJ P,DWIIR
+	 STOPCD
+	JRST STRLP
+
+STRLP3:	TLC T2,(BYTE (8) 3)	;Change to 1 chr.
+	PUSHJ P,DWIIR
+	 STOPCD
+STRLP2:	SETOM SUPBF
+	AOJA T4,PROOR1
+
+
+
+SUPSWP:	POP P,T3
+SUPSYW:	LDB T1,[POINT 8,ORING(T4),BYP2]
+	MOVE T2,[BYTE (8) 27,0,4]
+	DPB T1,[POINT 8,T2,15]
+	PUSHJ P,DWIIR
+	 JRST ORDONE
+	SETOM SUPBF
+	AOJA T4,PROOR1
+
+;Return in Rh(T2) a port number eligible for use in an Auxiliary Ciruit.
+GETPRT:	MOVE T2,AUXCPT
+GETPR1:	LDB T1,LCTYP		;Is this an Aux Circuit line?
+	CAIE T1,LT.AUX
+	 JRST GETPRC
+	LDB T1,LCAUX		;Is it in use?
+	SKIPN T1
+	 AOSA (P)
+GETPRC:	  AOBJN T2,GETPR1
+	RET
+
+;Compare number of free words in input ring with T1 and skip if greater.
+CIRFS:	MOVE T2,IRPPDP
+	SUB T2,IRP620
+	SOJE T2,CPOPJ		;J-Ring totally full
+	SKIPGE T2
+	 ADDI T2,MSKIRG+1
+	CAML T2,T1
+	 AOS (P)
+	RET
+
+P.BON: P.BOFF: P.ORAN:
+;If this is an Aux circuit port, send the packet to the port at the
+; other end.  Otherwise ignore it.
+SOAOR:	LDB T2,[POINT 8,ORING(T4),BYP2]	;Send over aux circuit or ignore
+	LDB T3,LCTYP
+	CAIE T3,LT.AUX		;Ignore unless Aux circuit port.
+	 AOJA T4,PROOR1
+;Send a packet over the simulated circuit.  T2/ Line number.
+SOA:	LDB T2,LCAUX
+	JUMPE T2,[AOJA T4,PROOR1]
+	DPB T2,[POINT 8,ORING(T4),BYP2]
+	PUSHJ P,LWFOR		;Load Word From ORing(T4) into t2
+	PUSHJ P,DWIIR
+	 JRST ORDONE
+	AOJA T4,PROOR1
+
+P.YELL:	LDB T2,[POINT 8,ORING(T4),BYP2]
+	LDB T3,LCTYP
+	CAIN T3,LT.AUX
+	 JRST SOA
+	PUSHJ P,LWFOR		;Load Word From ORing(T4) into t2
+	TLO T2,(<BYTE (8) 1>)	;Yellow ball reflects as an orange ball.
+RSPOUT:	PUSHJ P,DWIIR
+	 AOJA T4,PROOR1
+	AOJA T4,PROOR1
+
+P.CZ:	LDB T2,[POINT 8,ORING(T4),BYP2]	;Circuit zapper.
+	LDB T3,LCTYP
+	CAIE T3,LT.AUX
+	 JRST P.CZ1		;Not Aux port.
+	LDB T1,LCAUX		;Send on circuit zapper if anyone's at
+	JUMPE T1,[AOJA T4,PROOR1]	; the other end.
+	PUSHJ P,LWFOR		;Load Word From ORing(T4) into t2
+	DPB T1,[POINT 8,T2,15]
+	PUSHJ P,DWIIR
+	 JRST ORDONE
+	SETZ T1,
+	LDB T2,[POINT 8,ORING(T4),BYP2]
+	DPB T1,LCAUX(T2)	;No longer connected to anything.
+	AOJA T4,PROOR1
+P.CZ1:	MOVSI T1,LCREM
+	TDNE T1,LINCHR(T2)	;Is this a remote line?
+	 JRST P.CZ2		;Yes, go hang it up.
+	MOVE T1,LINCOU(T2)	;Count of free space in output ring.
+	CAIGE T1,4
+	 JRST ORDONE		;Not enough for message, hope it frees up.
+	MOVEI T1,IS.BD		;Enter baud detect mode.
+	DPB T1,LCIS
+	MOVSI T1,LCLGI
+	ANDCAM T1,LINCHR(T2)
+	AOJA T4,PROOR1
+P.CZ2:	MOVSI T1,LCCAR		;Do nothing if line not now connected.
+	TDNN T1,LINCHR(T2)
+	 AOJA T4,PROOR1
+	CALL HANGLN
+	LDB T1,[30300,,T2]
+	MOVE T1,DZBATB(T1)	;DZ-11 base address.
+	ANDI T2,7
+	MOVE T3,TIBTBL+8(T2)
+	BCIO T3,TCROFS(T1)	;Clear DTR.
+	AOJA T4,PROOR1
+
+P.CG:	LDB T2,[POINT 8,ORING(T4),BYP2]	;Character gobbler.
+	LDB T3,LCTYP
+	CAIN T3,LT.AUX
+	 JRST SOA
+	CALL FLUBUF		;Flush buffers.
+	AOJA T4,PROOR1
+
+SUPBF:	0
+AXSTRP:	0
+AXSTR:	BLOCK 3
+AXCNT:	0
+AXNUM:	0
+DZLOCK:	0
+
+
+
+
+;Initialization.  This code assumes the PI system is off.
+DZINI::	SKIPN DZDO##
+	 RET
+	SETOM DZLOCK
+	SETOM SUPBF		;Simulated supervisor not busy.
+	MOVSI T1,(<JFCL>)
+	MOVEM T1,KEYSET		;Turn off base communications.
+;Cons interrupt handling routines onto front of interrupt chains.
+	MOVE T1,[JRST PERINT]	;PERINT
+	EXCH T1,CH6+1
+	MOVE T1,[JEN @CH6];;;;;;;OVERRIDE LINK INCASE CH WAS UNUSED
+			  ;;;;;;;THIS CUTS OFF ANY PREVIOUS CH6 ROUTINES
+	MOVEM T1,PERINT+1
+	MOVE T1,[JRST CONINT]	;CONINT
+	EXCH T1,CH6+1
+	MOVEM T1,CONINT+1
+	MOVE T1,[JRST DZPINT]	;DZPINT
+	EXCH T1,CH7+1
+	MOVEM T1,DZPINT+1
+;Setup DZ-11 interrupt vector addresses in DZUBA's table.
+	MOVSI T2,-DZNUM*2
+DZINIA:	HLRZ T3,DZVECT(T2)
+	ADD T3,EPT+100+DZUBA
+	HRRZ T1,DZVECT(T2)
+	HRLI T1,(<JSR>)
+	MOVEM T1,(T3)
+	AOBJN T2,DZINIA
+	MOVE T1,ILCHR		;Init status of all lines.
+	MOVE T2,[LINCHR,,LINCHR+1]
+	MOVEM T1,-1(T2)
+	BLT T2,LINCHR+NLINES-1
+	MOVE T1,ICCHR
+	MOVEM T1,LINCHR+CTYLIN
+;Adjust tables to reflect system DZ-11 configuration.
+	MOVSI T1,-NCDLIN	;Get number of preconfigured ports.
+DZINI0:	LDB T2,DCTDN		;Get port number to configure.
+	LDB T3,DCTLN
+	LSH T2,3
+	TRO T2,(T3)
+	LDB T3,DCTSPE		;Speed.
+	DPB T3,LCSPE
+	LDB T3,DCTFIL		;Fill characters to send after a CR.
+	DPB T3,LCFIL
+	MOVSI T3,LCREM		;Remote or local.
+	SKIPGE DCTABL(T1)
+	 IORM T3,LINCHR(T2)
+	MOVEI T3,LT.DZ
+	DPB T3,LCTYP
+	AOBJN T1,DZINI0
+
+;Set up DZ-11 status for each DZ-11 in the system.
+	MOVSI T2,-DZNUM
+DZINI4:	MOVE T3,DZBATB(T2)
+	MOVEI T1,CSRCLR		;Clear the DZ-11.
+	BSIO T1,CSROFS(T3)
+	TIOE T1,CSROFS(T3)	;Wait until it's clear
+	 JRST .-1
+    ;Enable for Silo Full and transmitter ready interrupts.
+    ;Enable master scan.
+	MOVEI T1,CSRMSE+CSRRIE+CSRSAE+CSRTIE
+	WRIO T1,CSROFS(T3)
+	AOBJN T2,DZINI4
+
+;Now set up the DZ-11 line parameter registers for DZ-11 lines,
+; and send the login message to all local terminals.
+	MOVSI T2,-NDZLIN-1
+DZINI1:	LDB T1,LCTYP
+	MOVE T3,LINOT(T2)	;Initially the output ring buffer is empty.
+	MOVEM T3,LINOP(T2)
+	MOVEI T3,NOBIOB
+	MOVEM T3,LINCOU(T2)
+	CAIN T1,LT.UNU		;Unused line?
+	 JRST DZINI3		;Yes, nothing more to do.
+	CAIE T1,LT.DZ
+	 JRST DZINI2		;Type greeting if CTY.
+    ;Now set the line parameter register for DZ-11 lines.
+	HRRZ T4,T2
+	ROT T4,-3
+	MOVE T3,DZBATB(T4)
+	LSH T4,-41
+	TRO T4,LPRRO+3*LPRCLA
+	LDB T1,LCSPE		;Get desired speed.
+	CAIN T1,2		;Use 2 stop bits for 110 baud, 1 for others.
+	 TRO T4,LPRSC
+	DPB T1,[100400,,T4]
+	WRIO T4,LPROFS(T3)
+    ;Turn on DTR.  Some local terminals require it.
+	ANDI T4,7		;Get back line number.
+	MOVE T1,TIBTBL+8(T4)
+	BSIO T1,TCROFS(T3)
+	MOVSI T1,LCREM
+	TDNE T1,LINCHR(T2)
+	 JRST DZINI3
+DZINI2:	MOVEI T1,IS.BD		;Enter baud rate detect mode.
+	DPB T1,LCIS
+DZINI3:	AOBJN T2,DZINI1
+	RET
+
+;Shut down all DZ-11s.
+DZREM::	MOVSI T4,-DZNUM
+DZREM1:	MOVE T3,DZBATB(T4)
+	MOVEI T2,CSRCLR		;Clear CSR
+	WRIO T2,CSROFS(T3)
+	SETZ T2,
+	WRIO T2,TCROFS(T3)	;Clear modems
+	AOBJN T4,DZREM1
+	RET
+
+;Start typing login greeting.
+TYPGRE:	MOVEI T1,400		;High, low 8 bits of count.
+	CALL ORIDPB
+	HRRZ T1,LIMBC
+	CALL ORIDPB
+	HRRZ T1,LIMBP
+	ROT T1,-9		;High, low 9 bits of address.
+	PUSH P,T1
+	CALL ORIDPB
+	POP P,T1
+	ROT T1,9
+	CALL ORIDPB
+	PUSH P,T2
+	CALL STOUT		;Start message out.
+	POP P,T2
+	RET
+
+;Start output on line in T2.  Destroys T2, T1.
+STOUT:	HRRZS T2
+	LDB T3,LCOS
+	MOVEI T1,OS.ORB		;Set to examine output ring.
+	CAIN T3,OS.IDL		;If it is now idle.
+	 DPB T1,LCOS
+	MOVSI T1,LCACT		;Output already going?
+	TDNE T1,LINCHR(T2)
+	 RET			;Y, Xmit done will continue.
+	IORM T1,LINCHR(T2)
+	LDB T1,LCTYP
+	JRST @[EXP STCTY,STDZ,STFOO,STFOO](T1)
+STCTY:	AOS TTACT		;One more active line.
+	JRST CTYODN		;Pretend output done.
+STDZ:	AOS TTACT
+	JRST SDLE		;Set Dz-11 line enable and let I-level start.
+STFOO:	RET
+
+PERFLG:	0	;Set this flag and give Ch6 interrupt when need periodic action
+		;The next four flags tell PERINT what to do:
+SOTFLG:	0	;Check the output ring.
+CARFLG:	0	;Poll the state of the carrier bits on all dial in lines.
+SILFLG:	0	;Empty the silos on all Dz-11s.
+DEFLG:	0	;See if lines can enter deferred echo mode.
+DZINF::	0	;Set DZINF and give CH6 interrupt when CTY UART ready/done.
+CTOPNT:	0	;OUTPUT POINTER
+CTOCNT:	0	;AND COUNT
+TTACT:	0	;-1 if CTY or DZ11 output is in progress, 0 otherwise.
+NEI:	0	;Number of error indications by DZ-11 on reception.
+NLIC:	0	;Number of input characters which had to be discarded because
+		; of insufficient space in the input ring.
+TBNCC:	0	;Ticks before next check for carrier lost.
+TBNSC:	0	;Ticks before next silo check.
+TBNDEC:	0	;Ticks before next deferred echo check.
+
+;Space to save all Acs and new stack.
+DEFINE SAVEAREAS(NAME)<
+IRP NAME,<
+NAME'SV:BLOCK 20
+NAME'TBV:BLOCK 2
+NAME'PDP:-20,,.
+	BLOCK 20>>
+
+SAVEAREAS <DZP,PER,DZ,CON>
+
+;Login message.
+LIM:
+LIMBC:	51			;Number of bytes in the message
+LIMBP:	440700,,[ASCIZ/
+Hi there!  Please type your user name: /]
+
+;Base addresses of the DZ11s on the system.  The code makes a lot of
+; assumptions about the strcture of the sequence.
+DZUBA==3
+DZ0BAS==760010
+DZ1BAS==760020
+DZ2BAS==760030
+DZ3BAS==760040
+DZBATB:	DZUBA,,DZ0BAS
+	DZUBA,,DZ1BAS
+	DZUBA,,DZ2BAS
+	DZUBA,,DZ3BAS
+
+;Addresses of offset of DZ-11 vectors into vector table.
+;The same interrupt routine handles both silo full and
+; transmitter ready interrupts.
+DZVECT:	70,,DZ0INT
+	71,,DZ0INT
+	72,,DZ1INT
+	73,,DZ1INT
+	74,,DZ2INT
+	75,,DZ2INT
+	76,,DZ3INT
+	77,,DZ3INT
+
+;Configuration information.
+NAUXCP==40			;Number of Auxiliary Circuit ports.
+FAUXCP==CTYLIN+1		;Port number of first Auxiliary Circuit port.
+NDZLIN==DZNUM*8			;Number of DZ-11 lines on the system.
+CTYLIN==NDZLIN			;Line number of the CTY.
+ORBSIZ==100			;Number of words in the output rings.
+NOBIOB==4*ORBSIZ-1		;Number of usable bytes per output ring.
+NLINES==NDZLIN+1+NAUXCP
+
+AUXCPT:	-NAUXCP,,LINCHR+FAUXCP
+
+
+DEFINE LOOP(START,EXPRESSION) <
+ZZ==0
+REPEAT NDZLIN+1,<
+	<START>+<ZZ*ORBSIZ>+<EXPRESSION>
+ZZ==ZZ+1
+>>
+
+;Output ring buffers, one per DZ-11 line and one for the CTY.
+;Data is stored as 9 bit bytes.  If the high order bit is off, the rest of
+; the byte is a character to send to the line; otherwise, this byte and
+; the next 4 specify a block mode output request: bytes 1,2: byte count;
+; bytes 3-5: address.
+LINOP:	LOOP(LINORS-1,<001100,,>)	;Output putter
+LINOT:	LOOP(LINORS-1,<001100,,>)	;Output taker
+	001100,,LINORS-1
+LINTOR:	LOOP(LINORS-1+ORBSIZ,<001100,,>)	;Pointer to first byte above this
+				; buffer.  This table, indexed by line
+				; number - 1 also gives the start of that
+				; line's buffer.
+LINCOU:	REPEAT NDZLIN+1,<NOBIOB>	;Number of free bytes in the buffer
+LINORS:	BLOCK <NDZLIN+1>*ORBSIZ	;The buffers themselves
+
+;Variables for block mode output
+LINV1:	BLOCK NLINES
+LINV2:	BLOCK NLINES
+
+;Variables used when sending fill characters.  Lh: state to revert to
+; when fill character transmission finished. Rh: # of fill characters
+; yet to be sent.
+LINFCR:	BLOCK NDZLIN+1
+;Line characteristics table and byte pointers.
+;Note that all fields are orthogonal as far as storage is concerned.
+LINCHR:	BLOCK NLINES
+	;Initial line characteristics word for all ports except the CTY.
+ILCHR:	<BYTE (9) 0 (3) IS.IDL (3) OS.IDL (2) LT.UNU (10) 0 (4) 5>+LCDE
+	;Initial line characteristics for CTY.
+ICCHR:	<BYTE (9) 0 (3) IS.IDL (3) OS.IDL (2) LT.CTY (10) 0 (4) 0>+LCDE
+;Byte pointers are set up assuming the port number will be in T2.
+LCDO==1B<18+0>	;One bit which is set iff output to this port should be
+		; discarded.
+LCLGI==1B<18+1>	;One bit which is set iff the port has logged in, clear ow.
+LCACT==1B<18+2>	;(DZ,CTY) One bit which is set iff we expect a transmitter
+		; done interrupt for the line.  On Dz-11s, this is just
+		; when the line enable bit is set for the line.
+LCREM==1B<18+4>	;(DZ) One bit set iff this DZ-11 line is a dial-in.
+LCCAR==1B<18+5>	;(DZ) One bit set iff last timewet checked this DZ-11 line
+LCDE==1B34	;One bit set iff input echoing mode is "deferred."
+LCOH==1B35	;One bit set iff output is being held for this lin.
+		; had its carrier detect bit on.
+LCIS:	POINT 3,LINCHR(T2),11
+	;input state of line
+	IS.BD==3	;Baud detection going on.
+	IS.ESC==2	;Escape character (^Z) was the last character input.
+	IS.LGI==1	;Accepting part of login string we must echo.
+	IS.IDL==0	;Idle.
+LCOS:	POINT 3,LINCHR(T2),14
+	;output state of line
+	OS.IDL==0	;Idle
+	OS.ORB==1	;Outputting from the line's ring buffer.
+	OS.OP==2	;Outputting from a block output type pointer.
+			;Send block mode output finished message to base
+			; when finished.
+			;Additional variables in:
+			; LINV1, # bytes left; LINV2: address.
+	OS.FIL==3	;Sending fill characters.
+	OS.BMD==4	;Block output finished, must send message to host.
+	OS.LGI==5	;Outputting from a block output type pointer,
+			; send no message to the base when finished.
+	OS.HU==6	;DTR turned off, waiting for carrier to go off too.
+LCTYP:	POINT 2,LINCHR(T2),16
+	;pointer to line type:  0, CTY; 1, DZ-11; 2, Aux circuit; 3, Unused.
+	;code assumes LT.CTY < LT.DZ < LT.AUX < LT.UNU
+	LT.CTY==0	;This is the CTY
+	LT.DZ==1	;DZ-11 line
+	LT.AUX==2	;Auxiliary Circuit port
+	LT.UNU==3	;Line not connected
+LCFIL:	POINT 4,LINCHR(T2),20
+	;(-AUX) Number of fill characters to output after CR.
+LCAUX:	POINT 6,LINCHR(T2),26
+	;(AUX) Line number of line on other end of this aux circuit, if any.
+LCSPE:	POINT 4,LINCHR(T2),30
+	;(DZ) Speed of line.
+;Free: 9 bits.
+
+END
+
+
+
+;Local modes:
+;Mode:FAIL
+;End:
+    `/Vo

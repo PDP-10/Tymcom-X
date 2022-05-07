@@ -1,0 +1,4707 @@
+/GA
+
+
+/F01
+----
+
+SCNSER
+1) CHANGES TO PREPARE FOR TTY PASSING: ALL INTERRUPT ASSIGNMENTS
+   STORED IN DDB, NONE IN LDB, TABS-AS-BREAKS AND NO HT/VT/FF ECHO
+   BITS, AND IMAGE BREAK CHARACTER STORED IN DDB AND COPIED TO
+   LDB ON ATTACH
+2) POSSIBLE PERFORMANCE IMPROVEMENT (WE'LL SEE): TTY OUTPUT
+   HIGH AND LOW-WATER MARKS ARE NOW CHANGABLE AT RUN TIME, AND
+   THERE ARE DIFFERENT VALUES FOR SLOW (<1200) AND FAST (>1200)
+   LINES. CELLS ARE
+	OMX30	LIKE OLD TOCMAX -- # UNOUTPUT CHARACTERS PERMITTED
+		BEFORE MONITOR PUTS YOU TO SLEEP
+	OMX120	SAME BUT FOR FAST LINES
+	OWK30	# UNOUTPUT CHARACTERS AT WHICH MONITOR WAKES YOU
+		UP AGAIN (WAS THE CONSTANT 0)
+	OWK120	SAME BUT FOR FAST LINES
+	TOEMAX	LIKE OLD TOEMAX BUT A CELL NOT A CONSTANT
+   THIS WAS ALL DONE BECAUSE OF THE OBSERVATION THAT ON 33 BLOCK
+   OUTPUT SEEMED TO BE RIDICULOUSLY FASTER THAN ORDINARY OUTPUT
+   AND THE HYPOTHESIS THAT THIS WAS DUE TO INADEQUATE BUFFERING.
+   (ONE WOULD THINK TYMNET'S BUFFERING WOULD BE ENOUGH, AND THAT
+   IS INDEED THE CASE IN EXPERIMENTS ON 37, SO MAYBE THE PROBLEM'S
+   ELSEWHERE).
+3) TTY RXE AND TTY NO RXE SET AND CLEAR THE REVERSE X-ENABLE
+   PARAMETER
+MCB 1/25/79
+
+SCNSER
+BUG FIX TO CHARACTERS-LOST CODE (FOUND BY EVS, FIXED BY MCB 1/25/79)
+
+PICON
+Fixed bug in code to check for AC stack about to overflow in
+STKAC (KL). Ernie found this when looking at an unrelated crash. 
+/WRS 1-26-79
+
+/F02
+----
+
+SCNSER BUGFIX AT SCNOUT TO TAKE INTO ACCOUNT THE FACT THAT
+SNDBIO CAN SKIP-RETURN. /MCB 1-26-79
+
+/f03
+----
+
+scnser bugfix at tinas1 to make HIBERs work better. /MCB
+
+/F04
+----
+
+SCNSER
+TTY DEF COMMAND (AND AUXCAL FUNCTION '63) KEEP PORT IN DEFERRED
+ECHO FOREVER, THUS MAKING TYPEAHEAD WORK FOR THOSE WHO CARE.
+/MCB 1-29-79
+
+COMCON
+Fixed bug where "E" and "VERSION" commands don't wait for IO
+to complete.  This involved setting NOTIC in the flaggs for
+these commands.  /WRS 1-29-79
+
+UUOCON
+
+UUOCON$: added the SETALP uuo, and a call for the RUNALP uuo.
+	Changed SETJAL to do KJP for JL'd processes.  /WRS 2-24-79
+
+CLOCK1$: changed KSTOP to clear JBTSTS[kjp] and also made things
+	a little neeter.  /WRS 2-24-79
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/03
+---
+
+CLOCK1$: ignore tru limit exceeded if KJP set in JBTSTS /WRS 2-26-79
+
+SEGCON$: changed RUNALP uuo to be LOGOFF uuo.  If not called by
+	logout program (indicated by JBTSTS[kjp]=0), then it
+	will run the real logout program.  Otherwise, same funct
+	as before.  /WRS 2-26-79
+
+COMMON$: CLOCK1$: SEGCON$: UUOCON$: removed UPSALP bit from UPTSTS
+	in lieu of it being implied by UPTALN neq 0.  /WRS 2-26-79
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/04
+---
+
+SCNSER$: changed code in GETLCH so it will return bit 100000
+	(GTLECS) eat command synch - when a command is available
+	for rescan.  /WRS 2-28-79
+
+Added new FRMSER module - will contain code that handles frame trees,
+creating and destroying frames, etc. /EVS 3-9-79
+
+SCNSER
+New AUXCAL function, .AXSFS, function '64, like function '32, it
+sets the port's file status bits from the (immediate) argument.
+It then sets/clears the port's image state according to the data
+mode set (previously, this didn't occur until the next i/o
+operation). /MB 3-12-79
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/05
+---
+
+Created new symbol HPGONC in ONCE, which is the symbol
+used when moving the ONCE code and data to the highest
+possible place away from the rest of the monitor.
+Formerly, it was the magic number 337, but now the monitor won't
+fit below 340000 if loaded with EDDT and symbols - the dynamically
+allocated free core overwrites the physical pages that ONCE lives in.
+More has to be done to remedy this situation.
+/EVS 3-15-79
+
+Changed ONCE code not to reference the ONCE PCBs by physical
+location. This is necessary so that the ONCE PCBs can live
+at addresses over 337777. In the future, must map the ONCE only
+DDB (DDSTAR has the address of this) so that it too can be over
+337777. /EVS 3-15-79
+
+Installed new monitor user mode simulator in module DEBUG.
+Documentation of some sort will be provided at a later date.
+To use, get monitor file, say MONDEB$G, then 2 control b (as usual
+for debugging) and 140$g.
+Currently, you must be the only user running the simulator
+who is GFDed to the directory you are GFDed to. This will
+be fixed in the future. /EVS 3-18-79
+
+Put missing CLRPTA into OPCBST. ONCE code was setting up
+PGY tables in exec page map, then using them without making
+sure the mapping took effect. /EVS 3-19-79
+
+Re-arranged OPCBST/OPCBCL code to clear out stuff before invalidating
+the page map pointers needed instead of after. Worked in present
+system since the CLRPTA installed in this code (see above)
+wasn't there, so mappings were still in effect, but simulator
+dies right away. /EVS 3-21-79
+
+Fixed bug in MPSUPS originally found by Lee - test on loop
+is backwards, resulting in page table not getting cleared.
+/EVS 3-21-79
+
+Fixed bug in MAPUPS, test on loop is backwards, just like MPSUPS.
+/EVS 3-21-79
+
+Preserve location 66 in ONCE init code to keep out of simulators
+way until a new uuo is written to replace location 66
+(illegal instruction is stored there). /EVS 3-22-79
+
+CLOCK1 STTIOD AND SETIOD NOW CHECK THAT TARGET JOB IS NOT
+	IN SW STATE; IF SO,CRASH. THIS MAY HELP TO TRACK THE
+	CAUSE OF CRASHES SEEN WHERE JOB WAKES UP BEFORE I/O
+	COMPLETES (OR EVEN STARTS) ON PCB PAGE. ON H31 THIS
+	HAPPENED DURING MAP OF A UFD PAGE SEARCHING DURING ENTER. /AA
+	/AA 3-28-79
+
+Got rid of HPGONC. ONCE code and ONCE PCBs, PGY tables, and DDB are
+now physically relocated to just below the first hole in memory.
+(Virtual addresses remain the same). See the new comment in the ONCE
+module for a description of where everthing lives. /EVS 4-2-79
+
+Monitor now will use the exec virtual address space (400-???)
+to access free core, pgy tables, etc. See comment in ONCE.
+New macros and symbols in S.MAC determine where the start
+of exec address space is for this purpose and where the
+ONCE code lives in virtual address space. This was done
+to allow larger configurations to be generated without
+running into the 340000 limit. /EVS 4-2-79
+
+Bug in error messages for KL version of the monitor at
+PTSML - would never print out the message. Fixed the bug.
+/EVS 4-2-79
+
+Took the exec mode simulator out of DEBUG module, created new
+module SIMKL. This way, can use the simulator to debug other
+exec mode programs. /EVS 4-2-79
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/06
+---
+
+SCNSER
+Block i/o fix. (SCNSER smerged to agree with P033/G02). /MCB 4-3-79
+
+CORE1
+MWS fixes and parameter tweaks. (CORE1 smerged to agree with
+P033/G02). /MCB 4-3-79
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/07
+---
+
+SCNSER smerged to agree with P033/G03. /MCB 4-6-79
+
+Installed frame descriptor code into all VUUOs that take
+"other frame bit" argument. Changed SETOTF to take a frame
+descriptor rather than a job number. /EVS 4-6-79
+
+Changed CREFRM UUO to return a 2 word universal frame descriptor in
+AC and AC+1. /EVS 4-5-79
+
+Put access rights and frame handle tables into the context pages.
+Put frame descriptor, frame handle, and access rights code
+definitions into S.MAC. /EVS 4-5-79
+
+Changed SETLIC uuo so it will only write a stream accounting record
+in the event that the job half of JBTLIC is affected.  /WRS 4-9-79
+
+Changed STOLM?, SETLM? routines to clear page table after page
+map slot is stored, rather than before to guard against
+hardware dragging old slot contents back into paging memory
+before new slot contents are stored. /EVS 4-13-79
+
+Reference bit trapping is implemented. /EVS 4-13-79
+
+Two new page fault information UUOs - PGRSTS, and PGISTS.
+These UUOs return up to two words, like PGFSTS and PERSTS do,
+first a user word then an exec word. In PGRSTS, the
+left half contains 1b0 if the data is valid, and the right
+half contains the address of the fault location which had
+the reference bit off. If the monitor turns a ref bit on
+or the user program can't take the trap, the exec word
+is set. In PGISTS, the right half contains the software page
+fail bits (SPFW.?) and the left half contains the address
+of the ILL MEM REF, write violation or address break.
+SPFW.U is always set, and reading the words with PGISTS always
+sets them to zero, so check for existence is SPFW.U.
+/EVS 4-13-79
+
+UUO SPECIFIES ILLEGAL ADDRESS message has been changed to
+ILL MEM REF IN UUO FOR LOCATION xxxxxx (PAGE xxxxxx on KI)
+ILL MEM REF message now prints location instead of page on
+KL processors. ADDRESS CHECK for DEVICE xxx changed to
+print failing location. /EVS 4-13-79
+
+PICON$: fixed the WAKE uuo to not write anywhere in exec space.
+/wrs 4-18-79
+
+UUOCON$: changed SETE password /wrs 4-19-79
+
+Fixed CTYTYO in SCNSER to do filler characters, and to not
+loop forever if the -11 is down. /EVS 4-20-79
+
+New FRMOP functions to start and stop frames. /EVS 4-20-79
+
+Replaced CLRPTA with CLRPTO %UPS in ONCE at PGSLP+??. /EVS 4-20-79
+
+Changed message for per job exec address space address breaks
+not to try to type error message out. Now sets UTRP and
+UPSABK so that the correct message comes out at USRXIT.
+/EVS 4-20-79
+
+Implemented new set address break uuo. Format is samKL
+DATAO APR format. Zero argument means clear.
+Can only set to exec address space if
+process has WC license. /EVS 4-20-79
+
+Exec address space per job address breaks now save all the ACs
+in global table ABKACS. CAUTION: Do not set exec address space
+breaks at interrupt level routines or in the context switching
+code. The STKAC and KTRRET routines will not operate
+correctly in this case. /EVS 4-20-79
+/09
+---
+
+SCNSER smerged to agree with P033/J04. /MCB 5-16-79
+(This included the following change. /EVS)
+SCNSER:
+Fixed code at BIOZAP (zap of circuit in block mode) to NOT
+force the job out of BF wait, since this confuses the extra-
+buffer allocator. This bug may have caused some crashes on 29.
+/MCB 5-15-79
+
+ACTSER: Fixed bug where AC owner had pending software interrupt
+(JBTAWQ sign bit on) and exited GETABS routine thru ABTUUO,
+but didn't give back AC. Fix is just to call RELACB. /EVS
+5-18-79.
+
+ERRCON$: updated to reflect P033/J12 changes regarding error in
+detached jobs putting OPR: in monitor mode.  /WRS 31-May-79
+(This included the following change. /EVS)
+ERRCON$: Fixed problem causing a message from an error on a detached
+job to force OPR: into monitor mode.  U was getting setup to OPR: by
+TTYERP and was left that way when HOLD was called.  New JHOLD and JHOLD0
+which setup U before calling HOLD and HOLD0 respectively. /WRS 31-May-79
+
+ERRCON$: Cosmetic changes to output from ERRCON. /WRS 5-31-79
+
+
+SEGCON: updated to reflect P033/J11 changes in MAPHS
+to close security gap with GETSEG of SWR file. /aa 1-Jun-79
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/10
+---
+
+SMERGE bring P034 completely in line with changes made
+from monitors P033/HA to P033/K03 that hadn't been edited into
+P034. The following changes were SMERGEd in: (/EVS)
+SCNSER:
+Added code to do upper to lower case conversion on output at
+user's option.  Involved adding a new output mode (3) to the
+character table, another flag to LDBDCX (LXLLCO), code to 
+perform conversion if LXLLCO set, new AUXCAL (65) and TTY 
+command option (UCO) to set/clear LXLLCO.  This [hack] is 
+needed by APL 2741s which don't like upper case. /TLC 5-18-79
+
+S CLOCK1 SCHED1 SCNSER
+Rewrote block i/o buffer-reservation and base-port allocation logic.
+There is now one queue, BPQ, for waiting for a base port, and one
+queue, BBQ, for waiting for a monitor block i/o buffer. A base port
+is what the TYPNEG message negotiates for: it is a slot in the base
+which holds a port number, an input buffer address, and an output
+buffer address. Whenever a port goes from doing neither block
+input or output to doing one or both, it gets a base port. There
+can be more PDP10 ports doing block i/o than there are base slots;
+in such cases, the BPQ gets used to multiplex the base slots among
+the jobs. BIOCNT.rh is the number of PDP10 ports, BIOPRT the
+number of base ports. BIOBUF is the number of monitor buffers,
+which is determined by the routine BLKADJ, which now makes
+BIOBUF = BIOPRT+2 if it can (this lets 2 people do full-duplex
+block i/o with no contention for monitor buffers).
+/MCB 5-21-79
+
+SCNSER
+No longer sends a bell at RECHT1 if port is in image state,
+per request from TYMNET.
+/MCB 5-21-79
+
+S CLOCK1 SCHED1 SCNSER
+No more BBQ and no more BLKADJ. Buffers are allocated on demand
+(with the jobs possibly going into FC wait). When released, they
+go into a block buffer pool if noone's in FC wait; otherwise, they
+get returned to freecore. SCNSEC will move a buffer from the
+block pool to freecore if it finds FCREQ >= 0 (and, of course,
+if there is a free buffer). BIOBUF is the number of block buffers
+and BBFREE the number of free buffers in the block i/o pool.
+.AXEBM never fail-returns due to a lack of freecore.
+/MCB 5-23-79
+
+SCNSER
+Removed crash-causing BLKICK at BLKIHR (it's ok to get an
+input-terminated-by-host-request when there're no block
+buffers). Also made BLKIO (.AXEBM) error-return if the base
+gave us zero block ports.
+/MCB 5-24-79
+
+SCNSER:
+SCNSER, COMCON:  Modified TALK command so that lower case is not
+upshifted.  COMTYI made to inhibit upshifting when TRNCOM is
+not equal to zero. /TLC 5-30-79
+
+COMCON$: Added APL and TERMIN commands which run program of same name
+on SYS:   /WRS 1-Jun-79
+
+SCHED1:  IMPLEMENTED "OUTJOB" AND "BIGFIT" IN SWAPPER. ELIMINATED
+SIPQTA LIMITATION ON JOBS ENTERING SWAPPER.  OUTJOB IS THE JOB
+WHICH SWOSCN EATS AWAY AT FROM CYCLE TO CYCLE.  BIGFIT IS THE
+JOB WITH SEVERAL PAGES NEEDING TO COME IN WHICH THE SWAPPER IS
+CURRENTLY TRYING TO GET IN.  ONE BIGFIT JOB AND ANY NUMBER OF
+OTHER MRQ'D JOBS WITH FEWER PAGES NEEDED CAN GET SWAPPER
+SERVICE ANY CYCLE. /AA 6-1-79
+
+FIXED MODS TO /J13 - BIGFIT MODIFICATION. /EVS 6-1-79
+
+TVEDIT command runs RPG - for future.  /WRS 2-Jun-79
+
+Changed SETICP to be set with MRQ as soon as OUTJOB is set.
+No more page quota for OUTJOB which delays setting SETICP for now.
+/EVS 6-5-79
+
+Put special TRACE macro into SCHED1, puts information into trace buffer.
+Feature enabled by defining SCDTRC symbol. /EVS 6-5-79
+
+Added another TRACE macro. /EVS 6-5-79
+SCNSER,COMCON: CHANGED IMPLEMENTATION OF TRANSPARENT TALK.
+NOW DOES NOT USE FLAG, INSTEAD COMTYI GIVEN TWO ENTRY POINTS:
+COMTYI WHICH UPSHIFTS INPUT; COMTYT WHICH DOES NOT.  ALSO
+LEADING BLANK DELETION (ETC) WAS REMOVED FROM TALK. /TLC 6-8-79
+
+Changed TRACE macros to have a type number instead of storing
+the traced instruction in the ring. Changed the macros always
+to store 2 data items in the buffer so the records are always
+fixed length. Took out TRACE macros that traced FIT getting
+set up. These changes were made for the new TRACES program
+that reads the buffer and prints a diagram representing
+the state of the scheduler and swapper. /EVS 6-8-79
+
+SCHED1:  Added counters SSTC0 thru SSTC9 which can be hooked up
+to any code of interest by patching running monitor.  Also modified
+ICP to look at these and print them out as SSTCn  xx counts/second
+if they are found changing.  /aa 6-8-79
+
+
+
+
+
+
+
+
+
+
+
+
+
+/11
+---
+
+SMERGE fixes to TALK command in from P033, and POSAVL fix
+into scheduler. Also, new counters into scheduler.
+Following are the changes from P033.MEM. /EVS 6-12-79
+
+SCHED1:  Added counters BIGCNT,OUTCNT,EATCNT.  These count
+jobs chosen for BIGFIT, chosen as OUTJOB and totally eaten in
+SWOCTX,respectively.  /AA 6-8-79
+
+SCHED1:  Fixed SWOSCN logic re POSAVL.  Code will now
+compute POSAVL the first time it is forced to do a scan.
+(This may not happen for many ticks if OUTJOB lasts). /AA 6-8-79
+---------(end of text from P033.MEM)
+
+Fix simulator bug that caused JEN and JRSTF not to restore
+first part done in PC. /EVS 6-12-79
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/12
+---
+
+SEGCON:  Fixed bug in save code and readls which would compute
+length of saved area to be <0 if JOBFF>400000+JOBSV-1
+(ie, greater than 400076).  Problem lay with several HLRE instrs
+which are now HLRO instrs so that -length is always
+<0 even if bit 18 of -length is 0 (which happens whenever
+length=(jobff)-1-jobsv-1>400000. /AA 6-13-79
+
+SCNSER: fixed comment at HNGELS about last job on quque for
+spare ldb having 0 lh in ttytab.  He has -1 in lh. code was right.
+Fixed TTYATT to return F/0 if no tty ddb found (happens if target
+job is on spare ldb queue).
+COMCON:  ATT2A types "CANT ATT TO JOB" if ttyatt returns f/0
+instead of using garbage in F /AA 6-13-79
+
+Changed macros to define access rights bit tables and
+access rights definitions ".AR???" in preparation
+for translation from monitor to user access right bit map
+functions. /EVS 6-13-79
+
+COMMOD: Added LKBSIZ to LEVEL-D disk parameter table so user can
+gettab the length of the longest meaningful lookup block...
+GETTAB [20,,16].  /WRS 14-JUN-79
+
+COMMOD: Fixed some problems where someone added two number 14 entries
+in the LEVELD gettab table.  I changed all the comments and made a note
+to change the documentation to reflect the way anyone who's using it
+thinks it really is.  /WRS 15-JUN-79
+
+COMCON: added TE to run RPG for TECO so TE still works in spite of
+TERMIN command (especially for Mike Rude).  /WRS 21-Jun-79
+
+
+MAPIO:  fixed VFSTAT uuo kernel KFILCK to call RELSAT if
+GETSAT fail-returns;  old code assumed that no SAT mapped if
+fail-return, but can have sat mapped if had to read it in
+and SATCHK found it bad.  Call RELSAT unconditionally if
+GETSAT fails; RELSAT does nothing if no sat there. /AA 6-22-79
+
+Changed NUMCHN to 48. /EVS 6-27-79
+
+
+
+
+
+
+
+
+
+
+
+
+/13
+----
+
+Simio: Fixed bug which left microcycle clock on if doing 
+dump output. Now clock off during execution of dump
+input or output. /AA 7-9-79
+
+COMMON:  Revised method by which MINCOR = amount of freecore
+is calculated.  A bug existed which I discovered in process
+of trying to increase P90's freecore alloc by about 1K.
+MINCOR and MINCLN are eliminated.  New calculation produces a
+symbol FCWDS which includes a factor to account for
+SPT usage.  Symbol SHRFPG can be defined in CONFIG as number
+of expected shared file pages. New symbol FRECOR contains
+value FCWDS used by once-time code to allocate freecore.  This
+can be patched directly to increase the amount. /AA 7-9-79
+
+CONFIG:  brought from OSCURRENT config changes for
+C38 and P90.  38 gets 2 dsk controllers. P90 more jobs, etc. /AA 7-9-79
+
+FRMSER,SEGCON,UUOCON,COMCON,COMMON:
+Put new FRMOP function .FOSVA in - start a frame at one of its
+start vector addresses. E points to -ve job data area offset
+or +ve target process specified start vector address.
+
+
+
+
+
+
+
+
+
+
+
+
+/14
+---
+
+SCNSER: Fixed bug in CTYCHR that didn't do the waiting count
+correctly. /EVS 7-11-79
+
+
+
+
+
+
+
+
+
+
+
+
+/15
+----
+
+SCNSER: FIXED HORRIBLE BUG WHICH WAS INTRODUCED WHEN FREECORE
+VIRTUAL ADDRESSES BECAME DIFFERENT THAN PHYSICAL ADDRESSES.
+MUST NOW DO MAP INSTRUCTIONS AT GOBIO2. /EVS 7-11-79
+
+
+
+
+
+
+
+
+
+
+
+
+/16
+----
+UUOCON: ACTSER:  IMPLEMENT TRU COMPONENT CHECKPOINT RECORD
+[TYPE 21 LENGTH 41] XC req'd Generated by [new] XCHARG fn 6 /AA 7-12-79
+
+ADDED CAPABILITY TO ACTSER TO WRITE LOGIN RECORDS FOR FRAME CREATION
+FRMOP. CHANGED .FOCFM TO WRITE THE LOGIN RECORD. /EVS 7-13-79
+
+Fixed TTYNFR to set TTYATC (so code for forced commands won't think
+it's an aux port) and PJOBN (for neatness) and clear rh(DDBLDB)
+(superstition). /MB 7-16-79
+
+
+
+
+
+
+
+
+
+
+
+
+/17
+---
+
+ACTSER: fixed bug in frame create FRMOP - routine in ACTSER was
+using wrong size for login record. /EVS 7-16-79
+
+UUOCON: removed requirement for JL from CONT uuo.  Can only protect
+user so much from himself.  /WRS 7-16-79
+
+ACTSER: Fixed confustion about symbol ACUTAB in WRTACR. /EVS 7-17-79
+
+UUOCON: Added SETE password with all licenses for self. /TLC 7-18-79
+
+S: Changed IO, MB, and WS state codes from SJ to DJ.
+This fixes a bug - a job in IO wait could control C out,
+and do a COMCON command that started a monitor job if JBTIOA
+was zero - which zapped the state code. Meanwhile, there is still
+a DDB with IOW set on it, which will cause SETIOD to get called
+when the interrupt for the device comes in, or the device
+becomes hung. Changed WS from SJ to DJ because there still might
+be some code that calls WSYNC that assumes that either the
+code will be continued or DHNG will be called. Since we have
+changed IO and MB to DJ and RN is DJ, this is no great loss.
+Put comment in S just before QUEUES and CODES macro definitions
+to explain the rules for selecting SJ/DJ for a new or existing state
+code. /EVS 7-19-79
+
+ERRCON: Clear IOW in the DDB as well as IOACT so SETIOD won't
+wake the job up in case we get an interrupt from the hung device
+some time after hung code is called. Some drivers clear IOW themselves
+and call SETIOD, and some don't, so this code is for safety.
+/EVS 7-19-79
+
+CONF90:  Increased P90's ports to ^D127 (avoiding 128 out of
+ fear that a bug may exist at this boundary.) /AA 7-19-79
+
+UUOCON:  replace mask 777700 with extern name JBRIRD
+ from COMMOD in TRU calc in case byteptr ever changes. /AA 7-19-79
+
+
+
+
+
+
+
+
+
+
+
+
+/B
+
+/A01
+---
+
+SCNSER: Added capability to selectively place backspace in either
+the BREAK or BREAK2 set. Default is BREAK (the reverse of tab).
+New AUXCAL mode 66 selects break set: param LSB 1 gives BREAK2,
+0 BREAK. Backspace break state is recorded in L2LBBP in LDB
+and DCLBBP in DDB. L2LNXO moved to LDRNXO to make room for
+L2LBBP. BS assigned SPAI code 17 and SPAR code 6. changes
+made to input, echo, rubout, and output routines to recognize
+new property of bs. Of special note: deleted bs with L2LBSP set
+echos as SP; without L2LBSP set, echos nothing. SETTBK,
+TTYRES (RESET UUO), and ATTLDB modified to accept new BS.
+Minor bugs/typos detected and corrected in related
+parts of SCNSER: previously no entry for BS in remote echo 
+code; wrong reg and flag tested in ATTLDB in instruction in code
+to restore TABS-AS-BREAK condition. /TLC 7-20-79
+
+/A02
+---
+
+UUOCON: Fixed VREPLC bug involving pickup of UPTOFD
+"other frame" descriptor.  This bug was causing REMAP
+to fail for MAGNUM people first day 034 was up on C33.
+Actually, any remap would fail. /AA
+
+SEGCON,SIMIO,SCHED1,S,UUOCON,CLOCK1,ONCE,COMMON,PICON,COMCON,ERRCON
+NEW MODULE: ERRMSG.MAC
+
+ALSO EFFECTED (DEVICE DEPENDENT BITS MOVED TO MAKE ROOM FOR NEW
+DEVICE INDEPENDENT BIT IOHNG) PTPSER,FTASER,CDRSER,
+ACTSER,LPTSER
+
+Rewrote ERRCON to allow a parent frame to HIBER or interrupt
+on child halting. Implemented new FRMOP which reads a halt
+status block for a frame which contains halt class and type,
+halt count, PC, last UUO PC, and halt type dependent data.
+New module ERRMSG contains a macro definition which
+should define all system error messages, except those
+that come from commands. .FOHLT and .FOCLR will also
+generate unique halt class-type numbers.
+/EVS 8-1-79
+
+ERRCON,SEGCON:
+Changed some error messages - instead of JOB SETUP and JOB SAVED,
+SEGCON now calls ERRCON which will print <filename> SETUP and
+<filename> SAVED.
+Instead of BETTER SPECIFY A CORE ARGUMENT it now prints
+CORE ARGUMENT MUST BE SPECIFIED. Instead of REMAP UUO FAILURE
+VM SPACE MANGLED it now prints REMAP UUO FAILURE DURING RUN OR
+GET - the user can draw his own conclusions about what the address
+space is worth after this error.
+
+COMMON: Extensive cosmetic edit removing misleading and obsolete
+comments, regrouping definitions, etc.  Introduced symbol
+OPNFPF (Open Files Per Frame) INFDEF'd to 4, used to calculate
+freecore requirements.  Fixed JSR LODBTS stuff in crash code.
+COMMOD:  Introduced OPNFPF and new filser freecore requirement
+calculations.  Deleted FIL4WD and SYS4WD calcs and replaced
+with new symbol FFCBLK (Filser Free Core Blocks) which is
+set to JOBN*<2+<2*OPNFPF>>; this allows average of 2 DRB's
+(one each for logged-in and gfd'd ufd) and an ATB and FNB pair
+for each of the OPNFPF files expected, per job.  /AA 8-1-79
+
+UUOCON:
+NEW HIBER enable bit for child frame exits enabled - bit 9.
+/EVS 8-1-79
+
+
+/A03
+----
+
+ERRMSG: Made a mistake and left TTY finishing routine arg blank
+in the macros defining SETUP and SAVED exits - they were clearing
+type ahead and they are not supposed to. /EVS 8-2-79
+
+SCNSER/UUOCON: .STTLK SETUUO function ('10) to talk kludgily to
+other people's terminals; RETACH UUO (calli -'135) to move
+terminals around (generalized ATTACH). /MCB 8-2-79
+
+Temporarily stopped HALT command from trying to
+store into UPX even though its not always there.
+Need to replace cal to STOP1 with call to something
+that interrupts parent if he's enabled. /EVS 8-2-79
+
+/A04
+----
+
+HALT FRMOPs and HALT commands no longer store termination status
+in UPT, but do cause an interrupt in parent or traphandler.
+When parent gets an interrupt and wants to see if frame has stopped,
+it should keep track of whether it was running or not in its per-frame
+database, and compare that against JBTSTS. /EVS 8-2-79
+
+/A05
+----
+
+
+SCNSER: RETACH BUGFIXES /MCB 8-3-79
+
+FIXED TRHALT NOT TO SKIP. /EVS 8-3-79
+
+Put a primitive EBOX and MBOX simulation into SIMKL to chase
+down a bug in WATCH statistics and microcycles.
+Every time meter for a UPT is read, 20000 EBOX cycles
+are simulated and 10000 MBOX cycles. /EVS 8-3-79
+
+UUOCON: new sete password for me. /AA 8-3-79
+
+UUOCON: Fixed bug in CLKTRU which incorrectly masked the
+number of disk reads and writes obtained from JBTRCT and
+JBTWCT. /EVS 8-3-79
+
+/A06
+----
+
+SCNSER: Block i/o formerly kept every buffer it got from freecore
+in a pool of its own unless it saw people in FC wait. Since some
+people freak when there's no freecore instead of going into FC
+wait, this might have been bad. Now, when a port stops being a
+block port (BIODEC), it releases any block buffers in excess
+of 2 * #block ports to freecore. The SCNSEC code to check FCREQ
+and free a buffer has been removed. /MB 8-6-79
+
+
+FRMSER: Fixed bug that left newly created frame in NU state,
+which made subsequent start operations fail, since state code was
+NU so SETRUN didn't cause frame to go into run queue. /EVS 8-6-79
+
+SCNSER: CTYCHR routine - changed SPCTRY timeout from 40000
+to 100000 - when cache was on, took more than 40000 counts for
+KLDCP to finish with the character. /EVS 8-6-79
+
+/A07
+----
+
+Fixed bug uncovered by fixing NU queue bug - was doing XORM assuming
+JERR was off, but for previously used job slots, it was on, so XORM
+was turning it off, allowing FRMOP that starts frame to call SETRUN
+which started up job with no pc or exec acs. /EVS 8-6-79
+
+/A08
+----
+
+Fixed sign error in BIODEC buffer-freeing code. /MB 8-7-79
+
+ERRMSG:
+Corrected erroneous error message REMAP UUO FAILURE DURING RUN OR GET
+to be FATAL REMAP UUO FAILURE. /EVS 8-7-79
+
+Changed HALT error message in SIMKL to be the authentic KLDCP
+message. /EVS 8-7-79
+
+FRMSER: SY license now allows some access through absolute
+frame descriptors. /EVS 8-7-79
+
+S: Unscrambled user access right numbers - they were scrabled for
+test purposes. /EVS 8-7-79
+
+Fixed bug in MAP instruction simulation in SIMKL.
+Allowed simulated user IOT bit to allow simulated user to
+execute simulated I/O instructions. /EVS 8-7-79
+
+UUOCON: Added virtual PEEK, POKE, BITPOK capability to routines
+of same name. Created new CALLI -125, NPEEK, which is now the heart
+of PEEK that nonskip returns for error and skip returns if no error.
+Sign bit of address to read or write if set indicates address is
+virtural; if clear, physical. /TLC 8-8-79
+
+MAPIO: Fixed bug in VFSTAT UUO - was returning VM page does not exist
+because W was not setup to new call to REDLMA. /EVS 8-8-79
+
+UUOCON: Chaged KERUUO to assume 1b0 is set already in T1 according
+to caller's PC rather than setting it up. Changed VFSTAT to always
+set 1b0 in T1 (would have crashed if it was clear). Changed
+VCLEAR and VREMOV to get caller's PC from proper place
+(PDNMUP(P)) and set or clear 1B0 in T1 accordingly before falling
+into KERUUO. /EVS 8-9-79
+
+UUOCON: Took extraneous MOVE T2,JOB out of GETTAB code - was left
+over from HISEG days. /EVS 8-9-79
+
+/A09
+----
+
+UUOCON: Fixed CONT uuo to error return if detached job.  /WRS 8-14-79
+
+COMCON: Fixed ADRBRK command not to crash monitor when type
+ADRBRK xxxxxx MONITOR <anything else> - call to CKSLC was returning
+to main code after going thru COMERR, TTCMCA was zeroed,
+and next call to COMERR looped. /EVS 8-14-79
+
+SCNSER: Fixed code at TYICC to check for attachedness after job
+continues from a ^C. /MCB 8-14-79
+
+SCNSER: Added new flag, 1B14, to HANG UUO to facilitate elimination
+of phantom circuits. When 1B14 is set and the specified port
+has LDBLOG of zero, that port is hung; if LDBLOG <>0, error
+return. /TLC 8-14-79
+
+/A10
+----
+
+UUOCON$: SETE "broken" so will work over aux circuits.
+	SETLIC "broken" so it will work over aux circuits provided
+that the calling process has a MAXLIC with LICWCR.  /WRS 8-15-79
+
+SCNSER: Fixed block i/o bug introduced in /A06 -- BIODEC thought
+BIOCNT was really a count, and forgot that its left half could
+contain a -1 flag. /MCB 8-16-79
+
+SCNSER: New spare LDB code. Uses lh(TTYTAB) differently (see
+comment at page 3 of HANG UUO) so it can remember for jobs on the
+spare LDB waiting list whether the HANG that put them there
+was forcing KJOB (bit 16) or not -- formerly it always assumed
+it was. New code for circuit zap -- it is now guaranteed that
+after returning from RCVZAP, the LDB is really detached.
+/MCB 8-23-79
+
+/A11
+----
+
+SCNSER: Fixes to new spare LDB code. /MCB 8-27-79
+
+/A12
+----
+
+SCNSER: FIXES O NEW SPARE LDB CODE. /MCB 8-29-79
+
+/A13
+----
+
+Backed up version of SCNSER to SCNSER.A95 (A09.5) which has
+block I/O bug fixed but has old spare LDB code. /EVS 8-31-79
+
+UUOCON: Split UUOCON into two modules, UUOCON and IOCSS.
+UUOCON contains for the most part general UUO stuff,
+and IOCSS has the I/O channel stuff. (IOCSS stands for IO common
+subroutine service). /evs 8-31-79
+
+Redefined frame descriptors. For new definitions, see FRMOP.DOC
+in (MONDOC). Important change - GETTAB for job things will
+return the values that SY license was required for if the caller
+process has RC or WC. Non-job data still requires SY explicitly.
+/EVS 8-31-79
+
+Fixed horrendous bug that was causing two part instructions
+(such as ILDB, IDPB, DMOVE, DMOVEM) not to execute first part
+in software interrupt routines - monitor failed to clear
+first part done (PC.FPD) in new PC if it was on in old PC.
+PC.FPD will remain on until the first two part instruction is encountered.
+Hardware PI system correctly preserves all flags except for turning
+PC.FPD off, so CLKTRP now does just that. Also clear PC.ADR while
+we were at it so that interrupt routine will not miss address break
+if it gets one at the first instruction of the interrupt routine. /EVS 8-31-79
+
+Change TIMINT in SIMKL to 70 octal so that simulator works better on
+2020s. /EVS 8-31-79
+
+/A14
+----
+
+SCNSER: Fixed misunderstandings at TTYKIL -- basically, when TTYKIL
+is called from COMCON with F/ 0 and U/ "spare" LDB, it must NOT
+call NXTFRC because there is no appropriate TTYTAB entry. The old
+code "solved" this by not clearing lh(U) before comparing U with
+LINTBE, which just happened to make it think it wasn't the spare
+LDB after all in all the right cases. When I made the code clear
+lh(U) in /A12, this broke down. Now things are a bit clearer.
+/MCB 9-1-79
+
+/A15
+----
+
+SIMKL: If SETABK fails (it will on KI) no longer a fatal error, just
+informative message is printed out. /EVS 9-4-79
+
+UUOCON: Fixed DONUMT to return address of NUMTAB if user asks for it.
+/EVS 9-4-79
+
+/A16
+----
+
+UUOCON: GETTAB CHANGE INCLUDED REMOVING TABLE 1
+, BUT CHKPNT COUNTS ON GETTING A ZERO FOR ALL VALID JOB NUMBERS.
+PUT TABLE 1 BACK IN. /EVS 9-4-79
+
+/A17
+----
+
+PICON: WAKE and EVICT now take frame descriptors instead of job
+numbers. /EVS 9-5-79
+
+New CALLI - SETSTV (CALLI -137), takes count,,addr of start vector table
+and stores into UPT, returns old setting in AC.
+Start vector setting is cleared out after core image is setup, at same
+time license is set. /EVS 9-5-79
+
+/A18
+----
+
+Fix bug in create frame FRMOP error return, decremented pushdown
+pointer one too many times. /EVS 9-6-79
+
+/A19
+----
+
+S,FRMSER: Rewrote ABSACC and changed ARMAC arguments so that
+each license can have its own table of access bits that it gives
+the user of an absolute frame descriptor with that license.
+The old scheme involved a ring of protection (WC,RC,SY,TP).
+This change makes GETTAB work like it used to, i.e. RC and WC
+no longer give SY kinds of access to frames. In fact, WC no longer
+gives the ability to read another frame's ACs - they can only be written
+unless the caller has RC as well. /EVS 9-10-79
+
+/A20
+----
+
+SCNSER: Repair to code which processes HANGs on jobs already on
+the spare LDB queue -- it formerly ORd the job # into the TTYTAB
+entry. /MCB 9-21-79
+
+SCNSER: RETACH recoded to check access rights, to have different
+error codes, and to take more argument bits -- see the page before
+the RETACH:: label for documentation. /MCB 9-21-79
+
+SCNSER: New routine COMATT to perform certain functions common to
+all attaching operations. Probably more such routines forthcoming.
+/MCB 9-21-79
+
+/A21
+
+CONFIG: give V25 16 drives instead of 8 as per V. Hunter request.
+	/AA 9-27-79
+
+CONFIG: give C26,C29,C36 ^D30 SAT PCB's as per results of testing
+	C36 and finding that overlaying out of COEES' 1ESORD.OVL
+	was needing more SAT's than standard 15. This change was
+	patched on C36, found good, and requested for 26,29.
+	CONFIG for all systems changed to have parameters
+	SPCBN ; number of SAT pcb's
+	RPCBN ; number of RIB pcb's
+	defined.  /AA 9-27-79 and 9-28-79
+
+SCNSER: New TTY DDB bit, DCLCOM, reflects the setting of
+LDLCOM at the time of the last detach. It is set to command
+mode (1) by HANGs and command-port circuit zaps if the
+job is not continue-on-disconnect, and by the detach
+function of the ATTACH UUO. It is set to the current
+LDLCOM setting by HANGs and zaps of continue-on-disconnect-job
+command ports, and by RETACH. RETACH has a mode where it
+will restore the state appropriately. RETACH has also been
+changed to return the port number at the source end of the
+TTY being moved. (In keeping with the future, it gets this
+from rh(DEVNAM) rather than returning the actual host
+port number).
+/MCB 9-28-79
+
+/A22
+
+SCNSER: bugfix at NAMSCN. 200000 <= nam <= 270000 should be
+200000 <= nam <= 272727. (PATCHED IN /A21-1)
+/MCB 10-1-79
+
+CONF90:  for SLIGOS, set BPAUN=^D16 (up from 14) and SHRFPG=1000
+	(up from 500 as per Bernard). /AA 10-3-79
+
+SCHED1: Changed
+		CKJB0:	SKIPN	TIMEF
+			JRST	...
+			PUSHJ	p, ...
+	to
+		CKJB0:	PUSHJ	P, ...
+so rescheduling always happend when the current job is unrunnable,
+not just at clock ticks. This increases scheduler overhead slightly,
+but reduces unnecessary null time.
+/MCB 10-3-79
+
+
+KS10 support added. New modules RMXKON (KS style disk driver),
+DZKON (support for DZ11 driver, used when no network is connected
+to the 20), DR11C (network base ring simulator), CIOPR
+(communications interface handling module).
+/ELB (/EVS) 10-3-79
+
+Fixed bug in CMPLOG routine in FILUUO that caused unit within
+structure name to get set to DKKB? instead of DSKB? when adding
+a pack to an unrefreshed structure. /EVS/ELB 10-3-79
+
+Fixed bug in VREPLC FRMOP that did not allow monitor to replicate
+pages into per process area because PDNMUP(P) should have been
+PDNMUP-1(P), so was checking user bit in wrong stack word. /EVS
+/ELB 10-3-79
+
+Fixed bug in examine/deposit into frame FRMOP (.FORVA and .FOWVA)
+which did not handle negative args correctly - address is in right half
+and left half is now ignored. /EVS 10-3-79
+
+Added .FOGFT FRMOP, graft frames. See (MONDOC:37)FRMOP.DOC for
+grafting description. /EVS 10-3-79
+
+Fixed bug where read frame virtual address would fail on a page
+with MAX WRITE off because monitor always tried to replicate the page
+writably. /EVS 10-3-79.
+
+SEGCON: Fixed bug so that MFR is not set up to all rights in the case
+where HF is present on file, or file has a PID, since that would allow
+anyone who ran a program with HF or PID in an inferior frame to
+completely take advantage of the capability. /EVS 10-3-79
+
+UUOCON: NEW SETE PASSWORD FOR /AAA 10-5-79
+
+/A23
+----
+
+Added .FOCON FRMOP, continue a frame.
+More efficient than reading PC and starting frame up with .FOSAA.
+/EVS 10-8-79
+
+S, KISYM, KLSYM: Fixed headers and deleted trailing RCREFs so that
+now these modules will cref when compiled with COMMON. /TLC 10-8-79
+
+/A24
+----
+
+.FOCON not sufficient for restarting frames - if halt a frame,
+do an $X (deposits, starts), want to be able to restart the frame,
+and continue will not work properly. Solution: change .FORPC
+(read PC) to return c(UPTPDL)-1 if UPTPC is an exec mode PC.
+So if frame is in the middle of a UUO when it was stopped,
+PC will point to UUO and get PC and restart will work properly,
+since if frame was stopped, code was arranged to UUO could be
+restarted. /EVS 10-8-79
+
+/A25
+----
+
+CONF35.MAC: NUMPRT==0  number of remote ports
+MON35.CMD:  RMTSER/NOLOAD as per K. Carta; C35 no longer
+has a remote base. /AA 10-9-79
+
+CONF26
+CONF29
+CONF36	Withdrew the increase to 30 SAT pcb's until pcb lock
+code can be fixed to allow more than 15. /aa 10-9-79
+
+PICON: SNOOP code fixed at SNNMI stopping snoop interrupts.
+This change is designed to eliminate the crash on timer overflow
+which was crashing P90 when they used it.  Now we stop SNOOPI
+by setting a flag which causes SNOOPI to restart regular
+interval-timer interrupts at the end of the current "tick".
+In SNNMI we just sleep for a second to let this happen. /aa 10-9-79
+
+/A26
+----
+
+CORE1: Fixed bug that happened when frame went into CW. When it came out,
+it put frame #,,frame# into UPTLKJ which screwed things up.
+/EVS 10-10-79
+
+PICON:	Fixed bug in EVICT uuo to prevent T1 from getting clobbered.
+/WRS 10-11-79
+
+
+ERRCON: If detached frame has a parent, no message is printed out
+for monitor error messages. It is assumed that the parent will
+print out the message. Messages will still be printed out for detached
+orphan frames. Original intent of this is in case system jobs like
+PJ and CHKPNT bomb out. /EVS 10-12-79
+
+CORE1: Fixed bug where context page lock was given to two frames - the
+code that woke up the next waiter left UPTLKJ zero, so if after waking
+up the next frame to get the lock the frame tried to get the lock,
+it got it because UPTLKJ was zero, and the waiting frame assumed
+that it had the lock because it was awakened. Fix is to set UPTLKJ
+at the time of assigning the interlock to the next waiter, and increment
+UPTLKC. /EVS 10-12-79
+
+/A27
+----
+
+COMCON, FRMSER: Fixed bug that caused frame tree to get screwed up.
+When frame was killed, it orphaned all its children, but did not
+take the killed frame away from its parent. /EVS 10-12-79
+
+ERRCON: Fixed mis-SMERGE which had IFCPU(KI) instead of IFNCPU(KI)
+around code at ERRSCP, causing KL and KS monitors not to print out
+"FOR LOCATION ??". /EVS 10-12-79
+
+FRMSER: Previous fix for .FORPC which decremented PC on stack was
+not correct - if a job has a PC in the monitor and its state code
+is not TI or SL, any attempt to start it will first run through
+the rest of the monitor code it was in, and then USRXIT will
+start the program at the new PC, which should be the location after
+the UUO. If in TI or SL, however, the proper place to restart would
+be at the UUO itself. Therefore, .FORPC has been changed to
+return the actual PC on UPTPDL if not in TI or SL, and c(UPTPDL)-1
+if is TI or SL. /EVS 10-12-79
+
+/A28
+----
+
+FRMSER: Changed some erroneous comments in CREFRM, PSHARG. No source
+code changed. /EVS 10-17-79
+
+COMMOD: Fixed bad UNYOS and UNYRCO byte pointers - used UNS???
+to address unit data block locations instead of UNI???. /EVS 10-17-79
+
+COMMOD, FILIO, BPXKON, RMXKON: Took device dependent code that was checking
+at runtime for TYPRM in FILIO away.
+To add insult to injury, this code was also under IFCPU(KS) conditional,
+when actually it is possible that in the future KS will have different
+disks other than RM03 disks. Added new device dependent routines
+called thru KONSFT and KONHRD, which calls the device service routine
+on soft and hard errors respectively. For BP units, just a noop, but
+for RM units, copies the RH11 registers into the proper unit data block
+locations. /EVS 10-17-79
+
+DR11C:  Fixed bug which caused block mode output header message to be dropped
+when block mode output requests were adjacent and interrupt activity was high.
+Also added comments to most of the code. JRG/18-oct-79
+
+SCNSER: Removed STOPCD in NXTFRC when it finds a job on the spare
+LDB queue which has no TTYTAB entry -- it is indeed possible for
+the job to have killed itself while on the spare list. The new code
+just goes on to the next job, if any.
+/MCB 10-22-79
+
+
+PCBIO: INSTALL PPCBWC AND SPCBWC PRIM AND SEC PCB WAIT COUNTERS
+ FOR ICP TO WATCH. /AA 10-19-79
+
+/A29
+----
+
+CLOCK1:  install OLDJOB cell gets set just after MOVTST to
+ job we last ran, in hopes that crash analysis can sometimes be
+simplified. /AA 10-23-79
+
+SCNSER: Changed F to T2 in NXTFRC "fix" -- DDB addresses are not
+job numbers (see, if the monitor were written in PASCAL...).
+/MCB 10-26-79
+
+CORE1: Fixed bug that crashed system when tried to add
+super mapped page into working set. /EVS 10-31-79
+
+/A30
+
+SCNSER: NXTFRC made to save/restore J in case this is the cause of
+the mangled-J crashes.
+/MCB 11-2-79
+
+MON26.CMD: Make C26 a KL processor, was a KI. /AA
+
+/A31
+----
+
+Fixed bug in UUOCON - If got address check in IOWD list, MAPLSE
+which decrements DIO counts would call ADRCLS, but JBTABT was stil
+setup, so it did UMOVE F,F which got contents of user F, used it as
+DDB address, crashed. Fix is to SETZM JBTABT(J) in ADRCLS.
+/EVS 11-9-79
+
+/A32
+----
+
+MON37.KI,MON37.KL
+CONF37.KI,CONF37.KL
+Make command files for 37 to be a KI.  Both are available;
+MON37.CMD and CONF37.MAC are whatever was most recently copied
+from the KI or KL file. /AA
+
+
+
+
+
+
+
+
+
+/C
+
+/B01
+----
+
+COMCON - Changed the REASSIGN calli to perform a deassign if the 
+destination job number = 0.  This is for CHKPNT.  /WRS 15-NOV-79
+
+PICON, FILIO, KLSYM, IOCSS:
+FIXED CACHE BUG THAT INVOLVED KL10 CACHE VALIDATES.
+BUG WAS THAT A CACHE SWEEP COULD BE LEFT RUNNING AFTER DISMISSING
+BACK TO USER - INTERRUPT COULD COME IN FOR CACHE SWEEP DONE RIGHT AFTER
+CACHE VALIDATE CODE PICKED UP SERIAL NUMBER AND BEFORE VALIDATE
+WAS STARTED, CODE WOULD BELIEVE THE VALIDATE WAS COMPLETE, BUT
+THE VALIDATE WAS STILL RUNNING. IF THE VALIDATE THAT CAUSED THE 
+INTERRUPT WAS RUNNING DURING USER MODE EXECUTION, THE CODE THAT DID 
+THE SECOND VALIDATE COULD START I/O BEFORE MEMORY WAS COMPLETELY 
+UPDATED. FIXED BUG BY DOING FOR VALIDATE WHAT WAS ALREADY DONE FOR 
+UNLOAD -TURN OFF PI SYSTEM, START THE VALIDATE, AND CLEAR CACHE 
+SWEEP DONE, AND RETURN SWEEP SERIAL NUMBER IN T1. THUS, CAN NEVER
+LEAVE CACHE SWEEP RUNNING WHEN USER IS. /EVS 11-19-79
+
+DDT: EXEC DDT NOW HAS ^Y COMMAND FILES. FIRST
+VERSION OF FRMDDT IN THIS SOURCE. /EVS 11-19-79
+
+/B02
+---
+
+COMMON: fixed erroneous comment about SHRFPG symbol and moved
+some text which had gotten orphaned on page 2 back to page 3 where
+it belongs. (Probably a SMERGE effect). /AA
+
+COMMON: Inserted new channel routine macro UNASS on p. 53. Macro
+is called to generate code for unassigned channels that turns off
+the channel and logs the occurence of the faulty interrupt by
+setting a bit in the flag word BADINT in crash code.  New symbols
+UNASS'CH are initially set to 1 and cleared to 0 by macros MULASG,
+ASGSAV, and ASGINT as particular channels are assigned.  UNASS'CH are
+then used to help determine which channel macros to invoke.
+CTYSIM: MOVE T1,CH6+1 changed to MOVE T1,[JEN @CH6] on p. 9 to 
+support above. /TLC 11-28-79
+
+Changed erroneous comment in FRMSER about not being able to halt
+a frame, read PC, and start it at the PC in order to continue it.
+Actually, if the frame was in IO wait in an INIT UUO, it is
+not restartable. Therefore, OPEN should be used instead.
+(This is because PC points to data in the INIT. Could be fixed by
+adjusting the PC inside INIT) /EVS 11-28-79
+
+SCNSER: Fixed XOFF bug introduced by tabs break code. L2LNXO moved
+to LDRNXO but GOXOFF: MOVSI LDRNXO instead of MOVEI LDRNXO and
+BYTPD pointed to left instead of right of LDBDCH. /TLC 11-28-79.
+
+CLUBS: fixed bad code in KCBKER which called GETLMA then
+sosge uptldc before existence check. Now call REDLMA and
+no SOSGE.  P3/P4 carry slot info around in CLUBS; but as far
+as I can see its only use is to test LMPMXW in order
+to set first-class membership properly. /AA 11-28-79
+
+SCNSER: GOBPF+5 MOVSI to MOVEI (more of 11/28 fix). /TLC 11-29-79
+
+SIMKL: Made simulator work on a KI by adding code to simulate
+the DADD instruction. Took out message SETABK UUO FAILED.
+/EVS 11-29-79
+
+SCNSER: GOSBL made to not send bell if either (1) port is in
+image state or (2) host-no-xon is set for it.
+TTYKIL made to re-route the spare-LDB queue around the job
+being TTYKILled if the job is detached -- this should
+solve the recent crashes -- and to STOPCD if the job is
+attached and on the spare queue. The STOPCDs at HNGWT2 and NXTFRC
+which had been patched out have been put back in (since
+null DDBs should no longer be found in the queue, since
+TTYKDB should have taken them out). TTYNFR made to error-return
+if the "new" frame already has a command port DDB (this is what
+TTYATI, COMCON's analogue to TTYNFR, already does).
+Per AAA, AUXSTA states given names, and state tables commented.
+Also, CREAUX error-code names changed to agree with those in
+the YAMM.
+/MCB 11-30-79
+
+/B03
+----
+
+LPTSER: Reassigned LPT??? LH(S) bits again. All other modules
+had their bits moved to make room for device independent bit
+IOHNG, but somehow change never made it to LPTSER. This caused
+hung device problem whenever LPT tried to run. /EVS 12-6-79
+
+PICON,COMMON,DR11C,DZKON,CTYSIM: KS change. Now a second "SH"
+command at the 2020 console will act the same way a deposit in 30 acts
+on the KL/KI's and will crash the system./ELB 12-6-79
+
+/B04
+----
+
+SCNSER aux circuit timeout back to 150 sec (incorrect edit in /B02
+made it 15 sec).
+/MCB 12-7-79
+
+SCNSER AUXCAL fn '67, .AXOPC, output pointer with count. Like
+.AXOPT but (1) stops at specified count INSTEAD OF when a null
+is reached, and (2) always updates the count and pointer,
+not just when it can't complete the output. The count is in
+the rh of the word at the effective address; the byte pointer
+is at the effective address+1.
+/MCB 12-7-79
+
+
+
+/B05
+-----
+
+SCHED1	MAKE OLDJOB CELL REALLY WORK RIGHT. CODE MOVED HERE FROM
+	CLOCK1. /AA 12-10-79
+
+CONF90 increase SHRFPG to 1300., define OPNFPF to 10.
+	/AA 12-12-79
+
+/B06
+----
+
+SCNSER Fixed misassembling masks. /MCB 12-13-79
+
+/B07
+----
+
+SCNSER Typos in spare LDB cleanup code. /MCB 12-14-79
+
+/B08
+----
+
+Changed SAA and SVA to be fast rights in preparation for gate jumping
+code. /EVS 12-14-79
+
+COMMON: CRSCNT MOVED TO END OF CNFTBL. IFCPU(KS)< MAKE FORM-
+SIZE AND LINES PER PAGE INTO PARAMETERS TAKEN FROM CONF##.MAC
+/ELB 12-14-79
+
+FRMSER: New FRMOPs .FOCAR,.FOCER,.FOVCH,.FOJMP, which are
+read child to parent rights, read child to parent effective rights,
+validate child's handle, and gate jump. /EVS 12-14-79.
+
+/B09
+----
+
+COMMON:
+CORE1:
+ONCE:
+MAPIO:
+PCBIO: CHANGE DATA STRUCTURE ACCESSED THRU %CTSTS,%CTADR SO
+THAT FIELDS ARE 6 BITS WIDE; NEW JBTPCB REPLACES JBPADR &
+JBPSTS.  FOR ANY GIVEN JOB, JBTPCB(J) HOLDS ALL STATUS & ADR
+BYTES FOR THE JOB.  HEAVY PCBIO EDIT, MINOR MODS TO OTHER
+MODULES LISTED.  ALSO CHANGED PAGIN/PAGOUT/PAGIMD TO
+STORE REAL PCB ADDR IN PGYLMA, AND FINPCB TO PICK IT UP FROM
+THERE. PGYLOG FIELD NOW NOT USED. /AA 12-18-79
+
+/B10
+----
+
+UUOCON:
+SETE##: NEW MODULE SETE## CONTAINS SETE PASSWORD AND
+LICENSE TABLES ONLY. FOR TYMSHARE HOSTS, SETETY.MAC IS
+STANDARD. FOR TYMCARE, SETETC.MAC; TRW: SETETW.MAC;
+OTHERS WILL BE ADDED AS NEEDED. 
+
+MON##.CMD MODIFIED TO LOAD NEW MODULE FOLLOWING COMMOD.
+GUY BLOOD'S SETE PASSWORD ASSIGNED 0 LICENSE. /AA 12-18-79
+
+/B11
+----
+
+SCNSER: Fixed CREAUX to use 0 as the "originating" port
+when the command port of the job building the circuit is
+in fact the spare LDB (the spare LDB has an unacceptable
+port number).
+/MCB 12-19-79
+
+/B12
+----
+
+SCNSER: DDBLDB(U) => DDBLDB(F) /MCB 12-19-79
+
+
+/B13
+----
+
+SETETY: NEW PASSWORD FOR ME /AAA 12-28-79
+
+COMMON: FIX TAKDWN JSR LODBTS BUG INTRUDUCED LONG AGO BY ME
+	/AAA 12-28-79
+/B14
+----
+
+COMMON: PUT IN IFNDEF'S FOR LPTLPP AND LPTFS FOR THE KS LINE PRINTER VFU
+	DEFINTION./ELB 12-31-79
+
+COMCON: FIX BAD COMMENT FOR JOBKL /AA 1/2/80
+	FIX NEWTER: "PORT CAPACITY EXCEEDED" MSG TO CHECK F/0
+	AND STOPCD IF F/NON-ZERO (MEANS TTYTAB(J) HAS A DDB BUT
+	JBTSTS(J) HAS JNA OFF--SOMETHING SCREWED UP). /AA 1-3-80
+
+SCNSER:	ADD COMMENTS TO ROUTINE TTYATI /AA 1-3-80
+
+
+
+
+
+
+
+
+/D
+
+/C01
+----
+
+PCBIO: FIX TYPO IN MAPXCH..LEFT IN @-BITS IN INSTRUCTIONS
+REFERENCING %CTADR,%CTSTS. /AAA 1-7-80
+
+UUOCON: FIX NAMES OF CALLI'S (UNUSED 1ST ARGUMENT TO
+'X' MACRO, PAGE 7) TO STANDARD NAMES RECOGNIZED BY MACRO.
+FROM NOW ON, THIS LIST OF NAMES WILL BE THE FINAL AUTHORITY
+ON UUO NAMES.  WHEN YOU INVENT A NEW UUO, THE FIRST ARG
+TO "X" SHOULD BE THE AUTHORIZED PUBLIC NAME OF THE UUO;
+THE SECOND ARG CAN BE ANY CONVENIENT LABEL WHERE THE UUO CODE
+BEGINS; THIS INTERNAL MONITOR SYMBOL MAY OR MAY NOT
+BE THE SAME AS THE EXTERNAL PUBLIC NAME. /AA 1-8-80
+
+LPTSER: (IN THE KS10 SECTION) FIXED THE OFFLINE-ONLINE & POWERDOWN-UP
+PROBLEMS.  STILL MAY LOSE A COUPLE LINES OF DATA IN THE OFFLINE-ONLINE
+CASE BUT NOW IT WON'T HANG THINGS UP FOREVER. /GL 1-11-80
+
+COMCON: FIX JOBKL TO SET UP F (VIA A CALL ON TTYFND) WHEN IT
+DOESN'T CALL JOB1. THIS MAKES TTYKIL WORK. /MB 1-18-80
+
+SEGCON: Changed error in comments for LOGOFF uuo.  /WRS 1-18-80
+
+/C02
+----
+
+COMCON: RESCINDED NEWTER CHECK ON F=0; F<>0 HAPPENS WHEN
+LOGIN CMD IS PROCESSED 2ND TIME. /AA 1-22-80
+
+CONF25: DEFINE 2ND STRING DISK BPB WITH 8 DRIVES /AAA 1-24-80
+
+/C03
+----
+
+COMMON: Fixed MXPROT which had been inserted in the middle of GETTAB
+table 15 (GTODP).  Also various cosmetic changes to same page.
+
+FRMSER: Fixed typo in comment -- said error codes were returned
+in T3 when they are returned in P3. /MB 1-29-80
+
+SCNSER: Fixed off-by-one error in symbol MAXTMC. Also made SCNSER
+accept TMC subcodes up to TMCSLP greater than MAXTMC so that
+TYMNET can get ahead of us (this "solves" some crashes).
+/MB 1-30-80
+
+/C04
+----
+
+SCNSER: Fixed typo in CREAUX timeout, 15 sec should have been
+150 sec. Also made KSs use port 1 instead of port 0 for CREAUXes
+from detached jobs, and merged in Lee's change to let KS's
+use any host #.
+/MB 1-31-80
+
+/C05
+----
+
+SCNSER: Fixed SETTBK typo (actually, rewrote the whole thing so's
+it can be read.
+/MB 2-7-80
+
+SCNSER: Made ACTMC (which sets terminal characteristics) fake the
+effect of the node's reflecting the terminal type. This is, of
+course, temporary. /MB 2-8-80
+
+/C06
+----
+
+FRMSER: changed read halt status block operation to only require
+.ARRUN access rights.  /WRS 2-11-80
+
+S: changed the access right .ARDET to X rather than W access required
+to allow EXEC to simulate TTY trees until they are here.  /WRS 2-11-80
+
+SCNSER: Changed HNGUUO to take a frame descriptor rather than just
+a job number. If bit 15 (hang system) or bit 17 (hang port) is
+set, it requires WC license like before; otherwise, the rh of
+the argument is taken to be a frame descriptor and it requires
+hang-frame access to the specified frame. /MCB 2-12-80
+
+FRMSER,SEGCON: Added the following FRMOPs:
+  fn 32 .FOGET setup frame core image from file
+  fn 33 .FORUN setup and start frame from file
+  fn 34 .FOSAV save frame core image on file
+  fn 35 .FOSSA sharably save frame core image on file 
+These features are required for the EXEC.  /WRS 2-12-80
+[these featues don't seem to work in C06]
+
+/C07
+----
+
+SCNSER: .ARHNG is a slow access right! changed FARCHK call to
+FDRUPX. /MB 2-13-80
+
+SCNSER: Made aux circuit timeout values (AUXTMR, AUXTMP)
+variables so they can be patched in cases of slow TYMNETs.
+/MB 2-13-80
+
+SCNSER: Added two counts: NRPCNT is the number of times
+CREAUX has given the "supervisor didn't supply a port"
+error-return, ZRPCNT is the number of times the received port
+was zapped. Thus, the difference between the two counts is
+the number of times the supervisor REALLY failed to supply
+a port. /MB 2-13-80
+
+SEGCON: Fixed some typeo's in FRMOPs added to C06.  /WRS 2-13-80
+
+/C08
+----
+
+SCNSER: New TINASS causes, .IAYEL (9.: yellow ball received),
+and .IAGOB (10.: character gobbler received). Enabling .IAYEL
+prevents the monitor from reflecting the yellow ball. If such
+an unreflected yellow ball has been received, the user may (should)
+use the new .AXSOB (70: send orange ball) AUXCAL function to
+reflect it (.AXSOB does a LEVDEF so the ball will be sent
+immediately). There are two new POLPRT bits,
+LXRYBS (1B7: yellow ball seen) and LXRCGS (1B8: character gobbler seen)
+to go with the new interrupts.
+/MB 2-14-80
+
+/C09
+----
+
+SCNSER: Fixed bug in HNGUUO -- wrong sense for "job, not port" bit.
+/MB 2-14-80
+
+/C10
+----
+
+FRMSER: Save name of new process in JBTNAM on GET/RUN FRMOP's.
+/WRS 2-24-80
+
+SCNSER: New bit, LNLZIN in LDBLIN (the safest word in the LDB), set
+when a real zapper is received from TYMNET, cleared when that
+zapper is responded-to. Three counters added: NZAPIN, the number of
+zappers received, NZAPN2, the number received on a port which
+had already received one but not yet echoed one back, and
+NZAPOT, the number echoed.
+/MCB 2-27-80
+
+/C11
+----
+
+SCNSER: More zapper-anomaly stuff. New counter, NZAPLG, # times
+we've gotten a login on a port with an unechoed zapper. Also,
+for it and the other detected anomaly, NZAPN2 (see above), it
+now calls ZAPBUG, which stores a bunch of data about the LDB into
+locations starting at ZBGBUG (which will contain the address of
+the counter, either NZAPLG or NZAPN2 currently).
+/MCB 3-3-80
+
+/C12
+----
+
+SCNSER: Fixed above stuff related to calling ZAPBUG.  /WRS 3/3/80
+
+/C13
+----
+
+UUOCON: Changed JOBLIC routine to allow job license to be increased
+only if the current process has WC license.  The restriction about
+aux-circuits has been removed.  /WRS 3/5/80
+*****								   *****
+*    Note: if this monitor is released before 4/1/80, it should be     *
+*    patched so that the test for WC license in JOBLIC always skips.   *
+*****								   *****
+
+SCNSER: Fixed a bug where zappers directed at detached aux
+circuits don't get echoed -- this caused us to lose a zapper
+whenever a zapper arrived after a type 7 but before the job
+could wake up, get a DDB, and attach it to the aux port.
+/MCB 3-6-80
+
+MAGSER: Fixed bug in 2020 tape service which caused hung tape
+units never to give back control, since HASCTL was turned off
+in S but never stored back in DEVIOS at TMXHNG. /EVS 3-10-80
+
+MAGSER: Fixed bug in SGTDEV (gets tape control) which never gave
+the skip (unit unavailable) return, therefore never getting
+the DEVICE MTA? OPERATOR ACTION REQESTED message. Instead,
+it was incrementing location on stack above return address,
+having God knows what effect. /EVS 3-10-80 (These bugs
+found and fixed at TRW)
+
+PICON: made APRFAT global for FILDDT's sake.
+
+FILIO: Fixed cache bug which reared its ugly head whenever SWPSTR
+tried to include a disk transfer when the disk address was contiguous
+with the last address but core was not contiguous, forcing a new
+section of channel command list to be written. bug was just failure
+to notice in this condition if the sweep number of the request
+was greater than greatest seen so far, which caused sweep
+not to happen in this case. bug didn't manifest on busy or partly
+busy system because if another job runs it tends to flush out
+the cache. This is definitely the cache bug found in Paris - the
+tests they had to reproduce the failure on a stand alone system
+now succeed. /EVS 3-19-80.
+
+SCNSER: Removed POPJ P, P1 at start of ZAPDFR, since ZAPDFR
+now PJRSTs to SIMRZP instead of redispatching.
+/MCB 3-21-80.
+
+SETETY: Put myself in the SETE table at position 3. /GL 3-25-80
+
+COMMON: Changed the initialization of the LP20 buffer space.  The
+changes are all within an IFCPU(KS).  I'm using more space.  If it
+now takes more than one page LPTSER probably won't work on the 2020.
+See comments near LPVLPT:.  /GL 3-25-80
+Corrected a typo from 3-25-80.  /GL 3-26-80
+
+FRMSER: Bug fixes to .FOGET,RUN,SAV,SSA.  /WRS 3-27-80
+SEGCON: Optomized SG3.  Changed how .FOGET,RUN,SAV call things.  
+/WRS 3-27-80
+
+C13
+---
+
+COMMON: added some new entries to GETTAB tables for CRSHID's sake:
+	NSW(40) = SYSUID; last allocated universal frame id number
+	NSW(41) = THSTIM; UPTIME when SCNSER last ran
+	NSW(42) = MXTIM; all time max of (THSTIM-UPTIME)
+	CNF(36) = XWD SAV30,NUMTAB; addresses for CRSHID
+SCNSER: removed definitions of THSTIM,MXTIM as per above
+/WRS 3-27-80
+
+FRMSER: "patched" FRMOP dispatch table for .FOGET,RUN,SAV,SSA to
+	CPOPJ so as not to provide a potentially buggy service in 
+	version D.  /WRS 3-27-80
+
+
+CONF26:
+CONF29:
+CONF36: XP SPCBN,^D30 in all 3, so we won't need to patch this
+in any more on these systems.  Backup CONF##s not made. /AAA 3-27-80
+
+CONF33: MON33.CMD make 33 a KI again
+CONF39: MON39.CMD make 39 a KL again /AAA 3-27-80
+
+
+P034/E
+------
+
+/D01
+----
+
+CON23.MAC changed JOBN to ^D80, PORTN to ^D96 as per
+	Saltyron and Spinale /AA 4/8/80
+
+COMMON UUOCON SCNSER Initial PTY implementation. New CALLI,
+CREPTY (-141) returns a pair of PTY port #s in the left and
+right halves of the ac. The idea is that you set image mode and
+turn off echo on the one (data mode 24 or 214) and keep it
+for yourself, then attach the other one to the job you're
+controlling. They work more or less like aux circuits: to
+get rid of one you (either end) zap it. Two new symbols,
+RPORTN (# of real ports) and PPORTN (# of PTYs). They add
+up to PORTN. COMMON sets PPORTN to 4 if it is undefined,
+and this is subtracted from PORTN to get RPORTN, so if a
+system's configuration file is unchanged it will wind up
+with 4 fewer real ports than it used to have (and 4 more
+PTYs). /MCB 4-9-80
+
+/D02
+----
+
+SCNSER Dynamic quota-setting for PTYs, dependent on TIHLTN and
+LDBTIC/ECC at the other end. Also, PGSBL code, though now
+(paradoxically) it should never get executed.
+/MCB 4-11-80
+
+CONF37 64 real ports, 64 pseudo ports for system 37. /MCB 4-11-80
+
+SCNSER Fixed yellow and orange ball PTY dispatch routines
+to manage timeout bits and wait for input wait (!),
+respectively. /MCB 4-14-80
+
+/D03
+----
+
+SCNSER Fix at FRCCGB to load F (!). /MCB 4-15-80
+
+SCNSER New AUXCAL function '71, .AXSOX to set/clear/read the
+suppress-output-translation bit for the OTHER SIDE of a PTY.
+Also, fixed LDPDEM to point to the new position of the bit
+(which moved from LDLDEM to LDRDEM). /MCB 4-15-80
+
+/D04
+----
+
+It is now possible to delete files with RIB errors normally.
+The sequence is: LOOKUP (gives error 6), then just rename to 0
+as in normal deletes. Most programs will not be able to delete
+the RIB error files because they don't continue past the lookup error.
+/EVS 4-17-80
+
+Fixed race condition in file deletion code that could potentially
+cause a file that is superceding an existing file to get deleted
+instead of the existing file in the case where someone is
+deleting the existing file. Also, this bug could cause in very rare
+conditions multiple UFD entries. (No interlock was gotten while
+deleting UFD name out of directory, and it looked by name, not by
+retrieval pointer. Fix was to set ATPUPD as an interlock). /EVS
+4-17-80
+
+Fixed bug in CLOSE code that would die if doing CLOSE reset
+on a channel open for update and the file had a RIB error.
+/EVS 4-17-80
+
+Performance improvement: In prior monitors, CLOSE output always
+made the RIB and UFD page dirty by filling in the stuff from
+the ATB (and FNB). Save IO sometimes by doing compare before stuffing
+the data to see if its actually changing. Probably will save
+writing out the RIB again on CLOSE for update mode where nothing
+about the file has changed.
+/EVS 4-17-80
+
+Installed mechanism to cause a new bit in RIBLIC and the corresponding
+field in the UFD, ATPALC in ATBLCW, UFPALC in UFYUF2, RIPALC in RIBLCW,
+to get set before any allocation change is about to occur and to
+get cleared on close input under the proper circumstances. New RIB
+location used called RIBALT which is used to determine when
+a file's RIBs, SATs, and UFDs have all been written out to the disk.
+This bit is looked at by DSKCLN in "fast" mode in the UFD. In "fast"
+mode, only those files with RIPALC are looked at, and the resulting
+pages are cross checked for multiple use and ORed into the SATs.
+Lost pages can easily result, but the theory is that the file
+structure will still be intact. The operator can override the
+monitor's decision as to which mode to run DSKCLN in in case there
+is some file system corruption that results in a "fast" STOPCD
+which doesn't fix the damage. /EVS 4-17-80
+
+An attempt was made to abolish UPTREL. It would be nice if
+a program could mess with .JBREL and cause the CORE UUO
+to do allocations past a holey part of the address space
+that was brought into being by doing MAPs or VCREATes or something.
+But LOADER sets JOBREL to what it thinks it should be after
+one of its CORE UUOs, resulting in a mess, so I had to take
+the part that looks at .JBREL out in the CORE UUO and make it
+look at UPTREL again. However, allocation of buffers looks
+at .JBREL, and so does REMAP, so beware of dumb programs that
+set .JBREL by themselves to something. /EVS 4-17-80.
+
+Part of the "fast" DSKCLN change - STOPCD now has an argument.
+SLO means that the crashing monitor will attempt to tell the
+newly reloaded monitor that slow DSKCLN must run. A blank
+argument means the new monitor will run "fast" DSKCLN.
+An argument of NO means things are so bad that a warning message
+should be printed out and auto reload defeated. This is intended
+to get the operators to make maintainence fix the hardware.
+The criterion for setting a SLO as opposed to fast DSKCLN is
+as follows: STOPCDs that are intended to check non-file system
+related interfaces should all be normal ("fast"). STOPCDs
+that indicate trouble with the file system data base (ATBs, FNBs, STTs,
+etc.) should be slow, since they don't happen that often and
+they indicate possible trouble with the data base on disk.
+STOPCDs that imply that the IO or PCB data bases are bad can be
+fast, since chances are that the disk is still OK. (This may prove
+to be wrong by experience, in which case we will change the STOPCD
+to SLO.) STOPCDs that deal with SAT counts, bits not being on in the
+SAT when they should and vice versa, should be SLO, since it is very
+likely that there are multiply used pages hanging around somewhere.
+When writing a new STOPCD, bear in mind that the availability
+increase we hope for is based on running "fast" DSKCLN in most
+cases, so be thoughtful before deciding that SLO is the proper
+STOPCD. Also remember the effect that the system comes down in 
+fast DSKCLN, and crashes again with a SLO DSKCLN - if it is likely
+that this will happen for a certain STOPCD, then the first one is ok
+to be fast, since chances are a slow STOPCD will result if the
+first decision was wrong.
+
+RIB errors with no IO error on the transfer no longer crash the system
+immediately. This is because the system can crash in the middle of
+a RENAME, and ATPALC isn't set on the old UFD entry for efficiency
+sake. Instead, we will expect to see a RIB error when the system
+comes up again, and the file can be deleted using the new RIB error
+deletion feature. However, if ^D60 rib errors with no IO error
+are seen for two or more RIBs, the system will go down and run
+slow DSKCLN. This number can be changed as we have experience
+with it, and it might be possible to also introduce more than
+one memory cell to remember RIB error retrieval pointers so
+that we can crash after seeing X different errors on Y different
+RIBs. This eventual crash is designed to protect the system
+against flakey disk hardware. /EVS 4-17-80
+
+COMMON,COMMOD,FILUUO,UUOCON,ONCE,ONCDSK: Installed Restart mechanism
+to allow flexible system bring up.  Currently three Restart types
+exist:
+	Type	Mnemonic	Meaning
+	ONCE	ON		manual ONCE
+	BOOTS	BT		manual BOOTS
+	DSKCLN	DC		DSKCLN type: 0=None, 1=Fast, 7=Full
+
+ONCE and BOOTS state can be selected by three entities: user via .REST
+SETUUO, oper with SS4, monitor.  The effective state is determined by:
+  user if defined else SS4 if set else monitor.
+DSKCLN type can be specified by oper in ONCDSK, user prog with .REST,
+monitor in crash code, HOM blocks, default (type Full), in that
+order of priority.
+
+COMMON: CRASH code: Replaced old SAX BOOTS readin code with a
+generalized primitive driver; entry points: SAXRED, SAXWRI.  Added
+routines to setup for (PMDRD, PMDWT) and dispatch to (PMDDSP)
+primitive drivers.  Changed dispatch addr to BOOTS to always be
+startadr+5: new BOOTS entry point that accepts a command string
+addr passed in reg 1.  Added new routine ISBOOT to verify that
+BOOTS has indeed been loaded; BTPREP to do SAX area save and find
+highest possible BOOTS starting addr.  Save SAX area at bootsend+100
+even for systems without SAXs because BOOTS requires this to preserve
+SAX area in crash dumps.
+        Inserted Restart code: Macro RESYM to generate Restart
+symbols, byte pointers, RESTRT validator, user Restart save word.
+Determination of monitor Restart conditions based upon take-down
+type, hardware status, and file system integrity.  Transfer of
+user hang or crash Restart bits to RESTRT word.  Validation of
+RESTRT.  Transfer of pack ID from STR DDB to REPSID.  Writing of  
+DSKCLN type to HOM blocks if required, desired.  Prepartion of
+BOOTS command string, BTSTR.  Routine RECOMP to compute Restart
+condition based upon user, monitor Restart and SS4 setting.
+Location TDERR to be JSRed to if Restart error occurs (e.g.
+inconsistent HOM blocks).  Inserted inter-monitor block to facilitate
+communication between two consecutive monitors:  REPSID=26: pack
+set identifier used to insure that otherwise valid RESTRT will
+be ignored if new STR is mounted between monitor incarnations;
+RESTRT=27: lh/ validator, rh/ user, monitor Restart state.
+New GTODP GETTAB table item 5 (.ODDCT) holds DCN which contains
+DSKCLN type desired for DSKCLN after sys initialized.  During ONCE
+DCN is used to store DSKCLN types supplied by various sources.
+
+Changes in other modules to support Restart:
+
+COMMOD: Added HOMDCT (=30), HOMDCV--HOM block DSKCLN type and
+validator; STRPID, STR pack set id in lh of STRBTS; UNYSCN, byte
+pointer to UDB chan #.
+
+FILUUO: Changed DSKCLR UUO.  Accepts 3 modes specified by ac field
+value: DC.CLR (=0), clear in-core disk info; DC.FPC (=1), set
+STTFPC for all SATs on all units and clear SRPNDS; DC.NDS (=2),
+clear SRPNDS only. DC.NDS is needed to support DSKCLN mode 0 (None)
+since it is DSKCLN that decides it does not have to analyze a
+particular STR.
+
+UUOCON: New SETUUO function 12 (.REST) to read/write crash/hang
+Restart bits and designate whether Restart is to be written to
+disk.  New SETUUO function 11 (.BTSTR) to read/write BOOTS command
+string and ascertain max string length.
+
+ONCE: Copy Restart from RESTRT to DCN, clear RESTRT--done to insure
+that RESTRT is only good for the life of one crash/hang.  Check 
+RESTRT validity, compute once action and act accordingly.
+
+ONCDSK: Macro DCNDEF to define ONCE Restart symbols and pointers
+and select DSKCLN type priorities.  Setting DCN to highest priority
+DSKCLN type to allow GETTABing by DSKCLN.  Oper prompt for DSKCLN
+type if not defined in core or disk and SRPNDS set.  Last two items
+accomplished with SPCDKN.  Routine SPCDKP used to compute highest
+priority DSKCLN type.  Parsing done with SCAN macro.  New command,
+DSKCLN, to allow oper query and selection of DSKCLN type.
+					/TLC 4-29-80
+/D05
+----
+
+SCNSER Fix at FRCCGB to load J (!). /MCB 4-17-80
+
+SCNSER Make PTY send-bell code simulate a black ball to either
+end instead of sending a bell. It shouldn't happen anyway. The
+count TTYLOS is still the # of TYMNET black balls; there is a
+new count, PTYLOS, for the simulated ones (# balls/2).
+/MCB 4-17-80
+
+UUOCON:  corrected name of Calli -136 VPEEK (was NPEEK)
+/AAA 4-17-80
+
+PICON: changed EVICT uuo to require job to be running 
+/WRS 4-17-80
+
+/D06
+----
+
+LPTSER: Added form size control for the LP20 using the MTAPE UUO
+to pass a list of commands to change the DAVFU buffer and reload
+reload the LP20s vertical format unit.  All changes are within
+the IFCPU(KS) section. /GL 4-23-80
+
+File system bug in the new truncate CHANIO. DLTTR0 call to FLUSHA
+assumed that callers were RENAME or ENTER and that DDB pointers
+were already dumped out if they were changed. This is not true
+of the truncate CHANIO, so for safety sake put in call to PTROUT
+at DLTTR0. Symptom of this was file with RIB errors, since after
+truncation the deallocted pointers still left in DDB would be written
+back to RIB at CLOSE time, thus generating free pages and making
+RIBALP and RIBSIZ wrong. If RIB validate CHANIO was performed
+before truncate, nothing went wrong because pointers were dumped out
+then. /EVS 4-24-80
+
+SEGCON: skip over UXCTBU doesn't work, caused SAVE not to save
+enough (supposed to use JOBREL if JOBDDT setup.). /EVS 4-24-80
+
+PICON: fixed EVICT uuo fix.  /WRS 4-25-80
+
+SCNSER: Fixed CREAUX code that decides whether to use the
+command port's port# or port 0 to deal correctly with PTYs
+(i.e., to use port 0). /MCB 4-28-80
+
+COMMON: A crash during DSKCLN (i.e. when SRPNDS=1) will now cause
+monitor DSKCLN type to be set to FULL. /TLC 4-29-80
+
+COMMON: Changed the initialization of the LP20 buffer space again.
+The changes are all within an IFCPU(KS).  /GL 4-30-80
+
+COMMON: Fixed bug causing CRASH once command to hang in crash code.
+/TLC 5-2-80
+
+/D07
+----
+
+COMMON SCNSER: Block i/o for PTYs. (COMMON has new block i/o buffer
+size). /MCB 4-30-80
+
+SCNSER: New AUXCAL function, .AXFRS (function 72), Force Rescan String:
+	MOVE	ac, [port,,.AXFRS]
+	AUXCAL	ac, [
+		count
+		ildb pointer
+	]
+	  error return	;for the normal AUXCAL reasons
+	normal return	;ac/ return code
+where <return code> is one of
+	0  .FROK   no error
+	1  .FRAUX  can't do it on an aux circuit
+	2  .FRBIG  string too long (must be < TIHLTN)
+It clears the input buffer, forces the string in, adjusts the LDB
+so the string won't be echoed, and sets the rescan bit.
+/MCB 5-2-80
+
+/D08
+----
+
+SCNSER:  PTY block output fix /MCB 5-5-80
+
+/D09
+----
+
+SCNSER: PTY block input fix /MCB 5-5-80
+
+ONCDSK:  SWPDEF ROUTINE NOW ASSIGNS DEFAULT SWAP SPACE
+ OF 1 PAGE PER UNIT RATHER THAN ^D700 FOR 3330-TYPE PACKS.
+/AAA 5-5-80
+
+COMMOD: FIX LIMP4S TO EQUAL UNSP4S.  BOTH WERE INDEPENDENTLY
+ SET = ^D13.  LIMP4S IS USED BY ONCDSK TO LIMIT SIZE OF
+ OPERATOR ENTRY WHICH IS STUFFED INTO FIELD UNYP4S WHOSE
+ WIDTH IS UNSP4S. /AA 5-5-80
+
+SCNSER: Block input-message-handler fixes at FREBUF and BLKIHR.
+/MCB 5-7-80
+
+SEGCON: MAGTAPE GET/RUN FIXES; ELIMINATE REQUIREMENT
+ THAT OPERATOR SPECIFY CORE ARG TO THE GET/RUN.  USE
+ JOBHCR (VESTIGIAL JOBCOR) IF HE GIVES NO CORE ARG. /AA 5-9-80
+
+/D10
+----
+
+SCNSER: .AXFRS now causes the i/o-would-block interrupt
+rather than blocking, if the interrupt is enabled and there
+is no bufferlet space for the string. An output-space-available
+interrupt will be signalled at the next second there is ANY
+bufferlet space. /MCB 5-9-80
+
+SCNSER: New POLPRT bit, LXRIOS ('400), set when an output-
+space-available interrupt has been signalled for the port.
+/MCB 5-9-80
+
+/D11
+----
+SEGCON: FIX SAVJOB TO INITIALIZE VESTIGIAL JOBDAT EVEN
+IN THOSE CASES WHERE PG 400 CANNOT BE MADE
+RDW. TRY TO MAKE IT COW (.SHR AND .HGH CASE) AND DO
+THE INIT'ZN. /AA 5-12-80
+
+/D12
+----
+
+FRMSER: turned on FRMGET FRMRUN FRMSAV FRMSSA, but only for doing them
+to another frame...until I get time to fix the rest of the code, user
+will get "frame already running" error if does them on himself.  
+/WRS 5-13-80
+
+/D13
+----
+
+SCNSER: Another attempt at a working .AXFRS. New error codes
+(see SCNSER at FRSRSC:). /MCB 5-14-80
+
+/D14
+----
+
+SCNSER: Made .AXFRS nonskip-return on errors. You can tell its
+error-returns from the AUXCAL dispatch's because .AXFRS has no
+error code 72 (and presumably never will).
+/MCB 5-14-80
+
+/D15
+----
+
+SCNSER: Experimental fix to backpressure code. Message types
+TRO CGB BIN TRI and BPN can now be sent even if the port is
+being backpressured (the point was to allow BPN to be sent;
+the rest were promoted because their ordering seemed possibly
+significant). New pseudo-message type BOP (block output in progress)
+for PTYs. /MCB 5-16-80
+
+/D16
+----
+
+SCNSER: bugfix at PGBOP. /MCB 6-16-80
+
+/D17
+----
+
+MAPIO, FILRIB: KFTRN was comparing new file size with current
+to see if new size was still within last page without the atomic
+file lock, and then getting the lock if same and storing ATBSIZ,
+but this left window where file size could change while waiting
+for the lock, and ATBSIZ could wind up wrong. Fix: create new
+entry point in DLTTRC for truncate for the case where the
+file lock has already been obtained and call there with the lock.
+/EVS 5-20-80
+
+COMCON: Fixed DETACH <device> command to print all of its
+error messages instead of just some and to print a prompt
+when it succeeds (U was getting clobbered). /MCB 5-21-80
+
+SCNSER: Made CHKROM check JBTAWQ and go to ABTUUO if an interrupt
+is pending, when it's thinking about going into output wait. This
+appears to solve APL's problem of CLRBFOs being less effective
+on AUXCAL characters than on TTCALL characters. /MCB 5-21-80
+
+
+
+P034/F
+------
+
+/E01
+----
+
+SCNSER: Fix terminate-block-output call to cancel a pending block
+output request to TYMNET (otherwise it gets sent anyway, AFTER
+the terminate request is sent). /MCB 5-21-80
+
+SCNSER: Small fix in RETACH (remember to call SETLMD when attaching
+in user mode). /MCB 5-21-80
+
+UUOCON: Change .BTSTR, .RESTRT to require WC instead of OP 
+for changes. /TLC 5-21-80
+
+CONF90.MAC:  as per B. Mathieu request, reduced freecore
+ alloc's to allow them to load monitor in 1500K or less:
+ OPNFPF xp ^D9  (was 10)  causes one less DDB (32 wds) per
+ frame, or more than 4 pages less freecore (FCWDS)
+ M.SBSZ xp 1000 (was 4000) saves 3 pages SNOOP buffer
+ (if they need to use it, just reduces resolution) /AA 6/2/80
+
+SCNSER: New AUXCAL function '73, .AXTCN, read/set Terminal
+Characteristics by Number. Call is:
+	MOVE	ac, [port#,,.AXTCN]
+	MOVE	arg, [tc#,,new value (-1 to just read)]
+	AUXCAL	ac, arg
+	  error return	;normal reasons, or tc# or new value bad
+	normal return	;rh(arg) := old tc value
+The terminal characteristics are defined on page 2 of SCNSER.
+Note that they do NOT contain program-related characteristics
+(such as tabs-as-breaks), only real terminal characteristics.
+/MCB 6-2-80
+
+SCNSER: New AUXCAL function '74, .AXTCP, read changed Terminal
+Characteristics from (the other side of) a PTY. The call is
+	MOVE	ac, [your side's port#,,.AXTCP]
+	AUXCAL	ac, arg
+	  error return	;normal reasons, or not a PTY
+	normal return	;arc := tc#,,new value or -1 if
+			;nothing has changed since the last call
+New TINASS cause, .IATCC (^D10), and matching POLPRT bit,
+LXRTCC ('200): the event happens whenever the other side of
+the PTY sets its terminal characteristics.
+/MCB 6-2-80
+
+SCNSER: New AUXCAL function '75, .AXNZP, read/set No-ZaP bit,
+useful if you change your mind about an aux circuit, and useful
+for slaved command ports, where there is no parameter to control
+the setting of the bit.
+/MCB 6-2-80
+
+SCNSER: Fast block i/o for PTYs: if PGBOT finds the other end
+in block input wait with its block input buffer empty and
+its request size the same as the output block's size, it
+will (almost) simply swap the two block buffers.
+/MCB 6-2-80
+
+/E02
+----
+
+SCNSER: Bugfix at ACPTPC (failed to note that TYMTC1 skips).
+/MCB 6-3-80
+
+NOTE!!! Setting the backspace-for-delete bit (via .AXBS) is
+now equivalent to the TTY BACKSPACE command: it clears the
+erase-for-delete bit. Clearing the backspace(erase)-for-delete
+bit is now equivalent to the TTY NO BACKSPACE(ERASE) command:
+it clears both backspace and erase. If your INIT file
+formerly set first the erase then the backspace bit
+(in order to get the TTY ERASE effect), it will now give
+you the effect of TTY BACKSPACE instead.
+/MCB 6-3-80
+
+/E03
+----
+
+SCNSER: Bugfix: LDPTBK ("trap breaks") is now LDPTLN ("trap line").
+LDPTBK is now a byte pointer to the tabs-as-breaks bit.
+Also a bugfix in ACERAC.
+/MCB 6-4-80
+
+/E04
+----
+
+SCNSER: GETLCH, per request from JP, now returns the backpressure
+bit (as bit 0 -- it is one of the LDBDCH bits that's returned
+in its "correct" position).
+/MCB 6-11-80
+
+
+/E05
+----
+
+CONF38:
+CONF39:  increase JOBN to ^D80, up from 60 as per SRA request. 
+	increase PORTN to ^D96, up from 64, in keeping with
+	similar values for C36,C29.
+	/AA 6-12-80.
+
+RMXKON:	Changed the JRST CPOPJ1 at RMXRCL+4 to POPJ P,0 to fix a bug
+that EVS found today. /GL 6-12-80
+
+COMMON: Changed RM/RP code to read BOOTS into a general purpose
+primitive driver. Interfaced driver to soft crashing mechanism.
+Added code to read KS BOOTS via prim. driver.  Made minor changes
+to SAX prim. driver and BOOTS load caller to save a little space.
+/TLC 6-13-80
+
+/E06
+----
+
+SCNSER: Made incoming aux circuits (terminal id code = 0) always
+apply backpressure, rather than only in image mode. This helps
+programs that are talking to aux circuits, but may hurt
+"transparent" programs like AUXIO, since, once backpressured,
+you can't ^C a program that you've discovered is not
+listening to you.
+/MCB 6-16-80
+
+/E07
+----
+
+(KS2020): P034/E07 Represents no changes to source in (m33).  I'm making
+this note as a record of the initial test monitor for 37 of the KMC
+source.  The source of the merged modules (~P034/e03) is in (ks2020).
+/GL 6-16-80
+
+/E08
+----
+
+SCNSER: SMERGEd KS version (/E) with non-KS version (/E06).
+/MCB 6-16-80
+
+COMMON: FIXED SOME KS RM/RP PRIMITIVE DRIVER BUGS. MOVED CODE TO
+DEFAULT TO READ/WRITE ONE PAGE OUT OF SAX DRIVER SO IT COULD BE
+SHARED BY RM/RP DRIVER. /TLC 6-17-80
+
+KSSYM:,KISYM:,KLSYM: Added definitions for IFKMC & IFNKMC. KI & KL are
+			defined to have no KMC.  KS is defined with KMC.
+NOKMC:,KMCDDT:,KMCSER: New modules for KMC support.  NOKMC is used to
+			build a KS monitor with out a KMC.
+CIOPR:,DR11C:,DZKON:,KSIORG:,MAGSER: These are KS specific modules which
+have been changed to support the KMC.
+DDT:	DDT has a new command to look at KMC style 8 bit bytes.  It is
+like the normal display byte command except you type $88o instead of
+$8o.  The 88 is interpreted to mean KMC style bytes.
+These changes should have no effect on KI or KL monitors except forcing
+a recompile because of the new dates on KISYM & KLSYM.  /GL 6-17-80
+
+COMCON:	Merged in KMC support.
+CTYSIM:	Merged in KMC support.
+ONCE:	Merged in KMC support.
+PICON:	Merged in KMC support.
+COMMON:	Merged in KMC support.
+SCNSER:	Merged in KMC support.
+	See KMC.DOC for details of KMC "support". /GL 6-17-80
+
+/E09
+----
+
+Changed USETST+20 STOPCD to STOPCD SLO so DSKCLN can fixup the
+probable cause: RIBSIZ too big.  /WRS 6-18-80
+
+Added debuging aid (temporary) to REQUE in CLOCK1: job table JBTWRS
+which contains the 6 most recent job state codes (right to left).
+This should be instructive when looking at JBTPGO(j)=j crashes.
+Also to SCHED1 and COMMON.
+/WRS 6-20-80
+
+/E10
+----
+
+Made improvements and fixes to above mentioned debugging aid.  New
+table (temporary) MAPQUE (really should be MAPSTS) is used as
+follows:  MAPQUE[i*20+j] = <number of times state changed from i
+to j>.  If this value is found negative, such a state transition
+will SYSCRS.  R(WRS)MAPQUE to get a picture of this array.
+/WRS 6-23-80
+
+/E11
+----
+
+Changed all STOPCDs in FILRIB to SLO that weren't already.
+/EVS 6-23-80
+
+SIMIO:
+	fix INBLT bug which appears when error on superio read
+	is followed by a super write..page still mapped RDO.
+	Solution is to remove the page after any super
+	read error.  /AA 6-25-80
+SIMIO:
+COMMON:
+	Eliminate UPTPCN array (SIMIO debugging aid..
+	has never turned up any bugs. /AA 6-25-80
+
+FILUUO: Fixed bug that let close code be executed for a file
+already closed when file that was marked for deletion was deleted
+and then closed.
+	Changed RENAME to turn off file dumped bit when user does
+not pass .RBLIC and have WF or JL. (Discovered that some of ATMUFP
+may behave strangely--get cleared if user's arg block has .RBLIC
+entry and user does not have WF or JL but be preserved if block
+does not contain .RBLIC.)  /TLC 6-25-80
+
+/E12
+----
+
+CLOCK1: minor insignifigant change to fix MAPQUE statistics at REQUE.
+/WRS 6-25-80
+
+MAPIO: Fixed bug in KFTRN that allowed caller to set RIBSIZ past
+the HPW.  Changed DLTTCI error code to FALRBE (was FALPHP)
+when caller is KFTRN. /TLC 6-27-80
+
+
+CLUBS:  Rearranged CMC database to make a CMC 4 words
+ long instead of 5...saves freecore on any system which
+ uses lots of clubs.  Two bytes were substituted for
+ two halfwords, and the CID became a 27-bit byte instead
+ of a whole word.  Only 1 of the bytes is accessed inside
+ any loop.  It is doubtful that the club ID ever gets
+ up to 2^27-1, much less 2^35-1, so this limitation is
+ probably never going to be of consequence. /AA 6-29-80
+
+/E13
+-----
+
+MAPIO: Forgot to take out two instructions in DELXCH that make
+it ignore bounds checking for file size if called by KFTRN.
+Did it now. /TLC 7-1-80
+
+SCNSER: PTY block-output fix (ILDB => UUILDB at PGBOP1:) for KS with
+KMC. /GL 7-1-80
+
+CIOPR: Added DRPROT:: to be called from KMCSER to protect us from
+unexpected DR interrupts (flakey hwd). /GL 7-1-80
+KMCSER: Added call to DRPROT. /GL 7-1-80
+
+MAPIO: Moved around code in KFTRN to make it a little more efficient.
+Didn't cost any space. /TLC 7-1-80
+
+COMMON, ERRCON: changed around some crash related things in order to
+provide hooks for CRSHID.  New global locations useful for looking at
+crashes:
+    STOPPC/ the real PC of the *first* STOPCD we hit
+	- this differes from SYSCRS in four ways: 1) if we crash twice,
+	STOPPC is the address of the first one, SYSCRS is that of last.
+	2) if we hit a STOPCD (SLO) or JSR SLOCRS, STOPPC has the adr
+	of the STOPCD while SYSCRS has SLOCRS+n.  3) SYSCRS has the 
+	would be return address, while STOPPC is the actual STOPCD adr.
+	4) if there is a 147 restart, STOPPC/ 147.
+    STOPCN/ the number of times we tried to crash (if this is non-zero,
+	the crash code HALTs)
+Fixed a bug where on nested crashes, AC17 gets trashed.
+/WRS 7-1-80
+
+SCNSER: Added code in CREAUX to try building circuits to the next DR 
+when we get a 'host not available' message on multi DR KS Systems.
+/GL 7-1-80
+
+/E14
+-----
+
+SEGCON: Attempted to fix GET for a file over 1/2 adr space big.  I found
+many problems, but apearently not all.  Still doesn't work for real big
+ones, but some work that didn't before.  At READLS and RDLSUU.
+/WRS 7-2-80
+
+CONF38: Define OPNFPF to ^D12, system running out of freecore
+ alot, this will allocate more for DDBs. /AA 7-3-80
+
+LPTSER: Changed the LP20 character translation to a simpler scheme, and
+changed a STOPCD for the "impossible" condition of seeing the done bit
+along with error bits, to a JRST LPTERR since this condition does happen
+and is recoverable.
+/GL 7-4-80
+
+CIOPR: Added code to set the node manually down when preparing the DR
+to down line loaded and to clear the manual down flag when the node
+has been successfullly loaded
+/ELB 7-7-80
+
+/E15
+----
+CLUBS: Changed state that jobs get put into from RNQ to ISQ when they get a club
+inerlock after having waited. Really, ISQ is just defined as TSQ inside
+SCHED1, but didn't want to see TSQ appear in CLUBS. Orignially
+this was supposed to go into source for P90 so job with inerlock
+wasn't so low a priority as to keep other jobs from running
+and slow response up for many subsystem users, but didn't get
+into the sources. Could possibly allow two or more jobs which
+fight for the interlock to take over the system. /EVS 7-9-80
+
+SCHED1: Put ILWQ into ISCAN and OSCAN. Note that there are many
+potential interlocks involved among all jobs in IL wait, but
+I have done the standard QBAK1 and QFOR1 anyway. This is under the
+assumption that although the scheduler doesn't scan the club data base
+to decide who the next owner of the interlock will be, the first
+one on the IL queue is probably the first one for one of the interlocks.
+Perhaps we should arrange not to give the interlock to someone who
+is swapped out - but this might infringe on fairness. This change
+made after seeing a problem on Tymcare 2020 system with a bunch
+of MAGNUM jobs locked in core in IL state and two other jobs
+fighting for memory while running. /EVS 7-9-80
+
+CIOPR: Defined calls to KMCSMN & KMCCMN as macros defined outside
+the IFCPU (KS) and defined as JFCLs when IFNKMC.  IFKMC & IFNKMC
+seem to confuse MACRO when used inside an IFCPU(KS).  All this
+was nessisary because KMCSMN & KMCCMN don't exist in NON-KMC systems
+like TRW. /GL 7-10-80
+
+/E16
+----
+
+PICON:  IFCPU(KS) SNOOP CODE WAS WRONG. FIXED SNSTI AND SNOOPI
+	 TO SPLICE SNOOPI CODE INTO APRINT ROUTINE PROPERLY
+	USING JRST;  NO JSR'S. /AA 7-11-80
+
+SCNSER: Added code to CREAUX to call WRTACR to write a CREAUX
+stream record.  Normally this is only done when CREAUX succeeds; 
+however, if AXELOG is JFCLed, a record will be written for non-local
+CREAUX errors.
+
+UUOCON: Added code to LOGINN to call WRTACR to write a LOGINN
+stream record.  WRTACR is called only if user supplies proj. code
+(in arg block words 5-7) else LOGINN works as it did before.
+
+ACTSER: Added routine W22ACR to write CREAUX stream record.
+Contents: standard header plus word containing in left half error
+code with bit 0 set if monitor supplied error and in right half
+aux port number.  Inserted appropriate table entries for TATTLE
+and CREAUX records.
+						/TLC 7-15-80
+/E17
+----
+
+PICON: Fixed APRPR1 to jump back to APRP1R after counting a soft error
+on KS.  /GL 7-15-80
+
+/E18
+----
+
+ACTSER: Write standard header for CREAUX record. /TLC 7-16-80
+
+/E19
+----
+
+SETETY: Added sete password #2 for Sherman Gavette.  /WRS 7-17-80
+
+/E20
+----
+
+SCNSER: Added BBPAGE table to reflect operationns to UBA page table.
+/GL 7-21-80
+
+/E21
+----
+
+SCNSER: Added "IFKMC" code to CREAUX to look at the high 3 bits passed
+in the AC to determine to which node (TYMBASE) to build the circuit.
+If the node is not up at the time the UUO is processed a new CREAUX
+Error code will be returned (^D8 in the left half of the error word).
+This replaces the 'cycle thru the nodes' code of E13.
+/GL 7-22-80
+
+/E22
+----
+
+Removed AAA sete password.  /WRS 7-24-80
+
+SCNSER: Doubled the number of unread input characters allowed before
+throwing chars away for KS with KMC (this is for TYMCARE).
+TIHLTN is still ^D500 without KMC but contains ^D1000 for KMC systems.
+/GL 7-24-80
+
+SEGCON: Save code fixed to break IOWD in half before doing OUTPUT uuo
+if necessary, should fix saving huge files.
+/WRS 7-24-80
+
+/E23
+----
+
+COMMON: made SAV30 global again.  /WRS 7-29-80
+
+COMMON: added 5th line for INITIA (good to keep a spare)  /WRS 7-30-80
+
+SEGCON: fixed get run save uuo's to not fetch username from AC0,1 if
+ppn field is zero.  /WRS 7-30-80
+
+CLOCK1: at STOP1 added call to TYCIOS to clear IO status for ALL ports
+belonging to job.  This should fix the problem of people being
+woken out of some state (ie SW) and put in TS after being halted
+and restarted.  /WRS 7-30-80
+
+SCHED1: added cell MAPQSW which may be patched to
+  POPJ P,	to turn off MAPQUE stuff
+  JFCL		to turn on MAPQUE stuff
+/WRS 7-30-80
+
+/E24
+----
+
+CORE1 - changed number of ticks running between page aging calls
+from 10 to 120 due to excessive overhead in AGEPAG. /EVS 8-3-80
+
+CLOCK1: SCNSER: changed STOP1 fix to go at MSTART and MXSTRT.  This 
+seems to be a much better approach since the UUO doesn't really get
+restarted on a continue, rather it is continued!  /WRS 8-4-80
+
+/E25
+----
+
+ACTSER: Fixed CREAUX stream record writer to correctly indicate
+port number. /TLC 8-4-80
+
+/E26
+----
+
+SCNSER, ACTSER: More of 8-4-80. /TLC 8-6-80
+
+/E27
+----
+
+SCNSER: fixed .AXSYB, .AXSOB, .AXHNG auxcal's to not skip as they are
+documented (and have always been).  /WRS 8-8-80
+
+Added CNFN22, CONF22, MON22 for C22, a system which looks like C36.
+	/TLC 8-15-80
+
+CONF23: Changed JOBN to 108 and PORTN to 127. /TLC 8-15-80
+
+
+
+
+P034/G
+------
+
+/F01
+----
+
+SCNSER: Fixed KS Block I/O bug.  Added some BIO debug code to make it
+easier to see what's going on during BIO or after a crash. /GL 8-20-80
+
+/F02
+----
+
+CORE1: Added call to PAGWAK in BLTULP to wake jobs waiting for
+DIO on a pg to go to zero. /TLC 8-21-80
+
+/F03
+----
+
+FILRIB: Inserted call to RELRIB before doing SETACH in DLTTCI
+routine to insure that RIB is released. /TLC 8-21-80
+
+/F04
+----
+
+CLRPT instructions on 2020 are very slow, because they sweep
+the whole cache. To minimize the number of these done, if a frame's
+own context pages appear in %UPX, they are always write enabled,
+rather than switching between write enable and write protect.
+If another frame's context pages appear in %UPX, they are handled
+as they were previous to this change, i.e. when not in use for writing,
+they are write protected. /EVS 8-26-80
+
+/F05
+----
+
+SCNSER: Added test in GOZAP to STOPCD if port being zapped is > RPORTN.
+/GL 9-4-80
+
+/F06
+----
+
+Conditioned out code for MAPSTS.  /WRS 9-5-80
+
+/F07
+----
+
+Increased value of OPNFPF for C22 to 10 files per frame.
+Increase value of SHRFPG to ^D1300, taken from P90's value.
+/EVS 9-15-80
+
+Increased default value of OPNFPF (open files per frame) to ^D10.
+Increased OPNFPF for C38 to ^D16.
+/WRS 9-16-80
+
+/F08
+----
+
+Fixed crash code in COMMON to write down more accurate STOPPC 
+information.  /WRS 9-19-80
+
+SCHED1: Fixed possible problem with wait states getting overwritten
+at SWOSJ0 - if interrupt changed JBTSTS, MOVEM T1,JBTSTS(J) would
+write old value back, causing various problems possibly having
+symptoms like the JBTPGO loops. /EVS 9-22-80
+
+CORE1: Add log(base 2) freecore request failure table plus
+GETLNK("NOCORE") GETTAB to get at it. /Darren 22-SEP-80
+
+UUOCON: new UUO RLSLDB - release spare LDB, to be used by LOGOUT
+to release the SLDB so that alt log progs don't tie things up and
+to speed killing jobs in general.	/WRS 9-25-80
+
+ACTSER: FILUUO: UUOCON: changed places who got date and time together
+to do check for midnight to avoid off by 24 hour errors.  Anyone who
+wants date AND time should PUSHJ P,GETGMT to avoid more problems.
+/WRS 9-25-80
+
+UUOCON: new DAYTIM uuo returns secs past 1/1/64 - good for computing
+elapsed time, etc.  Also added 1 word format to the DATUUO uuo.
+/WRS 9-25-80
+
+/F09
+----
+
+UUOCON: fixed DAYTIM uuo - wasn't accounting for DATCOM skip return.
+/WRS 9-25-80
+
+SCNSER: Fixed CREAUX to always use 1 for it's dummy port number in
+KMC monitors.  Using the CMD PORT number as it sometimes did caused
+the wrong 11BASE to get the AUX request sometimes. /GL 9-26-80
+
+FILIO: Add routine to type "Unit XXXX Hung" to operator whenever
+a hung disk condition is detected. /Darren 26-SEP-80
+
+SCNSER: Fixed SNDBIO to send BLKNEG to first "UP" DR in a KMC MONITOR
+instead of the first node (up or not).  Won't affect KI or KL.
+/GL 9-26-80
+
+/F10
+----
+
+SCNSER: New .AXOSF (Output String to Fit) to output a string and
+non-skip return with updated arguments when no more characters
+fit.  Skip returns if string all output.   /WRS 9-26-80
+
+/F11
+----
+
+UUOCON: minor change of strategy in DAYTIM, etc.  /WRS 9-26-80
+
+FILFND: MAPIO: folded in Ernie's CB free core interlock problem 
+patch.  /WRS 9-29-80
+
+/F12
+----
+
+MAPIO: (nothing is ever right the first time) fixed my misteak in above
+fix for free core interlock problem.   /WRS 9-29-80
+
+/F13
+----
+
+FILIO: Be picky - set alarm & pretty up hung msg - Darren 9/30/80
+
+
+
+P034/H
+------
+
+/G01
+----
+Smerged F3 stuff into /G monitor. New modules APXKON, F3TSER.
+/EVS 11-11-80
+
+/G02
+----
+UUOCON: added U.FIXR and U.FLTR to simulate FIXR and FLTR instructions
+on the F3 until the microcode is fixed.  /WRS 11-13-80
+
+/G03
+----
+UUOCON: Make U.FIXR work for negative numbers in the same wrong way
+the hardware does.
+SCNSER: Make HANG UUO check against RPORTN rather than PORTN to
+prevent zappers being sent for PTYs. /Darren 13-Nov-80
+
+/G04
+----
+COMMON: Allow CONFIG to define RPORTN and PPORTN and have PORTN 
+computed. /WRS 11-25-80
+
+/G05
+----
+
+Fix comment at head of SETALP UUO to reflect reality. /TLC 12-2-80
+
+Added Darren SETE password #4.
+Removed Lee Blton's SETE password #4.
+/WRS 12/03/80
+
+/G06
+----
+
+CTYSIM: Fix ^ZL loginn sequence to accept lower case L.  Pull CTYDO out
+and declare it external.
+ONCE:	Add CONSOLE command to those accessible when sense switch 4 is
+set.  It sets CTYDO etc. to come up manually in CTYSIM standalone mode.
+COMMON:	Added NXTLPT:: EXP LPRUN for LPTSER to test to find out how many
+LP20s the monitor was configured for.  0==> non-existant device.
+LPTSER:	Fixed bug by adding PXCT 4,[] arround HLRZ T3,(M) in VFU code.
+ONCDSK:	Took out the RMA# IS OFF-LINE/NO RESPONSE messages IFKMC<>.
+CIOPR:	Fix for NODLOD. Don't set DRDO just because KMCDO was off when
+deselecting a DR.  This causes crashes when running from the CONSOLE.
+/GL 12-6-80
+
+
+/G07
+----
+Fixed bug which had symptom of causing crashes at MAPF34+4, USEOUT+3.
+RIBs would get areas where there were 0 pointers when there should
+have been a real pointers. Problem was that code changed DEVRIB
+prior to reading in prime rib for file, and DDB pointers were
+still valid and from the spare rib. If another job was sharing file
+and went looking thru DDBs for pointers, it would find these pointers
+and copy them, DEVFLO, and DEVRIB from the DDB which was in process
+of reading in the prime rib. Therefore, the copied pointers were
+from another rib other than the DEVRIB one. If these poiners were
+written back out, prime rib could get smashed with pointers
+that didn't belong there. This bug could also cause GIVPGK crashes,
+since it could cause same pointer to appear in two places in the file.
+Fix is to invalidate DDB pointers before changing DEVRIB. In NXTPT0
+this meant just turning on sign bit, since need the value of DEVFLO
+throughout the routine.
+Rib validate CHANIO, USETST, NXTPT0 changed to fix this condition.
+/EVS 12-8-80
+
+Changed ENTER and RENAME so that it requires WA to set or clear
+ATPPID and ATPALC. Previously to this any program could clear
+either of those bits, and JL and WF programs could set them. /EVS
+12-8-80
+
+Fixed bug where 1)Lookup file 2) Do some input on it so ATB stays
+around after close 3) Do truncating RENAME 4)Lookup file sometime
+later while FNB still around 5) Close file caused
+crash due to FNBALT being set to -1. This was because truncating
+RENAME code didn't set FNBALT and RIBALT after finishing
+the allocation change. (Slight oversight in doing fast DSKCLN
+file system change.) /EVS 12-8-80
+
+Fixed potential bug where doing CLBMEM UUO could screw up
+by not giving all club members if job doing CLBMEM UUO
+got rescheduled in middle of returning club IDs (could happen
+if page fault for user's page) and someone left the club.
+Was not likely to happen, but it could if the club membership
+card got reused before CLBMEM job started up again.
+Fix is to check to see if any jobs on system have left a club
+and start UUO over if they have. /EVS 12-8-80
+
+Attempted to solve IL club interlock problem for general case:
+Don't give club interlock to job with MRQ set unless RNDBIT
+is set in the system uptime (RNDBIT is an attempt to be fair
+every once in a while on a "random" basis) unless that job is
+the only one who needs the interlock.
+/EVS 12-8-80
+
+SCNSER: Fixed cache bug in block output that was discovered
+by inspection (cache bug was suspected, but turned out to be
+some other problem). BIOCSH set too early, before copying
+data from user space to the block I/O buffer. Move this
+to after data is BLTed to the block I/O buffer. /EVS 12-9-80
+
+/G08
+----
+
+S: Added macro MAPONC to define symbols for once module sizes;
+ONSZCK to check if enough pages have been allocated to a particular
+once module and print an error message if not.  Changed once module
+page allocations to 3 for REFSTR, 6 for ONCDSK, and 3 for ONCE (the
+minimum sizes). Commented out the RES page allocation.  It is not
+yet clear if this is valid.
+REFSTR,ONCDSK,ONCE: Call ONCSZCK to check if module is larger than
+number of pages allocated to it.  /TLC 12-11-80
+
+FILUUO: put in Ernie's patch to fix GIVPGK crashes (WRTOK2+n) 
+/WRS 12-20-80
+
+/G09
+----
+
+CORE1: Introduced new routine REPOK to check to see if a page selected
+by the uws or mws alg is bumpable (i.e. doesn't have DIO up or isn't
+locked).  Call REPOK from uws and mws code when a page is selected
+to be replaced.  Previously these checks were only done in the mws
+alg so it was possible, for example, for the destination of a BLTPAG
+to be the page selected for replacement if uws full and a fault occured
+on the source page.  /TLC 12-29-80
+
+/G10
+----
+
+COMMON: new gettab stuff for sake of patching, 
+CONFIG+37/ -len,,patch		; this is for static patch area
+CONFIG+40/ -len,,ttyini		; this is for dynamic patch area
+and a few for the sake of CRSHID, and real users,
+CONFIG+41/ cputype index...of (KI,KL,KS,F3)
+
+/G11
+----
+
+CLUBS: Fixed random function in RELINL to work correctly - must
+use mask to test bits, not just test bit. /EVS 1-5-80
+
+FILUUO: In CLRACH, turn off ATPALC if FNBALT is greater than
+PCDTIM, since in this case RIBALT must have been from a previous
+incarnation of the monitor. Installed this so that merely
+looking up a file and closing it will clear ATPALC if it got turned
+on in a previous monitor most of the time. This is so the program
+CLRALT will still be able to clear ATPALC after an all files restore,
+in which all ATPALC bits are on, even if the system crashes.
+/EVS 1-5-80
+
+SCNSER: Fixed GOTBUF routine to not mangle PDL in the case where
+there is contention for block I/O input buffers. /Darren 08-Jan-81
+
+CLUBS: FIXED BUG IN CLBINI UUO THAT CAUSED IT TO RETURN THE ID
+OF THE CURRENT JOB RATHER THAN THAT OF THE JOB HOLDING THE
+LOCK.  /TODD 1-13-81
+
+
+/G12
+----
+
+S: CHANGED PAGE ALLOCATION FOR ONCE FROM 3 TO 4 FOR KS. /GL 1-14-81
+
+
+/G13
+----
+
+COMMON:	Put back two lines lost in the F3 smerge that point to the
+2020s tape DDBs. /GL 1-19-81
+
+/G14
+----
+
+LPTSER:	UUO to reload LP20 VFU now error returns if LP is off-line.
+/GL 1-21-81
+
+/G15
+----
+COMMON, UUOCON, FRMSER: Add FRMOP to read & write frame attributes;
+Add UPTLOG (copy of LDBLOG) to UPT & make it frame attribute # 1.
+/Darren 22-Jan-81
+
+/G16
+----
+
+SCHED1: Moved TI queue higher in swap out priority, just below
+SL. Reason for this is alleged problem reported in Paris
+concerning ML waiters getting swapped out when TI jobs were still
+hanging around in core, causing PCB resource turnaround to go
+way down. Observed this on C29 (Coees). Moved TI to be swapped out
+before any sharable resource wait, since sharable resource
+waits should normally not be long. This may not be exactly right
+because of other low priority reasons for going into ML wait
+(Aux circuit wait, block I/O stuff, etc). /EVS 1-22-81
+
+SETETY:	Moved Todd to 4 and Darren to 6.  Added Macros and PRINTX to
+allow definition of industry SETEs in CONF##.MAC (2020s only).
+/GL 1-23-81
+
+SETETY:	Added Carl at 7.  /CARL 1-23-81
+
+CONF37: CONF54: CONF56: increased ports to 127, bpa to 16, fta to 4,
+except 56 which ports still at 60 due to wierd base.  Note some of these
+things were already as specified.  Per request from Tom Marconi.
+/WRS 1-29-81
+
+F3TSER: Fixed bug that caused random location to get clobbered
+in MAGINI (GETST smashes T2, but MAGINI uses T2 as AOBJN pointer.)
+/EVS 1-28-81
+
+F3TSER: Added support to make IBM mode (zero byte adjust only)
+work. /EVS 1-28-81
+
+/G17
+----
+
+SCNSER:	Added IRPMSG to hold 1st word of input message currently being
+processed.
+COMMON:	Corrected address of KMC control register 0 to 760540 from
+760541 in the crash code to reset the KMC's RUN bit. /GL 1-30-81
+
+/G18
+----
+
+ONCDSK: Added R,RE,REF,REFR,REFRE commands to say type REFRESH.
+Changed ARE YOU SURE to Say that it deletes all files to do a refresh
+and if they really wanted to do it. /CAB 2-2-81
+
+COMFAK: Fixed defaulting of PORTN,RPORTN,PPORTN so it says what it has
+and doesn't bother with the rest.  /WRS 2-2-1981 AD
+
+FRMSER: Re-do read/write frame attribute FRMOPS to match spec.
+	FRMOPs to read, write or write/read (exch) frame
+	attributes.  Format of call is:
+		MOVE	AC,[FN,,FD]
+		FRMOP	AC,ADDR
+		  <ERROR>
+		<SUCCESS>
+	<ADDR>:	Attribute #,,<Argument address>
+			OR
+	<ADDR>:	     0,,<Argument block address>
+		-COUNT,,<Attribute list address>
+	-----------------------------------------
+	On error return, FRMOP error is in AC right, positive
+	index into argument/attribute table is in AC left.
+	-----------------------------------------
+	FRMOP function codes are:
+		36 - Read frame attribute
+		37 - Write frame attribute
+		40 - Exchange (read, then write) frame attr.
+/Darren 02-Feb-81
+
+/G19
+----
+
+SEGCON: fixed LOGOFF uuo to not allow starting LOGOUT at ***ANY***
+address.  /WRS 03-Feb-81
+
+COMMON: fixed SBDIAG instructions (@ERASTS) to select controller
+#4 (DMA20), and perhaps retrieve useful information. /Darren 06-Feb-81
+
+SCNSER: Added ^H==RUBOUT Feature. AUXCAL '77, TTY BSD "BackSpaceDelete".
+Also saving start of last 3 IRING messages in IRPMSG, IRPMS2, and
+IRPMS3 to catch KMC bug.  Also to blink 2020 state light. /GL 07-Feb-81
+
+SEGCON: added "<" and ">" in addition to "(" and ")" in usernames so
+more software will work.  /Carl 07-Feb-81 THIS HAS BEEN BACKED OUT!
+
+/G20
+----
+PICON: (KL only) Do SBDIAG and RDERA on every APR interrupt.
+	***NOTE*** This information is stored in PICON:SAVERA and
+	PICON:SAVSB0+1. Disable Sbus errors when disabling MemBusParity
+	errors. Type out APR status, ERA, and SBUS function 0 on
+	every parity error before sweeping core. /Darren 10-Feb-81
+
+COMMON: Put JBTWRS (job state trace) table back in.
+CLOCK1: Restore calls to WRSMAP routine.
+SCHED1: Restore WRSMAP routine and calls to it, minus 2K MAPQUE
+	table; check in PAGWAK for job going into SS from state
+	other than SW. /Darren 10-Feb-81
+
+/G21
+----
+
+ACTSER, UUOCON, SCNSER: Added more general support for variable length
+accounting records.  Creaux record changed to be old creaux record with
+login string appended.  /TODD 2-11-81
+
+
+/G22
+----
+
+FRMSER: Fixed confusion in FRJSLO (gate jumps) about what was in P4 -
+SLIGOS was getting "bad frame number" error returns because
+frame handle address was in P4 instead of frame handle index number.
+Cure is to refetch index out of user AC. /EVS 2-13-81
+
+ACTSER: Zero bit 35 in last word of login string.  Read from beginning,
+not end, of login string.  /TODD 2-17-81
+
+/G23
+----
+
+
+ACTSER, UUOCON: ACT UGETF now sets sign bit if record is variable length.
+New symbol VARMIN is minimum legal length of var len stream records.  
+	/TODD 2-18-81
+
+/G24
+----
+
+SCNSER:	Added TTY RBS command so we can turn "remote backspace echo" on
+(and off!). Also added somemore KMC debug code.  /GLYONS 2-19-81
+
+/G25
+----
+
+ACTSER: Added missing entry for CHKPNT uptime rec to SPCACT table.
+/TODD 2-24-81
+
+/G26
+----
+
+SEGCON: "<>" hack backed up to previous source file without.  /CARL 2-26-81
+
+/G27
+----
+
+
+ACTSER, UUOCON:  Added minimum legal lenth field to info maintained for
+stream accounting records.  This field is zero if record is fixed length.
+	  /TODD 2-26-81
+
+/G28
+----
+
+SCNSER:	Doubled high character limit for 2020s form ^D1000 to ^D2000 tcompliment the KMC bug fix.  /GLYONS 2-27-81
+
+LPTSER: Changed title of KS version so that KS and KI,KL versions can be on
+the same master cref.  /TODD 3-17-81
+
+CLOCK1: Put code to ignore ucycles for Foos in IFCPU conditional.  
+Also put F3 Printx msg in IF2 cond to avoid having it appear in .LST
+before module title which screws up FSHSPL.  /TODD 3-17-81
+
+P034/J
+------
+
+/H01
+----
+
+FILUUO: changed code in close (CLSN2B) to not force access date
+to be updated when ATPALC is being cleared unless the file was
+actually accessed (ie. INPB or MAPB are on).  Note: ATPALC will
+still not get cleared if CLSACC is set in the close (inhibit
+access date).
+/WRS 3-17-81
+
+CLOCK1: Put setz t1, to zero microcycles for F3 in IFCPU(<F3>).  /Todd 3-17-81
+
+SWAMP: Call SLOCLE when the first bad sat is discovered so that a slow
+DSKCLN is rquested by monitor.  /Todd 3-17-81
+
+Changed Configuration files for various systems to reflect the following:
+System V70 is the new name for the old V25
+D37 has 128 ports 110 frames 16 bpa 4 fta on a KL processor
+D54 has  79 ports 100 frames 16 bpa 4 fta on a KL processor
+D56 has 100 ports  80 frames 16 bpa 4 fta on a KI processor
+D65 has 100 ports  80 frames 16 bpa 4 fta on a KI processor
+D25 has 100 ports  80 frames 16 bpa 4 fta on a KI processor
+Changed MONxx.CMD, CNFNxx.MAC and CONFxx.mac  and added sysdat of 17-Mar-81
+for the new systems.  /CARL 3-17-81
+
+FRMSER - Page 21, Fixed comment "MOVE ac,[fd,,fn]" to "MOVE ac,[fn,,fd]"
+as per documentation in the YAMM and the code reflects.  Typeo!  /CARL 3-17-81
+
+/H02
+----
+
+FILUUO: New entry point SLOCLE can be called to force full DSKCLN.  Same
+as SLOCLN except is called with a pushj and returns to next instruction.
+FILIO: Changed SLOCLN call to SLOCLE.
+SWAMP: Added code to cause a full DSKCLN if an output error on a SAT
+is detected.  /Todd 3-19-81
+
+/H03
+----
+
+FRMSER: FRMOP function to read effective rights always returned zero
+for created process handles. This is because check for PNO of created
+process handle was made against JBTSPN instead of JBTPNO. Fixed this.
+(Found by SLIGOS).
+/SOCCI 3-20-81
+
+/H04
+----
+
+F3TSER: Fixed bug in error detection code at end of reads ad OD.RF.
+Added new error bit TIMOUT that Poole told me about.
+/SOCCI 3-20-81
+
+/H05
+----
+
+UUOCON: fixed bug in DATUUO for converting from 1 word format.
+/WRS 3-20-81
+
+/H06
+----
+
+UUOCON: fixed the rest of the DATUUO bug.   /WRS 3-20-81
+
+UUOCON: made SIMINS flag a suppressed symbol.  /WRS 3-20-81
+
+P034/K
+------
+
+/J01
+----
+
+F3TSER: ADDED IN CODE TO DO READ INTERRUPT TYPE TAPE TRANSFERS.
+ALSO ADDED READ AND WRITE ERROR RECOVERY CODE, SINCE NEW MICROCODE
+DOESN'T DO WRITE ERROR RECOVERY ANY MORE. THIS VERSION OF F3TSER MUST
+RUN WITH THE NEW TAPE MICROCODE - WILL NOT RUN WITH OLD TAPEMICROCODE.
+NEW TAPE MICROCODE WILL SUPPORT EITHER OLD OR NEW VERSION OF F3TSER.
+/EVS 4-21-81
+
+/J02
+----
+
+FILUUO: Dskclr mode 0 now sets Adjmws to -1.  /Todd 5-1-81
+
+F3TSER: Discovered that new OVRRUN bit (overrun of tape channel)
+comes up when reading record longer than channel word count.
+Changed OD.WF status checking code to allow this to happen.
+(not good that can't detect combination overrun and length error).
+/EVS 5-1-81
+
+/J03
+----
+
+COMCON: Added UNDEL command to call the file undeleter program. /Todd 5-5-81
+
+
+/J04
+----
+F3TSER: Discovered that EOF bit is really EOT indicator on writes.
+Indicates reading a file mark on reads. The real EOT bit in tape status
+only says tape is at exactly EOT. Changed forward and back record,
+write gap and write tape mark, read and write interrupt routines to
+reflect this. Now, IOTEND will only come on on writes, IODEND will
+only come on on reads. Program is responsible for detecting two EOF marks
+as logical EOT on reads. I don't know if this is compatible with our other
+tape services. /EVS 5-8-81.
+
+/J05
+----
+F3TSER: Make OD.SKR and OD.BSR always clear IOLEND and IOTEND after J04
+change took that behavior away. Set TUBSB in tape UDB on hung
+tape transfers. /EVS 5-8-81.
+
+/J06
+----
+
+COMCON: Modify WSCTL CALLI to not change JBTSTS<JWSADJ> on read-type
+functions.
+/DARREN 5-13-81
+
+SCNSER: Fix for the "Messy Screen" KS Block I/O bug. at GOBIO2+13,14,15.  /GLYONS 5-13-81
+
+COMMON: Fix for the primitive RM/RP drivers to wait a few ms before
+testing to see if write done so as not to saturate the unibus. 
+/Todd 5-14-81
+
+APXKON,FILIO,COMMOD: New disk driver. Has hung disk code fixed,
+multiple transfer capability (doesn't call FILINT for each page transferred
+if a group of contiguous pages is started, instead calls when all pages
+in group are finished). This saves some CPU time, and also
+was done to attempt to be able to reduce the time between end of last page
+transfer and beginning of next page in less than 60 microseconds.
+However, disk I/O rate didn't speed up at all, indicating that must
+start the next transfer in less than 60 microseconds. I timed PI cycles
+at 42 us, and time it took from after PI cycle to time next transfer
+was sucessfully started at 42us, for total of 84 us. /EVS 5-19-81
+
+/J07
+----
+
+Removed Ginzburg's SETE password.  /WRS 5-21-81
+
+APXKON:  Fixed bug in disk driver which forgot to turn off disk
+conroller "idle" flag after a transfer - caused lost tape interrupts,
+since tape would interrupt and disk control idle flag would still be
+on.  (Foonly interrupts aren't like interrupts on the other machines,
+where as long as the interrupt flag is on the interrupt will keep
+coming in.  You only get one interrupt when the flag is set by the
+microcode (microcode keeps a count for every channel of how many
+flags were set for each channel)). /EVS 5-26-81
+
+/J08
+----
+
+Added the XMAGNUM command to COMCON to run (SYS)XMAGNU.  /WRS 5-26-81
+
+/J09
+----
+
+COMMON:	Slight change to KS primitive disk code that TODD fixed to handle
+4 or more disk drives on the KS.  wouldn't complile because macro doesn't
+like "100." as a notation for 100 decimal.  Changed 100. and 2000. to 
+^D100 and ^D2000 (near symbol RMP1:).  /GLYONS 6-8-81
+
+
+/J10
+----
+
+SCNSER: Moved command request and forced command bits from the left
+  half of LDBDDB to the left   half of TTYTAB.
+- Remove the spare LDB and all of its associated merde.
+- Overhaul the ZAP/HANG code to reflect the aforementioned.
+- Remove TTYCOM, COMWCM, SETKIL, and TTFCOM.
+- Modify LOGIN/TTYINI/INISET to assign frame number before forcing
+  command.
+- Don't allow aux circuits to log into a shut system.
+COMCON: Moved forced command/command request bits into left half of
+  TTYTAB.
+- Overhaul command dispatcher, assuming job number is always assigned.
+- Add the following routines:
+  * CHKKIL - called at end of command dispatch to see if job needs
+    to be killed (copied/modified from SCNSER:SETKIL).
+  * COMKJB - kill a detached job/frame.
+  * COMWCM - Set command request &/or forced command for a frame
+    (copied/modified from SCNSER:COMWCM).
+  * COMCMR - Command finish-up (copied/modified from SCNSER:TTYCMR)
+  * TTFCOM table - copied from SCNSER.
+  * FRMCOM - Find a frame with command pending (copied/modified
+    from SCNSER:TTYCOM).
+FRMSER: Extract FRMASN (Assign Frame Number) routine from CREFRM
+  and make it callable from LOGIN in SCNSER.
+UUOCON: Changed RLSLDB UUO to CPOPJ.
+COMMON: Define COMFLG bit table in jobs rather than ports.
+- Change LINNTB to BITNTB and redefine for general use.
+- Remove now-extraneous PVZHNG byte pointer.
+- Delete now-unused LINTBE definition.
+CLOCK1: Move TIMSET and TIMRST argument words here from SCNSER and
+  add CLKJOB byte pointer for writing job # into them.
+PICON: Use CLKJOB instead of hard-coded byte pointer.
+
+/DARREN 6-9-81
+
+/J11
+----
+
+COMMON - Remove symbol SETWCH, no longer used.
+CLOCK1 - Clear JBTWCH in CLRJBT, prevents job from getting previous job's
+  WATCH setting.
+/DARREN 6-10-81
+
+/J12
+----
+
+PICON - Make APR console messages more precise and more verbose for maint.
+  engineers who turn out to need almost as much hand-holding as operators.
+/DARREN 6-10-81
+
+/J13
+----
+
+ONCE:	Added a warning message when bringing up a 2020 manually to the
+effect that "the KMC will not be loaded so the Host will NEVER synch. with
+the Base".  Also made the CONSOLE command available to non 2020 monitors.
+/GLYONS 6-19-81
+
+/J14
+----
+
+UUOCON:	Define CIOPR for F3 as well as KS.
+CIOPR:	A quick debug version for the F3.  Doesn't work yet but won't hurt
+anything.    /GLYONS 6-20-81
+
+/J15
+----
+
+COMCON - Fix problem where jobs would get hung with command pending
+	because COMCNT was zero, caused by cases where job would exit
+	from command dispatcher with different job number than that
+	with which they entered (e.g., ATTACH).
+/DARREN 6-22-81
+
+/J16
+----
+
+SCNSER: Input and skip auxcals will no longer go into wait when there are
+echo chars, but no input chars and no chars can be converted (because of
+backpressure, etc.).  Also, if a job becomes detached after an inc and
+skip auxcal has begun execution, the auxcal will error return.  /TODD 6-29-81
+
+/J17
+----
+
+SCNSER: Execute echo logic even for a backpressured port.  Don't allow
+output if it is attempted.  This allows echo characters to be converted
+into input characters when a port is backpressured and echoing is turned
+off (as for an aux circuit).  /TODD 7-7-81
+
+/J18
+----
+
+SCNSER: Fix code to allow echo when backpressure on.  /TODD 7-7-81
+
+/J19
+----
+
+SCNSER: Allow backpressure off to be output on a backpressured port.
+Change definition of BPOKBN to fix off-by-one error.  /TODD 7-7-81
+
+/J20
+----
+
+SCNSER: Clear SKPFLG befor ABTUUO is called in TWAITC.  /TODD 7-8-81
+
+/J21
+----
+
+SCNSER: Process only data present in input ring at start of processing
+before servicing the output ring.  This should solve the problem of character
+lossage that results from reading too much data for one port before 
+backpressure can be applied.   /TODD 7-14-81
+
+/J22
+----
+
+removed E.Socci SETE password
+removed G.Lyons SETE password
+changed W.Soley SETE password
+/WRS 7-17-81
+
+IOCSS - Add BFICLN fix which forces "previous context user" before trying to
+clear user's input buffers, thus preventing STKAC crashes.
+/DARREN 7-23-81
+
+SCHED1 - Change AOS BADSS to STOPCD at PAGWK1+2 in yet another further
+attempt to track down JBTPGO loop bug.
+/DARREN 7-23-81
+
+UUOCON - Always allow (SYS) programs to write to the CTY.
+Logoff programs that SETNAM to EUTHAN (giggle).
+/DARREN 7-24-81
+
+FILRIB - Add hack at RIBEX2 to insure correct value for RIBSZS before trying
+to expand RIB (to be removed when problem has been diagnosed more thoroughly).
+Also count number of times each of the RIB expansion routines is called.
+/DARREN 7-24-81
+
+/J23
+----
+
+
+SCNSER: Added routine BPTEST to test to see whether few enough chars remain
+to be read such that backpressure can be turned off on a port.  Call this
+routine where necessary.  Previously backpressure was turned off too often
+causing the number of unread input chars for a port to progressively increase
+until chars were thrown away.  Changed TIHLTN to be max number of chars in
+input ring for one port so that backpressure on has a chance to be put in the
+output ring.  Fixed code at TTYSTR to consider both def and remote echo
+break chars.  /Todd 7-24-81
+
+
+
+/J24
+----
+
+SCNSER: FIXES TO ABOVE.   /TODD 7-24-81
+
+/J25
+----
+
+RMXKON: inserted fix for RMX ECC bug that was patched on 654 and
+seems to work.  Simply forces page transfer when doing retries
+since block transfers seem to not work very well.
+/WRS 7-27-81
+
+SCNSER: Extended Trmtab to include entries for new terminal types supported
+by Tymnet.  /TODD 7-28-81
+
+COMMON - Redefine SCNN (# TTY DDBs) to JOBN+PORTN+1 from 
+MAX(JOBN,PORTN)+AXDDBS.  Incidentally, symbol AXDDBS is now
+extraneous (i.e., never referenced anywhere).
+/DARREN 7-29-81
+
+/J26
+----
+
+Added 2 new entries to CONFIG table in COMMON:
+    PATMAP= CONFIG+42/ bit n is on if patch n is installed
+    MONID= CONFIG+43/ sixbit serial number of monitor in form M#####
+	changed for every monitor to prevent confusion when config
+	changes or such.
+/WRS 8-13-81
+
+/J27
+----
+
+RMXKON - Correct RMXADD to give error return only when actually attempting
+to read past end of cylinder (previously gave error even when reading up to
+the end).
+/DARREN 8-14-81
+
+RMXKON - Check for zero offset before backing up to previous block, thus
+preventing exec page faults in ECC correction routine DATERR. (Ernie's fix)
+/DARREN 8-16-81
+
+COMCON: Remove check for non-zero job number upon return from command
+dispatch, since we no longer depend on it for updating the tables.  This
+fix will prevent further crashes at COMDIS+5. /Darren
+/DARREN 8-17-81
+
+IOCSS: Added Chanio function 46, .chnxt.  If Chan is -1 the number of
+the next free chan is returned and the chanio skip-returns.  If Chan is
+a legal chan #, the chanio skip-returns if the chan is not in use.
+Otherwise, the chanio non-skip-returns.   /TODD 8-17-81
+
+/J28
+----
+
+CIOPR: fixed bug which left interrupts enabled after a nodeload.
+/ernstd   /TODD 8-24-81
+
+/J29
+----
+
+IOCSS: Set the "previous context user" bit to user before doing a buffered
+mode close and restore to previous previous context user when done.  This
+is necessary so that the monitor can do a close on chan 0.  /TODD 8-24-81
+
+/J30
+----
+
+COMCON - Put COMDIS+5 crash check back in - will fix individual commands
+instead.  /DARREN 8-25-81
+
+FILUUO - Fix DSKCOM command to always restore J before exit.
+/DARREN 8-25-81
+
+/J31
+----
+
+CORE1: fixed code in DOXCT routine which handles UXCT## macros to not
+reference 1(P) so that interrupts might be less devestating.  /WRS 8-27-81
+
+/J32
+----
+
+F3TSER: Changed OLDMOP to use exec virtual locations starting at %ONC instead
+of page 500.  This is necessary because page 500 (and above) may be used for
+other things in a big enough monitor.  Hopefully the use of %onc to %onc + ?
+is not in conflict with anything else.  There is currently no good way to
+know precisely which exec virtual pages are "claimed".   /TODD 8-31-81
+
+/J33
+----
+
+F3TSER: Minor change to above F3TSER change.  /TODD 9-1-81
+
+COMMON: FILUUO: changed crash code to pickup PCs from STOPCD(SLO) and 
+STOPCD(NO) in a more structured and accurate manner.  Also STOPPC will now
+only get decremented when it contains a real PC so DEP in 30 will not
+show up as STOPPC/-1 anymore.   /WRS 9-1-81
+
+/J34
+----
+
+FILRIB: Remove RIBEX2 hack, add better checks in RIBCK1 for consistency
+between RIBSZS and RIBSNM, and fix DLTSRB to adjust RIBSZS when RIBSNM has
+been decremented to zero.
+/DARREN 9-2-81
+
+/J35
+----
+
+COMMON: Do a TNCONO for F3s when sys comes down to tell the node that
+the sys is down.  This allows the node to resync with the host much faster
+because the node waits ~1 min. after it first learns that the host is down
+before resynching.  /TODD 9-2-81
+
+Changed terminal characteristic fields for IR and OR (input baud rate and
+output baud rate) to 4 bits from 3 bits to be compatable with Tymnets new
+codes.  Change is actually per DWS.  /WRS 9-2-81
+
+CORE1: Make sure VALID and REMOVE set up J before calling PAGWAT.  This
+should prevent any more JBTPGO loops, but it's hard to say since the
+problem couldn't be duplicated reliably.  /DARREN 9-9-81
+
+/J36
+----
+
+COMCON: Fix TIME command to restore job # after an attempt to get time
+on another job without appropriate lic.  Caused COMDIS+5 crash when TIM 0
+tried.   /TODD 9-10-81
+
+COMMON: Created the crash data block (CRSDB) where all important crash
+data is storred in an orderly defined manner so programs like CRSHID can
+get at them without symbols or other kludge.  /WRS 9-11-81
+
+/J37
+----
+
+UUOCON: Set Jbtslc to Max Jbtslc and new process lic in Setlic.  This allows
+process lic to be reduced and then restored when proc lic was increased
+by a previous Setlic past Jbtslc.  This can occur if frame lic increased
+by a sete or another frame.  Problem occurs when frame lic is reduced after
+proc lic is increased.   /TODD 9-16-81
+
+S.MAC: Added access right 32 for license passing.  /TODD 9-17-81
+
+/J38
+----
+
+
+COMMON: Add new UPT location UPTMTM (micro-cycle timer) plus new interrupt
+type (15) and byte pointer JBYMCY into trap word UPTTP1 (which is now full).
+
+CLOCK1: Add routine CHKMTM to update micro-cycle timer (called from TIMADJ).
+
+UUOCON: Add CALLI -144 SETMCY (Set Micro-cycle Timer).
+
+PICON: Add routine SETMCY (called from UUOCON) to set micro-cycle timer.
+/DARREN 9-21-81
+
+/J39
+----
+
+ONCE: Changed the SCAN and SCNTB macros to allow for a more versatle
+set of commands and options, and to ignore the UNI and STR fields needed
+in the corresponding macros in ONCDSK.  Modified the CMDSCN routine from
+the ONCDSK module to work with the new macros and made it local to ONCE.
+
+ONCE: Added the FULL command for bringing up the monitor to run a FULL
+      DSKCLN for this time only.  Nothing is written in the HOM pages.
+/CARL 10-9-81
+
+/J40
+----
+
+Scnser: Tihltn <- 2 * size input ring (in chars) + Tiwrnn.  This should
+reduce character losage for bases that don't know when to quit sending
+us characters on one port.   /TODD 10-13-81
+
+Note: Lospdp does NOT necessarily mean that we're too slow in requesting
+backpressure.  Consider:  host receives .ge. tiwrnn chars so requests
+and sends bp on, next time thru i ring lopbpn gets set again because
+# chars is .gt. tiwrnn and .lt. tihltn, enough chars are present in
+ring so that further reading of chars causes tihltn to be exceeded.  This
+may (should) be changed.   /TODD 10-13-81
+
+/J41
+----
+
+ONCE: Again modified SCAN and SCNTB macros.  Moved CMDSCN routine back
+      into ONCDSK.  Changed FULL command to be highest priority even to
+      override DSKCLN xxxxxx set by FILES.
+
+      Made FILES command harder to enter by asking for verification to
+      enter the ONCDSK dialogue.
+
+ONCDSK: Modified SCAN and SCNTB macros as per ONCE.  Added some better
+      documentation in the HELP messages for the commands.  Added a bit
+      to the SCNTB macros to require verifiation of individual commands.
+
+      Removed earlier edit for REFRESH command and cleaned up some of
+      the associated code.
+/CARL 10-15-81
+
+/J42
+----
+
+S:  Bumped counter OND in MAPONC macro from 6 to 7 because ONCDSK
+    grew some.  /CARL 10-15-81
+
+/J43
+----
+
+Scnser: Make Auxcal function 10 behave like Skpinc for command port.
+Previously would assume chars were present if a command was waiting
+to be rescaned.   /TODD 10-16-81
+
+Scnser: Don't wake job if backpressured port that is not in input wait
+attempts to echo a character.  /TODD 10-21-81
+
+SCNSER: Added AUXCAL 100 (.AXTTP) to set sixbit terminal type.  Added
+ corresponding 'TTY' command (TTY TYPE FOO).  /dws
+/DWS 10-23-81
+
+/J44
+----
+
+ONCE: Fix problem with SCNTB macro under IFKMC < ... > conditional.
+It seems that IFKMC translates to "REPEAT 1," and an extra set of
+angle brackets "REPEAT 1,<< ... >> causes MACRO-10 to break generating
+correct code, but producing assembly error messages.  Changed SCNTB
+macro to omit the duplicate "<>"'s allowing a clean assembly.
+/CARL 10-28-81
+
+UUOCON: Fix typo in setlic mod to update Jbtslc.   /TODD 10-28-81
+
+/J45
+----
+
+Changed SETE password.  /WRS 10-29-81
+
+/J46
+----
+
+
+Scnser: Fix an earlier fix.   /TODD 10-29-81
+
+/J47
+----
+
+Scnser: Change parameter name for tty command to set terminal type to
+"class" from "type" since type was already taken.   /TODD 10-29-81
+
+/J48
+----
+
+Common: Fix bug that caused free core Aobjn pointer to have its length
+set too large if the size of the free core bit table is greater than
+^D144 words.   /TODD 11-3-81
+
+/J49
+----
+
+ONCE: Removed "Entering ONCE ... type HELP for help..." message.
+
+ONCDSK: SHORTened the verification message to ask "Are you SURE you
+      want to do this? " instead of very long message.  /CARL 11-5-81
+
+Core1:  Location Maxcor contains the beginning of free core relative
+address of the highest free core block assigned.  Accessable via
+Getlnk gettab.   /TODD 11-6-81
+
+/J50
+----
+
+F3tser: Fixed Oldmop to work with odd %onc.   /TODD 11-6-81
+
+/J51
+----
+
+ONCE: Accidentally deleted label HLPCMD: while shortening messages.
+      Checked code & renamed label HLPCM1 and all references to HLPCMD.
+      Verification still re-types the HELP text for the command which
+      needs verification.  /CARL 11-6-81
+
+COMMON: changed defaults for PPORTN to JOBN/2
+/WRS 11-10-81
+
+/J52
+----
+
+
+F3tser: Setup Oldmop buffer byte pointer correctly.  /TODD 11-12-81
+
+/J53
+----
+
+F3tser, Magser: Fix buffered mode tape op to work when buffer empty.  Two
+problems were present: (1) SRFX didn't return properly for empty buffer.
+(2) MT resource was not released when buffer was empty.  /TODD 11-13-81
+
+/J54
+----
+
+COMCON: Modified DAYTIM command code to display the time zone immediately
+after the date and time display.  Currently "unknown" time zones have the
+letter designation as copied from the YAMM.  For daylight-savings time,
+the associated codes have a plus-sign "+" after the letter.
+
+COMCON: Moved routine PRTIME out of the daytime command and made it
+callable to return "hh:mm:ss" on the current output device.  Routine
+PRTIM has been changed print 2 digits each for SS.HH although it may
+leave out HH:MM:.... if both are zero.  Will also print 2 digits for
+minutes.  (uses common code from PRTIME).
+
+COMCON: Removed "TVEDIT" command from the list of RPG commands since
+noone uses it (as per WRS).  Added "VUE" command in its place for that
+time when VUE is added to RPG.  (Maybe soon?)
+
+UUOCON: Made routine DSTCHK internal so that the daytime command can
+check to see if the current time/date is between periods of daylight-
+savings, as per the table in uuocon.  /CARL 11-18-81
+
+/J55
+----
+
+COMCON: Changed WATCH-DAY routine to use PRTIME instead of PRTIM.  We
+don't want to see hh:mm:ss.hh for time of day.  However, we are leaving
+out the time zones from this command.  Also, fixed code which printed
+out a clobberred register as the hundredths of seconds.  Now works ok.
+/CARL 11-18-81
+
+/J56
+----
+
+IOCSS: Get UPT and UPX locks in cannonical order (lowest frame number
+first) in Vreplu to avoid deadlock.  /TODD 11-18-81
+
+/J57
+----
+
+Frmser: Install Sligos fix to Chepar.  Previously right of parent
+instead of child was being checked.  /TODD 11-20-81
+
+/J58
+----
+
+Doubled SAT and RIB PCB allocation for 38 on a hunch.   /WRS 11-20-81
+
+/J59
+----
+
+COMCON:  Changed time-zone table to reflect JST and JST+ for Tokyo (I),
+         to print WET for GMT+daylight, EET for CET+daylight, EEDT for
+         EET+daylight (Europe).  /CARL 11-24-81
+
+ERRMSG, UUOCON: Define new error class 3 (ill inst trap) subtype 4 to
+be called when an illegal CALL parameter is given.  Previously a
+non-existent CALL would do a SEEK.  /TODD 11-30-81
+
+/J60
+----
+
+FILIO: Turn on disk PI at end of UUOSK1.  On FOOs this caused sys to hang
+after a SEEK because of a ucode bug: if PI n pending, but off and m pending
+and on where m>n, m will not fire.  On other than FOOs ch7 (or something)
+turns the disk PI back on. /TODD 12-1-81
+
+
+
+CONF??, COMMON, CLOCK1: Delete extraneous conditional assembly switches from
+CONF?? files and from monitor.  The following symbols are now useless:
+	SYS40N, SYS50N - we no longer use DEC disk service
+	DSKN - yes, we have disks on our systems
+	LEVDN, LEVCN - refs to DEC level "C" and "D" disk service
+	PDP10N, KT10AN - we have no PDP-6's
+	DDTN - always included
+	MOVIEN - we don't dump to line printers
+	DISN, PENN, T340N, TVP10N, T30N, DTAN, DTCN, MTAN, MTBN, MTCN -
+		- obsolete DEC peripheral devices
+	TEMPN, TMPN, TMPLN - yes, we have TMPCOR
+	LOKN, CMNN, RTTRPN - misc. obsolete DEC switches
+/DARREN 12-2-81
+
+/J61
+----
+
+COMMON,
+S, PICON, CLOCK1, SCNSER, CLUBS, ERRCON ,SEGCON: Fix probs. with Hiber return
+and interrupt on wake uuo and exit in child identified by Sligos.  A new
+flag, EXCFLG, now exists.  It's function is analogous to WAKFLG.
+JBYFEX, child frame exit channel number, has been replaced with JBYEXC.
+Previously WAKFLG served both function and confusion resulted. For example,
+Hiber on Wake would return on exit in child.  WAKFLG, EXCFLG are now
+set only when TAKTRP isn't called.  This avoids getting two interrupts/
+hiber returns for one cause.  For same reason JBYFEX, JBYWAK are cleared
+in TTSCLR.  WAKFLG, EXCFLG are also cleared in SEGCON (so that a wake/exit
+directed to previous process will not affect the new process) and at
+logout.  Note that the behavior of wake and exit in child are now sufficiently
+different from the past so that programs that were were written to cope 
+with the bugs may not now work.  In fact, some may sleep forever waiting
+for a second interrupt which won't come.   /TODD 12-4-81
+
+
+/J62
+----
+
+COMCON: Changed table entries for time zones to those agreed upon with
+        international.  Zones 60,61 and 62 (european daylight times)
+        have been renamed "WEST","CEST" and "EEST" for Western, Central
+        and Eastern EUROPEAN SUMMER TIME.   /CARL 12-7-81
+
+/J63
+----
+
+SCNSER: Clear LOPBOP (PTY block-output-in-progress) flag in BIOZAP, so that
+receiving a zapper on a PTY port in block I/O mode won't crash at PGBOP+2
+as it used to.  /DARREN 12-8-81
+
+SCNSER: Fix TIHLTN value calculation.  /TODD 12-10-81
+
+SCNSER: Fix bug that caused Inchwl to deadlock a job if job was backpressured
+and less than Tiwkc chars were waiting to be read.  Now Inchwl will return
+any time chars are waiting and port is backpressured.  /TODD 12-10-81
+
+/J64
+----
+
+ONCE: Fix reference to HLP'CMD: to reset T1 and have all other
+references jrst to HLPCM1 which assumes T1 is already setup.
+(Fix to fix for missing label).
+/CARL 12-21-81
+
+/J65
+----
+
+P034/L
+------
+
+/K01
+----
+
+S: Changed the IFCPU and IFNCPU macros to "repeat cpzz" instead of
+   "repeat cpzz," so that IFCPU(x),< ... >  would not generate two
+   commas.  /CARL 12-28-81
+
+PICON,ONCE: Fixed Typoe of "IFCPU (x),< mumble >,end ..." which should
+   have been "IFCPU (x),< mumble > ; end ... "  (Yes, a comma and not
+   a semicolon).  /CARL 12-28-81
+
+UUOCON: Fix X macro used in WAYS macro.  Put a "," between the IFB,IFNB
+   and the code to be generated.  Also, add missing ")" close-paren to
+   the last item in the WAYS macro (fixed undefined symbol).
+   /Carl 12-28-81
+
+UUOCON: Removed SEXTERNAL symbol references SYDFTA and SYDMTX and made
+   them conditional on non-zero definitions of the configuration symbols
+   FTAUN (# of FTA's) and MAGUN (# of MTA's).
+
+UUOCON: Magically transformed .ELINK into .LNKEND for the new MACRO,
+   leaving .ELINK alone for the old MACRO %46.
+
+CTYSIM,CIOPR,KMCSER,DR11C,DZKON,ONCE: Removed SEXTERNAL references to
+   DZDO,DRDO,KMCDO,DZINI,DRINI,KMCINI,KMCSMN,KMCCMN and made them all
+   conditional on IFKMC.  DZDO,DRDO and KMCDO are defined in CTYSIM as
+   always.  /CARL 12-28-81
+
+SIMKL,ONCE: Removed SEXTERNAL references to ONCGO,MONDEB,& PATSIZ and
+   added the symbol KL$SIM in the simulator which is checked for non-zero
+   by ONCE under an IFCPU (KL) conditional.  Code was added to the patch
+   code in the simulator to set KL$SIM non-zero.  /CARL 12-29-81
+
+DDT: Commented out the line "SEXTERN OVTAB." in DDT.  This symbol is not
+   even referenced once in the source. (OR in *.mac in M33 or MPL) except
+   for LOADER.MAC which is only generating a DUMMY location OVTAB. if it
+   doesn't exist already (Special case!).  /CARL 12-29-81
+
+Note:  The monitor now has NO S-EXTERNALS in it.  It will now load using
+LINK-10.  With the exception of external POINTer references, the monitor
+will also assemble under MACRO %53B.   /CARL 12-29-81
+
+COMMON: (UUOCON,FRMSER,COMCON) Moved pointer UPYPSR from UUOCON into
+   COMMON and added corresponding pointers USYPSR & UXYPSR for %UPS
+   and %UPX.  All 3 are internal and referenced elsewhere at least once.
+   /CARL 12-30-81
+
+COMMON: (SCHED1,CORE1,UUOCON,COMCON,PICON,ONCE) Moved pointers from
+   literals in many modules into COMMON where the symbols used are defined.
+   New symbols are UPYPTx,UPYPXx,USYPTx,USYPXx,UXYPTx and EPYPSx where <x>
+   is either "N" or "M" depending upon whether %xxx.N or %xxx.N-1 is used
+   as argument to the macros.  /CARL 12-30-81
+
+COMMON,CORE1: Moved macro definition UPTPTR from CORE1 into S so that it
+   can be used where necessary.  Moved the only use of it into COMMON with
+   the pointers UPYPTx as mentioned above.  Also: *** NOTE *** I changed
+   the name of the macro (UPTPTR) to (UPYPTR) so as not to conflict with
+   the UPT symbol UPTPTR.  /CARL 12-31-81
+
+COMMOD,CORE1: Moved pointers from literals into COMMOD for their def's
+   and created 2 more symbols RB1PNO and BA1NBB which are near to RBYPNO
+   and BAYNBB in definition, but not quite!  /CARL 12-31-81
+
+COMMON,MAPIO,CORE1: Defined some more bit masks in COMMON so that less
+   polish is needed for adding bit definitions in other modules. New
+   symbols: LMMMXW, LMMSUP, LMMRED, LMMRDW for LMAP bit configurations.
+   /CARL 12-31-81
+
+COMMOD,FILRIB: More about pointers: RBYUNA, RBYUNR and RBYUNV for getting
+   the unit from ATBRIB(P2), DRBRIB(P1) and DEVRIB(F).  /CARL 12-31-81
+
+FRMSER: Changed BYTE (18) arg,0  to XWD arg,0 inside JDSMAC macro to fix E
+   errors in the new macro.  comment used to say something about a bug in
+   the old MACRO, but it assembles ok with either version at present.  Also
+   changed reference to literal to use UXYPSR in COMMON.  /CARL 12-31-81
+
+FILUUO: Fixed [XWD BYTE (5)0 (3)CPRRED (10)1 (8)0 (10)%COW.N+CNVVPN] to
+   simply [<CPRRED>B7+1B17+%COW.N+CNVVPN] to work with the new MACRO.
+   Macro-46 simply allowed that construct. Amazing!  /CARL 12-31-81
+
+COMMOD,FILFND: Defined SPTNMM to be SPTNME justified to SPNNFE so we don't
+   have to play games with externals.  /CARL 12-31-81
+
+ACTSER: Changed the ATB macro to use Xwd rather than BYTE and added
+   a ",0" to the end of each line where a 4th argument was wanted.
+   Put angle brackets "<>" around constants used in arithmetic with
+   an external.  Fixed "Polish too complex" error.  /CARL 12-31-81
+
+
+/K02
+----
+
+COMMON, CLOCK1, UUOCON: Removed job tables JBTRMT and JBTRMC (no longer used).
+/DARREN 1-6-82
+
+
+CONF??.mac, COMMON: The following symbols have been moved from CONF??.MAC to
+COMMON or deleted entirely:  SYSDEV,SYSNAM,SYSDAT,RP10N,RA10N,C0FHN,C0DPN,
+C0MDN,RD10N,NUMPRT,COREN,SEGNX,CR10N,CDPN,SPCINT,SPCDDB,SPCSAV.
+/DARREN 1-10-82
+
+/K03
+----
+
+COMCON: In JOBKL, delay call to TTYKIL until after returning from KILUPT.
+This should prevent job from being rescheduled with TTYTAB(J)=0, which int
+turn should prevent any more crashes at SCNSER:STTLK+6.
+/DARREN 1-11-82
+
+COMCON: Set Errflg in P3 instead of clearing J to indicate error at COR2+2.
+Error happens when CORE command requires hiseg to be deleted.  Problem
+was discovered by noticing that SYSTAT followed by CORE 5 (with SY lic)
+crashes system.  /TODD 1-19-82
+
+Errcon: Don't set up previous context F when Adrerr is called.  Fixes 
+bug that would either crash system or print a bogus device name in
+address check error message.  Sys would crash if user ac 4 had a value
+such that an exec mpe would occur.  /Todd  /TODD 2-1-82
+
+/K04
+----
+
+COMMON - Add new job table JBTSCA which contains TRU scaling argument,
+	plus byte pointers to the 4 9-bit fields.
+CLOCK1 - Modify GTCGSZ (Get Charging Size) to use TRU scaling args if present.
+UUOCON - Modify CLKTRU to do size-dependent and size-independent components
+	seperately, scaling size-independent according to JBTSCA args.  Add
+	XCHARG function 7 for TRU scaling.
+/DARREN 2-9-82
+
+/K05
+----
+
+COMMON: Allow FCWDS to be defined in Conf.  /TODD 2-10-82
+
+/K06
+----
+
+PICON: Added Internal label PGFUIO just prior to PGFAIL with contents
+       PC.UIO,,PGFAIL to be used by ONCE inside IFCPU(KI) conditional
+       for getting there on page-fail conditions.  /CARL 2-18-82
+
+ONCE:  Changed all occurrances of [EXTERNAL] and [POLISH] to non-literals
+       so that MACRO 53B can be used for assembly.  /CARL 2-18-82
+
+/K07
+----
+
+Comcon: change UNDEL command to UNDELETE.  /TODD 2-23-82
+
+FILIO - Add counter OHTREP to count number of times INSOHT is called more
+than once for the same disk page; also halfword table OHTCPN for Core Page
+Number of disk page entered in OHTTAB.  /DARREN 2-23-82
+
+ONCE:  Modified routines Evaset and Evaclr and added Evahi to allow
+	dynamic data structure allocation to start at next pg after
+	initial Syssiz.  Previously started at %Min (pg 400).  Evahi
+	determines if virtual address has transitioned from below per-
+	process area to within or above it.  If it has, it sets Evasiz
+	to %Min.  
+COMMON, ONCE:  Call Evahi after Evasiz is modified.  Repeat allocation 
+	code for a particular data structure if it couldn't fit below pg
+	340 and addr wasn't previoulsy above %Min.  /TODD 2-25-82
+
+/K08
+----
+
+KSSYM,KSIORG: Updated XCREF/RCREF to .XCREF/.CREF so that either macro
+    can assemble the sources for a KS processor. /Carl 2-Mar-82
+
+KSSYM,ONCE: Moved WRHSB from ONCE to KSSYM where it belonged. /Carl 2-Mar-82
+
+ONCE: Removed more literals so that ONCE would assemble for the KS.  The
+    Old MACRO %46 would not fold literals on pass 2 tha same as pass 1,
+    thus we got "P" errors during assembly.
+      /CARL 3-2-82
+
+/K09
+----
+
+ONCE: Text message at HLPCMD was re-inserted to catch illegal commands
+      given to the ONCE> prompt.  Removed originally because it was too
+      verbose.  Now skipped upon entry.  Message:
+      ?Unrecognized command - Please type HELP for help.
+        /CARL 3-3-82
+
+IOCSS:	Push F at CLOSE3 and pop at UCLS3 so can tell if buffered io
+was being done so can determine whether to restore previous pc.uio state.
+Solves XBASIC Getseg error problem.  /TODD 3-3-82
+
+COMMOD, CONF??.EXP - Move a few more symbols out of the config files -
+  C1FHN, C1DPN, C1MDN (defined only on a few VF KI's and always to 0)
+/DARREN 3-5-82
+
+S,FILUUO - Add DMOVPG to disk DDB dispatch table.
+APXKON - Ernie changes - ?
+CORE1 - Add "validate even if private" flagg VL.VPP.
+IOCSS - Add CHANIO function 47 - VMOVPG.
+SWAMP - Make UPDAC0 an external entry point.
+SIMIO - Don't undo 4 disk-block charge after SIMCRE, no longer accrued.
+FILFND - (quote) "Add routine DECUNS to decrement ATBUMC & ATBMXW, and
+  remove SPT entry for unshared DP so it can be moved to another file."
+MAPIO - All the good stuff:
+  Add VM kernel routine KMOVPG to "take a page which is currently mapped
+    and not part of a file and cause it to be mappable from the specified
+    position of a file open on the channel."
+  Add routine LOKHPW, called (by KFCRE & KMOVPG) when holding only the
+    atomic file lock and needing the write lock to manipulate a slot past
+    highest page written (HPW).
+  Add entry SWEPRH to SWEEP to sweep file with real holes despite TITO
+   crock; modify SWEEP to use VMOVPG if sweeping 1 real page (SIMIO case).
+/DARREN 3-9-82
+
+/K10
+----
+
+IOCSS, CORE1:  Call Uniupt from Reprlu to release %upt lock if held
+by current frame and not complain if not.  Delete Reprl1 code because
+can always get upt lock (eventually).  /TODD 3-10-82
+
+/K11
+----
+
+CONF??, COMMON: (KS only) Move definitions of LPTN, LPRUN, and LPRVEC
+from CONF?? to COMMON, enclosed by IFCPU(KS), since they're the same on
+all 2020's.  Remove VECMIN, VECMAX, VECNUM, TBISTR, and TBIEND as perhaps
+the silliest consistency check ever devised.
+COMMON, ONCE: Use size of TBISAV table to init loop counter in SETUBT.
+/DARREN 3-13-82
+
+COMMON - Remove two more job tables that appear to be unused - JBTCB2 and
+  JBTIDN - apparently used by CLUBS at some point in history.  /DARREN 3-18-82
+
+/K12
+----
+
+Scnser: Have Newjer zap tty after printing out error message.  Previously
+job capacity exceeded would not kill port and this eventually would
+cause a crash in addition to the nuisance of echoing user name and
+leaving port in limbo.  /Todd  /TODD 4-8-82
+
+
+S, FILUUO: Install new close flag, CLSDMP=200, to set file dumped bit.
+This will allow TITO to set file dumped without doing a rename and
+potentially changing some other rib data.  /TODD 4-13-82
+
+/K13
+----
+
+UUOCON - Time to remove EUTHAN hack from SETNAM.
+/DARREN 4-16-82
+
+FILIO - One-line fix to INSOHT change.
+/DARREN 4-19-82
+
+COMCON: added POP command - special form of ATTACH to attach you to your
+parent (if any) and log out current job.  /WRS 4-20-82
+
+COMCON: updated several messages to talk about frames not jobs.  /WRS 4-20-82
+
+COMCON: changed attach code to check for attached frame license greater than
+source frame license.  /WRS 4-20-82
+
+FILUUO: changed LICMSK to return the current license in the case where
+the requested license is greater than the current (for example it used
+to be that LICMSK(WA,WF)=0, rather now LICMSK(WA,WF)=WF)  /WRS 4-20-82
+
+/K14
+----
+
+COMCON: fixed POP command to handle errors more gracefully  /WRS 4-20-82
+
+/K15
+----
+
+COMCON: more fixes to ATTACH and POP license restrictions  /WRS 4-20-82
+
+IOCSS - Fix function code check, broken when NXTCHN was added.
+/DARREN 4-21-82
+
+COMCON - Change INITIA command to .INITI for obscure and perverse
+  reasons.  /DARREN 4-21-82
+
+MAPIO - Fix KMOVPG for case where file page argument is -1 (insert after
+  current EOF).  /DARREN 4-27-82
+
+/K16
+----
+
+S: Change CLSDMP to be 100000 from 200 to avoid conflict with possible
+DEC expansion.  /TODD 4-30-82
+
+ONCDSK: Modified STSREF (REFRESH) to force a call to UPDHOM after the
+        refresh is complete.
+
+ONCDSK: Split GETRAN into SETRAN (start timer) and GETRAN (stop timer
+        and read number into RANNO) and call both routines whenever
+        CMDSCN is called by ONCE or ONCDSK so that the clock is always
+        running while waiting for command input.  This solves the KS,
+        KL problem doing a refresh and setting the pack-set id to 0.
+          /CARL 5-5-82
+
+/K17
+----
+
+ONCDSK: Removed erroneous calls to SETCHG which may have clobbered
+        something since U was not guaranteed to be setup in /K16.
+        Re-Inserted LSH to zap low order 12 bits in GETRAN since a
+        KL always returns 0 [Inside IFCPU(KL)].
+Note: REFSTR rewrites the HOM pages before it returns to ONCDSK, so
+      no other forced rewrites are necessary in ONCE.
+      /CARL 5-7-82
+
+ONCDSK:  Fixed CMDSCN routine to skip return on "NO" answer to the
+         "are you sure" question, so that it doesn't complain about
+         commands which require verification as "unrecognized".
+ONCDSK:  Added local symbol CMDMSG which if non-zero will only type
+         the "Are you sure" question on verification rather than the
+         verbose help text put in for operators to read.  Mainly for
+         debugging use when jumping in and out of ONCE/ONCDSK.
+/CARL 5-8-82
+
+FRMSER - Add .FRMOP 41 (Stop Frame) - simulates ^C on a frame.  /DARREN 5-25-82
+
+/K18
+----
+
+DDT: Changed code which checked for processor type to check FOONLY using
+
+DDT: Changed F3 processor check from AOBJN test to PUSH test for KA/F3's.
+     Ac/ 0,,-1  PUSH Ac,0  (1,,0 no carry; 2,,0 otherwise) TLZ Ac,1 to have
+     all good DEC hardware return 0.  /CARL 5-29-82
+
+/K19
+----
+
+COMCON: changed ATTCHK (check source / target frame license for attach) to
+check frame license rather than process license (ooops).  /WRS 6-7-82
+
+SCNSER: Only negotiate for BIO ports if on a Tymnet base.  I.e., if a
+KI or KL.  /TODD 6-22-82
+
+/K20
+----
+
+Mapio:  Return valid error code from sweep vmovpg failure.  Solves crashes
+caused by copying a file into a full directory.  /TODD 7-13-82
+
+/K21
+----
+
+FRMSER: Add new format .FOCFM call, allowing new JBTPPN = caller's
+   AUN, PVYMSK bits in JBTPRV to be different, plus provision for
+   running LOGINN in the child frame.
+	NEWWAY:	MOVSI	ac,.FOCFM
+		FRMOP	ac,BLOCK
+		  error return
+		normal return
+	BLOCK:	flags,,count
+		exp JBTPPN,JBTPRV,JBTAUN,JBTUNM,JBTUN1
+	;FLAGS
+	CF.OLD== 1B0			; this word is -cnt,,adr (old way)
+	CF.LOG== 1B17			; run LOGINN in child
+FRMSER: Add .FRMOP 42 - Force command on frame, this was the chosen
+   generalization of "force INITIA command", plus new .FRMOP error
+   code 37 (illegal command).
+UUOCON, FRMSER: Move code for CHPRJ calli (change project code) from
+   UUOCON to FRMSER and add a FRMOP entry point (.FRMOP 43).
+COMCON: Add routine to return forced command index given SIXBIT string,
+   called by .FRMOP 42.
+ - Allow LOGINN to be run in a detached frame.
+ - Have POP command run LOGOUT, remove CPOP routine.
+ - Add PCOM & DCOM commands (both run PCOM) and PEAK command (runs PEAK).
+ - Remove PCHECK command and code.
+ - Add .USESTAT command to display incremental data.
+SCNSER: In normal character mode, have ^T force .USESTAT command if
+   LDBDCX<LXLRTC> is set.
+ - Add "TTY [NO] RTCOMP" & AUXCAL 101 to set/clear LXLRTC.
+
+
+/K22
+----
+
+
+/K24
+----
+
+/K24
+----
+
+Assigned JP.MAI (1b8) in priv word to indicate (new) mail waiting.  Added
+SETMAI UUO (CALLI -145) using most of SETMAL as a subroutine.  Added code
+in SCNSER to print "[Mail Waiting]" if JP.MAI set.  Note:  None of the
+above invalidates any of the JP.MAL (old RPG mail) stuff.
+/DWS 7-19-82
+
+/K25
+----
+
+/K26
+----
+
+Common, Clock1, Uuocon:
+   Add Inactivity Timeout feature.  New job table, JBTINA, keeps track
+of user specified inactivity timeout (0 if off), time since job was
+last active, and whether the inactivty limit was hit.  Once-a-minute code
+in Clock1 increments inactivity counters.  If the time-limit is hit, the
+process will be evicted if enabled for eviction otherwise it will be
+hung (killed regardless of hang/zap action specified by user).  Changing
+the timeout limit is accomplished with the SET AUTOLOGOUT n command,
+SET NOAUTOLOGOUT command, SETPRV UUO with bit 2000 set as desired
+(if old Jbtprv 2000 XOR new Jbtprv 2000 = 1 then limit is updated) to set/
+clear a timeout of 15 min., and CALLI ac,-146 where ac is limit in min.
+Gettab -55 has been added to read the Jbtina word.
+
+Scnser:
+   New hang flag, (1B13), causes job to be hard killed without detaching.
+Needed so that Logout can print message when autologout occurs.
+
+/TODD 7-21-82
+
+SCNSER: Changed TRMBYP to a 5 bit field for network terminal ID code (TIC).
+ Also extended the table TRMTAB to 32 entries, making up something reasonable
+ for the as yet undefined codes.  /WRS 8-2-82
+
+/K27
+----
+
+/K28
+----
+
+Commod, Oncdsk, Refstr, Swamp, Filuuo:  Remove all code pertaining to
+the obsolete swapping area.  /TODD 8-10-82
+
+/K29
+----
+
+COMMON, COMMOD - Move another whole bunch of symbols from the CONF?? files
+into COMMON and COMMOD, mostly inside IFCPU/IFNCPU conditionals. 
+/DARREN 8-17-82
+
+/K30
+----
+
+/K31
+----
+
+SCNSER - Comment out IFKMC conditional which ended up inside IFCPU(<KI,KL>)
+conditional last time around, thus causing assembly error when building
+monitor for KL system.  /DARREN 8-19-82
+
+Frmser:  Add capability to pass lic. to new style Crefrm.  Setting flag
+1b16 passes word after Logtab arg block ANDed with the parent's process
+lic. to the child as its frmae lic.    /TODD 8-19-82
+
+/K32
+----
+
+ONCDSK,REFSTR: Renamed RANNO in ONCDSK to RANHOM since all but one use
+    was to hold the value of HOMRAN for packset-id checks.  Added RANNO
+    as internal to REFSTR only for setting HOMRAN during the REFRESH
+    command.  RANNO is set to a random # each time a command is entered
+    to ONCE or ONCDSK.  /CARL 8-27-82
+
+/K33
+----
+
+
+UUOCON, ERRCON, ERRMSG - Add frame stop and frame exit (equivalent
+to EXIT and EXIT 1), CALLI -142 (frame error class 4, type 2) and
+-147 (class 4, type 7).  Treats error code in AC as either octal (if
+left half is zero) or SIXBIT (if not).  Also merged ERRMSG.MAC into
+ERRCON.MAC.
+
+/DARREN 8-28-82
+
+/K34
+----
+
+COMMON - Replace EVAHI with EVMALC, which does ONCE-time core allocation
+  across the pre-process area.  Adjust AC use in LINKDB to use proper
+  AC's for EVMALC call.  Modify free-core allocation to allocate in
+  ^D145 word blocks.  Use %ERR rather than %DDT in crash code when
+  copying context pages.
+S - eliminate exec virtual page for %DDT.
+ONCE - Call EVASET to set up exec page map before setting up ONCE
+  PCB's and calling FILMAN.  Modify OPCBST/OPCBCL to use existing
+  map slots for ONCE PCB's rather than inventing them.  Modify
+  routines which allocate EVM to call EVMALC.
+ONCDSK, COMMOD - Call EVMALC to allocate STT storage, eliminate
+  HICORE and CORGRB.
+
+/DARREN 9-1-82
+
+
+COMMOD, CONF?? - Move symbols FTA and FTATYP from CONF?? files into
+  COMMOD, delete AXDDBS (no longer used), allow M.SBSZ (SNOOP
+  histogram buffer size) to default to 0.
+
+/DARREN 9-1-82
+
+/K35
+----
+
+CORE1 - Add context page lock/unlock log in order to track down problem
+of this monitor not working properly on KL processors.  /DARREN 9-21-82
+
+/K36
+----
+
+FRMSER - Copy project code from parent to child in CREFRM.
+/DARREN 9-22-82
+
+SCNSER:  Added routine CHKYEL to TINASS UUO to check for condition prexisting
+when interrupt is enabled to prevent yellow ball races.  /WRS 9-25-82
+
+/K37
+----
+
+Frmser:  Change the exec XCT HRRM to an exec XCT MOVEM in FRMCFH
+because HRRM doesn't work on KI's if the destination is to a register.
+The register affected is in the kernel block not the user's.
+/TODD 10-1-82
+
+/K38
+----
+
+
+
+COMCON Modified the send routine in order to allow a user with either
+op license or acct suprprv to talk with all persons in their gan. Two
+additional registers were brought in to the SEND routine, and because
+it was not known if they contained important information or not, their
+contents were pushed on to the stack upon entry. This required modifying
+all points at which the SEND routine exited in order that the stack was
+the same upon exit.  /MATOKA 10-8-82
+
+/K39
+----
+
+S.MAC: Change PVDINA to lh 400 from rh 2000.  Rh 2000 in priv. word
+is used to indicate that a TRU budget is present.  This wasn't documented.
+/TODD 12-1-82
+
+COMCON - Give special prompt [!] if in PDP mode and any license set.
+/DARREN 12-2-82
+
+SETETY - Remove Sherman's SETE password.
+/DARREN 12-7-82
+
+ONCE,ONCDSK:  Modified the HELP texts and printed messages in the
+        ONCE/FILES dialogues to remove the word "ONCDSK" from all
+        places and to make the terminology clearer to operations.
+        (This will now match the NEW documentation Rick Daniels is
+        putting together for the /L operator mini-manuals.)
+/CARL 12-8-82
+
+/K40
+----
+
+COMMOD - Put back place-holders for obsolete entries that went away.
+/DARREN 12-15-82
+
+/K41
+----
+
+FRMSER: fixed problem causing assembler to generate bad code resulting
+in .FOSVA not working.  Made JDSVTB table a fullword table rather than
+halfword (making it 2 words longer).  Took out about a dozen instructions
+to make up for it.  /WRS 1-14-83
+
+UUOCON, ERRCON: changed name of fail exit, stop ...
+    Fail Stop   is CALLI -147   is continuable   is HST 4,,7
+    Fail Exit   is CALLI -142   is not continuable   is HST 4,,2
+/WRS 1-15-83
+
+/K42
+----
+
+FRMSER: Fixed misplaced flag in /K41 edit.  STARCL belongs on the
+        CCL vector rather than the normal start vector for the
+        .FOSVA frmop.   /CARL 2-4-83
+
+/K43
+----
+
+ONCE - Split EVASET into two routines, so that high-seg page map set-up
+and setting the lower boundary for EVM allocation can be done at different
+points in ONCE.  The new routine EVMINI can be called more than once to
+allow for the perversities of the FILES subsystem.  /DARREN 2-9-83
+
+SEGCON, ERRCON - Fix old "TRANSMISSION ERROR" message to type out "I/O
+error on file FILNAM.EXT".  /DARREN 2-9-83
+
+CORE1 - Remove context page lock/unlock debug code, since problems seem
+to be fixed.  /DARREN 2-9-83
+
+/K44
+----
+
+SCNSER: added code to TATUUO (ATTACH UUO) and RETACH (UUO) to allow
+user to specify forcing target frame to RUN state if not already so,
+by calling SETRUN.  This may not make sense with certain other options
+specified.  In particular, in RETACH, it will only work when the port
+being moved is being attached as the command port.  The option is
+selected as follows:
+    bit 1B15 in the AC of an ATTACH UUO
+    bit 1B4 in the bits field of a RETACH UUO argument block
+/WRS 3-15-83
+
+/K45
+----
+
+ONCDSK - When setting up for REFRESH, insure that RANHOM is non-zero before
+  calling RWRHOM to re-write home pages, so that subsequent call to RDHOME
+  will not generate the "MISSING OR INCONSISTENT PACK SET ID" message when
+  using a virgin pack set.  /DARREN 3-18-83
+
+/K46
+----
+
+
+REFSTR - Repair the home page retrieval pointer table which got broken
+  back in K27/K28 - the table must match the home page exactly.
+/DARREN 3-20-83
+
+/K47
+----
+
+PICON:  Fixed typo from /K06 version - moving INTERN PGFUIO inside an
+	IFNCPU(KI) conditional.
+SIMKL:  Repeat 0'ed OUT the KL-simulator leaving the global symbol KL$SIM
+	inside an IFCPU(KL) conditional.  If the KL-simulator is wanted,
+	should be re-installed via a new config symbol, so that PARIS can
+	continue to exclude it if desired.   /CARL  3-24-83
+
+ONCE - Fix recently-introduced bug in PGY table allocation - CAVPGN is
+  NOT the size of the PGY table if there are holes in core...
+/DARREN 3-31-83
+
+/K50
+----
+P034/M
+------
+
+/L01
+----
+
+ONCE, SCNSER - Inserted console messages that describe what is
+	happening during RELOAD.  /SUTTOND 8-31-83
+
+/L02
+----
+
+CORE1 - modified code @ REMOV5+5 to handle context pages for frames other
+	than the current frame.  This should fix the REMCHR+4 and REMCHR+11
+	crashes.  /SUTTOND 8-31-83
+
+/L03
+----
+
+Added Dave Sutton to SETE tables.  /SUTTOND 9-19-83
+
+/L04
+----
+
+IOCSS:	Inserted code in routine DEVPHY: to crash if the user requests
+	device SYS and SYS cannot be found in the DDB chain.
+	/SUTTOND 10-5-83
+
+/L05
+----
+
+SCNSER: removed local variables THSTIM and MXTIM and made them external.
+Code will now use the global THSTIM and MXTIM defined in COMMON and
+appearing in NSWTAB+41 and NSWTAB+42 (gettabable) like it was supposed to.
+/WRS 10-6-83
+
+/L06
+----
+
+ONCDSK: Enclosed test for disk unit off-line inside IFCPU (F3)
+	conditional @ KONTOK.  /SUTTOND 10-20-83
+
+/L07
+----
+
+ONCDSK: Set EVASIZ to zero @ FILOPT+5 so that EVMINI will get
+	called the 1st time EVMALC is called when allocating memory
+	for UDB's.  /SUTTOND 10-28-83
+
+/L08
+----
+
+COMCON: POP registers S and P1 off the stack in case of error in
+	argument to TALK command in SEND: routine.  /SUTTOND 11-1-83
+
+/L09
+----
+
+PICON:	Deleted command to clear Cache Sweep Done Flag in routines CSUNL
+	and CSVAL.  Not necessary since monitor waits every time for
+	cache-sweep-done interrupt.  /SUTTOND 11-2-83
+
+/L10
+----
+
+COMCON: Added "Special Command Mode" to run RCM program in case
+	PVSCMD is set and user types otherwise illegal command.
+S.MAC:  added PVSCMD==200,,0
+FRMSER: Child now inherits RCM program on a CREFRM
+
+Note: RCM program now receives monitor parsed command name in sixbit
+in user AC 1.  This prevents problem caused by multiple rescan's.
+/WRS 11-3-83
+
+/L11
+----
+
+Removed Darren Price from SETE tables.  /SUTTOND 11-7-83
+
+/L12
+----
+
+FILFND: Prevented loop in DB linkages by inserting a conditional
+	at SRCFINI+6.  /SUTTOND 11-16-83
+
+/L13
+----
+
+Modified ONCE and COMMON so that FRECOR will default to the available
+executive virtual memory below ONCE.  /SUTTOND 11-21-83
+
+/L14
+----
+
+PICON:  Added code @ KEYSET+3 to crash if SCNINT is not called within
+	2000 tics(17 secs).  /SUTTOND 12-13-83
+
+/L15
+----
+
+ONCDSK: Amplified error messages in routine UNTDWN.  /SUTTOND 1-11-84
+
+Added PVLOS - LogoutOnStop.  Added check at COMCON:STOP and CLOCK1:STOP1
+to force LOGOUT if its set and job is being stopped.  Also check at command
+dispatch time in COMCON and force RestrictedCommandMode if PVLOS is set.
+Lastly, added code to FRMSER:PSHPRV and UUOCON:SETPRV to allow user to set,
+but never clear PVLOS.  /WRS 1-20-84
+
+/L16
+----
+
+Changed COMCON so panic logouts (like EXIT in a logged out job and
+EXIT or STOP in a PV.LOS job) happen immediately rather than being
+postponed until the next command input.  /WRS 1-27-84
+
+/L17
+----
+
+Modified default open files/frame(OPNFPF) in COMMOD to be ^D10
+so that there will be plenty of room for ATB's & FNB's in systems
+with more than 1 Meg.  Specify smaller OPNFPF in the CONFnn file
+for systems with less memory if necessary.    /SUTTOND 1-31-84
+
+
+/L18
+----
+
+Deleted Adele Newmon from SETETY tables.  /SUTTOND 2-6-84
+
+/L19
+----
+
+FILUUO: Modified SKIPGE to MOVE at CLRACH+6, eliminating slow
+	crash since FNBALT(xx) is initialized to -1 for debug
+	purposes.  /SUTTOND 2-23-84
+
+/L20
+----
+
+COMMON: Inserted cache sweep in CRASHX routine so that memory in
+	the crash file looks the same as it did to the CPU at the
+	time of the crash.  /SUTTOND 2-29-84
+
+/L21
+----
+
+SCNSER: Entered test for beyond last legal priority bit in LDBOUT(U)
+	in routine SCOTTY at  GOLIN+2.  Don't do output on line if test
+	fails.  /SUTTOND 3-2-84
+
+/L22
+----
+
+CLOCK1: Modified inactivity timer code @INACT2+2 to use one less
+        instruction, and eliminate use of T2.  Also changed comments
+        for better understanding of the routine.  /CARL 4-20-84
+
+/L23
+----
+
+ONCE:   Change CONSOLE command to set CTY flag, Added NETWORK command
+        to clear CTY flag.  Use GO, FULL, MANUAL or READONLY to bring
+        up the system.
+
+CTYSIM: Allow lower-case on all commands, added ctrl-z ? to print a
+        short help text of legal ones.  /CARL 4-23-84
+
+/L24
+----
+
+PICON: changed EVICT UUO to set PV.LOS (logout on stop) so an evicted job
+that gets sick and halts or doesn't know any better and exits will get
+logged out.    /WRS 5-22-84
+
+/L25
+----
+
+SCHED1: changed default setting for MAPQUE (JBTWRS) feature to off.
+	/WRS 6-6-84
+
+PICON:	Removed edit /L14, code at KEYSET+3 which caused a crash if
+	routine SCNINT was not called within so many (2000) tics.
+	We don't need to MAKE the system "crash" here!  /CARL 6-7-84
+
+ONCDSK: Modified CMDSCN routine, near CMDSC5 to disregard verification
+	if CMDMSG is non-zero, and added new bit for MKTBL macro AB.CVR
+	to ignore verify bit (AB.VER) if CTYDO flag is set (for CONSOLE).
+
+ONCE:	Defined AB.CVR for ONCE/ONCDSK command table bits, set the bit
+	for MANUAL and READONLY.  Modified CONSOLE and NETWORK commands
+	to give an acceptance response and a reminder to type one of the
+	system startup commands: GO, FULL, MANUAL, READONLY.
+
+	Modified SUTTOND's amplified INITIA message to only print when
+	INITIA is really being forced, i.e. TLNN (STAUTO),STATES
+	/CARL 6-7-84
+
+	Fixed TYPO which broke abbreviation of CONSOLE command by
+	mispelling NETWORK as <CONSOLE>.  Also changed code at CHGSYS
+	to allow larger than 255 as host number on micro-node bases.
+	KI/KL's still have 255 maximum.  /CARL 6-8-84
+
+S.MAC:	Changed SIZONC from 4 to 5 in MAPONC call for KS.  /CARL 6-13-84
+
+/L27
+----
+
+Removed Lois Lindley from Sete and added Osman Guven.  /OSMAN 6-20-84
+
+/L30
+----
+
+ACTSER: Copy UPTLOG for new frame into supervisor info when writing the
+	accounting record for .FOCFM (we are assuming that the LOGIN UUO
+	handles this correctly elsewhere).  /OSMAN 7-6-84
+
+/L31
+----
+
+F3TSER: Fixed radix in formula which calculates byte pointer into EPT page map
+	to ^D18 and ^O1000 to avoid confusion.  The assembler defaults to ^D
+	in the offset part of the pointer, so the calclation was always wrong.
+        /CARL 7-8-84
+
+   P034/N
+------
+
+  /M01
+----
+
+Mis-release by Dave Sutton caused confusion.  So, to avoid further
+confusion as to which /M this is, it has been decided to skip the
+release of P034/M altogether and proceed to the next release.
+
+P034/P
+------
+
+  /N01
+----
+   u dú

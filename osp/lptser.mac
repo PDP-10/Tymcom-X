@@ -1,0 +1,940 @@
+
+
+IFCPU (KS),<
+TITLE LPTSRS Line printer service for LP20 controller.
+SUBTTL DSB
+
+LPTFL==1
+IFG LPTFL,<	;ENDS ON LAST PAGE
+OPDEF CALL [PUSHJ P,]
+OPDEF RET [POPJ P,]
+
+;Device registers
+DEFINE IOREG(REGNAME,OFFSET,BITLST,MSB)
+<ZZ==100000
+IFNB <MSB>,<ZZ==MSB>
+REGNAME'OFS==OFFSET
+IRP BITLST,<REGNAME'BITLST==ZZ
+ZZ==ZZ/2
+>>
+IOREG(CSA,0,<ERR,PZ,UC,DR,OL,DH,ER,LI,DON,IE,A17,A16,DL,TM,PE,GO>)
+    ;Function codes
+	F.PD==0		;Print data mode.
+	F.LV==CSADL	;Load VFU mode.
+IOREG(CSB,2,<VD,,PNR,LDP,OO,T02,T01,T00,OL,DNR,LPE,MPE,RPE,MTE,DTE,GE>)
+    ANYRBE==CSBDNR+CSBLPE+CSBMPE+CSBRPE+CSBMTE+CSBDTE+CSBGE+CSBOL
+IOREG(BA,4)
+IOREG(BC,6)
+IOREG(PC,10)
+IOREG(RDR,12,<RAP,INT,DEL,TRA,PI>,10000)
+IOREG(CC,15)
+IOREG(CB,14)
+IOREG(CKS,17)
+IOREG(PD,16)
+NLP20R==10		;Number of LP20 registers.
+IOREG(PGR,763000,<REV,DIS,FST,VAL>,400000)
+
+EXTERN CPOPJ1,CPOPJ,SETIOD,HNGSTP,ERROCI,STOIOS,DEVERR
+EXTERN SETACT,WAIT1
+EXTERN LPVLPT,LPCFPT,LP0DDB,LPTSB,NXDLPT
+EXTERN LPT11A,LPTBA,LPTEC,LPTFUN,LPTSTS,LPTWC,SIZLPT,LPTLBA
+
+LPTSER::
+
+;Data structures.
+;Data is moved by LPTXFR from the
+;user ring buffers into the monitor ring buffer in
+;response to the OUT UUO.  Before initiating
+;a transfer, SOP copies the next block
+;of data to be output from the monitor buffer into the LPT buffer
+;moving the bytes around as required for byte accesses
+;made by the UBA.
+;The format of the user buffers is irrelevant to
+; this module.
+;The format of the monitor ring buffer is:
+; DEVCLS of the DDB points to the first location
+; in the buffer.  the first word before the
+; buffer is the address of the first word above the
+; buffer.  The second word before the buffer contains
+; the In pointer in the left half, the Out pointer
+; in the right half.  The in pointer is adjusted by UUOCON,
+; the Out pointer by this module.
+;The LPT buffer is pointed at by LPTLBA in the DDB.
+
+
+;LINE PRINTER DEVICE DEPENDENT I/O STATUS MNEMONIC DEFINITIONS
+
+LPTEND==400000		;CLOSE UUO has been done.
+LPTRBL==200000		;LPT trouble detected at I-level.
+LPTPAR==100000		;Partial buffer already output.
+LPTRAM==40000		;LP20 RAM not loaded.
+LPTVFU==20000		;Printer DAVFU not loaded.
+LPTMO==10000		;Internal output done.
+
+;BITS IN RH OF S
+LPTNFF==100		;Suppress FFs before, after output.
+
+;LINE PRINTER SERVICE DISPATCH TABLE
+
+LPTDSP::PHASE 0
+DDXZ:	DSPSIZ
+DDINT:	RET
+DBYT:	4400,,4400
+DVSIZ:	MOVEI T1,SIZLPT
+DINI:	JRST LPTINI
+DHNG:	JRST LPTHNG
+DRL:	JRST LPTREL
+DCL:	JRST LPTCLS
+DOU:	JRST LPTOUT
+DIN:	JRST ERROCI
+DXFR:	JRST LPTXFR
+DGTRO:	POPJ P,		;UNDEFINED
+DMT:	JRST INIVFU	;VFU INITIALIZATION UUO
+	DSPSIZ==.-1
+	DEPHASE
+
+
+
+
+SUBTTL LPTINI, LPTHNG, LPTREL - init, hung device, release
+
+;LPTINI.  Called at system start time.
+;	 The code skip returns to force calling for each
+;	 configured LPT.
+
+;LPTHNG.  Called by DEVCHK&UUOCON when hung device count
+;	  is decremented to 0.
+
+;LPTREL.  Called by RELEA1&UUCON in response to user RELEAS uuo.
+
+;All are passed the LPT's DDB in F and must clear the printer.
+; LPTHNG and LPTINI mark the RAM and DAVFU for loading in
+; the theory that the printer may have dropped off line.
+
+
+LPTHNG::TLO S,LPTRAM+LPTVFU
+	JRST LPTREL
+LPTINI::SKIPN	NXDLPT
+	  JRST	CPOPJ1		;IF NONE CONFIGURED DON'T EVEN TRY.
+	TLO S,LPTRAM+LPTVFU	;Flag RAM, VFU need loading.
+	CALL LPTREL		;Clear LPT, save S.
+	LDB T1,[130700+F,,LPTLBA]	;-11 page of buffer
+	ADD T1,[3,,PGROFS]	;Paging RAM entry for buffer.
+	LDB T2,[POINT 9,LPTLBA(F),8]	;-10 page of buffer
+	TRO T2,PGRVAL
+	WRIO T2,(T1)		;Map -11 page into -10 buffer.
+	JRST CPOPJ1
+
+LPTREL::SKIPN	NXDLPT
+	  JRST	CPOPJ
+	MOVE T1,LPTBA(F)	;Base adr of LP20 registers
+	MOVEI T2,CSALI		;Local init.
+	WRIO T2,CSAOFS(T1)
+	MOVEI T2,CSAER		;Clear error indicators.
+	BSIO T2,CSAOFS(T1)
+	TLZ S,LPTRBL+LPTPAR	;No error, no partial buffer out.
+	JRST STOIOS
+
+	OPDEF	ADJBP	[XWD 133000,0]
+	VFUBUF==LPVLPT	;our symbol for the COMMOD buffer
+	MAXC==^D143	;allow no more commands than max DAVFU lines
+	MAXLN==^D88	;only allow 88 lines for now
+INIVFU::SKIPN	NXDLPT
+	  JRST	CPOPJ
+	MOVE T1,LPTBA(F)	;Base adr of LP20 registers.
+	RDIO T2,CSBOFS(T1)      ;Read status register        
+	TRNE T2,CSBOL		;Printer offline?
+	  JRST	CPOPJ		;Error return if off line.
+	CALL WAIT1	;Wait for IOACT to go off
+	HRRZI M,(M)	;M points to current(the first for now) command
+			;FIRST TEST FOR A SINGLE RESET TOF COMMAND
+PXCT 4,[HLRZ	T3,(M)]	;T3/cmd op and channel mask
+	ANDI	T3,(3B2);T3/cmd op
+	CAIE	T3,(1B1);skip if RESET TOF cmd
+	  JRST	CMDLST	;  else go process the reload command list
+	MOVE T1,NEWTOF	;set up for a one byte (357) LODVFU
+	JRST	LPTFLV	;go into LODVFU routine
+			;----------------------------------------------
+CMDLST:	CALL ERRSCN	;scan command list for errors
+	  POPJ	P,	;NON-SKIP RETURN! (bad command list)
+CMDLUP:	CALL GETCMD	;T3/op + chan mask; T2/last line; T1/first line
+	TLZE	T3,(1B1);test 'this is the final command' bit
+	  JRST	RLDVFU	;  if set go and RELOAD VFU
+VFULUP:	CALL FETCH	;else fetch the channel stops for current line
+	TLNE	T3,(1B2);command bit tells wether to set or reset the
+	  IORM	T3,T1	;	masked channels.  IORM sets them.
+	TLNN	T3,(1B2);skip if bit 2 is set
+	  ANDCAM T3,T1	;	reset masked bits.
+	CALL STORE	;store bits 6-17 of T1 as channel stops 12-1
+	ADDI	T1,1	;increment current line
+	CAIG 	T1,(T2)	;if current line .GE. last line skip out of loop
+	  JRST	VFULUP	;else process the new current line
+	AOJA	M,CMDLUP;increment command pointer and loop back
+
+RLDVFU:	HRLZI	T3,4000	;channel 12 mask bit
+	CALL FETCH	;fetch channel stops for bottom line of page
+	IORM	T3,T1	;set channel 12 "bottom of form" stop
+	CALL STORE
+	HRLZI	T3,1	;channel 1 mask bit
+	MOVEI	T1,0	;set current line pointer to zero
+	CALL FETCH
+	IORM	T3,T1	;set channel 1 "top of form" stop
+	CALL STORE
+	MOVEI	T3,356
+	MOVE	T4,[POINT 18,VFUBUF+1]	;skip 2 bits
+	IDPB T3,T4	;put start byte (356) in first byte position.
+	LSH	T2,1	;T2/(form length -1)*2
+	ADDI	T2,2	;T2/number of bytes to be sent to printer davfu
+	MOVEI	T1,(T2)	;T1/T2
+	ADJBP T1,VFUPTR	;T1/byte pointer to last byte to be sent
+	MOVEI	T3,357
+	PUSH	P,P1
+	MOVE	P1,T1
+	CALL FWADJ
+	IDPB	T3,P1	;put stop byte (357) in last byte position.
+	MOVEI	T3,0	;zero T3
+	IDPB	T3,P1
+	IDPB	T3,P1
+	IDPB	T3,P1	;once more just to be sure
+	MOVE	P1,T1
+	CALL HWADJ
+	POP	P,P1
+	MOVEI	T1,4(T2);T1/number of bytes to be sent plus 3(+1)
+	LSH	T1,^D16	;T1/number of words to be sent,,?
+	HRRI	T1,(T2)	;T1/# of words,,# of bytes
+	HLLM T1,VFUBUF	;put number of words in left half of vfubuf
+	AOS	0,(P)
+	JRST LODVFU	;LOAD THE VFU AND RETURN!
+
+
+GETCMD:	PXCT 4,[HLLZ T3,(M)]	;T3/cmd op and channel mask,,0
+	PXCT 4,[HRRZ T2,(M)]	;T2 will hold "last line"
+	MOVE	T1,T2
+	LSH	T1,-9	;T1 will hold "current line"
+	SUBI	T2,1
+	SUBI	T1,1
+	ANDI	T2,377	;T2/last line
+	ANDI	T1,377	;T1/current line
+	RET
+
+ERRSCN:	PUSH	P,M	;save command pointer
+	HRLI	M,-MAXC	;M/-max command count,,command pointer
+ERRLUP:	CALL GETCMD	;T3/cmd & mask; T1/current line; T2/last line
+	CAILE	T2,MAXLN
+	  JRST	VFUERR	;last line must be .LE. max lines in VFUBUF
+	CAILE	T1,(T2)
+	  JRST	VFUERR	;starting line must be .LE. last line
+	TLNN	T3,(1B1);test 'this is the final command' bit
+	  JRST	TSTMAX	;if bit is 0 go see if we should loop again
+	TLNN	T3,(1B2);bit 2 must be set for a RELOAD DAVFU cmd
+	  JRST	VFUERR	;RESET TOF is an illegal list terminator
+	POP	P,M	;restore initial command pointer
+	JRST	CPOPJ1	;SKIP RETURN! all commands are good.
+TSTMAX:	AOBJN M,ERRLUP	;go check next cmd (unless we've exceeded MAXC)
+VFUERR:	POP	P,M	;restore the stack
+	RET		;NON-SKIP RETURN! (bad or too many commands)
+
+FETCH:	PUSH	P,P1
+	MOVEI	P1,(T1)	;P1/current line
+	LSH	P1,1	;P1/byte offset into vfubuf 
+	ADDI	P1,2	;skip two for the start byte
+	ADJBP P1,VFUPTR	;P1=pointer to byte just before this line's
+	PUSH	P,P1
+	CALL FWADJ	;pack bytes of 2 words at (P1) left justified
+	ILDB	T4,P1	;get channel stops 6-1 of current line
+	DPB T4,C6TO1	;deposit them in bits 12-17 of T1.
+	ILDB	T4,P1	;get channel stops 12-7 of current line
+	DPB T4,C12TO7	;deposit them in bits 6-11 of T1.
+	POP	P,P1	;P1/ as it was before the ILDB's
+	CALL HWADJ	;re-adjust the bytes into 16 bit half words
+	POP	P,P1
+	RET
+
+STORE:	PUSH	P,P1
+	MOVEI	P1,(T1)
+	LSH	P1,1
+	ADDI	P1,2	;skip two for the start byte
+	ADJBP P1,VFUPTR	;P1=pointer to byte just before this line's
+	PUSH	P,P1
+	CALL FWADJ	;pack bytes of 2 words at (P1) left justified
+	LDB T4,C6TO1	;T4/six bits from T1 positions 12-17
+	IDPB	T4,P1	;put chan stops 6-1 for current line in vfubuf
+	LDB T4,C12TO7	;T4/six bits from T1 positions 6-11
+	IDPB	T4,P1	;put chan stops 12-7 for current line in vfubuf
+	POP	P,P1	;P1/ as it was before the ILDB's
+	CALL HWADJ	;re-adjust the bytes into 16 bit half words
+	ANDI	T1,377	;T1/0,,current line
+	POP	P,P1
+	RET
+
+FWADJ:	PUSH	P,P1
+	CALL FW
+	CALL FW		;pack the next word
+	POP	P,P1
+	RET
+
+HWADJ:	PUSH	P,P1
+	CALL HW
+	CALL HW		;pack the next word
+	POP	P,P1
+	RET
+
+FW:	MOVE	T4,(P1)	;T4/ x x 16 bits,, x x 16 bits
+	LSH	T4,2
+	HLL	T4,(P1)	;T4/ x x 16 bits,,16 bits 0 0
+	LSH	T4,2	;T4/ four 8 bit bytes then four bits of 0
+	MOVEM	T4,(P1)
+	ADDI	P1,1	;increment P1
+	RET
+
+HW:	MOVE	T4,(T4/ four left justified 8 bit bytes
+	LSH	T4,-2
+	HLLM	T4,(P1)	;(P1)/ 0 0 16 bits,,xxxxxxxxxxxxxxxxxx
+	HRRZ	T4,T4	;zero left half of T4
+	LSH	T4,-2	;T4/ 0,,0 0 two bytes
+	HRRM	T4,(P1) ;(P1)/ 0 0 two bytes,,0 0 two bytes
+	ADDI	P1,1	;increment P1
+	RET
+
+
+VFUPTR:	POINT 8,VFUBUF+1
+C6TO1:	POINT 6,T1,17
+C12TO7:	POINT 6,T1,11
+NEWTOF:	XWD	1,<<.&777>_2>+4	;MOVE TO LPTBUF PAGE IN COMMOD
+	BYTE (8) 377,0
+
+
+
+SUBTTL LPTOUT, LPTCLS - output, close UUOs
+
+;LPTOUT.  Called when the LPT is stopped and there is data
+; to be transferred.  IOBEG is on if this is the very
+; first block of data to be sent.
+
+LPTOUT::SKIPN	NXDLPT
+	  JRST	CPOPJ
+	MOVE T1,LPTBA(F)	;Base adr of LP20 registers.
+	RDIO T2,CSBOFS(T1)	;Read status register.
+	TRNE T2,CSBDNR		;VFU need loading?
+	 TLO S,LPTVFU		;Y.  Remember for later.
+	TRNN T2,CSBOL		;Printer offline?
+	 TLNE S,LPTRBL		;Error detected previously?
+	  JRST LPTHAN		;YvY: stop user.
+	TLZE S,LPTRAM		;RAM need loading?
+	 CALL LODRAM		;Y
+	TLZE S,LPTVFU		;DAVFU need loading?
+	 CALL LODVFU		;Y
+	TLZE S,IOBEG		;First output?
+	 TRNE S,LPTNFF		;NFF off?
+	  SKIPA			;NvN, start user data out.
+	   CALL LPTCF		;Y&Y.  Send CRFF first.
+	CALL SOP		;T1:=pointer to next block
+	 RET			;Jrst return if nothing to do.
+	MOVEI T2,F.PD		;Print data function.
+	CALL SLP20R		;Setup BC,BA,PC registers.
+LPTUGO:	TLZA S,LPTMO		;Flag sending user data.
+LPTMGO:	 TLO S,LPTMO		;Flag sending monitor data.
+	CALL SETACT		;Set IOACT, hung timeout.
+	MOVE S,DEVIOS(F)
+	MOVE T1,LPTBA(F)	;Base adr of LP20 registers.
+	MOVEI T2,CSAER		;Ensure CSAER off.  Also sets CSADON.
+	BSIO T2,CSAOFS(T1)
+	RDIO T2,BCOFS(T1)	;Clear CSADON.
+	WRIO T2,BCOFS(T1)
+	MOVEI T2,CSAIE+CSAPE+CSAGO
+	BSIO T2,CSAOFS(T1)	;Start controller.
+	RET
+
+;Here before first or after last transfer when LPTNFF is off.
+;Send a CRFF.
+LPTCF:	MOVE T1,LPCFPT		;Output pointer to CRFF
+	MOVEI T2,F.PD		;Print data.
+	CALL SLP20R
+	JRST LPTMG1
+
+;SOP.  Set T1.Lh= # -10 words to be sent to device.
+; Set T1.Rh = -11 address which will map to start of data.
+; Set T3 = # -10 words of monitor buffer this xfr will do.
+; Single return if no data to be output; skip otherwise.
+EXTERN LPTEPT
+DEBSOP:	MOVE T1,LPTEPT
+	JRST CPOPJ1
+SOP:	HRRZ T3,DEVCLS(F)
+	HLRZ T1,-2(T3)
+	HRRZ T2,-2(T3)
+	SUB T1,T2		;T1:=IN - OUT
+	JUMPGE T1,SOP1		;(J-IN)=OUT
+	HRRZ T1,-1(T3)
+	SUB T1,T2		;T1:=LAST-OUT
+SOP1:	JUMPE T1,CPOPJ
+	PUSH P,T1
+	CALL LPTCVT		;move & convert data.
+	POP P,T3
+	HRLZS T1
+	HRR T1,LPTLBA(F)
+	JRST CPOPJ1
+
+;SLP20R.  Setup LP20 registers for data transfer according to
+; output pointer in T1.  T1.Lh=-10 words to send
+; T1.Rh=-11 adr of start of block to be sent.
+; T2.Rh = function bits for command.
+; T3 = # 10 words of monitor buffer used, if applicable.
+SLP20R:	MOVEM T2,LPTFUN(F)
+	MOVEM T3,LPTWC(F)	;Monitor buffer this one does.
+	MOVE T3,LPTBA(F)	;T3:=base adr of LP20 registers.
+	HLRZ T2,T1		;T2:=+ word count in LPT buffer.
+	LSH T2,2		;+ byte count
+	MOVNS T2
+	ANDI T2,7777
+	WRIO T2,BCOFS(T3)
+	WRIO T1,BAOFS(T3)
+	MOVEI T2,7777		;Set page counter to maximum
+	WRIO T2,PCOFS(T3)
+	MOVEI T2,CSADL+CSATM
+	BCIO T2,CSAOFS(T3)
+	MOVE T2,LPTFUN(F)
+	BSIO T2,CSAOFS(T3)
+	RET
+
+;LODRAM.  Load the LP20 translation RAM
+; with the standard values.
+LODRAM:	MOVE T1,LPTBA(F)	;T1:=base adr of LP20 registers
+	MOVEI T2,377		;Zero all RAM entries.
+	SETZ T3,
+LODRA1:	WRIOB T2,CBOFS(T1)
+	WRIO T3,RDROFS(T1)
+	SOJGE T2,LODRA1
+;;;;;;;	MOVE T2,[-100,,RDRTRA+40]	;40-137 xlate into themselves
+	MOVE T2,[-400,,RDRTRA]	;EVERY THING TRANSLATES TO ITSELF
+LODR1A:	WRIOB T2,CBOFS(T1)
+	WRIO T2,RDROFS(T1)
+	AOBJN T2,LODR1A
+	RET			;FORGET THE FANCY STUFF BELOW
+
+	MOVSI T2,-SREITL	;Special RAM entry init table len
+LODRA2:	HLRZ T3,SREIT(T2)
+	WRIOB T3,CBOFS(T1)	;special character
+	HRRZ T3,SREIT(T2)
+	WRIO T3,RDROFS(T1)
+	AOBJN T2,LODRA2
+	MOVEI T2,600000
+	TDNE T2,DEVSTS(F)	;Lower case printer?
+	 RET			;Yes.
+	MOVEI T2,36		;Have LP20 map l.c. into u.c.
+LODRA3:	MOVEI T3,140(T2)
+	WRIOB T3,CBOFS(T1)
+	MOVEI T3,RDRTRA+100(T2)
+	WRIO T3,RDROFS(T1)
+	SOJGE T2,LODRA3
+	RET
+
+;Special RAM entry initialization table.
+;	Char,,RAM entry		Char	VFU channel
+SREIT:	  12,,RDRTRA+RDRPI+7	;LF	8
+	  13,,RDRTRA+RDRPI+6	;VT	7
+	  14,,RDRTRA+RDRPI+0	;FF	1
+	  20,,RDRTRA+RDRPI+1	;DLE	2
+	  21,,RDRTRA+RDRPI+2	;DC1	3
+	  22,,RDRTRA+RDRPI+3	;DC2	4
+	  23,,RDRTRA+RDRPI+4	;DC3	5
+	  24,,RDRTRA+RDRPI+5	;DC4	6
+SREITL==.-SREIT
+
+;LODVFU.  Load the VFU with the standard assignments.
+LODVFU:	MOVE T1,LPTBA(F)
+	RDIO T1,CSBOFS(T1)
+	TRNE T1,CSBOO		;This printer has a DAVFU?
+	 RET			;N.
+	MOVE T1,LPVLPT		;Pointer to VFU data
+LPTFLV:	MOVEI T2,F.LV		;Load VFU.
+	CALL SLP20R
+	SETZM LPTWC(F)
+LPTMG1:	CALL LPTMGO		;Start VFU load.
+	MOVEM S,DEVIOS(F)
+	CALL WAIT1		;Reschedule until finished.
+	TLNE S,LPTRBL		;Hang if error.
+	 JRST LPTHAN
+	RET			;None, continue with output.
+
+;LPTHAN.  Stop user job, informing operator and user of
+; problem with LPT.  If continued, retry operation.
+LPTHAN:	TLZ S,LPTRBL		;Clear error flag.
+	MOVEM S,DEVIOS(F)
+	CALL HNGSTP
+	JRST LPTOUT		;Try again if user continues.
+
+;LPTCLS - Close UUO.  Do OUTPUT, wait for buffers to
+; be sent, then output CRFF unless LPTNFF is set.
+LPTCLS:	SKIPN	NXDLPT
+	  JRST CPOPJ
+	CALL LPTOUT
+	CALL WAIT1		;Wait until output finished.
+	TLNE S,LPTRBL
+	 JRST LPTHAN		;Hang on errors.
+	TRNE S,LPTNFF
+	 RET			;Finished.
+	TLO S,LPTEND
+	JRST LPTCF
+
+
+
+
+SUBTTL LPTXFR, LPTCVT - move data between buffers.
+
+;LPTXFR.  Supplied by UUOCON with
+; T2.Lh, start of data in user's buffer, interpreted as 7 bit bytes
+; T2.Rh, address of next block in monitor buffer
+; T3, Last address +1 in monitor buffer to be transferred to.
+; T1, Number of words to be moved.
+;Returns in T1 the number of words actually moved.
+
+LPTXFR:	XCTFU <BLT T2,-1(T3)>
+	JRST CPOPJ1
+
+;LPTCVT.  Move T1 words out of monitor buffer pointed
+; at by T2 into LPT buffer for this printer.
+; Repack data in -11 format: 8 bit bytes, four per word,
+; stored in order: 10-17,2-9,28-35,20-27.
+;Returns in T1.Rh: # words of LPT buffer used,
+;This code borrowed from T10 module LP2SER.
+LPTCVT:	MOVEI T4,5
+	IMULB T4,T1		;# bytes to move.
+	CAILE T4,^D1280		;Never more than 400 wordsworth
+	 STOPCD
+	ROT T1,-2		;Compute words used in LPT buffer.
+	TLZE T1,600000		;Any remainder?
+	 ADDI T1,1		;Yes, takes whole word.
+	HLRZ T3,LPTLBA(F)	;-10 adr of LPT buffer
+	HRLI T2,440700
+LPTXF1:	SOJL T4,CPOPJ
+	ILDB P1,T2
+	SOJL T4,LPTXF2
+	ILDB P2,T2
+	LSH P2,10
+	IOR P2,P1
+	HRLZM P2,(T3)
+	SOJL T4,CPOPJ
+	ILDB P1,T2
+	SOJL T4,LPTXF3
+	ILDB P2,T2
+	LSH P2,10
+	IOR P2,P1
+	HRRM P2,(T3)
+	AOJA T3,LPTXF1
+LPTXF2:	HRLZM P1,(T3)
+	RET
+LPTXF3:	HRRM P1,(T3)
+	RET
+
+
+SUBTTL LPTINT - LP20 interrupt service
+
+
+;LPTINT.  Come here with acs saved, stack setup,
+; F=DDB of interrupting LP20, T1=base
+; address of interrupting LP20, S=DEVIOS(F).
+
+LPRINT::0
+	MOVEM 17,LPTACS+17
+	MOVEI 17,LPTACS
+	BLT 17,LPTACS+16
+	MOVE P,LPTPDP
+	MOVEI F,LP0DDB
+	MOVE S,DEVIOS(F)
+	MOVE T1,LPTBA(F)
+	CALL LPTINT
+	MOVSI 17,LPTACS
+	BLT 17,17
+	JEN @LPRINT
+LPTINT:	RDIO T2,CSAOFS(T1)	;See why LP20 interrupted.
+	TRNN T2,CSADON		;Done interrupt?
+	 JRST LPTERR		;Nope, some error.
+	RDIO T3,CSBOFS(T1)
+	TRNN T2,CSAPZ+CSAUC	;Shouldn't have done&error.
+	 TRNE T3,ANYRBE
+	  JRST LPTERR		;BUT WE DO SOMETIMES!
+LPTIN0:	TLNE S,LPTMO		;Internal output (CRFF or DAVFU ld)
+	 JRST LPTDON		;Y.  Restart user.
+	HRRZ T4,DEVCLS(F)	;Advance output pointer over data
+				; just printed.
+	HRRZ T3,-2(T4)		;Start of data just transferred
+	ADD T3,LPTWC(F)		;First word after data just transferred
+	CAML T3,-1(T4)		;Past end of ring buffer?
+	 HRRZ T3,DEVCLS(F)	;Yes, next xfr starts at ring start.
+	HRRM T3,-2(T4)		;New ring taker
+	CALL SOP		;Setup next output pointer
+	 JRST LPTDON		;Nothing more to print
+	PUSH P,T1
+	PUSH P,T3
+	CALL LPTDO1		;Start user after every block.
+	POP P,T3
+	POP P,T1
+	MOVE S,DEVIOS(F)
+	MOVEI T2,F.PD
+	CALL SLP20R
+	JRST LPTUGO
+LPTDON:	TRZ S,IOACT		;Output has stopped
+LPTDO1:	TLZE S,IOW
+	 CALL SETIOD		;Wake user
+	JRST STOIOS
+
+;LPTERR.  Here when device interrupted because of
+; some error condition.  T2 has CSRA contents.
+LPTERR:	TRNE T2,CSAPZ		;Page counter 0?
+	 CALL LPTPZE
+	RDIO T3,CSBOFS(T1)
+	TRNN T2,CSAUC
+	 TRNE T3,ANYRBE
+	  SKIPA
+	   JRST LPTIN0		;Must be PZE.
+	TRNE T3,CSBDNR
+	 TLO S,LPTVFU
+	CALL SAVSTS		;Save all registers.
+	TLO S,LPTRBL+LPTPAR	;Flag error.
+	MOVEI T2,CSAER		;Reset error flags
+	BSIO T2,CSAOFS(T1)
+	TRZ S,IOACT
+	TLZE S,IOW
+	 CALL SETIOD		;Wake user
+	CALL STOIOS
+	JRST DEVERR		;Have UUOCON retry.
+;Here on page counter decremented to zero interrupt.  Set
+; the counter to 7777, clear the error flag, and return.
+LPTPZE:	MOVEI T3,7777
+	WRIO T3,PCOFS(T1)
+	MOVEI T3,CSAPZ
+	BCIO T3,CSAOFS(T1)
+	RET
+
+;SAVSTS.  Increment LPT error count and save all registers
+; in the DDB.
+SAVSTS:	AOS LPTEC(F)		;One more LPT error
+	MOVE T2,[POINT 18,LPTSB(F)]
+		;THE CODE BELOW IS SUPPOSED TO SET UP THE DDB TO
+		; SO THAT THE PORTION OF THE BUFFER NOT YET PRINTED
+		; WHEN THE ERROR OCCURED WILL NOT BE LOST.
+	RET ;;;;; UNFORTUNATELY IT HAS A BUG WHICH KILLS US SO SKIPIT.
+	MOVSI T3,-NLP20R
+SAVST1:	RDIO (T1)
+	IDPB T4,T2
+	ADDI T1,2
+	AOBJN T3,SAVST1
+	SUBI T1,NLP20R*2
+	RET
+
+;LPTACS, LPTPDP.  Save user Acs here, set up I level PDL
+; using LPTPDP
+LPTACS:	BLOCK 20
+LPTPDP:	-30,,.
+	BLOCK 30
+
+
+>;IFG LPTFL, STARTING PAGE 1.
+IFE LPTFL,<
+
+INTERN LPRINT,LPRDDB,LPRDDS,LPRINI
+
+LPRINT:	STOPCD
+LPRINI:	POPJ	P,	;DO NOTHING, JUST RETURN
+LPRDDB:	BLOCK	15
+RELOC LPRDDB+DEVSER
+LPRINI
+RELOC
+LPRDDS==15
+>;IFE LPTFL
+
+>;IFCPU (KS).
+
+
+;*****
+
+
+IFCPU (<KI,KL>),<
+TITLE	LPTSER - LINE PRINTER SERVICE ROUTINE FOR MULTIPLE LINE PRINTERS - V1420
+SUBTTL	T. N. MCMANUS /TNM/CHW/RCC   TS 7 JUL 71
+
+
+
+;THE FOLLOWING EXTERNAL SYMBOLS ARE DEFINED IN COMMON:
+
+	EXTERNAL CPOPJ1,CPOPJ
+
+;THE FOLLOWING EXTERNAL SYMBOLS ARE DEFINED IN CLOCK1:
+
+	EXTERNAL SETIOD 
+
+;THE FOLLOWING EXTERNAL SYMBOLS ARE DEFINED IN ERRCON:
+
+	EXTERNAL HNGSTP, ERROCI
+
+;THE FOLLOWING EXTERNAL SYMBOLS ARE DEFINED IN UUOCON:
+
+	EXTERNAL ADVBFE, IOSET, OUT, SETACT, STOIOS, DEVERR
+
+;THE FOLLOWING SYMBOLS ARE REFERENCED OUTSIDE OF LPTSER:
+
+	INTERN	LPTINT, LPTNXT, LPTECM, LPTDON, LPTDSP
+	ENTRY	LPTSER
+
+LPTSER:
+;LINE PRINTER CONTROL REGISTER MNEMONIC DEFINITIONS
+
+	LPTCLR==1B25			;CLEAR LINE PRINTER BUFFER
+	LPTLOV==1B26			;LINE OVERFLOW FLAG (PDP-6 ONLY)
+	LPTERR==1B27			;ERROR FLAG
+	LPTBSY==1B28			;BUSY FLAG
+	LPTDON==1B29			;DONE FLAG
+	LPTECM==7B32			;ERROR CHANNEL MASK
+
+	LPTBDM==LPTBSY+LPTDON		;BUSY/DONE FLAG MASK
+
+;LINE PRINTER DEVICE DEPENDENT I/O STATUS MNEMONIC DEFINITIONS
+
+	LPTEND==400000			;CLOSE UUO HAS BEEN DONE
+	LPTSYN==200000			;CRFF AFTER CLOSE UUO HAS BEEN SENT
+	LPTRBL==100000			;LPT TROUBLE DETECTED AT INTERRUPT LEVEL
+	LPTPAR==40000			;PARTIAL BUFFER ALREADY OUTPUT
+
+;BITS IN RH OF S
+
+	LPTNFF==100			;SUPPRESS FREE FORM FEEDS
+
+;LINE PRINTER DEVICE DATA BLOCK ADDRESSING MNEMONIC DEFINITIONS
+
+	EXTERN	LPTCON,LPTPTR,LPTCH,LPTSVE,LPTEX1,LPTSV2,LPTECH
+	EXTERN	LPTDNE,LPTCSO,LPTCSZ,LPTCNI,LPTCNO,LPTDTO,LPTBKO
+	EXTERN	LPXSTS,SIZLPT
+	EXTERN	WSYNC
+
+;LINE PRINTER SERVICE DISPATCH TABLE
+
+LPTDSP:	PHASE 0
+DDXZ:	DSPSIZ
+DDINT:	POPJ P,
+DBYT:	4400,,4400
+DVSIZ:	MOVEI T1,SIZLPT
+DINI:	JRST LPTINI
+DHNG:	JRST LPTHNG
+DRL:	JRST LPTREL
+DCL:	JRST LPTCLS
+DOU:	JRST LPTOUT
+DIN:	JRST ERROCI
+DXFR:	JRST LPTXFR
+	DSPSIZ==.-1
+	DEPHASE
+;LINE PRINTER INITIALIZATION, HUNG DEVICE AND RELEASE CODE
+
+	;LPTINI IS CALLED AT SYSTEM INITIALIZATION TIME FROM
+	;IOGO IN SYSINI WITH THE DDB ADDRESS IN F
+
+	;LPTHNG IS CALLED FROM DEVCHK IN UUOCON (IOCSS) WITH
+	;THE DDB ADDRESS IN F WHENEVER A LINE PRINTER
+	;HUNG DEVICE COUNT IS DECREMENTED TO ZERO
+
+	;LPTREL IS CALLED FROM RELEA1 IN UUOCON WITH THE DDB
+	;ADDRESS IN F WHENEVER A RELEASE UUO IS EXECUTED
+	;FOR A LINE PRINTER
+
+	;EACH OF THE ABOVE ROUTINES MUST:
+	;
+	;	1.  CLEAR THE SPECIFIED LINE PRINTER
+	;	2.  DEASSIGN BOTH THE ERROR AND DONE INTERRUPT
+	;	     CHANNELS FOR THAT LINE PRINTER
+	;	3.  CLEAR THE SKIP CHAIN INTERRUPT MASK FLAGS
+	;	     FOR THAT LINE PRINTER
+
+	;NOTE:  THE LPTINI CODE FORCES IOGO IN SYSINI TO INVOKE
+	;       LPTINI FOR EACH LINE PRINTER ON THE SYSTEM RATHER
+	;       THAN FOR THE NORMAL CASE WHERE IT INVOKES THE
+	;       INITIALIZATION CODE ONCE FOR EACH DISPATCH TABLE.
+	;
+	;       THEREFORE, THE CORRECT OPERATION OF THE LPTINI CODE
+	;       IS DEPENDANT UPON THE IOGO CODE WHICH SHOULD BE:
+	;
+	;		PUSHJ P,DINI(P3)
+	;		HRRZM P3,SAVITM
+
+LPTHNG:
+LPTREL:
+	SOS	(P)		;COUNTERACT SKIP RETURN
+LPTINI:	MOVEI	U,LPTCLR	;CLEAR THE LINE PRINTER
+	XCT	LPTCNO(F)
+	XCT LPXSTS(F)	;CONI INTO DEVSTS FOR 96 CHR CHECK
+	HLLZS	LPTCON(F)	;CLEAR SKIP CHAIN MASK FLAGS
+	TLZ	S,LPTRBL!LPTPAR	;CLEAR TROUBLE FLAGS
+	PUSHJ	P,STOIOS
+	JRST	CPOPJ1		;SKIP RETURN IF ENTERED AT LPTINI
+					; TO FORCE CALL FOR EACH LPT
+
+;LINE PRINTER CLOSE UUO ROUTINE
+
+LPTCLS:	TLO	S,LPTEND	;TURN ON THE END FLAG
+	TLZ	S,LPTSYN+LPTRBL+LPTPAR ;TURN OFF SYNCHRONIZATION FLAG
+	MOVEM	S,DEVIOS(F)	;SAVE S IN THE DDB
+;LINE PRINTER OUTPUT UUO ROUTINE
+
+LPTOUT: TLZN	S,LPTRBL	;TROUBLE DETECTED?
+	JRST	LPTOU2		;NO
+	MOVEM	S,DEVIOS(F)	;YES, SAVE NEW STATUS
+LPTSTP:	PUSHJ	P,HNGSTP	;HALT JOB UNTIL I/O IS OK
+LPTOU2:	MOVEI	U,0	;CLEAR LP FLAGS
+	TLO	S,IO		;INDICATE OUTPUT
+	XCT	LPTCNO(F)	;CLEAR ALL FLAGS
+	MOVEI	U,LPTERR	;MASK FOR ERROR FLAG
+	XCT	LPTCSZ(F)	;ERROR?
+	JRST	LPTSTP	;YES.
+	MOVE	U,LPTCH(F)	;SET UP CHANNEL ASSIGNMENT
+	TLNN	S,IOBEG	;FIRST OUTPUT?
+	JRST	LPTGO	;NO
+	HRRZ	T1,DEVCLS(F)	;YES,SET UP INITIAL BLKO POINTER
+	SUBI	T1,1		;TO BUFFER ADDRESS - 1
+	MOVEM	T1,LPTPTR(F)	; AND STORE IT
+	TRC	U,LPTDON!LPTCLR	;CLEAR LPTDON AND SET LPTCLR
+LPTGO:	PUSHJ	P,SETACT	;SET I/O ACTIVE, ETC.
+	HRLI	U,LPTLOV+LPTERR+LPTDON
+	WRPI	LI.PIF	;TURN OFF ALL INTERRUPTS
+	XCT	LPTCNO(F)	;DO IT TO IT
+	HLRM	U,LPTCON(F)	;SET CHAIN MASK BITS
+	WRPI	LI.PIN	;TURN ON INTERRUPTS AGAIN
+	TLNN	S,LPTEND	;CLOSE?
+	POPJ	P,		;NO. RETURN
+	PUSHJ	P,WSYNC		;YES. GO TO I/O WAIT FOR BUFFER TO EMPTY
+	TLZN	S,LPTRBL	;ANY ERRORS?
+	POPJ	P,		;NO
+	JRST	LPTSTP		;YES. TELL OPERATOR AND HANG
+;
+; ADVANCE BUFFER POINTER.
+;   ON ENTRY (T1)= LAST BLKO POINTER
+;   SKIP RETURN INDICATES BUFFER NOT EMPTY
+;   NO-SKIP RETURN INDICATES BUFFER IS EMPTY
+;
+ABOP:	HRRZS	T1		;CLEAR COUNT
+	AOJ	T1,		;INCREMENT ADDRESS
+	HRRZ	T2,DEVCLS(F)	;BUFFER POINTER
+	CAML	T1,-1(T2)	;OUT .GE. LAST ?
+	MOVE	T1,T2		;YES. OUT = FIRST
+	HRRM	T1,-2(T2)	;STORE NEW OUT POINTER
+	MOVS	T1,-2(T2)	;SWAP IN AND OUT
+	CAME	T1,-2(T2)	;IN .EQ. OUT?
+	AOS	(P)		;NO. BUFFER CONTAINS DATA
+	POPJ	P,		;RETURN
+;
+
+;
+;  SET UP NEW BLKO POINTER FOR NEXT BLOCK
+;  IN MONITOR BUFFER.  ASSUMES BUFFER IS
+;  NOT EMPTY.
+;    ON EXIT (T1)= NEW POINTER
+;
+BPTSET:	HRRZ	T3,DEVCLS(F)	;GET BUFFER POINTER
+	HLRZ	T1,-2(T3)	;LOAD IN POINTER
+	HRRZ	T2,-2(T3)	;LOAD OUT POINTER
+	SUB	T1,T2		;COMPUTE LENGTH
+	JUMPGE	T1,BPTSE1	;JUMP IF IN .GE. OUT
+	HRRZ	T1,-1(T3)	;GET LAST POINTER
+	SUB	T1,T2		;COMPUTE LENGTH TO END OF BUFFER
+BPTSE1:	MOVN	T1,T1		;NEGATE COUNT
+	SOS	T2		;COMPUTE ADDRESS - 1
+	HRL	T1,T2		;COMBINE ADDRESS AND LENGTH
+	MOVSS	T1		; IN PROPER ORDER
+	POPJ	P,		;RETURN
+;LINE PRINTER INTERRUPT SERVICE ROUTINE
+
+LPTINT:	XCT	LPXSTS(F)	;STORE CONI STATUS IN DDB
+	XCT	LPTECH(F)	;SKIP IF NO ERROR CHANNEL ASSIGNED
+	XCT	LPTDNE(F)	;SKIP IF DONE FLAG IS UP
+	JRST	LPTER1		; BRANCH TO ERROR SERVICE ROUTINE
+	SKIPL	LPTPTR(F)	;BLKO COUNT TO 0 ON PREV. INTERRUPT?
+	JRST	LPTSVE(F)	; YES, GO SAVE ORIGINAL AC'S
+	AOSLE	DEVWUC(F)	;ADVANCE EARLY STARTUP COUNT
+	JRST	LPTSVE(F)	;COUNT EXHAUSTED SO START UP USER
+	XCT	LPTBKO(F)	; NO, SEND NEXT WORD FOR PRINTING
+	JRST	LPTEX1(F)	;LAST WORD SENT BUT INTERRUPT PENDING
+	JRST	LPTEX1(F)	;GO RESTORE F AND RETURN
+
+LPTNXT:					;ENTER HERE AFTER DDB ROUTINE SAVES
+					; ORIGINAL AC'S IN PROPER CHANNEL
+					; SAVE AREA AND SETS UP F
+					; TO POINT TO DDB AGAIN
+
+	PUSHJ	P,IOSET		;SET AC R:= JOB AREA ADDRESS AND
+					; AC S:= DEVIOS IN THE DDB
+	TLNE	S,LPTRBL	;TROUBLE DETECTED ON INTERRUPT
+	JRST	LPTERG		;YES, FIX IT
+	TLZE	S,IOBEG		;NO, FIRST BUFFER SINCE INIT?
+	JRST	LPTBG1		; YES, GO OUTPUT A CRFF
+	MOVE	T1,LPTPTR(F)	;GET OLD BLKO POINTER
+	PUSHJ	P,ABOP	; NO, ADVANCE TO NEXT BLOCK
+	JRST	LPTOFF		;CANNOT ADVANCE, BUFFER EMPTY
+	PUSHJ	P,BPTSET	;SET UP NEW BLKO POINTER
+	MOVEM	T1,LPTPTR(F)	;STORE NEW POINTER
+	HLREM	T1,DEVWUC(F)	;SET WAKE UP COUNT TO SAME AS BLOCKO COUNT
+LPTWCK:	TLZE	S,IOW		;IS JOB WAITING FOR I/O COMPLETION?
+	PUSHJ	P,SETIOD	; YES, ARRANGE FOR JOB TO RUN AGAIN
+	JRST	STOIOS		;SAVE S, RESET HUNG DEVICE COUNT
+					; AND DISMISS INTERRUPT
+
+LPTOFF:	TLNN	S,LPTEND	;SKIP IF CLOSE HAS BEEN DONE
+	JRST	LPTOF1		; GO TURN PRINTER OFF UNTIL NEXT OUTPUT
+	TLON	S,LPTSYN	;HAS FINAL CRFF BEEN OUTPUT?
+	JRST	LPTBG2		; NO, SO GO DO IT
+	TLZ	S,LPTEND	; YES, SO CLEAR END FLAG
+LPTOF1:	TRZ	S,IOACT		;CLEAR I/O ACTIVE BIT
+	MOVEI	U,0		;CLEAR U AND
+	XCT	LPTCNO(F)	; TURN LPT OFF
+	HLLZS	LPTCON(F)	;CLEAR SKIP CHAIN MASK FLAGS
+	JRST	LPTWCK		; AND BRANCH
+
+LPTBG1:	MOVE	T1,LPTPTR(F)	;OLD BLKO POINTER
+	PUSHJ	P,BPTSET	;SET UP INITIAL BLKO POINTER *******
+	MOVEM	T1,LPTPTR(F)	;STORE NEW POINTER
+LPTBG2:	MOVEI	U,[EXP 15B6+14B13]	;SEND OUT A CRFF
+	TRNN	S,LPTNFF	;SKIP IF SUPPRESSING FF (100 MODE)
+	XCT	LPTDTO(F)
+	JRST	STOIOS		;GO DISMISS ITERRUPT
+;LINE PRINTER ERROR HANDLING ROUTINE
+
+LPTER1:	MOVEM	U,LPTSV2(F)	;SAVE U IN DDB
+	MOVEI	U,LPTLOV	;GET LINE OVERFLOW ERROR MASK
+	XCT	LPTCSO(F)	;SKIP IF LINE OVERFLOW FLAG IS ON
+	JRST	LPTER2		; GO CHECK IF PREVIOUS ERROR OCCURRED
+	MOVN	U,[EXP 1000001]	;DECREMENT BLK0 POINTER
+	ADDM	U,LPTPTR(F)
+	MOVEI	U,[EXP 15B6+12B13]	;PRINT CRLF
+	XCT	LPTDTO(F)
+	JRST	LPTER4
+
+LPTER2:	XCT	LPTECH(F)	;SKIP IF ERROR INTERRUPT NOT ASSIGNED
+	JRST	LPTER5		; ERROR CONDITION DETECTED
+	XCT	LPTCNI(F)	;GET HARDWARE STATUS
+	ANDI	U,LPTBDM	;EXTRACT BUSY AND DONE FLAGS
+	XOR	U,LPTCH(F)	;PUT CHANNEL ASSIGNMENTS BACK IN
+	XORI	U,LPTDON	;RECOMPLEMENT LPTDON TO PREVIOUS STATE
+	XCT	LPTCNO(F)	;SEND IT OUT TO THE LPT
+	MOVEI	U,LPTLOV!LPTERR!LPTDON	;ENABLE FOR ALL INTERRUPTS
+	HRRM	U,LPTCON(F)	;SAVE SKIP CHAIN MASK FLAGS
+LPTER4:	MOVE	U,LPTSV2(F)	;RESTORE SAVED ACCUMULATOR
+	JRST	LPTEX1(F)	; AND GO DISMISS INTERRUPT
+
+LPTER5:	MOVSI	U,LPTRBL!LPTPAR	;INDICATE TROUBLE NOTICED ON
+	ORM	U,DEVIOS(F)	; INTERRUPT LEVEL
+	MOVE	U,LPTSV2(F)	;RESTORE U
+	JRST	LPTSVE(F)	;GO SAVE ALL AC'S
+
+;RETURN HERE WITH ACS SAVED
+LPTERG:	PUSHJ	P,LPTOF1	;TURN OFF LPT, CLEAR IOACT
+	JRST	DEVERR		;CAUSE UUOCON TO RETRY ON UUO LEVEL
+;
+;	DEVICE DEPENDENT TRANSFER FROM USER BUFFER
+;	ON ENTRY: LH(T2)=DATA AREA IN USER BUFFER
+;	          RH(T2)=ADDRESS OF NEXT BLOCK IN MONITOR BUFFER
+;		  (T3)  =LAST ADDRESS + 1 IN MONITOR BUFFER OF DATA TO BE TRANSFERRED
+;	          (T1)  =NO. OF WORDS IN BLOCK TO BE XFERRED
+;	ON EXIT: (T1)  RETURNS NO. OF WORDS ACTUALLY XFERRED
+;
+LPTXFR:	XCTFU <BLT T2,-1(T3)>	;ALL SET UP FOR BLT
+	AOS	(P)		;SKIP  RETURN
+	POPJ	P,
+>;IFCPU (<KI,KL>).  KS10 USES DIFFERENT CODE ALTOGETHER.
+END
+   >@"F

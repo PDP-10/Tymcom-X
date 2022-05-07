@@ -1,0 +1,343 @@
+title kmcser - module to support the KMC communication interface
+IFKMC<
+;This module does the required setup and fiddling required to
+;support the KMC microprocessor, which is driving the DR devices
+;and managing the input and output rings and processing the block io
+;requests.
+
+	entry kmcser,kmcini
+
+kmcser:: 0
+
+EXTERNAL KMCPDP,KMCFLG,DRMTIM
+EXTERNAL DRPROT
+external iring,oring,irp620,irppdp,orp620,orppdp,dmp620
+external keyset,crschk,syscrs
+external sizirg,sizorg
+external ubacm0,ubanxt,ubirbg,ubaend
+
+opdef call [pushj p,]
+opdef ret [popj p,]
+opdef stack [push p,]
+opdef unstack [pop p,]
+
+;First paging RAM location for the KMC is ubacm0. KMC can use from
+;ubacm0 to last RAM locations
+
+;calculate the pdp11 address for the start of the oring
+orng11==<oring&777>_2+<<<iring+<1_sizirg>-iring&777000>_-9>+ubirbg>_^D11
+
+;define the KMC CSR names
+define name(xx),<csr'xx==xx>
+xx==0
+repeat 8,<
+  name(\xx)
+xx==xx+1>
+
+;defne the flag positions in CSRs 3 and 4
+dr0flg==1
+dr1flg==2
+dr2flg==20
+dr3flg==200
+drflgs==dr0flg+dr1flg+dr2flg+dr3flg
+;set up flag table
+flgtab: dr0flg
+	dr1flg
+	dr2flg
+	dr3flg
+
+;define the KMC CSR1 bit names
+define ioreg(dev,regadr,bitlst,bitmsk)
+<zz==100000
+ifnb <bitmsk>,<zz==bitmsk>
+dev'adr:3,,regadr
+irp bitlst,<dev'bitlst==zz
+zz==zz/2
+>>
+ 
+kmcadr==760540
+ioreg(csr,kmcadr,<run,mcl,cr,,,rmo,rmi,stp,,,,,,,>)
+
+pg3adr: 0		;Address of paging Ram Location on UBA 3
+nxtpag: 0		;hold the address of the next page
+avlflg: 3,,kmcadr+csr4	;address of the available node flag word
+actflg: 3,,kmcadr+csr3	;address of the active node flag word
+upflg:  0		;the node up flag word
+manflg: 0		;the node has been set down manually flag
+notavl: 0		;node port numbers gt max. no. of port flag
+
+;parameters defining maximum possible number of nodes and line per
+;node and the maximum ports configured
+maxdr==4		;maximun number of nodes
+lperdr==100		;lines per node
+external portn		;maximum number of ports configured
+
+
+
+
+
+;kmcini- initializes the paging ram to map the addresses of the 
+;  input and output rings to pdp 11 addresses and sets up the
+;  low core communication area for the KMC. The communication area is
+;  DMP620 - unchanged
+;         - loc of input ring in pdp11 address,in the format
+;	    xx,,yy where xx=bits 17,16 of addr. and yy=bits 0-15 of addr.
+;         - size of input ring, in the xx,,yy format in pdp11 bytes
+;  IRPPDP - unchanged
+;  IRP620 - 620 pointer to input ring,unchanged
+;	  - loc of output ring in pdp11 address,in the xx,,yy format
+;	  - size of output ring in the xx,,yy format in pdp11 bytes
+
+kmcini:: skipn kmcdo##		;skip if the KMC is to be activated
+	 ret
+	stack t2		;preserve t2,t3
+	stack t3
+	movsi t1,(<jfcl>)	;deactivate the 620 keyset
+	movem t1,keyset
+;Set up the the paging RAM to map CM 0 to pdp11 addr. 4000
+	hrrzi t1,pgradr+ubacm0	;LPT uses 1st RAM loc,KMC expects this 2nd
+	hrli t1,ua3
+	movem t1,pg3adr		;set up address of 1st paging ram loc. to be used
+	setz t1,
+	tro t1,pgrval		;set the valid bit
+	movei t2,1000		;Set as next cm page
+	movem t2,nxtpag		;save
+	wrio t1,@pg3adr		;write to paging RAM
+;Now set up the pointers to the rings in KMC address format
+	movei t3,dmp620+1	;address to store the IRING addr
+	movei t1,<iring&777>_2+<ubirbg_^D11> ;pdp11 address of iring
+	call stor11		;Store the 11 address
+   	aoj t3,			;point to iring size word
+	movei t1,1_<sizirg+2>   ;lenght of iring in pdp11 bytes
+	call stor11		;store iring length
+	movei t3,irp620+1	;address of pointer to oring
+	movei t1,orng11		;construct addr. of end of iring in pdp11 adr
+	call stor11		;Store the pdp11 addr. of oring
+	aoj t3,			;point to oring size word
+	movei t1,1_<sizorg+2>  	;length of oring in pdp11 bytes
+	call stor11		;store the length of the oring
+;Now set up paging ram locations for iring and oring
+	movei t2,ubanxt-1-ubacm0;see if all fit in page 0
+	skipn t2		;skip if not
+	 jrst kmcout		;all done
+	movei t1,ubirbg-ubacm0	;see if iring started in cm0
+	skipn t1		;skip if not
+	 jrst setram		;set up rest of ram for rings
+	movei t2,ubanxt-ubirbg	;get count of pages
+	movei t1,iring&777000	;set nxtpag to iring address
+	movem t1,nxtpag
+;setram - sets up the paging ram for the nimber of slots specifiedin t2
+;  starting at the address in nxtpag
+setram:	move t1,nxtpag		;Get address of next page
+	lsh t1,-9		;get pdp10 page address
+setrm1:	aos t2,pg3adr		;increment address of paging RAM entry
+	tro t1,pgrval		;set the valid address bit
+	wrio t1,@pg3adr		;set up the RAM entry
+	trz t1,pgrval		;clear the flag
+	aoj t1,			;get page address of next page
+	sojn t2,setrm1		;loop til all pages set
+;Paging ram set up, exit
+kmcout: setzm upflg		;clear all up flags
+	movei t1,drflgs
+	CALL	KRING0
+	wriob t1,@actflg
+	CALL	KRING
+;Clear out paging RAM area for KMC block io
+	movei t3,ubaend-ubanxt 	;Get count of entries to clear
+	move t2,[ua3,,pgradr+ubanxt]  ;Get 1st RAM addr. to clear
+	setz t1,
+clrram:	wrio t1,@t2		;clear
+	aos t2
+	sojn t3,clrram		;till done
+;set the flags to disable any nodes whose port numbers exceed the maximum
+;number of ports configured in the system
+	setzm t2
+	setzm t1
+setnav:	addi t1,lperdr		;skip until port number gt portn
+	aos t2			;count the nodes passed by
+	caig t1,portn
+	 jrst setnav
+setna1: cail t2,maxdr		;checked all nodes?
+	 jrst setna2		;yes,done
+	move t1,flgtab(t2)	;get appropriate flag
+	iorm t1,notavl		;set as not available to recieve messages
+	aoja t2,setna1
+setna2:	move t1,notavl		;set as manual down to prevent messages
+	movem t1,manflg
+	CALL DRPROT		;SET UP DR INTERRUPT PROTECTION (CIOPR)
+	unstack t2
+	unstack t3
+	ret
+
+
+
+
+
+subttl routines to process the active,available manual and up flags
+;Routines to handle the flags controlling the KMC and Node 
+;  communication
+;There are three sets of flags used to communicate between the KMC
+;and the pdp10. They are:
+;	Available - 0 flags that the DR for the node is physically there
+;		    1 flags that the KMC got a NXM for that DR
+;	Active    - 0 flags that the KMC is to process messages for the DR
+;		    1 flags that the KMC is throw away messages to the DR
+;		      and not take input from it
+;	Up        - 0 flags that no answered message has been received
+;		      from the node
+;		    1 flags that an answered message has been received
+;		      from the node
+;The active flags are maintained by the pdp10 in the KMC CSR#3.
+;The available flags are maintained by the KMC in the KMC CSR#4
+;The up flags are maintained by the pdp10 in pdp10 memory
+;The KMC will support up to 4 nodes connected directly to the 2020
+;  using DR11C's.
+
+;kmcgav - get the available node flag word
+kmcgav:: rdiob t1,@avlflg	;read the KMC node available register
+	ret
+
+;kmcgac - get the active node flag word
+kmcgac:: rdiob t1,@actflg	;read the KMC node active register
+	ret
+ 
+;kmccac - marks inactive the node whose
+;	 number is in register T1
+kmccac:: stack t2
+	stack t1
+	rdiob t2,@avlflg	;always set as not active the unavail. nodes
+	tdo t2,manflg		;set manual down flags
+	move t1,flgtab(t1)	;get the appropriate bit
+	tdo t2,t1		;set the flag + the avail flags
+	CALL	KRING0
+	bsiob t2,@actflg	;set the flags
+	CALL	KRING
+	unstack t1		;get the DR number back
+	call kmccup		;clear the up flag also
+	unstack t2
+	ret
+
+;kmcsac- mark as active the node specified in T1
+kmcsac:: stack t2
+	rdiob t2,@avlflg	;dont turn off flag if node not avail
+	tdo t2,manflg		;set manual down flag
+	move t1,flgtab(t1)	;get the appropriate flag
+	CALL	KRING0
+	tdnn t2,t1		;see if avail
+	 bciob t1,@actflg	;clear if available
+	CALL	KRING
+	unstack t2
+	ret
+
+;kmcgup - get the node up flag word
+kmcgup:: move t1,upflg		;fetch the word
+	ret
+
+;kmcsup - set the host up for DR specified in T1
+kmcsup:: move t1,flgtab(t1)	;get appropriate flag
+	iorm t1,upflg		;set flag
+	ret			
+
+;kmccup - clear the host up for DR specified in T1
+kmccup:: move t1,flgtab(t1)
+	andcam t1,upflg
+	ret
+
+;kmcrst - return in t1 the bits set for the nodes which are active
+;  and unanswered
+kmcrst:: stack t2
+	rdiob t1,@avlflg	;get the active flags
+	move t2,manflg		;get the manual down flags
+	iorm t2,t1		;or in with avail and act
+	move t2,upflg		;get the up and answered nodes
+	iorm t2,t1		;or in
+	xori t1,drflgs		;complement 
+	CALL KRING0
+	rdiob t2,@actflg	;temp see below
+	tdz t2,t1		;bciob t1,@actflg didn't work?
+	wriob t2,@actflg	;see above
+	EXCH	T1,T2
+	CALL KRING
+	MOVE	T1,T2		;RESTORE T1
+	unstack t2
+	ret
+
+;kmcsmn - set the manually down flag for node specified in T1
+kmcsmn:: move t1,flgtab(t1)		;get appropriate flag
+	CALL	KRING0
+	bsiob t1,@actflg	;set in active word
+	CALL	KRING
+	iorm t1,manflg		;set in manual down flag
+	andcam t1,upflg		;clear in up flag
+	ret
+
+;kmccmn - clear the manual down flag for node spcified in T1
+kmccmn:: stack t2
+	move t1,flgtab(t1)	;get appropriate flag
+	move t2,notavl		;check if nodes ports within max. of config
+	tdnn t2,t1		;dont clear if not
+	 andcam t1,manflg	;clear if in range
+	rdiob t2,@avlflg	;get the available node flags
+	CALL	KRING0
+	tdnn t2,t1		;make sure the node is available
+	 bciob t1,@actflg	;set node active if available
+	CALL	KRING
+	unstack tet
+
+
+
+
+
+
+
+
+
+
+;stor11 - stores the value in t1 into the location in t3 in the
+;  format xx,yy, where xx=bits 17,16 of t1 and yy=0-15
+
+stor11:	hrrzm t1,(t3)		;store 0-15
+	lsh t1,2		;move over 16,17
+	hllm t1,(t3)		;store high order bits
+	ret
+
+
+KRING:	STACK T1
+	STACK T2
+	RDIOB	T2,@ACTFLG
+	ANDI	T2,377
+	ANDI	T1,377
+	LSH	T1,8
+	IOR	T1,T2
+	HRL	T1,DRMTIM	;GET SECONDS UP
+	XOR	T1,[1B3]	;FLIP THE 3RD HIGHEST BIT (IT SHOWS)
+	MOVE	T2,KMCPDP
+	MOVEM	T1,KMCFLG(T2)
+	ADDI	T2,1		;INC KMCPDP
+	ANDI	T2,77
+	MOVEM	T2,KMCPDP
+	UNSTACK	T2
+	UNSTACK	T1
+	RET
+
+KRING0:	STACK T1
+	STACK T2
+	RDIOB	T1,@AVLFLG
+	RDIOB	T2,@ACTFLG
+	ANDI	T2,377
+	ANDI	T1,377
+	LSH	T1,8
+	IOR	T1,T2
+	HRL	T1,DRMTIM	;GET SECONDS UP
+	XOR	T1,[1B3]	;FLIP THE 3RD HIGHEST BIT (IT SHOWS)
+	MOVE	T2,KMCPDP
+	MOVEM	T1,KMCFLG(T2)
+	ADDI	T2,1		;INC KMCPDP
+	ANDI	T2,77
+	MOVEM	T2,KMCPDP
+	UNSTACK	T2
+	UNSTACK	T1
+	RET
+>;END IFKMC
+end
+S1—

@@ -1,0 +1,355 @@
+Files involved:
+; install only files indicated, archive all files.
+
+; to generate system 00, use LOAD /SAVE:00034J @MON00
+MUSGUG   MON00.CMD
+CEBHIG   CONF00.MAC
+JOPLOL   CNFN00.MAC
+PIQYIS   00034J.SAV   ; install on system 00
+
+; to generate system 22, use LOAD /SAVE:22034J @MON22
+PUNPIP   MON22.CMD
+MUYMIY   CONF22.MAC
+BOGWEB   CNFN22.MAC
+ZOKMOY   22034J.SAV   ; install on system 22
+
+; to generate system 23, use LOAD /SAVE:23034J @MON23
+HODGAW   MON23.CMD
+RICHEN   CONF23.MAC
+LOHJOK   CNFN23.MAC
+BOJHUP   23034J.SAV   ; install on system 23
+
+; to generate system 24, use LOAD /SAVE:24034J @MON24
+SAVPAY   MON24.CMD
+NETHON   CONF24.MAC
+CAHMIG   CNFN24.MAC
+RIMRIR   24034J.SAV   ; install on system 24
+
+; to generate system 25, use LOAD /SAVE:25034J @MON25
+SENTIC   MON25.CMD
+PELJOY   CONF25.MAC
+JOJXIM   CNFN25.MAC
+FOCJIX   25034J.SAV   ; install on system 25
+
+; to generate system 26, use LOAD /SAVE:26034J @MON26
+FANWOX   MON26.CMD
+WAZTER   CONF26.MAC
+NABLIB   CNFN26.MAC
+KIPJUQ   26034J.SAV   ; install on system 26
+
+; to generate system 27, use LOAD /SAVE:27034J @MON27
+XEDFEL   MON27.CMD
+COBLAN   CONF27.MAC
+CAGCEK   CNFN27.MAC
+FEVMEH   27034J.SAV   ; install on system 27
+
+; to generate system 28, use LOAD /SAVE:28034J @MON28
+FEQNOB   MON28.CMD
+FEXSUN   CONF28.MAC
+WEYCOS   CNFN28.MAC
+TOKPAC   28034J.SAV   ; install on system 28
+
+; to generate system 29, use LOAD /SAVE:29034J @MON29
+RIPWOM   MON29.CMD
+LABJIC   CONF29.MAC
+VOWYIN   CNFN29.MAC
+ZAJGAV   29034J.SAV   ; install on system 29
+
+; to generate system 30, use LOAD /SAVE:30034J @MON30
+VUVTEC   MON30.CMD
+JERVET   CONF30.MAC
+GABPAJ   CNFN30.MAC
+LUNKOQ   30034J.SAV   ; install on system 30
+
+; to generate system 31, use LOAD /SAVE:31034J @MON31
+RONYEJ   MON31.CMD
+CEVNAM   CONF31.MAC
+XACJIF   CNFN31.MAC
+VAXFIN   31034J.SAV   ; install on system 31
+
+; to generate system 32, use LOAD /SAVE:32034J @MON32
+PAWYUJ   MON32.CMD
+HORRUW   CONF32.MAC
+DOCQAR   CNFN32.MAC
+QUDPUJ   32034J.SAV   ; install on system 32
+
+; to generate system 33, use LOAD /SAVE:33034J @MON33
+GAGBUG   MON33.CMD
+HEGRID   CONF33.MAC
+BOQTUX   CNFN33.MAC
+KAKBOK   33034J.SAV   ; install on system 33
+
+; to generate system 34, use LOAD /SAVE:34034J @MON34
+RIXFEZ   MON34.CMD
+ZEPMIV   CONF34.MAC
+XACLET   CNFN34.MAC
+FAXRIN   34034J.SAV   ; install on system 34
+
+; to generate system 35, use LOAD /SAVE:35034J @MON35
+WOKHUB   MON35.CMD
+COPZEW   CONF35.MAC
+ZIBCAY   CNFN35.MAC
+XEYLAP   35034J.SAV   ; install on system 35
+
+; to generate system 36, use LOAD /SAVE:36034J @MON36
+GISWIX   MON36.CMD
+DUKNEG   CONF36.MAC
+MIWXUN   CNFN36.MAC
+CUKLUD   36034J.SAV   ; install on system 36
+
+; to generate system 37, use LOAD /SAVE:37034J @MON37
+POSJIH   MON37.CMD
+HATFAC   CONF37.MAC
+KEYLIH   CNFN37.MAC
+JEDDUV   37034J.SAV   ; install on system 37
+
+; to generate system 38, use LOAD /SAVE:38034J @MON38
+YEZXIX   MON38.CMD
+BAFSON   CONF38.MAC
+SEYBOF   CNFN38.MAC
+JELDIF   38034J.SAV   ; install on system 38
+
+; to generate system 39, use LOAD /SAVE:39034J @MON39
+HEQJIQ   MON39.CMD
+HEGRID   CONF39.MAC
+ZUHLUW   CNFN39.MAC
+QAQPUQ   39034J.SAV   ; install on system 39
+
+; to generate system 54, use LOAD /SAVE:54034J @MON54
+RESFAM   MON54.CMD
+WOKXUZ   CONF54.MAC
+FAQSIH   CNFN54.MAC
+HUPHEF   54034J.SAV   ; install on system 54
+
+; to generate system 56, use LOAD /SAVE:56034J @MON56
+TOQGAC   MON56.CMD
+PELJOY   CONF56.MAC
+YIKDED   CNFN56.MAC
+GIGLOJ   56034J.SAV   ; install on system 56
+
+; to generate system 59, use LOAD /SAVE:59034J @MON59
+WUDKEF   MON59.CMD
+VULSAW   CONF59.MAC
+DARXUV   CNFN59.MAC
+PUMSOZ   59034J.SAV   ; install on system 59
+
+; to generate system 65, use LOAD /SAVE:65034J @MON65
+NOSKAT   MON65.CMD
+PELJOY   CONF65.MAC
+MIKYOM   CNFN65.MAC
+PUDDOV   65034J.SAV   ; install on system 65
+
+; to generate system 70, use LOAD /SAVE:70034J @MON70
+FODTAW   MON70.CMD
+DAJPUR   CONF70.MAC
+PAQPIV   CNFN70.MAC
+REVTOR   70034J.SAV   ; install on system 70
+
+; to generate system 83, use LOAD /SAVE:83034J @MON83
+TAGZOM   MON83.CMD
+VEHVUQ   CONF83.MAC
+VEFPUM   CNFN83.MAC
+PULWIF   83034J.SAV   ; install on system 83
+
+; to generate system 88, use LOAD /SAVE:88034J @MON88
+REYBOS   MON88.CMD
+ZOWPIB   CONF88.MAC
+JOSPUC   CNFN88.MAC
+MIQMIG   88034J.SAV   ; install on system 88
+
+; to generate system 90, use LOAD /SAVE:90034J @MON90
+XEGGOQ   MON90.CMD
+CIBGEL   CONF90.MAC
+PITRUT   CNFN90.MAC
+NUCJIX   90034J.SAV   ; install on system 90
+
+; to generate system BG, use LOAD /SAVE:BG034J @MONBG
+KEPJEG   MONBG.CMD
+YIBLIL   CONFBG.MAC
+MEWJOM   CNFNBG.MAC
+DACLON   BG034J.SAV   ; install on system BG
+
+; to generate system F3, use LOAD /SAVE:F3034J @MONF3
+LUJJIR   MONF3.CMD
+QUGHOT   CONFF3.MAC
+YIPPAL   CNFNF3.MAC
+GOQWUT   F3034J.SAV   ; install on system F3
+
+; to generate system FZ, use LOAD /SAVE:FZ034J @MONFZ
+XUJPEL   MONFZ.CMD
+YOBCIP   CONFFZ.MAC
+QITXOK   CNFNFZ.MAC
+ZIHVUL   FZ034J.SAV   ; install on system FZ
+
+; to generate system G3, use LOAD /SAVE:G3034J @MONG3
+QUKRAQ   MONG3.CMD
+TOBXED   CONFG3.MAC
+FEWNEK   CNFNG3.MAC
+WIXCAM   G3034J.SAV   ; install on system G3
+
+; to generate system KS, use LOAD /SAVE:KS034J @MONKS
+BEQNEZ   MONKS.CMD
+JILHUG   CONFKS.MAC
+TURHEY   CNFNKS.MAC
+BOYNUK   KS034J.SAV   ; install on system KS
+
+; to generate system RB, use LOAD /SAVE:RB034J @MONRB
+VIWHER   MONRB.CMD
+BIZHEQ   CONFRB.MAC
+MULZAW   CNFNRB.MAC
+JIHQEP   RB034J.SAV   ; install on system RB
+
+; to generate system TW, use LOAD /SAVE:TW034J @MONTW
+BIFSUQ   MONTW.CMD
+VAPBAJ   CONFTW.MAC
+XEWDOG   CNFNTW.MAC
+QABMUW   TW034J.SAV   ; install on system TW
+
+; to generate system WK, use LOAD /SAVE:WK034J @MONWK
+DIDFOB   MONWK.CMD
+YOBSEV   CONFWK.MAC
+BIKMOS   CNFNWK.MAC
+DOVLAY   WK034J.SAV   ; install on system WK
+
+; the following files are common modules
+COXKUW   ACTSER.MAC
+QUSBEG   APXKON.MAC
+HOZQEW   BPXKON.MAC
+ZEVKIX   CDRSER.MAC
+ZUPPOM   CIOPR.MAC 
+GUJMOW   CLOCK1.MAC
+HIRDEP   CLUBS.MAC 
+TATFEQ   COMCON.MAC
+ZULQOB   COMFAK.MAC
+MAZYEJ   COMMOD.MAC
+TUQLAN   COMMON.MAC
+ROLCAX   COMTXT.MAC
+BAMBEW   CORE1.MAC 
+QASYES   CTYSIM.MAC
+JATBIX   DDT.MAC   
+PAYYOF   DEBUG.MAC 
+NOCZAD   DR11C.MAC 
+WUMDEJ   DZKON.MAC 
+MOWHIM   EDDT.MAC  
+WOTLEK   ERRCON.MAC
+PAYXUX   ERRMSG.MAC
+JOCGES   F3TSER.MAC
+KONMOS   FILFND.MAC
+SAJKAH   FILIO.MAC 
+SILKUG   FILRIB.MAC
+QABTEP   FILUUO.MAC
+ZERSAM   FRMSER.MAC
+LEMBIL   FTASER.MAC
+GAGJAZ   IOCSS.MAC 
+DUZLOP   JOBDAT.MAC
+PATJOF   KISYM.MAC 
+YURDUJ   KLSYM.MAC 
+COWNOJ   KMCDDT.MAC
+HAJRAH   KMCSER.MAC
+QATMIB   KSCOMM.MAC
+CATLAJ   KSIORG.MAC
+RAFJEW   KSSYM.MAC 
+HADCUY   LPTSER.MAC
+WETYEW   MAGSER.MAC
+RIVZEW   MAPIO.MAC 
+ZUHKEP   NOKMC.MAC
+MUZCUV   ONCDSK.MAC
+TUMMEW   ONCE.MAC  
+GORGIB   PATCH.MAC 
+GAYQAJ   PCBIO.MAC 
+YEGKUG   PICON.MAC 
+LOJJUM   PLTSER.MAC
+NUPYIV   PTPSER.MAC
+JOQZOD   PTRSER.MAC
+TAWJOB   REFSTR.MAC
+RUKSAN   RMTSER.MAC
+XOYYAW   RMXKON.MAC
+TIBPUC   S.MAC
+ZICFIH   SCHED1.MAC
+ZEXDOH   SCNSER.MAC
+XEYBEN   SEGCON.MAC
+BAQFIX   SETEKS.MAC
+MOMQOL   SETETC.MAC
+SURCEJ   SETETW.MAC
+WIHKUM   SETETY.MAC
+DEQYAW   SIMIO.MAC 
+KEXZOL   SIMKL.MAC 
+JEXZUJ   SWAMP.MAC 
+DUQKOP   TMPUUO.MAC
+XEGQOW   UUOCON.MAC
+FOHGAG   VTEST.MAC
+
+Modification history:
+
+P034/J
+------
+
+/H01
+----
+
+FILUUO: changed code in close (CLSN2B) to not force access date
+to be updated when ATPALC is being cleared unless the file was
+actually accessed (ie. INPB or MAPB are on).  Note: ATPALC will
+still not get cleared if CLSACC is set in the close (inhibit
+access date).
+/WRS 3-17-81
+
+SWAMP: Call SLOCLE when the first bad sat is discovered so that a slow
+DSKCLN is rquested by monitor.  /Todd 3-17-81
+
+Changed Configuration files for various systems to reflect the following:
+System V70 is the new name for the old V25
+D37 has 128 ports 110 frames 16 bpa 4 fta on a KL processor
+D54 has  79 ports 100 frames 16 bpa 4 fta on a KL processor
+D56 has 100 ports  80 frames 16 bpa 4 fta on a KI processor
+D65 has 100 ports  80 frames 16 bpa 4 fta on a KI processor
+D25 has 100 ports  80 frames 16 bpa 4 fta on a KI processor
+Changed MONxx.CMD, CNFNxx.MAC and CONFxx.mac  and added sysdat of 17-Mar-81
+for the new systems.  /CARL 3-17-81
+
+FRMSER - Page 21, Fixed comment "MOVE ac,[fd,,fn]" to "MOVE ac,[fn,,fd]"
+as per documentation in the YAMM and the code reflects.  Typeo!  /CARL 3-17-81
+
+/H02
+----
+
+FILUUO: New entry point SLOCLE can be called to force full DSKCLN.  Same
+as SLOCLN except is called with a pushj and returns to next instruction.
+FILIO: Changed SLOCLN call to SLOCLE.
+SWAMP: Added code to cause a full DSKCLN if an output error on a SAT
+is detected.  /Todd 3-19-81
+
+/H03
+----
+
+FRMSER: FRMOP function to read effective rights always returned zero
+for created process handles. This is because check for PNO of created
+process handle was made against JBTSPN instead of JBTPNO. Fixed this.
+(Found by SLIGOS).
+/SOCCI 3-20-81
+
+/H04
+----
+
+F3TSER: Fixed bug in error detection code at end of reads ad OD.RF.
+Added new error bit TIMOUT that Poole told me about.
+/SOCCI 3-20-81
+
+/H05
+----
+
+UUOCON: fixed bug in DATUUO for converting from 1 word format.
+/WRS 3-20-81
+
+/H06-
+
+UUOCON: fixed the rest of the DATUUO bug.   /WRS 3-20-81
+
+UUOCON: made SIMINS flag a suppressed symbol.  /WRS 3-20-81
+
+/H07
+----
+
+P034/J
+------
+  u'cç
