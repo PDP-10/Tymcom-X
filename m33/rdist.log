@@ -1,0 +1,113 @@
+.:LOGFILE RDIST.LOG
+RUN (XEXEC)MINIT
+
+.WATCH DAY
+
+.PJOB
+Frame 17  TTY213  M33[3,42754] at X32
+
+.RDIST (M33)*.A##/MASTER:33/HOST:32/CHECK
+[23:10:14]
+Master host: 33
+2 files on master system.
+Slave hosts: 32
+Checking host 32
+
+End of SAIL execution
+.RDIST (M33)*.B##/MASTER:33/HOST:32/CHECK
+[23:10:47]
+Master host: 33
+16 files on master system.
+Slave hosts: 32
+Checking host 32
+(M33         :  32) P035E.BAK      2 09-Nov-89 10:17 -- extra not on master
+(M33         :  32) SHOINA.BAK     2 26-Sep-89 12:38 -- extra not on master
+
+End of SAIL execution
+.RDIST (M33)*.C##/MASTER:33/HOST:32/CHECK
+[23:11:29]
+Master host: 33
+131 files on master system.
+Slave hosts: 32
+Checking host 32
+(M33         :  32) CIOPRS.CRF    18 06-Jul-89 17:23 -- extra not on master
+(M33         :  32) MONDAT.CMD     2 15-Jan-79 10:47 -- bad checksum DOSFEF
+                           should be 15-Jan-79 10:47 HOJDOH  ALL  RD  NO
+(M33         :  32) 003TEL.COM     2 09-Nov-89 14:09 -- extra not on master
+(M33         :  32) 013TEL.COM                       -- missing on slave
+
+End of SAIL execution
+.RDIST (M33)*.D##/MASTER:33/HOST:32/CHECK
+[23:14:53]
+Master host: 33
+133 files on master system.
+Slave hosts: 32
+Checking host 32
+
+?unable to build circuit to M33:32
+?host unavailable
+
+?unable to build circuit to M33:32
+?host unavailable
+
+?unable to build circuit to M33:32
+?host unavailable
+
+?unable to build circuit to M33:32
+?host unavailable
+
+?unable to build circuit to M33:32
+?host unavailable
+Creaux failed to M33:32
+
+End of SAIL execution
+.RDIST (M33)*.E##/MASTER:33/HOST:32/CHECK
+[23:17:11]
+Master host: 33
+9 files on master system.
+Slave hosts: 32
+Checking host 32
+
+?unable to build circuit to M33:32
+?host unavailable
+
+?unable to build circuit to M33:32
+?host unavailable
+	RDIST (M33)*.F##/MASTER:33/HOST:32/CHECK
+	RDIST (M33)*.G##/MASTER:33/HOST:32/CHECK
+	RDIST (M33)*.H##/MASTER:33/HOST:32/CHECK
+	RDIST (M33)*.I##/MASTER:33/HOST:32/CHECK
+	RDIST (M33)*.J##/MASTER:33/HOST:32/CHECK
+	RDIST (M33)*.K##/MASTER:33/HOST:32/CHECK
+	RDIST (M33)*.L##/MASTER:33/HOST:32/CHECK
+	RDIST (M33)*.M##/MASTER:33/HOST:32/CHECK
+	RDIST (M33)*.N##/MASTER:33/HOST:32/CHECK
+	RDIST (M33)*.O##/MASTER:33/HOST:32/CHECK
+	RDIST (M33)*.P##/MASTER:33/HOST:32/CHECK
+	RDIST (M33)*.Q##/MASTER:33/HOST:32/CHECK
+	RDIST (M33)*.R##/MASTER:33/HOST:32/CHECK
+	RDIST (M33)*.S##/MASTER:33/HOST:32/CHECK
+	RDIST (M33)*.T##/MASTER:33/HOST:32/CHECK
+	RDIST (M33)*.U##/MASTER:33/HOST:32/CHECK
+	RDIST (M33)*.V##/MASTER:33/HOST:32/CHECK
+	RDIST (M33)*.W##/MASTER:33/HOST:32/CHECK
+	RDIST (M33)*.X##/MASTER:33/HOST:32/CHECK
+	RDIST (M33)*.Y##/MASTER:33/HOST:32/CHECK
+	RDIST (M33)*.Z##/MASTER:33/HOST:32/CHECK
+	RDIST (M33)*.0##/MASTER:33/HOST:32/CHECK
+	RDIST (M33)*.1##/MASTER:33/HOST:32/CHECK
+	RDIST (M33)*.2##/MASTER:33/HOST:32/CHECK
+	RDIST (M33)*.3##/MASTER:33/HOST:32/CHECK
+	RDIST (M33)*.4##/MASTER:33/HOST:32/CHECK
+	RDIST (M33)*.5##/MASTER:33/HOST:32/CHECK
+	RDIST (M33)*.6##/MASTER:33/HOST:32/CHECK
+	RDIST (M33)*.7##/MASTER:33/HOST:32/CHECK
+	RDIST (M33)*.8##/MASTER:33/HOST:32/CHECK
+	RDIST (M33)*.9##/MASTER:33/HOST:32/CHECK
+	RDIST (M33)*./MASTER:33/HOST:32/CHECK
+	FINDIT (M33)RDIST.*
+	DAYTIME		;There are 2 lines after this one.
+	COPY RDIST.LOG,RDIST.OUT
+	MUNG FINDIT,RDIST.OUT
+
+; Req #7964 aborted - lost command port at line 9

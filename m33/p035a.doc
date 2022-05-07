@@ -1,0 +1,225 @@
+
+Changes to the TYMCOM-X operating system between P034/P and P035   Page 1
+Reliability
+
+I.  Reliability
+
+    A.  The STOPCD reporting mechanism has been made more consistent and
+	additional information is provided for various types of system
+	errors.  See the document STOPCD.MEM for more details.
+
+    B.  The internal disk and memory page utilization has been reorganized
+	to be consistent on all processor types (KI-10, KL-10, KS-2020, F3).
+
+    C.  Spurious character gobblers are no longer sent to the base when a
+	circuit is zapped.  This often caused the new E-BUS bases to crash.
+
+    D.  The DSKCHR UUO has been modified to match physical and logical device
+	names properly.   DSKB10 will no longer be reported as DSKB1 when the
+	physical units are out of order.
+
+    E.  The SAT (system allocation table) pages are now properly found and
+	scanned using the pointers from the HOME pages instead of an absolute
+	constant defined in the source code.
+
+    F.  A system restart at location 146 will now load the BOOTS program.
+
+    G.  Whenever the available disk space is less than 1000 pages the Big Ben
+	banner will be printed every 10 minutes.  See below for details.
+
+    H.  The base and disk channel communication information is now being saved
+	in a reserved area before it can be overwritten at crash time.
+
+
+II. Performance
+
+    A.  Improve the system scheduler algorithm to take into account the type
+	of job mix actually running on TYMCOM-X.  Raise the memory utilization
+	requirements for each job queue and change the transition timing for
+	each of the run queues.
+
+    B.  Change the maximum number of characters in a message to and from the
+	base to match the TYMNET ISIS specification so that the base does not
+	always have to re-package data passed to TYMNET.
+
+    C.  Support the inactivity timeout implemented in the P034/N version of
+	the operating system.  Any frame enabled for autologout will be logged
+	off the system if the frame does not run.  Thus, frames waiting for
+	user input or in stopped (^C) state will be logged off when the time
+	limit expires.
+
+    D.  Diagnostic count information is now being gathered for various UUOs
+	and FRMOPs during normal system operation.
+
+
+Changes to the TYMCOM-X operating system between P034/P and P035   Page 2
+Human engineering - operator changes
+
+III. Human engineering - operator changes
+
+    A.  The system operator is no longer asked to supply the DSKCLN type at
+	system initialization if the default mode is NULL.  The system will
+	automatically set the DSKCLN mode to FAST.
+
+    B.  The system console (CTY) width is increased from 72 to 80 columns for
+	greater readability.
+
+    C.  A Big Ben banner containing the system name, daytime and available
+	disk space will be printed periodically on the system console.
+	The period may be adjusted by the operator with the  SET BIGBEN n
+	command.  The default period is 240 minutes or 4 hours.
+
+    D.  Whenever the date and time are received from the network an event
+	message will be printed on the console (CTY) and the OPR: terminal
+	to inform the operator that the time has been adjusted.
+
+    E.  Whenever the date and time is adjusted by more than 60 minutes, the
+	system will be SHUT and the console (CTY) bell will ring until the
+	operator verifies the new date and time with the SET HAPPY command.
+
+    F.  Whenever the new E-BUS base declares itself up or loses contact with
+	the PDP-10 an event message will be printed on the console (CTY) and
+	the OPR: terminal to inform the operator of the new base status.
+
+    G.  The  SET DEFAULT INACTIVITY n  command is provided for the operator
+	(or anyone with OP license) to set the system-wide default inactivity
+	timeout to n minutes.  The initial default is 15 minutes.
+
+    H.  Add the DEBUG command to the ONCE dialogue to allow the setting of
+	various software debugging flags.
+
+    I.  The system operator will now be prompted to change the system number
+	if it is zero.  This allows a default monitor to be built and run on
+	any system as long as the configuration is the same or a valid subset.
+
+    J.  Increase the maximum size allowable for CRASH.SAV to be the largest
+	possible memory size plus 1 to allow for the future implementation of
+	CRASH.EXE.
+
+
+IV. Support for Memorex 3650 (IBM 3350 compatible) disks
+
+    A.  The new PAKCP5 disk maintence program can format and copy individual
+	disk units on the new hardware.
+
+    B.  The system BOOT program can recognize the system files in both blocks
+	and pages in both the old and new record formats.
+
+    C.  The operating system file structure is supported on the new geometry.
+
+    D.  The ASP structure copy program works without any modification.
+
+
+Changes to the TYMCOM-X operating system between P034/P and P035   Page 3
+New and changed commands
+
+V.  New and changed commands
+
+    A.  PJOB outputs more information about the current frame. 
+
+    B.  VERSION now attempts to use DEC version format when possible and
+	otherwise uses concise TYMCOM-X format.
+
+    C.  TERMINAL is now a complete alias for SET TTY.
+
+    D.  MOVE, DUPLICATE, SUBMIT, ZAP and TYMVALIDATE now run the appropriate
+	program from the (SYS) directory.
+
+    E.  WHERIS now runs (SYS)RPG to find the location of a program.
+
+    F.  FINISH and .DSKCLN may now be forced on a command line under program
+	or operating system control.
+
+    G.  TALK JOB n  now works as expected without crashing the system.
+
+    H.  SET AUTOLOGOUT n  will initialize the inactivity timeout for a user
+	to n minutes.  If n is omitted the system-wide default is used.
+
+    I.  Allow the character "!" in addition to the character ";" at command
+	level to indicate that the remainder of the line is a comment.
+
+    J.  Make  TTY TYPE 1  and  TTY D 15  set the KATAKANA bit for both MAGNUM	
+	and the TYMNET TYMSAT.  TTY KATAKANA  also works for both.
+
+    K.  Allow  TTY TYPE  to accept a text argument and perform the same
+	function as  TTY CLASS  when a valid text argument is typed.
+
+
+VI. Security
+
+    A.  Change the arguments to the LOGIN UUO and the FRMOP UUO function
+	.FOCFM to include network-origin-info and project code.  This permits
+	the tracking of created frames for royalty accounting functions.
+
+    B.  Add option CF.PLI to the FRMOP UUO function .FOCFM to allow a frame
+	to LOGIN a child frame and connect it to a port requesting a username
+	and password which is checked against the local password database on
+	the running system.
+
+    C.  Add the new license bit QM which allows privileged jobs to manipulate
+	the records in the job processor queue.
+
+    D.  Keep a copy of the aux-circuit string used to build each circuit so
+	that it will be possible to trace a given circuit after it is built.
+
+    E.  Set the network-origin-info entry for the port whenever a command port
+	is given to a new frame using the RETACH UUO.  This prevents problems
+	with royalty accounting on PTY ports.
+
+
+Changes to the TYMCOM-X operating system between P034/P and P035   Page 4
+New E-BUS base support
+
+VII. New E-BUS base support
+
+    A.  Fixed numerous long standing bugs which caused the new base to crash
+	due to protocol implementation inconsistencies.
+
+    B.  Change the maximum number of characters in messages to and from the
+	base to match the TYMNET ISIS specification so that the base does not
+	always have to re-package data passed to TYMNET.
+
+    C.  Provide more information to operations personnel on the system console
+	(CTY) when the base is having problems.  Indicate the reason for the
+	base crash if it is known.
+
+    D.  Accept the new information provided by the base and store it for
+	examination by the appropriate diagnostic and monitoring software.
+
+
+VIII. UUOs and monitor calls (for programmers only)
+
+    A.  The three-word buffer header used for the OPEN UUO must not be in the
+	users AC block or in restricted memory locations below 140.  This was
+	previously not enforced.  (Also CHANIO UUO function .CHOPN).
+
+    B.  GETTAB tables 31 and 32 now contain the sixbit username of the users
+	connected directory.  (Also called the GFD directory).
+
+    C.  New GETTAB entries are now available for the system time zone and the
+	system startup time in universal date-time format.
+
+    D.  The DSKCHR UUO has been modified to match physical and logical disk
+	device names properly so that names such as DSKB1 and DSKB10 can no
+	longer be confused.
+
+    E.  Add capability to the DATUUO UUO to return the specified time in the
+	new universal date-time format and the TYMCOM-X date-time format.
+	These each contain the number of days from a particular offset in
+	the left half of the word and the time since midnight as a fraction
+	of a day in the right half of the word.
+
+    F.  Extend the SETUUO UUO function .STTLK to allow a string pointer to
+	be used to send a message to a job.  Job 0 is assumed to indicate
+	the system console (CTY) and the operator (OPR:) terminal.
+
+    G.  Add the capability of one frame to interrupt another frame.
+	1.  CALLI -151 (FINASS) to assign a channel to receive the interrupt.
+	    Available interrupts are exit or logout by a specific child frame
+	    and software interrupt received from my parent frame, one of my
+	    child frames, a sibling frame or any frame.
+	2.  FRMOP UUO function .FOCSI to cause a software interrupt on another
+	    frame.  Please contact the TYMCOM-X software group for information
+	    about these new interrupts and how to use them from various upper
+	    level languages.
+

@@ -1,0 +1,156 @@
+
+
+
+                  F3 Bootstrap Procedures
+
+
+
+
+
+
+1.0  HOW TO BOOT IF MONITOR WAS RUNNING
+
+     1.  Set all switches to down position except for MI and
+         MEM PAR STOP.
+
+     2.  Switch CONSOLE STOP up and then down.   This  stops
+         the machine.
+
+     3.  Press the momentary CONSOLE RESET up.  This  resets
+         the  machine.   The PROG HALT light should be on at
+         this point.
+
+     4.  Set the address switches to 147 octal.
+
+     5.  Press CONSOLE START up.  This should  initiate  the
+         bootstrap  procedure.   The message "BOOTS:" should
+         appear on  the  console, type <RETURN>,  and  eventually
+          "LOADING (SYS)SYSTEM.SAV"  should appear.  The system 
+         should come up within 5-15 minutes.
+
+
+
+If the system does not successfully  boot  using  the  above
+procedure,  use  the  procedure for loading the monitor from
+tape.
+                                                      Page 2
+
+
+
+
+2.0  LOADING THE MONITOR FROM TAPE
+
+     1.  Mount the current monitor  bootstrap  tape  (marked
+         USE  ME)  on  the  tape  drive,  set the density to
+         1600BPI.
+
+     2.  Make sure all switches are in  the  down  position,
+         including MI and MEM PAR STOP.
+
+     3.  Set 5000 octal in the Address Switches.
+
+     4.  Set the MICRO PROCESSOR STOP switch up.
+
+     5.  Set the MICRO PROCESSOR MI PC FROM SW switch up.
+
+     6.  Press the momentary MICRO PROCESSOR CLR switch up.
+
+     7.  Press the momentary MICRO PROCESSOR CONT switch up.
+         switches back down.
+
+     8.  Set the MICRO PROCESSOR MI  PC  FROM  SW  and  STOP
+
+     9.  Set the MICRO PROCESSOR MI PARITY STOP switch up.
+
+    10.  Press the momentary MICRO PROCESSOR CONT switch up.
+         This  should  start  the tape reading in.  If it is
+         successful, all the lights  under  DATA  should  be
+         off.  The tape takes about 5-10 seconds to read in.
+
+    11.  When the tape stops reading in, clear  the  address
+         switches and set 140 octal in them.
+
+    12.  Press the momentary CONSOLE START switch up.
+
+    13.  Press the momentary CONSOLE RESET switch up.
+
+    14.  Set the MICRO PROCESSOR MEM PARITY STOP switch up.
+
+    15.  Press  the  momentary  CONSOLE  START  switch   up.
+         Output  should  now  appear on the console terminal
+         which includes  the  phrase  MONITOR  JUST  LOADED.
+         After about 5-15 minutes, the system should be back
+         on the air.  If the monitor asks for  DSKCLN  type,
+         type  in  "FULL"  unless  you know that it is OK to
+         give another answer.
+ 
+                                                        Page 3
+
+
+
+
+3.0  MICROCODE LOAD PROCEDURE
+
+     1.  Mount current Microcode tape on tape drive (the one
+         marked "use me")
+
+     2.  Set  density  switch  to   density   indicated   on
+         Microcode tape label.
+
+     3.  Make sure all switches are in  the  down  position,
+         including MICRO PROCESSOR MI and MEM PAR STOP.
+
+     4.  Set 10 Octal in the Address switches
+
+     5.  Set the MICRO PROCESSOR STOP switch up.
+
+     6.  Set the MICRO PROCESSOR MI PC FROM SW switch up.
+
+     7.  Press the momentary MICRO PROCESSOR CLR switch up.
+
+     8.  Press the momentary MICRO PROCESSOR CONT switch up.
+
+     9.  Set the MICRO PROCESSOR MI  PC  FROM  SW  and  STOP
+         switches back down.
+
+    10.  Press the momentary MICRO PROCESSOR CONT switch up.
+         This  should  start  the tape reading in.  If it is
+         successful, all the lights  under  DATA  should  be
+         off.  The tape takes about a second to read in.
+
+    11.  Set the MICRO PROCESSOR MI PARITY STOP switch up.
+
+Now follow the "loading monitor from tape" procedure.
+
+                                                        Page 4
+
+
+
+
+4.0  POWER UP PROCEDURE FOR F3
+
+     1.  Turn off main power to disks.  Switches are located
+         in  the  back  of the CDC disk units, on lower left
+         hand side.
+
+     2.  Turn off power to the F3  processor.   The  correct
+         power  switch  is  the silver colored toggle switch
+         located on the power supply panel of  the  F3,  and
+         not the black circuit breaker which is located near
+         the bottom of the machine.
+
+     3.  Reset the circuit breaker in the power  supply  box
+         which  is  located  in  the northeast corner of the
+         room.
+
+     4.  Power the F3 back up using the silver toggle switch
+
+     5.  Power  up  the  disks  one  at  a  time.   This  is
+         necessary  because all three disks being powered up
+         at once will cause an overload and trip the circuit
+         breaker.   After  powering  up a disk, wait for its
+         ready light to go on before powering  up  the  next
+         one.
+
+     6.  Load  Microcode  and  Monitor  (see  Microcode  and
+         Monitor load procedures)

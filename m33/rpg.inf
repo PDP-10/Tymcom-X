@@ -1,0 +1,119 @@
+155.0	19-Oct-82 Carl
+Fixed code in 151.0 to allow ^G to echo as BELL as per request
+of COEES and MAGNUM.
+
+154.0	01-Oct-82 Carl
+Fixed problem in /YESTERDAY switch to DIRIT to determine the date
+correctly for end-of-month and end-of-year and february on leap
+years.
+
+153.0	03-Jun-82 Carl
+Fixed problem in RDLUD to correctly read the lud when a username
+hashed to LUD block 0.  Previous versions used 0 as flag for block
+in memory and 0 meant file not read, thus usernames in block 0
+did not work for any RPG functions/conversions.
+
+152.0	14-May-82 Carl
+Added /YESTERDAY to dirit commands list and modified the message
+typed out by an illegal switch.
+
+151.0	12-May-82 Carl
+Fixed MAIL,POSTMAN commands to not allow special characters to be
+printed in mail messages.  Control chars > ^char, rub > ^#, tilde ^%.
+
+150.0	08-Apr-82 Carl
+Fixed bug in RPG/RPGINI which expected a null word after the last
+word in the INI record list.  Forced a null every time.
+
+147.0	08-Feb-82 Carl
+Divided RPG into separate modules RPGUNV, RPGINI, RPGMAI, RPG and made
+changes to make it assemble under MACRO %53B.  Incidently, changed the
+/PROJ switch to DIRIT to be a full /PROJECT, and added /CASE to the
+list of DIFFER switches, (/K to FILCOM).
+
+146.0	19-Nov-81 Carl
+Added "VUE" command to always run (SYS)VUE regardless of your
+EXEC mode.
+
+--- Todd didn't document his UNDELETE changes --- 145.0 ???
+--- Todd didn't document his DIRIT changes ---
+
+144.1 23-Jan-81 Carl
+Bugfix to duplicate get LOGGED-IN PPN and store in LOGPPN# at startup
+time, before it get's used.  *** NOTE *** I tried to simply move it &
+RPG broke, (ILL MEM REF), so it is in both places still.
+
+--- Someone didn't document 144.0 ---
+
+143.1	05-mar-80 AAA
+Bugfix at SND4A missing [] around asciz literal.
+
+143.0	03-mar-80 AAA
+Bugfixes to 142.6 which correct use of AC's in SMALA,
+and loop at ML collecting and printing mail. T3 is now
+holy, since it contains mail file block number.
+
+142.0 thru 142.6 Jan and Feb 80 AAA
+Implement "arbitrary-length mail" SEND and MAIL commands,
+and clean up bugs which existed in previous mail code
+causing XOBLAM to get garbaged on C33 and elsewhere.
+
+140.1	07-jun-79 A.Atkinson
+1) Changed SEND command panic terminate when letter too
+	long.  Now  prints last few chars of letter that did
+	make it into mail.
+2) Fixed bug in SEND of file contents; SN3B code
+	was getting chars from dsk and depositing them via T4
+	without regard for the restriction that the buffer
+	pointed-to by T4 is 100 words long.
+140.0	23-MAR-79 S.D.Daniels
+  1) Fixed bug as  per TSR #57193 (.RDL extension for SFO). Page
+	38, lines 3000:3600 (rerel+5...).  The file extension
+	code was bizarre: after HLRZ t1,fl2 there was:
+	 skipn t2,intext(t1);  movsi t2,'rel';
+	 skipn t1,oext;  move t1,t2;
+	 movem t2,oextp; movem t1,lext;
+	(LEXT is extension to check date/time on)
+	(OEXTP is extension used in emitted command)
+	Symptom was SFO used REL, not RDL files.  (OEXT had RDL).
+	Current decision: (OEXTP and LEXT both get same)
+	 If OEXT (specified file) exists then use it, else
+	  If INTEXT(T1) exists then use it, else use ".REL"
+	This may fix "com foo.=foo.sai" as well.
+
+137.0	19-JAN-79 S.D.Daniels
+  1) Bug "fix" v134 introduced an "out of core" on a huge compile
+	command.  GTUNO allocates too much core to find a user and
+	never releases it, and user name => ppn routine search of
+	known names never would find a name.  Current fix: find the
+	name.  For later: separate LUD search (mail code) from user
+	name conversion, and use LOOKUP for the conversion.
+	PPSR #900131
+  2) Also for later: Figure out how ###RPG.TMP should work with
+	respect to GFD, LOGOUT, and LOGOUT. (clearly wrong now.)
+136.0	10/27/78 W.R.Soley
+  1) Changed the SEND command routine to call the special mailbox
+	routines to eliminate the need to send mail to one's self
+	in order to retain a copy.
+
+135.0	10/26/78 W.R.Soley
+  1) Changed special mailbox routines to output packets packed
+	two to a block.
+
+134.0   17-OCT-78 S.D.Daniels
+  1) Added the DO command (run with a path of PPNS) which uses
+	record type 8 as a list of PPNS to try to runthe file.
+  2) Added the SETDOLIST and ADDDOLIST (both CTEST) commands to
+	operate on the path records.
+  3) Made RPG look for and use the logged in PPN for ###RPG.TMP
+	and RPG.INI
+  4) Some cleanup in associated routines (SCAN esp).
+
+133.0	9/6/78 W.R.Soley
+  1) Added the SETMAIL (CTEST) command to create record type
+	7 for special mailbox.
+  2) Added code to MAIL command to save mail in a file.
+  3) Added the switch /AUTHOR to DIRIT (/O).
+  4) Added the switches /AUTHOR and /PROJECT to the DIRIT help
+	message.
+

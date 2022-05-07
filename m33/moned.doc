@@ -1,0 +1,18 @@
+The program MONED, used to make several monitors for general release,
+performs the following functions:
+
+1.	Creates a frame in which it runs MONED1 once for each system
+	named ## such that the file CONF##.MAC exists.  The default
+	general release monitor name is used in each case (see MONED1
+	documentation for <ESC>).
+
+2.	Output from the assemblies is recorded in the file MONED.LOG.
+
+3.	Transmittal data such as files, checksums and build instructions
+	are output to MONED.XMT.
+
+4.	A list of files is output to MONED.FIL.
+
+When MONED is run, it lists the systems it will make monitors for.
+It then asks if it should detach.  (note the program may be attached
+to and detached from at any point)

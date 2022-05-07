@@ -1,0 +1,2679 @@
+!TTY TYPE TTY
+
+!FIND
+FIND version 23
+Target 1: ASCIZ
+Target 2: . 
+Search in: .O
+Search in: .V -1:2
+Search in: @MON
+
+file list being read from MON
+
+ACTSER.MAC        
+{Page 2}
+...
+        MOVEI T1,[BYTE (7)7,7,7,7,7     ; RING BELL GOOD
+                ASCIZ~ /
+*** ACCOUNTING DEVICE RELEASED ***
+/]
+
+BOTLOD.MAC        
+{Page 8}
+...
+        PHASE   1
+PRLP:   MOVEI   0,STR           ;01 Point to ASCIZ~ message
+        HRLI    0,(POINT 7,0)   ;02
+PRLP1:  ILDB    17,0            ;03
+
+{Page 9}
+...
+        MOVE    P,[IOWD PDLLEN,UPDL]
+        OUTSTR  [ASCIZ~ /
+BOTLOD - creates program to load BOOTS in to a KI or KL processor.
+/]
+...
+
+NOPUNC: OUTSTR  [ASCIZ~ /Do you want to create KL-BOTLOD? /]
+        INCHRW  T1
+        CAIE    T1,"Y"
+...
+         SKIPA  T1,OKMSG
+NODSK:    MOVEI T1,[ASCIZ~  /?Could not create DSK:BTLDKL.SAV/]
+        OUTSTR  (T1)
+        CLOSE   PT,
+...
+
+OKMSG:  [ASCIZ~ /
+Created BTLDKL.SAV - it needs to be converted to BOTLOD.A10 for KLDCP./]
+
+{Page 10}
+...
+          JRST  NOPTP                   ;CAN NOT GET PTP
+        OUTSTR  [ASCIZ~ /Number of copies of KI-BOTLOD to punch on paper tape /]
+NUMRD1: MOVEI   P1,0
+NUMRD:  INCHWL  T4
+...
+
+BADNUM: OUTSTR  [ASCIZ~ /
+Number out of range, try again: /]
+        JRST    NUMRD1
+
+{Page 11}
+...
+          POPJ  P,                      ;No errors
+PTPERR: OUTSTR  [ASCIZ~ /
+?Error punching paper tape  /]
+        EXIT
+
+CLOCK1.MAC        
+{Page 11}
+...
+;FIXWEK - Routine to update GMTDIF (difference between local and GMT) and
+;         to update LOCWEK (address of ASCIZ~ string for day of week)
+;       Called when time-of-day is changed and once an hour
+;Uses T1,T2,T3,T4
+...
+        IDIVI   T1,7            ;Get remainder when LH(UDT) is divided by 7
+        MOVE    T1,WEKDAY(T2)   ;Get pointer to ASCIZ~ string
+        MOVEM   T1,LOCWEK##     ; that has name of day of week
+FIXWK0: POP     P,P4
+...
+
+WEKDAY: [ASCIZ~ /Wednesday/]    ;0
+        [ASCIZ~ /Thursday/]     ;1
+        [ASCIZ~ /Friday/]       ;2
+        [ASCIZ~ /Saturday/]     ;3
+        [ASCIZ~ /Sunday/]       ;4
+        [ASCIZ~ /Monday/]       ;5
+        [ASCIZ~ /Tuesday/]      ;6
+
+{Page 13}
+...
+        PUSHJ   P,OPROUT##      ;Set COMTOA for INLMES and such
+        MOVEI   T1,CONFIG##     ;System name (ASCIZ~)
+        PUSHJ   P,CONMES##      ;Space over so LA36 printhead does not
+        PUSHJ   P,PRSPC##       ; obscure message
+...
+        PUSHJ   P,INLMES##
+         ASCIZ~ /- Total of /
+PRINTF(<[BIGBEN Check DRBSTR instead of STRDDB?]>)
+        MOVEI   T4,STRDDB##     ; Check right structure
+...
+        PUSHJ   P,INLMES##
+         ASCIZ~ / pages free on /
+        MOVE    T2,STRNAM##(T4)
+        PUSHJ   P,PRNAME##      ;Output "DSKB"
+
+{Page 14}
+...
+         JRST   WDOG1
+        MOVEI   T1,[ASCIZ~/
+Disk space is less than 100 pages
+/]
+        SKIPG   T2              ;PRINT THAT UNLESS ITS ACTUALLY EMPTY
+         MOVEI  T1,[ASCIZ~/
+Disk full, please take corrective action
+/]
+...
+         JUMPE  J,[HRRZM T3,CTYBLF##    ;BELL FLAG GOES ON
+                   MOVEI T1,[ASCIZ~/
+System UNSHUT without accounting.
+Log in to 'OPER' and 'R CHKPNT'
+
+COMCON.MAC        
+{Page 3}
+...
+        JSP     T1,COMER        ;NO, TYPE "LOGIN PLEASE"
+        ASCIZ~ /?login please
+/
+CHKRUN: MOVEI   W,0             ;PHYSICAL I/O FLAG
+...
+
+TYPCC:  ASCIZ~  /?please type ^C first
+/
+
+TYPESC: ASCIZ~ /?please type ESC first
+/
+
+...
+        JSP     T1,COMER        ;NO, PRINT "NO CORE ASSIGNED"
+        ASCIZ~ /?no core assigned
+/
+                                ; ALL GONE, NEXT TIME UPTHCU WILL BE 0
+
+{Page 17}
+...
+PJOBX:: PUSHJ   P,INLMES        ;Enter here from STOPCD processor
+         ASCIZ~ /Frame /
+        MOVE    T1,J
+        PUSHJ   P,PRTDEC        ;Output job number in decimal
+        PUSHJ   P,INLMES
+         ASCIZ~ /  /
+        HRRZ    T2,TTYTAB(J)    ;Get TTY DDB
+        MOVE    T2,(T2)         ;Get TTY name
+...
+        PUSHJ   P,INLMES
+         ASCIZ~ /  /
+        MOVE    T2,JBTUNM##(J)  ;User's name
+        PUSHJ   P,PRNAME
+...
+PJOBX1: PUSHJ   P,INLMES        ;This could exceed 80 columns.
+         ASCIZ~ / at /
+        MOVE    T2,.CPSNO##     ;System number (from CONFIG.MAC)
+        PUSHJ   P,PR6BIT##      ;Right justified SIXBIT
+
+{Page 18}
+...
+ENAERR: JSP     T1,ERRMES       ;Tell first part
+        ASCIZ~  /?
+?License not set
+/
+
+{Page 29}
+...
+        JSP     T1,ERRMES       ;NO, TELL USER THE LEGAL ONES
+        ASCIZ~  /?args are: DAY,RUN,WAIT,READ,WRITE,VERSION,FILES,ALL
+/
+WATCH1: MOVNI   T1,(T1)         ;-NO. OF ENTRY IN TABLE
+
+{Page 30}
+...
+PRRBKC: PJSP    T1,CONMES
+        ASCIZ~  /]
+/
+;SUBROUTINE TO PRINT LEFT BRACKET
+...
+PRLBK:  PJSP    T1,CONMES
+        ASCIZ~  /[/
+
+;SUBROUTINE TO PRINT A FILESPEC FOR A DDB
+...
+;*;     PUSHJ   P,INLMES
+;*;      ASCIZ~ / block /
+;*;     MOVE    T1,DEVPOS##(F)
+;*;     PUSHJ   P,PRTDEC        ;Decimal
+;*;     PUSHJ   P,INLMES
+;*;      ASCIZ~ /, page /
+;*;     MOVE    T1,DEVFLO##(F)
+;*;     PJRST   PRT22A##        ;Octal
+
+{Page 33}
+...
+        JSP     T1,ERRMES       ;YES, PRINT CANT CONTINUE
+        ASCIZ~  /?can't continue
+/
+
+...
+        PUSHJ   P,INLMES
+         ASCIZ~ /[continued by operator]/
+        POPJ    P,
+
+
+{Page 34}
+...
+        JSP     T1,ERRMES
+        ASCIZ~  /?job not waiting/
+
+{Page 35}
+...
+        PUSHJ   P,INLMES                ;TOO SMALL ARG
+         ASCIZ~ /?try larger argument
+/
+        JRST    COR2
+
+{Page 36}
+...
+        PUSHJ   P,INLMES
+         ASCIZ~ /+/
+        HRRZ    T1,%UPS+UPTHRL
+        SKIPE   T1
+...
+        PUSHJ   P,INLMES
+         ASCIZ~ "/"
+        LDB     T1,PVYCOR       ;GET CORE PERMITTED THIS USER
+        LSH     T1,2            ;CONVERT TO PAGES
+...
+        PUSHJ   P,INLMES
+         ASCIZ~ / pages
+Vir. core left=/
+        SETZ    T1,                     ;BEGIN WITH NOTHING
+...
+        PUSHJ   P,INLMES
+         ASCIZ~ /ws,exs: /
+        LDB     T1,JBYUWS
+        PUSHJ   P,PRTDEC
+...
+        PUSHJ   P,INLMES
+        ASCIZ~  /  lim,max: /
+        LDB     T1,USYUWL       ;LIMIT
+        PUSHJ   P,PRTDEC
+
+{Page 37}
+...
+        PUSHJ   P,INLMES
+         ASCIZ~         /?program is run only/
+        PUSHJ   P,CRLF
+        JRST    COMERP
+
+{Page 38}
+...
+LOGDET: JSP     T1,ERRMES
+         ASCIZ~ /?please KJOB or DETACH
+/
+CLOGIN: TLNE    P4,JLOG         ;FORCE USER TO LOGOUT BEFORE
+
+{Page 41}
+...
+ASSER2: JSP     T1,ERRMES
+         ASCIZ~ /?device not available
+/
+
+{Page 42}
+...
+        PUSHJ   P,INLMES
+         ASCIZ~ /?logical name already in use, /
+        MOVEI   T1,0            ;CLEAR LOGICAL NAME FOR THIS DEVICE
+ASSF1:  POP     P,F             ;DDB OF THE NEWLY ASSIGNED DEVICE
+...
+        JSP     T1,CONMES
+         ASCIZ~ / assigned
+/
+
+{Page 43}
+...
+        JSP     T1,ERRMES       ;PRINT NO SUCH DEVICE
+         ASCIZ~ /?no such device
+/
+
+DEAER2: PUSHJ   P,INLMES
+         ASCIZ~ "?"
+        MOVE    T2,DEVNAM(F)    ;PRINT PHYSICAL DEVICE NAME
+        MOVE    U,-1(P)         ;RESTORE TTY LDB
+...
+        JSP     T1,ERRMES
+        ASCIZ~  / wasn't assigned
+/
+
+{Page 47}
+...
+REASE7: PUSHJ   P,INLMES
+         ASCIZ~ "?"
+        MOVE    T2,DEVNAM(F)
+        MOVE    U,-1(P)         ;RESTORE TTY LDB
+...
+        JSP     T1,ERRMES
+         ASCIZ~ / can't be reassigned
+/
+
+{Page 49}
+...
+        PUSHJ P,INLMES
+         ASCIZ~ "?"
+        MOVE T2,DEVNAM(F)       ;PRINT PHYSICAL NAME
+        PUSHJ P,PRNAME
+        JSP T1,ERRMES
+         ASCIZ~ " already attached
+"
+
+ATT3:   JSP T1,ERRMES
+         ASCIZ~ "?unable to attach to frame
+"
+
+ATT5:   JSP T1,ERRMES
+         ASCIZ~ "?unable to attach device
+"
+
+ATT4:   JSP T1,ERRMES
+         ASCIZ~ "?frame not assigned
+"
+
+ATT1:   JSP T1,ERRMES
+         ASCIZ~ "?illegal frame number
+"
+
+{Page 50}
+...
+DETMSG: PUSHJ P,INLMES          ;TELL USER WHERE HE WAS
+         ASCIZ~ "from frame "
+        PJRST PJOB
+
+LOGER1: JSP T1,ERRMES
+         ASCIZ~ "?unable to detach device
+"
+
+{Page 51}
+...
+
+DAMESS: ASCIZ~  /-JAN-/
+
+STZONE: ASCIZ~  /Y/     ;  4
+        ASCIZ~  /BST/   ;  5 BERING STANDARD TIME
+        ASCIZ~  /HST/   ;  6 HAWAII-ALASKA STANDARD TIME
+        ASCIZ~  /YST/   ;  7 YUKON STANDARD TIME
+        ASCIZ~  /PST/   ; 10 PACIFIC STANDARD TIME
+        ASCIZ~  /MST/   ; 11 MOUNTAIN STANDARD TIME
+        ASCIZ~  /CST/   ; 12 CENTRAL STANDARD TIME
+        ASCIZ~  /EST/   ; 13 EASTERN STANDARD TIME
+        ASCIZ~  /AST/   ; 14 ATLANTIC STANDARD TIME
+        ASCIZ~  /P/     ; 15
+        ASCIZ~  /O/     ; 16
+        ASCIZ~  /N/     ; 17
+        ASCIZ~  /GMT/   ; 20 GREENWICH MEAN TIME (Western European)
+        ASCIZ~  /CET/   ; 21 CENTRAL EUROPEAN TIME
+        ASCIZ~  /EET/   ; 22 EASTERN EUROPEAN TIME
+        ASCIZ~  /C/     ; 23
+        ASCIZ~  /D/     ; 24
+        ASCIZ~  /E/     ; 25
+        ASCIZ~  /F/     ; 26
+        ASCIZ~  /G/     ; 27
+        ASCIZ~  /H/     ; 30
+        ASCIZ~  /JST/   ; 31 TOKYO
+        ASCIZ~  /K/     ; 32 BRISBANE
+        ASCIZ~  /L/     ; 33
+        ASCIZ~  /M/     ; 34
+
+DSZONE: ASCIZ~  /Y +/   ; 44
+        ASCIZ~  /BDT/   ; 45 BERING DAYLIGHT TIME
+        ASCIZ~  /HDT/   ; 46 HAWAII-ALASKA DAYLIGHT TIME
+        ASCIZ~  /YDT/   ; 47 YUKON DAYLIGHT TIME
+        ASCIZ~  /PDT/   ; 50 PACIFIC DAYLIGHT TIME
+        ASCIZ~  /MDT/   ; 51 MOUNTAIN DAYLIGHT TIME
+        ASCIZ~  /CDT/   ; 52 CENTRAL DAYLIGHT TIME
+        ASCIZ~  /EDT/   ; 53 EASTERN DAYLIGHT TIME
+        ASCIZ~  /ADT/   ; 54 ATLANTIC DAYLIGHT TIME
+        ASCIZ~  /P +/   ; 55
+        ASCIZ~  /O +/   ; 56
+        ASCIZ~  /N +/   ; 57
+        ASCIZ~  /WEST/  ; 60 WESTERN EUROPEAN SUMMER TIME
+        ASCIZ~  /CEST/  ; 61 CENTRAL EUROPEAN SUMMER TIME
+        ASCIZ~  /EEST/  ; 62 EASTERN EUROPEAN SUMMER TIME
+        ASCIZ~  /C +/   ; 63
+        ASCIZ~  /D +/   ; 64
+        ASCIZ~  /E +/   ; 65
+        ASCIZ~  /F +/   ; 66
+        ASCIZ~  /G +/   ; 67
+        ASCIZ~  /H +/   ; 70
+        ASCIZ~  /JST+/  ; 71 TOKYO + DAYLIGHT  (Not normally used)
+        ASCIZ~  /K +/   ; 72 BRISBANE + DAYLIGHT
+        ASCIZ~  /L +/   ; 73
+        ASCIZ~  /M +/   ; 74
+
+
+{Page 52}
+...
+        TRZ     T4,40           ; T4 STILL OK, CLEAR DST IF WAS ON
+        MOVEI   T1,STZONE-4(T4) ;GET ASCIZ~ STRING TO TYPE
+        SKIPN   T3              ; SKIP IF WE'RE OK
+         MOVEI  T1,DSZONE-4(T4) ;  ELSE USE DAYLIGHT STRING
+        SKIPG   THSDAT##        ;If date is not valid
+         MOVEI  T1,[ASCIZ~ / Date not set!/]
+        PUSHJ   P,CONMES        ; TYPE IT.
+        SKIPN   KSYS##          ;Is the KSYS timer set?
+         JRST   DAYTI2          ;No
+        MOVEI   T1,[ASCIZ~ / Timesharing ceases in /]
+        PUSHJ   P,CONMES
+        MOVE    T1,KSYS         ;Minutes left
+        PUSHJ   P,PRTDEC
+        MOVEI   T1,[ASCIZ~ / minutes/]
+        PUSHJ   P,CONMES
+DAYTI2: PJRST   CRLF            ;AND ADD CRLF
+...
+        PUSHJ   P,INLMES
+         ASCIZ~ \
+Date/time is now \
+        PUSHJ   P,LOCTIM        ;Output time
+...
+        PJSP    T1,CONMES       ;Yes, output message and POPJ
+         ASCIZ~  \--- System is SHUT ---
+\
+
+...
+
+LOCTIM::MOVEI   T1,[ASCIZ~ /(date unknown) /]
+        SKIPG   LOCDAY##        ;No date if LOCDAY not set
+         PJRST  CONMES
+
+{Page 53}
+...
+        PUSHJ   P,INLMES
+         ASCIZ~ / TRU
+/
+        POP     P,T1
+...
+        PUSHJ   P,INLMES
+         ASCIZ~ / TRU
+/
+        PUSHJ   P,INLMES
+        ASCIZ~  /terminal time: /
+        MOVE    T1,JBTCNK(J)
+        IMUL    T1,JFYSEC       ; MAKE PRINTER WORK RIGHT
+
+{Page 54}
+...
+USESTA: PUSHJ   P,INLMES        ;Preliminary type-out
+         ASCIZ~ /elapsed:/
+        MOVE    T1,JBTCNK(J)    ;Connect time
+        EXCH    T1,JBTSTA##(J)  ;Previous (saved) connect time
+...
+        PUSHJ   P,INLMES
+         ASCIZ~ / tru:/
+        PUSHJ   P,PRTWRN        ;Type out incremental TRU's
+        PUSHJ   P,INLMES
+         ASCIZ~ / blks in:/
+        PUSHJ   P,PRTWDR
+        PUSHJ   P,INLMES
+         ASCIZ~ / out:/
+        PUSHJ   P,PRTWDW
+        PUSHJ   P,PRSPC
+        PUSHJ   P,INLMES
+         ASCIZ~ / mws:/
+        LDB     T1,JBYMWS##
+        PUSHJ   P,PRTDEC
+...
+        PUSHJ   P,INLMES
+         ASCIZ~ / pc:/
+        HRRZ    T1,JBTPC##(J)
+        PUSHJ   P,OCTPNT        ;6 octal digits
+...
+        PUSHJ   P,INLMES
+         ASCIZ~ \
+I/O wait for \
+        PUSHJ   P,PRTDDB
+
+{Page 56}
+...
+SNDBSI: JSP     T1,ERRMES       ;TYPE ERROR AND RETURN
+         ASCIZ~ /?TTY is busy
+/
+
+{Page 57}
+...
+        JSP     T1,ERRMES       ;GIVE SENDER THE BAD NEWS
+         ASCIZ~ /?no such port
+/
+
+...
+        JSP     T1,ERRMES       ;PRINT ERROR MESSAGE AND RETURN
+         ASCIZ~ /?GAN command not permitted
+/
+
+{Page 58}
+...
+SENDHD: PUSHJ   P,INLMES        ;SEND START OF SEND MESSAGE
+         ASCIZ~ /
+;;/
+        EXCH    U,-1(P)         ;GET SENDER'S LDB ADR
+...
+        PUSHJ   P,INLMES        ;AND SPACER
+         ASCIZ~ /: - /          ; ..
+        POPJ    P,0             ;RETURN FROM SENDHD
+
+
+{Page 61}
+...
+        PUSHJ   P,INLMES        ;PRINT SLASH TAB
+         ASCIZ~ */      *
+ECOMC:  HLRZ    T1,(P)          ;PRINT LEFT HALF
+        PUSHJ   P,OCTPNT
+...
+        PUSHJ   P,INLMES        ;PRINT FINAL TAB
+         ASCIZ~ /       /
+        POP     P,T1
+        POP     P,T1            ;RECOVER VERSION/E FLAG
+
+{Page 69}
+...
+SWSL2:  JSP     T1,ERRMES       ;BE NICE, GIVE HIM A MESSAGE
+         ASCIZ~ /?size too big or too small/
+
+SETHAP: PUSHJ   P,CKSLC         ;SET HAPPY
+...
+          JRST  [JSP  T1,ERRMES ;  print error if limit too large
+                  ASCIZ~ /Limit exceeds maximum/]
+        IMULI   T2,^D10000      ;CONVERT TO INTERNAL FORM
+        MOVEM   T2,JBTSLM##(J)  ; Store as saved limit
+...
+          JRST  [JSP  T1,ERRMES ;  print error if to large
+                  ASCIZ~ /Inactivity limit too large/]
+        MOVEM   T2,INADEF       ; Store in default address
+        POPJ    P,
+
+{Page 70}
+...
+        MOVE    P1,%UPS+UPTABK  ;GET INTO PERMANENT PLACE
+        MOVEI   T1,[ASCIZ~/NONE/]
+        TRNN    P1,-1           ;ANY AT ALL
+         JRST   CONMES          ;NO, PRINT NONE AND RETURN
+        MOVEI   T1,[ASCIZ~/AT /]
+        PUSHJ   P,CONMES
+        HRRZ    T1,P1
+        PUSHJ   P,OCTPNT
+        MOVEI   T1,[ASCIZ~/(EXEC)/]
+        TLNN    P1,AB.USR
+         PUSHJ  P,CONMES
+        MOVEI   T1,[ASCIZ~/ READ/]
+        TLNE    P1,AB.RED
+         PUSHJ  P,CONMES
+        MOVEI   T1,[ASCIZ~/ WRITE/]
+        TLNE    P1,AB.WRT
+         PUSHJ  P,CONMES
+        MOVEI   T1,[ASCIZ~/ FETCH/]
+        TLNE    P1,AB.FET
+         PJRST  CONMES
+
+{Page 77}
+...
+        JSP     T1,ERRMES       ;Drop into error message routine
+         ASCIZ~ /
+/                               ; with CR-LF
+
+
+{Page 78}
+...
+
+CONMES::HRLI    T1,440700       ;FORM ASCIZ~ BYTE POINTER
+        PUSH    P,T1            ;SAVE BYTE POINTER
+CON0:   ILDB    T3,(P)          ;GET NEXT CHAR.
+
+{Page 79}
+;ROUTINE TO PRINT INLINE ASCIZ~ MESSAGE
+;CALL:  PUSHJ P,INLMES
+;        ASCIZ~ /THE MESSAGE/
+;RETURN TO NEXT LOC AFTER MESSAGE
+
+...
+NOTENF: JSP T1,ERRMES
+         ASCIZ~ /?too few arguments
+/
+
+
+{Page 80}
+...
+        CAIN    T1,JAPMOD       ;Don't call it MAIL if Japanese
+         SKIPA  T1,[EXP [ASCIZ~/opnotice waiting
+/] ]
+          MOVEI T1,[ASCIZ~/mail waiting
+/]
+        PUSHJ   P,CONMES
+...
+        ANDCAM  F,JBTPRV(J)     ;Yes, turn bit off
+        MOVEI   T1,[ASCIZ~ /[mail waiting]
+/]
+        PUSHJ   P,CONMES        ;Announce new mail
+...
+         PUSHJ  P,[PUSHJ P,INLMES
+                    ASCIZ~ /Remember to set date,time /
+                   PJRST DAYTIM]
+        LDB     F,PVYMOD        ;Get mode (PDP vs XEXEC)
+...
+        SKIPE   F               ; If not, give usual dot prompt
+         MOVEI  T1,[ASCIZ~ /!/] ; If so, give special prompt
+NOTPDP: POP     P,J
+        POP     P,F             ; RESTORE F
+        JRST CONMES             ; TYPE ASCIZ~ AT (T1) AND POPJ
+
+PRMPT:  [ASCIZ~ "."]    ; PDP10 mode without license
+        [ASCIZ~ "-"]    ; XEXEC mode
+JAPMOD==2
+        [ASCIZ~ "-"]    ; JXEXEC mode
+        [ASCIZ~ "READY
+"]                      ; SUDS mode
+
+
+COMMOD.MAC        
+{Page 37}
+...
+; PARAMETERS FOR KONKON
+; %TYP  - KONTROLLER TYPE (ASCIZ~) EG. DP,FH,DR,MD
+; TYPL   - KONTROLLER NUMBER SYMBOL (ASCIZ~) EG. A,B,C
+; SYM - KONTROLLER SYMBOL (ASCIZ~) EG. DP0,DP1,FH0,FH1
+
+DEFINE  KONKON (%TYP,TYPL,SYM)<
+
+{Page 43}
+...
+  CTYBLN==.-CTYBUF      ;Define length for SYSDVF
+        ASCIZ~ /<><>/   ;Null at end so can use CTYBUF$0T in FILDDT
+IF2,<IFN CTYBUF+1001-CHNUNC,<   ;Do NOT move CTYBUF!
+  PRINTX ?CHNUNC cannot be in same page as cached items in COMMON!>>
+
+COMMON.MAC        
+{Page 21}
+...
+        HLLM    T1,KAF
+        MOVEI   T1,[ASCIZ~ /Use 1^B if you want to set DDT break point
+/]
+        PUSHJ   P,CONMES##      ;Output message to console
+
+{Page 31}
+...
+BGBENF::1B0+<XWD ^D<4*60>,0>    ;Output at system startup, then every 4 hours
+LOCWEK::0                       ;Pointer to ASCIZ~ string for day of week
+
+{Page 40}
+...
+
+CRSHAC:: BLOCK  20      ;Operators answer to "Why reload" question in ASCIZ~
+PREVAC:: BLOCK  20      ;Previous context ACs
+WHYMXL==:<.-CRSHAC-1>B26
+
+{Page 45}
+...
+TYPCSB::PUSHJ   P,INLMES##
+        ASCIZ~/
+CPU Status Block
+/
+        PUSHJ   P,INLMES##
+        ASCIZ~/
+APRID = /
+        MOVE    T1,.CPAPD       ;GET APRID
+...
+        PUSHJ   P,INLMES##
+        ASCIZ~/
+ERA = /
+        SKIPN   T1,.CPAER
+...
+        PUSHJ   P,INLMES##
+        ASCIZ~/
+CONI APR, = /
+   MOVE    T1,.CPACN       ;GET CONI APR
+...
+        PUSHJ   P,INLMES##
+        ASCIZ~/
+CONI PI, = /
+        SKIPN   T1,.CPCPI
+...
+        PUSHJ   P,INLMES##
+        ASCIZ~/
+CONI PAG, = /
+        MOVE    T1,.CPPGC       ;GET CONI PAG
+...
+        PUSHJ   P,INLMES##
+        ASCIZ~/
+DATAI PAG, = /
+        MOVE    T1,.CPPGD       ;GET DATAI PAG
+...
+        PUSHJ   P,INLMES##
+         ASCIZ~/
+AR ARX Data Words (7:0 & 7:1) = /
+        MOVE    T1,.CP7+0       ;GET AC BLOCK 7 LOC 0
+...
+        PUSHJ   P,INLMES##
+         ASCIZ~/ & /
+        MOVE    T1,.CP7+1       ;GET AC BLOCK 7 LOC 1
+        PUSHJ   P,HWDPNT##      ;TYPE IT
+        PUSHJ   P,INLMES##
+         ASCIZ~/
+Page Fail Words   (7:2 & 500) = /
+        MOVE    T1,.CP7+2       ;GET AC BLOCK 7 LOC 2
+...
+        PUSHJ   P,INLMES##
+         ASCIZ~/ & /
+        MOVE    T1,.CPUP1+0     ;Page fail code from UPT location 500
+        PUSHJ   P,HWDPNT##      ;TYPE IT
+        PUSHJ   P,INLMES##
+         ASCIZ~/
+
+SBUS Diags:
+
+{Page 48}
+...
+KAFPRT: PUSHJ   P,INLMES##      ;Routine for STOPCD(KAF)
+         ASCIZ~ /Last interrupt/
+IFCPU(KS),<SKIPN T2,KAFPC+1>    ;Get old PC if 8080 did it to us
+        MOVE    T2,CH1          ;Get PC at time of channel-1 interrupt
+
+{Page 49}
+...
+
+CRSWHY: MOVEI   P1,[ASCIZ~ /
+/]                                      ;No message if STOPCD crash
+        SKIPN   T1,SAV30
+         JRST   CRSWH1
+        MOVEI   P1,[ASCIZ~ /
+Crashed by deposit 1 in 30 /]
+        SOJE    T1,CRSWH3               ;Skip next tests if DM 30,1
+        MOVEI   P1,[ASCIZ~ /
+Crashed by deposit nonzero in location 30 /]
+        LDB     T1,[POINT 16,SAV30,15]  ; Get Base ORING pointer field
+...
+        CAMN    T1,CRSHWD               ; Does it STILL match 30?
+         MOVEI  P1,[ASCIZ~ /
+Base initiated crash /]
+CRSWH1: LDB     T1,[POINT 16,KEY620,15] ;Get the KEY value
+        CAIN    T1,354                  ;Hex 'EC'?
+         MOVEI  P1,[ASCIZ~ /
+Base halted itself /]
+CRSWH2: SKIPE   TAKDWN                  ;System hung from TAKEIT?
+         MOVEI  P1,[ASCIZ~ /
+TAKEIT run /]
+        SKIPE   CRS147
+         MOVEI  P1,[ASCIZ~ /
+Manual restart (from location 147) /]
+CRSWH3: JSP     T1,CTYTYP##             ;Output reason for SYSTOP
+        MOVEI   P1,[ASCIZ~ /
+Full DSKCLN requested /]
+        SKIPN   SLOCRS                  ;STOPCD(SLO) or STOPCD(,DSKCLN)?
+
+{Page 52}
+...
+         JRST   MONCR1                  ;NO
+        MOVEI   P1,[ASCIZ~ /
+Severe ERROR encountered: HARDWARE SUSPECT /]
+        JSP     T1,CTYTYP##             ;If STOPCD(NO)
+...
+TDERR:: 0                               ;Nonzero (JSR) on take-down error
+        MOVEI   P1,[ASCIZ~ /
+Serious restart error while writing to HOM pages
+/]
+
+COMTXT.MAC        
+{Page 2}
+...
+>  ;End REPEAT 0
+        SYSX4R==SYSX4R&777400           ;Last byte of name must be null (ASCIZ~)
+        MAKEM 5,6,SYSDT1,,              ;Define SYSX5L+SYSX5R and SYSX6L+SYSX6R
+        SYSX6R==SYSX6R&777400           ;Last byte of date must be null (ASCIZ~)
+
+        SYSID1(<SYSID=:'>,<'>)          ;Full word symbol just for DDT/CRSHID
+
+CORE1.MAC        
+{Page 21}
+...
+PRTPG1: PUSHJ   P,INLMES##      ;Routine called by STOPCD(BADPAG)
+         ASCIZ~ /Bad spot on /
+        LDB     T1,RB1UNI##
+        MOVE    T1,UNTTBL##(T1)
+...
+        PUSHJ   P,INLMES##
+         ASCIZ~ /, unit=/
+        LDB     T1,RB1UNI##
+        PUSHJ   P,PRTOCT##      ;Logical unit (DSKB0=0, etc)
+        PUSHJ   P,INLMES##
+         ASCIZ~ / page=/
+        LDB     T1,RB1PNO##
+        PUSHJ   P,PRTOCT##      ;Page within unit
+        PUSHJ   P,INLMES##
+         ASCIZ~ / count=/
+        MOVE    T1,%RIB+BATPAT
+        PUSHJ   P,PRTDEC##      ;Total bad spots on this unit
+
+CTYSIM.MAC        
+{Page 3}
+...
+        CAIN    T1,"?"          ; needs help?
+         JRST   [MOVE T1,[POINT 7,[ASCIZ~ /
+
+CTYSIM commands (prefix with CTRL-Z)
+
+{Page 5}
+...
+         AOJA   T4,CTOLP        ;FORGET IT
+        MOVE    T1,[POINT 7,[ASCIZ~ /
+please log in:  /]]
+        MOVEM   T1,STRFLG
+
+{Page 9}
+...
+IFCPU (KS),<WRAPR LP.ESF+LP.80C+APRCHN##>       ;ENABLE THE CTY INTERRUPT
+        MOVE    T1,[POINT 7,[ASCIZ~ /
+
+Type CTRL-Z ? for help
+
+DDT.MAC        
+{Page 2}
+...
+IFN XMOD,<DEFINE HEADER (TS,TR,DS,DR),<
+  IFE DDTST,<   DEFINE PROMPT,<ASCIZ~/EDDT/>
+        TITLE EDDT      VERSION TS'.'TR'-'DS'.'DR       -EXEC MODE DDT>
+  IFN DDTST,<   DEFINE PROMPT,<ASCIZ~/TEDDT/>
+        TITLE TEDDT     VERSION TS'.'TR'-'DS'.'DR       -TEST EXEC MODE DDT>
+        XJOBSYM==36
+...
+IFE DDTST,<
+IFE HI,<        DEFINE PROMPT,<ASCIZ~/DDT/>
+        TITLE UDDT      VERSION TS'.'TR'-'DS'.'DR       -USER MODE DDT>
+IFN HI,<        DEFINE PROMPT,<ASCIZ~/HIDDT/>
+        TITLE HIDDT     VERSION TS'.'TR'-'DS'.'DR       -HISEG DDT>>>
+IFN DDTST,<     DEFINE PROMPT,<ASCIZ~/TDDT/>
+        TITLE TDDT      VERSION TS'.'TR'-'DS'.'DR       -TEST MODE DDT>>
+IFN FLDDT,<     DEFINE PROMPT,<ASCIZ~/FILDDT/>
+        TITLE FILDDT    VERSION TS'.'TR'-'DS'.'DR       -FILE DDT>
+>;END IFE FRMDDT
+IFN FRMDDT,<
+IFE DDTST,<     DEFINE PROMPT,<ASCIZ~/FRMDDT/>
+        TITLE FRMDDT VERSION TS'.'TR'-'DS'.'DR  -FRAME DDT>
+IFN DDTST,<     DEFINE PROMPT,<ASCIZ~/DDT/>
+        TITLE TFRDDT VERSION TS.'TR'-'DS'.'DR   -TEST MODE FRAME DDT>
+>>
+
+{Page 7}
+...
+        SKPEXC                  ;If EDDT running in usermode
+         JRST   [OUTSTR [ASCIZ~ /DDT/]
+                 JRST   DD1]
+        SKIPN   CCL             ;Exec mode.  Enterred at DDT+1?
+
+{Page 8}
+...
+IFN FLDDT,<
+        OUTSTR [ASCIZ~ /Input file: /]
+>
+IFN FRMDDT,<
+        OUTSTR [ASCIZ~ /Symbol file: /]
+>
+        PUSHJ P,FILNAM
+
+{Page 11}
+NOCRS1: CLRBFI
+        OUTSTR [ASCIZ~ /?input file not found
+/]
+        JRST DDT                ;TRY AGAIN
+...
+        SKIPE WENB
+        OUTSTR [ASCIZ~ /
+[write enabled]/]
+        SKIPN WENB
+        OUTSTR [ASCIZ~ /
+[write disabled]/]
+        JRST DD1                ;ENABBLE FOR WRITTING
+
+{Page 12}
+...
+        SETMOD T,
+        OUTSTR [ASCIZ~ /
+Commands file: /]
+        PUSHJ P,FILNAM
+...
+
+NOCMDF: OUTSTR [ASCIZ~ /?command file not found
+/]
+        SETZM COMAND
+
+{Page 15}
+...
+
+NOSYM:  OUTSTR [ASCIZ~ /
+CAN NOT LOAD SYMBOLS FROM FILE
+/]
+
+{Page 36}
+...
+DEFINE  MAKBUF (BUFNO,TEXT) <XLOC BUFLOC+BUFNO*SIZBUF
+        ASCIZ~ |TEXT|>
+
+IFN FLDDT,<
+
+{Page 37}
+...
+        SKIPE CODMOD
+         SKIPA W1,[POINT 7,[ASCIZ~ /
+CODE MODE/]]
+        MOVE W1,[POINT 7,[ASCIZ~ /
+FILE MODE/]]
+        JRST PRTBF1
+
+{Page 39}
+...
+        JRST UPDOK
+        OUTSTR [ASCIZ~/
+OUTPUT ERROR/]
+        JRST WRONG1
+...
+                SOJE TT1,GTSEG1
+                OUTSTR [ASCIZ~/LOST HISEG!/]
+                EXIT]
+        POP P,JOBSA
+
+{Page 41}
+...
+        CAIN    TT1,FRXLOC+3    ;IF IT SKIPPED,
+        OUTSTR  [ASCIZ~ /<SKIP>/]
+RSTFRX: MOVE    T,FRAME         ;SETUP FD AGAIN.
+        HRLI    T,.FOWVA
+
+{Page 42}
+...
+IFN FRMDDT,<
+DEFINE MSG(A)<OUTSTR [ASCIZ~\'A\]>
+
+STFRM:  MOVE    T,FRAME
+
+DEBUG.MAC        
+{Page 4}
+...
+
+DEFINE ERROR(MSG)<JRST [OUTSTR [ASCIZ~/'MSG
+/]
+                EXIT]>
+
+DZKON.MAC        
+{Page 6}
+...
+LIMBC:  51                      ;Number of bytes in the message
+LIMBP:  440700,,[ASCIZ~/
+Hi there!  Please type your user name: /]
+
+
+ERRCON.MAC        
+{Page 5}
+...
+        PUSHJ   P,INLMES
+        ASCIZ~  \'MESS\
+>;END IFADF
+>;END IRP MESS
+
+{Page 8}
+...
+TYPIME: PUSHJ   P,INLMES##
+         ASCIZ~ /Instruction is /
+IFCPU (KI),<    ;Page fail PC is eventually stored at UPT+425
+        MOVE    T1,@%UPT+UPTMUP ;Kernal Trap MUUO saved PC of failing instructio
+n
+...
+        PUSHJ   P,INLMES##
+         ASCIZ~ /
+Virtual page /
+        LDB     T1,[POINT 9,%UPT+UPTXPF,17]
+...
+        PUSHJ   P,INLMES##
+         ASCIZ~ /, physical page /
+        POP     P,T1
+        LSH     T1,P2WLSH       ;Convert to word address
+...
+
+MAPTBL: 1B18!1,,[ASCIZ~ /<no access>/]
+        1B19!1,,[ASCIZ~ /<public>/]
+        1B20!0,,[ASCIZ~ /<read only>/]  ;Complain if B20 is off
+        1B21!1,,[ASCIZ~ /<dirty>/]
+        1B22!1,,[ASCIZ~ /<no match>/]
+        MAPBTS==.-MAPTBL
+>  ;End IFCPU(KI)
+...
+        PUSHJ   P,INLMES##
+         ASCIZ~ /
+Virtual address /
+        HRRZ    T1,%UPT+UPTPFW  ;Page fail word at UPT+500
+...
+        PUSHJ   P,INLMES##
+         ASCIZ~ /, physical address /
+        POP     P,T1
+        MAP     T1,(T1)         ;Returns <001000,,0>+<physical address>
+...
+
+MAPTBL: 1B0!1B17![ASCIZ~ /<UPT>/]
+        1B1!1B17![ASCIZ~ /<pager failure>/]
+        1B2!0B17![ASCIZ~ /<no access>/] ;Complain if B2 is OFF
+        1B3!0B17![ASCIZ~ /<read only>/] ;Complain if B3 is OFF
+        1B4!1B17![ASCIZ~ /<dirty>/]     ;Software bit, page dirty if set
+        1B5!1B17![ASCIZ~ /<writing>/]   ;Write or read-modify-write reference
+        1B6!1B17![ASCIZ~ /<public>/]
+        1B7!1B17![ASCIZ~ /<cached>/]
+        1B8!0B17![ASCIZ~ /<unpaged>/]   ;Always ON, complain if OFF
+        MAPBTS==.-MAPTBL
+>  ;End IFNCPU(KI)
+
+{Page 12}
+...
+        PUSHJ P,INLMES
+        ASCIZ~ /
+problem on /
+        PUSHJ P,ERNAM
+        PUSHJ P,INLMES
+        ASCIZ~ / for job /
+        PUSHJ P,PJOB##          ;NOW THE JOB
+        PUSHJ P,CRLF
+
+{Page 13}
+...
+        PUSHJ   P,INLMES
+         ASCIZ~ "?context page I/O error"
+        PJRST   ERRCIO          ;GO DO THE RIGHT STUFF FOR THE FRAME.
+
+{Page 14}
+...
+ERROP1: PUSHJ   P,INLMES
+        ASCIZ~/?
+?error in /
+        PUSHJ   P,PJOBX##       ;PRINT JOB NUMBER AND USERNAME
+...
+ERRPRG::PUSHJ   P,INLMES##
+         ASCIZ~ /Running /
+        MOVE    T1,JBTFPN##(J)  ;Program directory
+        PUSHJ   P,PRTDIR##      ;Output directory name
+
+{Page 16}
+...
+        PUSHJ   P,INLMES
+         ASCIZ~ / for page /
+        LDB     T1,[POINT 9,M,26] ;GET PAGE FROM M
+        PUSHJ   P,OCTPNT
+...
+        PUSHJ   P,INLMES
+         ASCIZ~ / for location /
+        HRRZ    T1,M    ;GET FULL LOCATION
+        PUSHJ   P,OCTPNT
+...
+ERRSCU: PUSHJ   P,INLMES        ;NO, PRINT WHERE UUO IS
+         ASCIZ~ /; UUO/
+        MOVE    T2,%UPT+UPTPDL
+        SUBI    T2,1
+
+{Page 20}
+...
+        PUSHJ   P,INLMES##      ;Yes, do not ding bell for an event
+         ASCIZ~ /
+%% /
+        MOVE    T1,.CPSTY##     ;Get type
+...
+        PUSHJ   P,INLMES##
+         ASCIZ~ / stopcode /
+        MOVE    T2,.CPSNM##     ;Get stopcode name
+        PUSHJ   P,PRNAME        ;Output SIXBIT
+        PUSHJ   P,INLMES##
+         ASCIZ~ / at /
+        PUSHJ   P,LOCTIM##      ;Output date, time of day
+        PUSHJ   P,CRLF##
+...
+        PUSHJ   P,INLMES##      ;CRLF and "?"
+         ASCIZ~ /
+
+
+...
+        PUSHJ   P,INLMES##
+         ASCIZ~ / stopcode "/
+        MOVE    T2,.CPSNM##     ;Get stopcode name
+        PUSHJ   P,PRNAME        ;(up to 6 characters)
+...
+        PUSHJ   P,INLMES##
+         ASCIZ~ /+/
+        HRRZ    T1,.CPSPC##     ;Yes, get PC of XCT instruction
+        SUBI    T1,(M)          ;Minus addr of stopcode block
+...
+DIE4:   PUSHJ   P,INLMES##
+         ASCIZ~ /" at /
+        PUSHJ   P,LOCTIM##      ;Output date, time of day
+        PUSHJ   P,CRLF
+...
+        PUSHJ   P,INLMES##
+         ASCIZ~ /File /
+        PUSHJ   P,PRTDDB##      ;Print DEVICE:FILE.EXT[P,Pn,SFD,SFD,SFD]
+        PUSHJ   P,CRLF##
+...
+        MOVE    T2,PRCTAB(T1)   ;Get control bits
+        MOVEI   T1,[ASCIZ~ /[Continuing system]/]
+        SKIPE   SLOCRS##        ;DSKCLN requested?
+         MOVEI  T1,[ASCIZ~ /Requesting FULL DSKCLN/]
+        TLNN    T2,(S%EVNT)     ;No message if EVENT
+         PUSHJ  P,CONMES##      ;Send to CTY (don't do a SEND ALL)
+...
+        PUSHJ   P,INLMES##
+         ASCIZ~ /, hardware /
+        HLLZ    T2,.CPLOG##     ;'AA', 'BB', etc
+        PUSHJ   P,PR6BIT
+        PUSHJ   P,INLMES##
+         ASCIZ~ /, /
+        HLLZ    T2,.CPCPU##     ;'KL', 'KI', 'KS', 'F3'
+        PUSHJ   P,PR6BIT
+...
+        PUSHJ   P,INLMES##
+         ASCIZ~ /, base /
+        HRRZ    T1,.CPLOG       ;Base node number
+        PUSHJ   P,PRTOCT
+        PUSHJ   P,INLMES##
+         ASCIZ~ /, /
+        MOVEI   T1,CONFIG##     ;Full system number
+        PUSHJ   P,CONMES##
+        PUSHJ   P,INLMES##
+         ASCIZ~ /, /
+        MOVEI   T1,SYSDAT##     ;System build date
+        PUSHJ   P,CONMES##
+        PUSHJ   P,INLMES##
+         ASCIZ~ /, /
+        MOVE    T2,CNFSID##     ;Configuration system ID number
+        PUSHJ   P,PRNAME
+
+{Page 21}
+...
+CPUSTP: PUSHJ   P,INLMES##
+         ASCIZ~ /? CPU or hardware error - / ;Hardware other than the disks
+        JRST    RELOAD
+
+...
+STPSTP: PUSHJ   P,INLMES##
+         ASCIZ~ /? Stopcode limit exceeded - /
+        JRST    RELOAD
+
+...
+        PUSHJ   P,INLMES##
+         ASCIZ~ /Reload monitor
+
+----------------------------------------------------
+
+{Page 22}
+...
+        PUSHJ   P,INLMES##
+         ASCIZ~ /[Aborting job]
+/
+        PUSHJ   P,GIVLOK##      ;Give back locks this CPU owns
+
+{Page 23}
+...
+        PUSHJ   P,INLMES##
+         ASCIZ~ / UUO is /
+        MOVE    T1,.CPSUU##     ;UUO or instruction causing Ill Mem Ref
+        PUSHJ   P,HWDPNT        ;Print as octal halfwords
+...
+        PUSHJ   P,INLMES##      ;No, Monitor did MUUO on behalf of user
+        ASCIZ~ /
+MUUO is /
+        MOVE    T1,%UPT+UPTUUO##;Get user-mode MUUO instruction
+
+{Page 25}
+...
+DIEUNI::PUSHJ   P,INLMES##      ;START THE OUTPUT
+        ASCIZ~  /Unit = /
+        MOVE    T2,.CPACA##     ;GET ADDRESS OF AC SET
+        MOVE    T2,U(T2)        ;GET "U" AT CRASH
+...
+DIESTR::PUSHJ   P,INLMES##      ;TYPE INTRODUCTION
+        ASCIZ~  /Structure = /
+        MOVE    T2,STRNAM##(P2) ;GET STR NAME
+        PJRST   PRNAME          ;TYPE IT AND RETURN
+...
+        PJSP    T1,CONMES##     ;Output message and POPJ
+         ASCIZ~ /Disk is unsafe - requesting manual BOOTS with no dump.
+***** Need to do a FULL DSKCLN when the disk is fixed. *****
+/                               ;POPJ back to DIE
+
+{Page 26}
+...
+        PUSHJ   P,INLMES##      ;Space entries apart
+         ASCIZ~ /   /
+        MOVE    T2,(P1)         ;Get item name
+        PUSHJ   P,PRNAME
+        PUSHJ   P,INLMES##
+         ASCIZ~ /: /
+        MAP     T1,1(P1)        ;Make sure this won't fault
+        PUSHJ   P,FLTCHK##
+
+{Page 27}
+...
+        PUSHJ   P,INLMES##      ;This routine called by STOPCD processor
+         ASCIZ~ /Contents of T1 = /
+PRTT0:  POP     P,T1            ;Get saved value
+        PUSHJ   P,HWDPNT        ;Print as halfwords
+...
+        PUSHJ   P,INLMES##      ;This routine called by STOPCD processor
+         ASCIZ~ /Contents of T2 = /
+        PJRST   PRTT0
+
+...
+        PUSHJ   P,INLMES##      ;This routine called by STOPCD processor
+         ASCIZ~ /Contents of T3 = /
+        PJRST   PRTT0
+
+...
+        PUSHJ   P,INLMES##      ;This routine called by STOPCD processor
+         ASCIZ~ /Contents of T4 = /
+        PJRST   PRTT0
+
+PRTJOB::PUSHJ   P,INLMES##      ;This routine called by STOPCD processor
+         ASCIZ~ /Previous JOB = /
+        MOVE    T1,JOB
+        PUSHJ   P,PRTDEC
+        PUSHJ   P,INLMES##
+         ASCIZ~ /, accumulator J = /
+        PJRST   PJOB##          ;Type J as decimal and CRLF
+
+...
+        PUSHJ   P,INLMES##      ;This routine called by STOPCD processor
+         ASCIZ~ /Contents of P1 = /
+        PJRST   PRTT0
+
+...
+        PUSHJ   P,INLMES##      ;This routine called by STOPCD processor
+         ASCIZ~ /Contents of PG = /
+        POP     P,T1            ;Get saved value
+        PUSHJ   P,HWDPNT        ;Print as halfwords
+        PUSHJ   P,INLMES##      ;Then next part
+         ASCIZ~ /, Unit # (U) = /
+        PJRST   PRTT0           ;Restore U, and fall into common code
+
+
+{Page 30}
+...
+        PUSHJ   P,INLMES        ;PRINT THE TWO COMMAS
+        ASCIZ~/,,/              ;...
+        POP     P,T1            ;RESTORE T1 FOR RH
+        PJRST   OCTPNT          ;PRINT RH AND RETURN
+...
+
+XMODE:  ASCIZ~ / at exec PC /
+UMODE:  ASCIZ~ / at user PC /
+
+PCP::   MOVEI   T1,XMODE        ;ASSUME PC IN EXEC MODE
+
+{Page 31}
+...
+        PUSHJ   P,INLMES        ;THEN TWO COMMAS
+         ASCIZ~ /,,/
+PRT22B: POP     P,T1            ;GET LOW ORDER HALF
+        PJRST   OCTPNT          ;PRINT AS NON ZERO SUPPRESSED OCTAL (RH ONLY)
+
+{Page 32}
+...
+ERNAM:: PUSHJ   P,INLMES
+         ASCIZ~ /device /
+        SKIPN   F       ;IF NO F SETUP,
+         SKIPA  T2,[SIXBIT/??????/] ;THEN SAY DON'T KNOW
+...
+CRLFQ:  PJSP    T1,CONMES       ;PRINT ? AND CRLF
+        ASCIZ~/
+?/
+
+
+FILFND.MAC        
+{Page 38}
+...
+PRTATB::PUSHJ   P,INLMES##
+         ASCIZ~ /ATB: /
+        SKIPGE  ATBDUM(P2)      ;Dummy ATB?
+         JRST   PRTAT1          ;Yes
+...
+        PUSHJ   P,INLMES##
+         ASCIZ~ /Private pages for frame /
+        PJRST   PJOB##          ;Output job number and CRLF
+
+
+FILIO.MAC        
+{Page 7}
+...
+PRTUNI: PUSHJ   P,INLMES##      ;Routine for STOPCD(UNIONL)
+         ASCIZ~ /Unit came on-line: /
+        MOVE    T2,UNINAM(U)
+        PJRST   PRNAME##        ;CRLF is provided by stopcode processor
+
+{Page 10}
+...
+PRTPGY::PUSHJ   P,INLMES##
+         ASCIZ~ /Core page /
+        MOVE    T1,PG
+        PUSHJ   P,OCTPNT##
+        PUSHJ   P,INLMES##
+         ASCIZ~ / associated with disk unit /
+        LDB     T1,PGYUNI       ;Get disk unit part of PGYADR
+        PUSHJ   P,OCTPNT##      ;Print unit
+        PUSHJ   P,INLMES##
+         ASCIZ~ / page /
+        LDB     T1,PGYPNO       ;Get disk page number part of PGYADR
+        PUSHJ   P,PRT22A##      ;Print page address (6 or 7 octal digits)
+
+{Page 20}
+...
+         BYTE (7) 7,7,7,7,7     ;SOME BELLS
+         ASCIZ~ /
+UNIT /
+        MOVE T2,(P)     ;RESTORE U
+...
+        PUSHJ P,INLMES
+         ASCIZ~ / WENT OFF-LINE/
+        MOVE T2,(P)
+        MOVE T2,UNIDES(T2)
+...
+        PUSHJ P,INLMES
+         ASCIZ~ / (FILE UNSAFE)/
+TELOP4: PUSHJ P,INLMES
+         BYTE (7)7,7,7,7,7
+         ASCIZ~ /
+PLEASE TURN IT OFF-LINE, THEN BACK ON-LINE AGAIN.
+/
+...
+        BYTE (7) 7,7,7,7,7      ;Bells (Clangor and Alarum)
+        ASCIZ~  /
+Unit /
+        MOVE    T2,(P)          ;Get back Unit Data Block address
+...
+        PUSHJ   P,INLMES        ;In-line message
+        ASCIZ~  / Hung
+/
+        PJRST   UXPOPJ          ;Restore UDB and return
+
+FILRIB.MAC        
+{Page 18}
+...
+RIBERX: PUSHJ   P,INLMES##      ;F points to DDB
+         ASCIZ~ /RIB error in /
+        PUSHJ   P,PRTDDB##      ;DEV:(USERNAME)FILE.EXT[P,PN]
+        PUSHJ   P,INLMES##
+         ASCIZ~ / on /
+        LDB     T1,RBYUNV##     ;Get disk unit part of DEVRIB(F)
+        MOVE    U,UNTTBL(T1)    ;Point to the CB
+...
+        PUSHJ   P,INLMES##
+         ASCIZ~ /: page /
+        LDB     T1,RBYPNV##     ;Get disk page number part of DEVRIB(F)
+        PJRST   PRT22A##        ;Print page address (6 or 7 octal digits)
+
+FILUUO.MAC        
+{Page 15}
+...
+DSKCM1: PUSHJ   P,INLMES        ;NO, PRINT MESSAGE
+        ASCIZ~  /RD,WT=/
+        PUSHJ   P,DSKINC        ;PRINT INCREMENTAL DISK READS
+        PUSHJ   P,INLMES        ;COMMA
+        ASCIZ~  /,/
+        PUSHJ   P,PRTWDW        ;PRINT NO OF INCREMENTAL DISK WRITES
+        PUSHJ   P,CRLF          ;PRINT CRLF
+
+{Page 16}
+...
+DSKCM2: PUSHJ   P,INLMES        ;PRINT HEADING
+        ASCIZ~  /RD,WT=/
+        LDB     T1,JBYRCT       ;TOTAL NO. OF READS FOR JOB SINCE LOG-IN
+        PUSHJ   P,RADX10        ;PRINT DECIMAL
+        PUSHJ   P,INLMES        ;PRINT COMMA
+        ASCIZ~  /,/
+        ADDI    J,JBTWCT-JBTRCT ;INCREASE JOB NO. BY DIFF. IN TABLE ORIGINS
+        LDB     T1,JBYWCT       ;TOTAL NO. OF WRITES FOR JOB SINCE LOGIN
+
+KMCDDT.MAC        
+{Page 1}
+...
+        PUSHJ   P,SAVKMC        ;SAVE THE KMC'S STATE
+        MOVEI   A,[ASCIZ~ "
+*** KMC DEBUG ROUTINES ***
+
+...
+        JRST    GOAWAY          ;YES
+UNKTRM: MOVEI   A,[ASCIZ~ "
+? UNKNOWN TERMINATOR
+"]
+...
+
+GOAWAY: MOVEI   A,[ASCIZ~ "
+RETURNING TO DDT
+
+...
+
+BADADR: MOVEI   A,[ASCIZ~ "
+? BAD ADDRESS
+"]
+...
+        SOJGE   A,GETPC6        ;NO-CONTINUE
+        MOVEI   A,[ASCIZ~ "
+% CANNOT DETERMINE PC, C, OR Z!!
+"]
+...
+        MOVEM   T3,MAR          ;AND SAVE IT
+        MOVEI   A,[ASCIZ~ "PC = "];TELL HIM WHERE HE IS
+        PUSHJ   P,OUTSTR
+        MOVE    A,MPPC          ;GET CURRENT MICRO-PC
+...
+        PUSHJ   P,OUTWRD
+        MOVEI   A,[ASCIZ~ "  Z = "]
+        PUSHJ   P,OUTSTR        ;TELL HIM THE STATE OF THE Z FLAG
+        MOVE    A,ZFLAG
+        PUSHJ   P,ONOFF
+        MOVEI   A,[ASCIZ~ "  C = "]
+        PUSHJ   P,OUTSTR        ;TELL HIM THE STATE OF THE C FLAG
+        MOVE    A,CFLAG
+        PUSHJ   P,ONOFF
+        MOVEI   A,[ASCIZ~ "  M = "];TELL HIM ABOUT THE MAR
+        PUSHJ   P,OUTSTR
+        MOVE    A,MAR
+...
+
+NEWLIN: MOVEI   A,[ASCIZ~ "
+"]                              ;GET CR-LF
+                                ;AND FALL INTO OUTSTR
+
+;SUBROUTINE TO OUTPUT ASCIZ~ STRING TO THE CTY
+;       C(A) = ADDRESS OF STRING
+;       PUSHJ   P,OUTSTR
+
+MONBTS.MAC        
+{Page 1}
+...
+BUGDMP::PUSHJ   P,INLMES##      ;Dump core into SYS:CRASH.EXE
+         ASCIZ~ /
+BUGDMP - No crash dump for this stopcode
+/
+
+{Page 2}
+...
+> ;END IFCPU(KS)
+NOBOOT: MOVEI   P1,[ASCIZ~ / ?Can't read BOOTS!! /]
+        JSP     T1,CTYTYP##     ;Type out message
+        HALT    BOTLOD          ;Can't find BOOTS anywhere
+...
+         JRST   (T4)            ;NO: RETURN
+        MOVEI   P1,[ASCIZ~ /
+"BOOTS loaded"
+  /]
+...
+BADPWT:
+BADPRD: MOVEI   P1,[ASCIZ~ /?Unit data block messed up
+/]
+        JSP     T1,CTYTYP##
+
+ONCDSK.MAC        
+{Page 1}
+...
+
+;CONMES = output ASCIZ~ string, addr in T1
+;TYPDEC = output P1 as decimal
+;CRLF   = output CRLF
+
+{Page 2}
+...
+          JRST  MANQST          ;MINOR ERRORS.
+        MOVEI   T1,[ASCIZ~ /
+ERRORS which prevent bringing the system UP/]
+MANCM1: PUSHJ   P,CONMES
+...
+
+MANREF: MOVEI   T1,[ASCIZ~ /
+File structure NEEDS refreshing/]
+        JRST    MANCM1
+
+MANQST: MOVEI   T1,[ASCIZ~ /
+MINOR ERRORS - Bring system UP anyway? /]
+        PUSHJ   P,ASKQUE
+
+{Page 6}
+...
+<       xz$(\$XZ)
+Ifnb <TEXT>,<ASCIZ~ \TEXT'TEXT1'TEXT2'TEXT3\>
+        $XZ==$XZ+1>
+        MK'NAM
+
+{Page 7}
+...
+        PUSHJ   P,LNGMES        ; No -- Type it out.
+        MOVEI   T1,[ASCIZ~\
+
+Are you SURE you want to do this? \]
+
+{Page 8}
+;Here from the FILES command in ONCE
+FILOPT: MOVEI   T1,[ASCIZ~ /
+Entering the FILES dialogue...
+  Type "GO" to return to ONCE./]
+...
+
+HLPFIL: MOVEI T1,[ASCIZ~ /
+  Type "HELP" for a list of options.
+/]
+...
+NULFIL:
+FILCMD: MOVEI T1,[ASCIZ~ /
+FILES* /]
+        PUSHJ P,OCONM
+...
+
+BADDIS: MOVEI   T1,[ASCIZ~ /  DISSOLVE is spelled with two "S"es.
+/]                      ;Here if typed "DISOLVE"
+        JRST    HLPTY1
+
+{Page 9}
+...
+NULTYP:
+HLPTYP: MOVEI T1,[ASCIZ~ /
+Type "TYPE HELP" for a list of options.
+/]
+
+{Page 10}
+...
+NULCHG:
+HLPCHG: MOVEI T1,[ASCIZ~ /
+Type "CHANGE HELP" for a list of options.
+/]
+
+{Page 11}
+...
+NULUIP:
+HLPUIP: MOVEI T1,[ASCIZ~ /
+Type "TYPE unit-name HELP" for a list of options./]
+        SKIPL TYPONL
+        MOVEI T1,[ASCIZ~ /
+Type "CHANGE unit-name HELP" for a list of options./]   ;WAS A CHANGE
+        JRST HLPTY1
+
+{Page 12}
+...
+NULSRP:
+HLPSRP: MOVEI T1,[ASCIZ~ /
+Type "TYPE str-name HELP" for a list of options./]
+        SKIPL TYPONL
+        MOVEI T1,[ASCIZ~ /
+Type "CHANGE str-name HELP" for a list of options./]
+        JRST HLPTY1
+
+{Page 14}
+...
+RDHOME: PUSHJ   P,INLMES##
+         ASCIZ~ /
+Checking all units on disk controller - reading UNIT ID from HOME pages./
+        SETOM   TYPUI0          ;Force CRLF next output from TYPUID
+...
+        HLLZS   P1              ;GET SIXBIT KONTROLLER NAME
+        MOVEI   T3,[ASCIZ~ .DO YOU WANT IT TO BE 1)ON-LINE, OR 2)DOWN? (TYPE #)
+.]
+        PUSHJ   P,MCKKON        ;PRINT MSG & GET ANSWER
+...
+         JRST CHKHOM            ;UNIT IS OK OR HAVE BEEN HERE BEFORE
+        MOVEI   T3,[ASCIZ~ .DO YOU WANT IT TO BE 1)WRITE-ENABLED, OR 2)WRITE-PRO
+TECTED? (TYPE #)
+.]
+        PUSHJ   P,WRPUNM        ;PRINT MSG & GET ANSWER
+
+{Page 15}
+...
+         JRST   OLDST4          ;OKAY.
+OLDST1: MOVEI   T1,[ASCIZ~ /MISSING OR INCONSISTENT HASH CONSTANT FOR UNIT /]
+        PUSHJ   P,MSGUNI        ;
+OLDST4: HRRZ    T1,%HOM+HOMRAN  ;T1/ UNIT'S PACK SET ID.
+...
+ ;Label STRFIX to JFCL missing or inconsistant pack set it
+OLDST5: MOVEI   T1,[ASCIZ~ /MISSING OR INCONSISTENT PACK SET ID FOR UNIT /]
+        PUSHJ   P,MSGUNI        ;
+OLDST8: 
+
+{Page 16}
+        JUMPE   P2,NTISTR       ;IF UNIT NOT IN STR, JUMP OVER THIS.
+        MOVEI   T1,[ASCIZ~ .
+DISK FORMAT DOES NOT MATCH EXPECTED FORMAT ON UNIT .]
+        SKIPN   T2,DSKPPU##     ;# of disk pages per unit we expect
+...
+        PUSH    P,T2            ;SAVE LOG. UNIT #
+        MOVEI   T1,[ASCIZ~ .
+MORE THAN ONE LAST UNIT IN STR .]
+        PUSHJ   P,MSGSTR        ;PRINT MSG FOLLOWED BY SIXBIT STR NAME
+...
+
+NOSTR:  MOVEI T1,[ASCIZ~ /
+TOO MANY STR'S /]
+        PUSHJ P,OCONM
+
+{Page 17}
+...
+OFLTAB: PHASE 0 ;123456789012;  ;4 drive reports per line = 72 columns
+         [ASCIZ~ /-offline-   /]        ;Pack not spinning or no ID plug
+%OFLER::![ASCIZ~ /unit error  /]        ;Hardware indications on drive
+%OFLFM::![ASCIZ~ /bad format  /]        ;Incorrectly formatted pack on drive
+%OFLMT::![ASCIZ~ /maintenance /]        ;Drive is in MAINT. mode
+%OFLRS::![ASCIZ~ /(no disk)   /]        ;No response from drive (RM03 not plugge
+d in)
+%OFLIG::![ASCIZ~ /(ignored)   /]        ;Wrong vol-set-ID (belongs to another sy
+stem)
+        PHASE .+%%ZZQ
+
+{Page 18}
+...
+        JUMPN   T1,LSTRED       ;WAS THE LAST UNIT IN THIS STR FOUND?
+        MOVEI   T1,[ASCIZ~ .
+LAST UNIT WASN'T FOUND IN STR .]
+        PUSHJ   P,MSGSTR        ;NO - PRINT MSG. FOLLOWED BY SIXBIT STR NAME
+...
+         JRST   MISUNI          ;NO - CHECK FOR MISSING UNITS
+        MOVEI   T3,[ASCIZ~ .
+TWO LOGICAL UNIT .]
+        MOVEI   T1,[ASCIZ~ .'S FOUND IN STR .]
+        PUSHJ   P,MSGLNG        ;PRINT MSGS FOLLOWED BY SIXBIT STR NAME
+        JRST    CHKUN1          ;CHECK NEXT PAIR OF UNITS
+...
+        ADDI    P1,1            ;INCREMENT TO GET CORRECT MISSING LOG. UNIT #
+        MOVEI   T3,[ASCIZ~ .
+LOGICAL UNIT .]
+        MOVEI   T1,[ASCIZ~ . MISSING FROM STR .]
+        PUSHJ   P,MSGLNG
+        JRST    MISUNI          ;REPEAT UNTIL ALL MISSING ARE TYPED OUT
+
+{Page 19}
+...
+
+SCNSTD: MOVEI   T1,[ASCIZ~ .
+?NO SYSTEM STRUCTURE.]
+        PUSHJ   P,SVMOT2        ;NO, TYPE MESSAGE
+
+{Page 20}
+WRPUNM: MOVEI   T4,[ASCIZ~ . IS WRITE PROTECTED.]
+
+        MOVE    P1,UNINAM(U)    ;GET SIXBIT UNIT NAME
+        MOVEI   T1,[ASCIZ~ .
+.]
+        PJRST   NASTYP          ;TYPE MSGS. & GET USER'S RESPONSE
+...
+
+MCKKON: MOVEI   T1,[ASCIZ~ .
+.]
+        MOVEI   T4,[ASCIZ~ . IS OFF-LINE.]
+NASTYP: JSP     T2,SVOTAC       ;SAVE P4,F,U & J
+        PUSH    P,T3            ;SAVE 2ND. MSG ADR.
+
+{Page 27}
+...
+        JRST    CONCHK          ;GO MAKE CONSISTANCY CHECKS.
+        MOVEI   T1,[ASCIZ~ . PAGE HARDWARE READ ERROR.]
+        PUSHJ   P,RDWMSG        ;PRINT ERROR MSG. FOR PAGE TYPE.
+        SETOM   CHKFLG          ;SAW ERROR ON THIS PAGE.
+...
+          JRST  TSTCHK          ;EXIT CHECKING ERRORS ON THE WAY
+        MOVEI   T1,[ASCIZ~ . PAGE CONSISTENCY ERROR.]
+        PUSHJ   P,RDWMSG        ;PRINT ERROR MSG. FOR PAGE TYPE
+        SETOM   CHKFLG          ;SAW ERROR ON THIS PAGE.
+
+{Page 28}
+...
+        POPJ    P,              ;WON.
+        MOVEI   T1,[ASCIZ~ .HARDWARE WRITE ERROR.]
+        MOVE    T3,UNINAM(U)    ;PICK UP UNIT NAME AND PRINT
+        PUSHJ   P,RDWMSG        ;ERROR MSG. FOR PAGE TYPE.
+
+{Page 29}
+...
+        PUSHJ   P,PRNAME        ;PUT NAME IN BUFFER
+        MOVEI   T1,[ASCIZ~ . FIRST .] ;PRESUME ERROR ON 1ST PAGE.
+        SKIPE   WHICH           ;2ND. PAGE WAS READ?
+         JRST   FSTERR          ;NO - 1ST. PAGE.
+        HLLOS   REDERR          ;INDICATE ERROR ON 2ND. PAGE.
+        SKIPA   T1,[[ASCIZ~ . SECOND .]]
+FSTERR:  HRROS  REDERR          ;INDICATE ERROR ON 1ST. PAGE.
+        PUSHJ   P,CONMES        ;PUT MSG. IN BUFFER
+
+{Page 31}
+...
+IFCPU(<KI,KL>),<
+CPYMSG: [ASCIZ~ /IBM 3330-1/]     ;0 3330-1  (100 MEGABYTE) IBM DISK ON SA10
+        [ASCIZ~ /3330-II or 3675/];1 3330-11 (200 MEGABYTE) IBM DISK ON SA10
+        [ASCIZ~ /3650 or 3652/]   ;2 3650/52 (300 MEGABYTE) Memorex disk on SA10
+        [ASCIZ~ /IBM compatible/] ;3 reserved for other IBM disk on SA10
+CPYFLG: -1                      ;Output geometry message first time thru
+>  ;End IFCPU(<KI,KL>)
+...
+        PUSHJ   P,CONMES
+        MOVEI   T1,[ASCIZ~ / unknown format/]
+        LDB     T2,UNYBPR##     ;Get blocks per record
+        CAIN    T2,1            ;Does each record = 1 block?
+         MOVEI  T1,[ASCIZ~ / formatted in blocks/]
+        CAIN    T2,4            ;Does each record = 4 blocks?
+         MOVEI  T1,[ASCIZ~ / formatted in pages/]
+        JUMPE   T1,CPOPJ        ;No message if unit is off-line
+        PUSHJ   P,CONOUT        ;How formatted
+
+{Page 34}
+...
+        PUSHJ   P,FNDUNI        ;SEE IF UNIT EXISTS & RETURN WITH UNIT DATA BLOC
+K
+          SKIPA T1,[[ASCIZ~ .NOT A PHYSICAL UNIT-TRY AGAIN.]]
+         JRST   CPOPJ1          ;UNIT EXISTS - SKIP RETURN
+        PUSHJ   P,SVMOUT        ;ADD CRLF & O/P MSG.
+
+{Page 36}
+...
+         POPJ   P,              ; (I.E. FROM FILMAN).
+        MOVEI   T1,[ASCIZ~ .
+Do you want to initialize the BAT pages on this UNIT?
+.]
+...
+          POPJ  P,              ;HE DOESN'T WANT TO
+        MOVEI   T1,[ASCIZ~ .
+THIS is not normally done, are you SURE?
+.]
+
+{Page 37}
+...
+
+TYPUNI: MOVEI   P1,[ASCIZ~ .,.]
+TYPUN1: MOVE    T1,P1           ;GET MSG. ADR. INTO KOSHER AC
+        PUSHJ   P,CONMES        ;PUT "," OR MSG. IN BUFFER
+...
+        PUSHJ   P,SPUNAM        ;PUT SIXBIT UNIT NAME IN BUFFER
+        MOVEI   T1,[ASCIZ~ .(.]
+        PUSHJ   P,CONMES        ;PUT "(" IN BUFFER
+        SKIPE   T2,UNIHID(U)    ;GET SIXBIT UNIT ID - IF ANY
+        PUSHJ   P,PRNAME        ;PUT IT IN THE BUFFER
+        MOVEI   T1,[ASCIZ~ .).]
+        PUSHJ   P,CONMES        ;PUT ")" IN THE BUFFER
+        PJRST   OPOUT           ;O/P BUFFER
+...
+
+TYPSYS: MOVEI   T1,[ASCIZ~ .
+STR IN "SYS" SEARCH LIST:.]
+        PUSHJ   P,CONOUT
+
+{Page 38}
+...
+
+TYPUNS: MOVEI   P1,[ASCIZ~ .
+UNITS NOT IN A FILE STRUCTURE:
+.]
+
+{Page 39}
+...
+        JUMPE   T2,NOREF        ;DOES STR NEED REFRESHING?
+        MOVEI   T1,[ASCIZ~ .NEEDS REFRESHING .]         ;YES
+        PUSHJ   P,CONMES        ;PUT MSG IN BUFFER
+NOREF:  PUSHJ   P,SPSNAM        ;PUT SIXBIT STR NAME IN BUFFER
+...
+        PUSHJ   P,OPOUT ;O/P BUFFER
+        MOVEI   P1,[ASCIZ~ .:.]
+        PUSHJ   P,TYPUN1        ;TYPE ":" UNIT NAME & (ID) [IST. TIME THRU]
+TYPST1: HLRZ    U,UNISTR(U)     ;GET NEXT UNIT DATA BLOCK IN STR
+
+{Page 40}
+...
+KNNUNI: PUSHJ P,DECLOP  ;TYPE VALUE AND MESSAGE
+        MOVEI T1,[ASCIZ~ /MIN = /]
+        MOVE P1,MIN
+        PUSHJ P,TYPDEC
+        MOVEI T1,[ASCIZ~ / MAX = /]
+        MOVE P1,MAX
+        PUSHJ P,DECLOP
+...
+
+ASKRPQ: MOVEI T1,[ASCIZ~ /
+VALUE NOT IN PERMITTED RANGE/]
+        SKIPGE DBLSTD   ;NO ERROR IF STANDARD SETTING
+
+{Page 41}
+...
+        JUMPN T1,CPOPJ  ;ALREADY SET FOR REFRESH
+        MOVEI T1,[ASCIZ~ /
+CHANGE WILL CAUSE STR TO NEED REFRESHING/]
+        PJRST CONOUT
+
+{Page 44}
+...
+        JFCL
+        MOVEI   T1,[ASCIZ~ /
+UNIT ID IS /]
+        SKIPN   P1,UNIHID(U)
+        MOVEI   T1,[ASCIZ~ /
+ZERO UNIT ID - NEW ID NEEDED/]
+        PUSHJ   P,CONMES
+
+{Page 45}
+...
+        HRRZ    P1,STRP4C(P2)
+        MOVEI   T1,[ASCIZ~ /PAGES FOR CRASH.SAV = /]
+        PUSHJ   P,ASKQMM
+          POPJ  P,
+...
+        MOVEM   T1,MAX
+        MOVEI   T1,[ASCIZ~ /# OF PAGES ALLOWED FOR OVERDRAW PER USER = /]
+        MOVM    P1,STROVR(P2)
+        PUSHJ   P,ASKQMM
+
+{Page 46}
+...
+        PUSHJ   P,FNDSTR        ;DOES THIS STR ALREADY EXIST?
+          SKIPA T1,[[ASCIZ~ /STR already exists/]] ;YES, THIS IS A NO-NO.
+        JRST    STSNEW          ;NO, OKAY UNLESS ALREADY A STR.
+        PJRST   CONOUT
+...
+         JRST   STSNE1          ;NO, THIS IS IT.
+        MOVEI   T1,[ASCIZ~ /
+Too many file structures!  Only one allowed!
+/]
+...
+    ;HERE TO PUT THE UNITS IN THE STR.
+STSNE2: MOVEI   T1,[ASCIZ~ /Type names of physical units in STR, extra CR when d
+one/]
+        PUSHJ   P,CONOUT
+
+...
+        JUMPE   T1,STSUN2       ;T1 = 0 IF IT ISN'T
+        MOVEI   T1,[ASCIZ~ .
+Unit already in file structure
+.]
+
+{Page 49}
+...
+         JRST   ADDNOT          ;NO, ILLEGAL TO ADD TO IT.
+        MOVEI   T1,[ASCIZ~ .Enter unit name to add.]
+        PUSHJ   P,CONOUT        ;BY NOW P2=STR DDB.
+        PUSHJ   P,GETUNI        ;GET A UNIT NAME.
+...
+        JUMPE   T1,ADDUN2       ;NO.
+        MOVEI   T1,[ASCIZ~ .THAT unit is already in a structure.]
+        JRST    CONOUT
+
+...
+
+ADDNOT: MOVEI T1,[ASCIZ~ .The SYSTEM structure has not been DEFINED yet.]
+        JRST CONOUT
+
+CANTAD: HLLZS   UNISTR(U)       ;
+        MOVEI   T1,[ASCIZ~ .Cannot add unit to structure.]
+        JRST    CONOUT
+
+{Page 50}
+...
+CNTADS: HRROS   STRREF(P2)      ;MARK WE STILL NEED REFRESHING.
+        MOVEI   T1,[ASCIZ~ /The structure WAS NOT successfully refreshed./]
+        PJRST   CONOUT
+
+...
+        MOVEI   J,0             ;Job 0 is local time zone
+GETDT1: MOVEI   T1,[ASCIZ~ /Enter date as MM-DD-YYYY /]
+        PUSHJ   P,OCONM
+        PUSHJ   P,OPOUT
+...
+          JRST  GETDT1
+GETDT2: MOVEI   T1,[ASCIZ~ /Enter time as HHMM /]
+        PUSHJ   P,OCONM
+        PUSHJ   P,OPOUT
+
+{Page 53}
+...
+;
+SPCDKN: MOVEI   T1,[ASCIZ~ /
+DSKCLN mode is: /]
+        PUSHJ   P,OCONM         ;MOVE MSG TO OUTPUT BUF
+...
+        PUSHJ   P,CRLFOP        ;APPEND CRLF, DO CTY OUTPUT
+SPCDK1: MOVEI   T1,[ASCIZ~ /DSKCLN mode desired? /]
+        PUSHJ   P,OCONM         ;MOVE MSG TO OUTPUT BUF
+        PUSHJ   P,OPOUT         ;DO CTY OUTPUT
+...
+
+SPDKHP: MOVEI   T1,[ASCIZ~ \
+Bad entry: Type 'FULL', 'FAST', 'NONE'
+ or just <Return> for default (NO CHANGE)\]
+...
+
+FILGO:  MOVEI T1,[Asciz~\
+Leaving the FILES dialogue...\]
+        PUSHJ P,LNGMES          ; Let everyone know we're leaving!
+
+{Page 55}
+...
+TYPSPC: MOVE    P1,NMSTPC
+        MOVEI   T1,[ASCIZ~ /NUMBER OF SAT PCBS = /]
+        PJRST   DECLOP
+
+...
+        MOVEM   T1,MAX
+        MOVEI   T1,[ASCIZ~ /NUMBER OF SAT PCBS = /]
+        MOVE    P1,NMSTPC
+        PUSHJ   P,ASKQMM
+...
+TYPRPC: MOVE    P1,NMRBPC
+        MOVEI   T1,[ASCIZ~ /NUMBER OF RIB PCBS = /]
+        PJRST   DECLOP
+
+...
+        MOVEM   T1,MAX
+        MOVEI   T1,[ASCIZ~ /NUMBER OF RIB PCBS = /]
+        MOVE    P1,NMRBPC
+        PUSHJ   P,ASKQMM
+...
+
+CHGBAT: MOVEI   T1,[ASCIZ~ /Type unit name to refresh BAT pages  /]
+        PUSHJ   P,CONMES
+        PUSHJ   P,OPOUT
+
+{Page 56}
+...
+
+TYPBAT: MOVEI   T1,[ASCIZ~ /Type unit name  /]
+        PUSHJ   P,CONMES
+        PUSHJ   P,OPOUT
+...
+        AOBJN   T2,TYPBT1
+TYPBT2: MOVEI   T1,[ASCIZ~ /  (counts do not agree)/]
+        CAMN    P1,%BAT+BATPAT  ;Page total
+        CAME    P3,%BAT+BATCNT  ;Count of regions
+...
+        PUSHJ   P,PR6DIG        ;Output number in 6-character field
+        MOVEI   T1,[ASCIZ~ / bad pages in /]
+        PUSHJ   P,CONMES
+        MOVE    T1,P3
+        PUSHJ   P,PRTDIG
+        MOVEI   T1,[ASCIZ~ / distinct regions./]
+        PUSHJ   P,CRLFOP
+        JUMPE   P3,TYPBT9       ;Just CRLF if none
+        MOVEI   T1,[ASCIZ~ /Do you want a list of bad spots? /]
+        PUSHJ   P,YESNO         ;Skip if "Y"
+          POPJ  P,              ;Done if "N" or no bad spots
+
+{Page 57}
+...
+        JUMPN   T1,TYPBT4       ;Zero means single page
+        MOVEI   T1,[ASCIZ~ / 1 page  at /]
+        PUSHJ   P,CONMES
+        JRST    TYPBT5
+...
+        PUSHJ   P,PR2DIG        ;Output leading blank if needed
+        MOVEI   T1,[ASCIZ~ / pages at /]
+        PUSHJ   P,CONMES
+
+...
+        PUSH    P,T1            ;Cyl
+        MOVEI   T1,[ASCIZ~ / = cylinder/]
+        PUSHJ   P,CONMES
+        POP     P,T1
+        PUSHJ   P,PR4DIG
+        MOVEI   T1,[ASCIZ~ /, head/]
+        PUSHJ   P,CONMES
+        POP     P,T1
+        PUSHJ   P,PR3DIG
+        MOVEI   T1,[ASCIZ~ /, record/]  ;Entire page is 1 record if in pages
+        SKIPL   UNICHR(U)               ;If formatted in blocks,
+         MOVEI  T1,[ASCIZ~ /, records/] ; all 4 blocks are marked as unuseable
+        PUSHJ   P,CONMES
+        MOVE    T1,(P)
+...
+
+NODATE: MOVEI   T1,[ASCIZ~ /(no date)/]
+        PJRST   CONMES
+
+...
+
+SPACE3: MOVEI   T1,[ASCIZ~ /   /];3 blanks
+        PJRST   CONMES
+
+
+ONCE.MAC        
+{Page 7}
+...
+PTSML:  PUSH    P,T2    ;SAVE AMOUNT NEEDED
+        MOVEI T1,[ASCIZ~ /
+MUST HAVE /]
+        PUSHJ   P,PAGTYP        ;TYPE INFORMATION ON ERROR
+...
+        PUSHJ   P,PAGDEC
+        MOVEI   T1,[ASCIZ~ / CONTIGUOUS MEMORY PAGES ON LINE
+TO LOAD THIS MONITOR, ONLY /]
+        PUSHJ   P,PAGTYP
+...
+        PUSHJ   P,PAGDEC
+        MOVEI   T1,[ASCIZ~ / PAGES ON LINE BEFORE FIRST HOLE.
+/]
+        PUSHJ   P,PAGTYP
+...
+
+PTINTR: MOVEI T1,[ASCIZ~ /
+INTERLEAVE SET INCORRECTLY OR MEMORY BOX OFF-LINE
+ADDRESS /]
+...
+        PUSHJ P,PAGOCT
+        MOVEI T1,[ASCIZ~ / (OCTAL)
+/]
+        PUSHJ P,PAGTYP
+...
+
+BLTBAD: MOVEI T1,[ASCIZ~ /
+ONCE CODE BLT BAD, NOTIFY OPERATING SYSTEMS
+/]
+...
+
+PDDTNF: MOVEI   T1,[ASCIZ~/
+VIRGIN MONITOR DOES NOT FIT WITHIN 340000(8) LOCATIONS.
+NOTIFY OPERATING SYSTEMS GROUP.
+
+{Page 15}
+...
+        PUSHJ   P,INLMES
+         ASCIZ~ /
+CLOCK ON INTERNAL - RESET AND TYPE <RETURN>
+/
+
+{Page 16}
+...
+         JRST   ONCTS1          ;OK (check bits in T2)
+        MOVEI   T1,[ASCIZ~ /
+%% CPU serial number is /]
+        PUSHJ   P,OCONM
+...
+        PUSHJ   P,OPOUT
+        MOVEI   T1,[ASCIZ~ /.  This monitor was built for a different system.
+Are you SURE you want to proceed? /]
+        PUSHJ   P,YESNO         ;Skip if "Y"
+          JRST  SYSBTS##        ;Go get BOOTS if "N"
+        MOVEI   T1,[ASCIZ~ /
+Please notify TYMCOM-X Support Group if this is a permanent change.
+/]
+...
+         JRST   AUTORS          ;NO: DO AUTO RESTART
+        MOVEI   T1,[ASCIZ~ /
+/]                              ; Type a free CRLF
+        JRST    HLPCM1          ;   on entry.
+
+HLPCMD: MOVEI   T1,[ASCIZ~ /
+?Unrecognized command - Please type HELP for help.
+/]
+...
+NULCMD:                         ; ** LABEL FOR NULL RETURN **
+ONCCMD: MOVEI T1,[ASCIZ~ /
+ONCE>/]                         ;COMMAND PROMPT
+        PUSHJ P,OCONM
+
+{Page 18}
+...
+NULTYP:
+HLPTYP: MOVEI T1,[ASCIZ~ /
+Type  "TYPE HELP"  for a list of options.
+/]
+
+{Page 19}
+...
+NULCHG:
+HLPCHG: MOVEI T1,[ASCIZ~ /
+Type  "CHANGE HELP"  for a list of options.
+/]
+
+{Page 20}
+...
+TYPCOR: HRRZ P1,CORLIM
+        MOVEI T1,[ASCIZ~ /Default minimum user core = /]
+        PJRST DECLOP
+
+TYPSYS: MOVE    P1,SYSNUM       ;GET SYSTEM NUMBER.
+        MOVEI T1,[ASCIZ~ /System number = /]
+        PJRST DECLOP
+
+...
+        MOVEM T1,MAX
+        MOVEI T1,[ASCIZ~ /Default minimum user core = /]
+        PUSHJ P,ASKQMM
+         POPJ P,
+...
+        MOVEM   T1,MAX
+        MOVEI   T1,[ASCIZ~ /System number = /]
+        PUSHJ   P,ASKQMM
+         POPJ   P,
+
+{Page 27}
+...
+> ; End IFKMC
+        MOVE    T1,[Exp [ASCIZ~\
+  Console\],[ASCIZ~\
+  Network\]]+1(T1)              ; Print selection.
+        PUSHJ   P,OCONM
+        PUSHJ   P,OPOUT
+        MOVEI   T1,[Asciz~\ selected.
+  Please type GO, FULL, MANUAL or READONLY to bring up the system.
+\]                              ; Print something!
+...
+        MOVEM   T1,NOXEXE##     ; Set NOXEXEC FLAG
+        MOVE    T1,[Exp [ASCIZ~\
+  NOINITIA\],[ASCIZ~\
+  INITAI\]]+1(T1)               ; Print selection.
+        PUSHJ   P,OCONM
+        PUSHJ   P,OPOUT
+        MOVEI   T1,[Asciz~\ selected.
+  Please type GO, FULL, MANUAL or READONLY to bring up the system.
+\]                              ; Print something!
+
+{Page 28}
+...
+        PUSHJ   P,INLMES
+         ASCIZ~ /
+Highest memory address is /
+        MOVE    T1,HIPAGE       ;Page number
+...
+        PUSHJ   P,INLMES
+        ASCIZ~  /
+"Hole" in core from /
+        MOVEI   T1,1(PG)
+...
+        PUSHJ   P,INLMES
+        ASCIZ~  / to /
+        MOVE    T1,(P)
+        ANDI    T1,17777
+
+{Page 29}
+...
+         JRST   MANRSN
+        MOVEI   T1,[ASCIZ~ /
+WARNING: The KMC is not loaded when coming up manually.
+         The 2020 host will not be able to talk to TYMNET.
+...
+        JRST AUTOR0
+KMCMER: MOVEI   T1,[ASCIZ~/
+KMC not set as active in system/]
+        JRST HLPCM1             ;GO COMPLAIN
+
+{Page 30}
+...
+         JRST   AUTOR1          ;NO
+        MOVEI   T1,[ASCIZ~ /
+EDDT breakpoints are set.
+/]
+...
+         JRST   RMVDDT          ;No, remove DDT
+        MOVEI   T1,[ASCIZ~ /
+DEBUGFLAG is set.
+/]
+
+{Page 32}
+...
+        PUSHJ   P,INLMES
+        ASCIZ~  /
+?????Should have /
+        MOVEI   T1,PMEMSZ
+...
+        PUSHJ   P,INLMES
+        ASCIZ~  /K of memory.
+/
+SIZOK:  POP     P,T1
+...
+        PUSHJ   P,INLMES
+        ASCIZ~  /K of memory online.
+/
+        PUSHJ   P,OPOUT
+...
+        PUSHJ   P,INLMES
+        ASCIZ~  /To automatically login, login over shut.
+/
+        PUSHJ   P,OPOUT
+
+{Page 35}
+...
+         JRST   IOGO2           ; No!  So don't say anything.
+        MOVEI   T1,[ASCIZ~ \
+
+System in auto-restart, running INITIA
+
+{Page 36}
+...
+        PUSHJ   P,INLMES
+        ASCIZ~  /
+????Core is not contiguous, correct before trying to bring up system
+/
+
+{Page 42}
+...
+
+CONOUT: PUSHJ   P,CONMES        ;Output ASCIZ~ string in T1 + CRLF
+CRLFOP: PUSHJ   P,CRLF          ;Output CRLF and dump output buffer
+OPOUT:: MOVEI T3,0              ;MAKE SURE STRING ENDS
+
+PICON.MAC        
+{Page 8}
+...
+PRT30:  PUSHJ   P,INLMES##      ;This routine called by STOPCD processor
+         ASCIZ~ /Contents of 30: /
+        MOVE    T1,SAV30##      ;Get saved value
+        PUSHJ   P,HWDPNT##      ;Print as halfwords
+        PUSHJ   P,INLMES##      ;Some spacing
+         ASCIZ~ / = SIXBIT |/
+        MOVE    T2,SAV30##      ;Restore CRSHWD
+        PUSHJ   P,PRNAME##      ;Print as sixbit
+        PUSHJ   P,INLMES##
+         ASCIZ~ /|/
+        PJRST   PRTKEY##        ;Output KEY620 and CRLF
+
+
+{Page 10}
+...
+        JSP     T1,BUGTY6       ;THEN RIGHT HALF
+        MOVEI   P1,[ASCIZ~ /
+/]
+        JSP     T1,BUGTYP
+
+{Page 11}
+;;
+;; Type out ASCIZ~ string on CTY. Called via
+;; JSP T1,BUGTYP with address of string in P1.
+;; Clobbers T2,P2,0. Preserves P1 and T1.
+...
+
+RSCMSG: ASCIZ~ /TYPE R TO RESCAN, L TO LOAD BOOTS
+/
+
+NONMSG: ASCIZ~ /
+NONE FOUND.
+/
+PARMSG: ASCIZ~ /
+EXEC PARITY ERROR
+LOC           CONTENTS
+...
+
+DONMSG: ASCIZ~ /
+MEMORY SCAN COMPLETE.
+/
+...
+IFCPU (KI),<DEFINE APRTXT,<
+        APRNXM,,[ASCIZ~ /NXM=Nonexistant memory /]
+        APRPOW,,[ASCIZ~ /PWF=Power failure /]
+        APRIOP,,[ASCIZ~ /IOF=IO page failure /]
+>>
+IFCPU (KL),<DEFINE APRTXT,<
+        LP.NXM,,[ASCIZ~ /NXM=Nonexistant memory /]
+        LP.PWF,,[ASCIZ~ /PWF=Power failure /]
+        LP.IOF,,[ASCIZ~ /IOF=IO page failure /]
+        LP.CDP,,[ASCIZ~ /CDP=Cache directory parity /]
+        LP.ADP,,[ASCIZ~ /ADP=Address parity /]
+>>
+IFCPU (KS),<DEFINE APRTXT,<
+        LP.NXM,,[ASCIZ~ /NXM=Nonexistant memory /]
+        LP.PWF,,[ASCIZ~ /PWF=Power failure /]
+>>
+IFCPU (F3),<DEFINE APRTXT,<
+        LP.NXM,,[ASCIZ~ /NXM=Nonexistant memory /]
+        LP.PWF,,[ASCIZ~ /PWF=Power failure /]
+        LP.IOF,,[ASCIZ~ /IOF=IO page failure /]
+>>
+
+        [ASCIZ~ /**  APR status: /]     ;Header text
+APRMSG: APRTXT                  ;Bits in APFMSK
+        APRMSL==.-APRMSG        ;Number of entries in APRTXT
+ASTER:  ASCIZ~  /  **
+********************************************************
+/
+
+{Page 12}
+...
+        PUSHJ   P,INLMES
+         ASCIZ~ /
+"Spurious" user parity error interrupt/
+UPEH:   MOVE    W,P1
+...
+UPEBA:  WRPI    LI.PIF
+        MOVEI   P1,[ASCIZ~ /
+UPT page parity error, location/]
+        JSP     T1,BUGTYP
+...
+        JSP     T1,BUGTY6
+UPEHR2: MOVEI   P1,[ASCIZ~ / = /]
+        JSP     T1,BUGTYP
+        HLRZ    P1,T3
+...
+
+PARPRT: EXP [ASCIZ~/
+BIT DROPPED/],[ASCIZ~/
+PICKED BIT/], [ASCIZ~/
+PICKED PARITY/]
+
+...
+
+HRDUPE: ASCIZ~/
+HARD USER PARITY ERROR /
+
+...
+        PUSHJ   P,INLMES
+         ASCIZ~ /
+USER PARITY ERROR AT /
+        HLRZ    T1,P4
+...
+        PUSHJ   P,INLMES
+         ASCIZ~ / = /
+        HLRZ    T1,PARWRD
+        PUSHJ   P,OCTPNT
+
+REFSTR.MAC        
+{Page 3}
+...
+
+IOFAL:  ASCIZ~ /
+ERROR ON DISK TRANSFER.
+/
+
+OGTPG: ASCIZ~ /
+OUT OF ROOM ON DISK.
+/
+
+BATBAD: ASCIZ~ /
+BAT PAGE CONSISTENCY ERROR.
+/
+
+RBNOUT: ASCIZ~ /
+OUT OF RETRIEVAL POINTER SPACE IN NON-EXTENDED FILE.
+/
+
+RBEOUT: ASCIZ~ /
+OUT OF RETRIEVAL POINTER SPACE IN EXTENDED FILE.
+/
+
+UFDERR: ASCIZ~ /
+OUT OF ROOM IN A ONE PAGE UFD.
+/
+
+NOTAVL: ASCIZ~ /
+RESERVED PAGE HAS ALREADY BEEN ALLOCATED.
+/
+
+RIBFAL: ASCIZ~/
+FAULTY RIB STRUCTURE.
+/
+
+SOFERR: ASCIZ~ /
+SOFTWARE ERROR.
+CALL PDP-10 OPERATING SYSTEMS GROUP.
+
+{Page 33}
+...
+TSTSUP::MOVEM   P,SAVEP
+        MOVEI   T1,[ASCIZ~ /TSTSUP routines.
+Set page number in PAGE, then use PREAD$G to read, and PWRITE$G to write./]
+        PUSHJ   P,CONOUT
+        MOVEI   T1,[ASCIZ~ /
+Data is in %TMP<%TMP+777>0$N.   Use FILES$G to get back to "FILES*".
+/]
+...
+;*;     JRST    PREAD1          ;Show what's been read it
+        MOVEI   0,[ASCIZ~ \C REFSTR: %TMP6T/ PAGE[\]
+        JRST    DDT+1           ;Tell DDT to unlock the symbol table
+
+
+{Page 34}
+...
+PREAD1:                         ;Type out the contents of PAGE
+;*;     MOVEI   T1,[ASCIZ~ \PAGE/  \]
+;*;     PUSHJ   P,CONMES
+;*;     MOVE    T1,PAGE
+...
+;*;     JRST    DDT
+        MOVEI   0,[ASCIZ~ .PAGE/.]
+        JRST    DDT+1           ;Let EDDT type out the data
+
+...
+         POPJ   P,              ;OK
+PREAD2: MOVEI   T1,[ASCIZ~ \? PAGE out of range or UNTTBL not set up.  \]
+        PUSHJ   P,CONMES
+        POP     P,(P)           ;Dump return address
+...
+
+PREAD4: MOVEI   T1,[ASCIZ~ \?I/O error on \]
+        JRST    PREAD1
+
+
+SCNSER.MAC        
+{Page 22}
+...
+PRTCRS: PUSHJ   P,INLMES##
+         ASCIZ~ /ORP620: /
+        MOVE    T1,ORP620
+        PUSHJ   P,PRTOCT##
+        PUSHJ   P,INLMES##
+         ASCIZ~ /  IRP620: /
+        MOVE    T1,IRP620
+        PUSHJ   P,PRTOCT##
+        PUSHJ   P,INLMES##              ;Called from STOPCD(BASE),STOPCD(BASE04)
+         ASCIZ~ /   SAV30: /
+        MOVE    T1,SAV30##              ;Saved contents of CRSHWD
+        PUSHJ   P,HWDPNT##
+        PUSHJ   P,INLMES##
+         ASCIZ~ / = /
+        LDB     T1,[POINT 16,SAV30,15]  ; Get Base ORING pointer field
+        PUSHJ   P,PRTOCT##
+...
+PRTKEY::PUSHJ   P,INLMES##              ;Here from STOPCD(CRASH)
+         ASCIZ~ /   Key: /
+        MOVE    T1,KEY620               ;Get Key value
+        CAMN    T1,KEY10
+         JRST   [JSP T1,CONMES##
+                 ASCIZ~ /OK
+/]
+        LSH     T1,^D<16-36>            ;Get high order 16 bits and
+
+{Page 24}
+...
+PRTIRG::PUSHJ   P,INLMES##      ;Called from stopcodes TTYBMT,TTYBPN,CTYBMT
+         ASCIZ~ /ORPPDP: /
+        MOVE    T1,ORPPDP
+        PUSHJ   P,PRTOCT##
+        PUSHJ   P,INLMES##
+         ASCIZ~ /  IRPPDP: /
+        MOVE    T1,IRPPDP
+        PUSHJ   P,PRTOCT##
+        PUSHJ   P,INLMES##      ;Output word that IRPPDP points to
+         ASCIZ~ /   IRING+/
+        MOVE    P4,IRPPDP       ;In case called from CTYBMT in CTYSIM
+        HRRZ    T1,P4
+...
+        PUSHJ   P,INLMES##
+         ASCIZ~ \/ \
+        LDB     T1,INPTYP       ;Message type
+        PUSHJ   P,PRTOCT##
+
+{Page 40}
+...
+
+NEWJER: MOVEI   T1,[ASCIZ~ /
+frame capacity exceeded
+/]
+...
+
+NEWTER: MOVEI   T1,[ASCIZ~ /
+port capacity exceeded
+/]
+
+{Page 61}
+...
+        PUSHJ   P,INLMES
+         ASCIZ~ /Bits,,Line = /
+        POP     P,T1            ;Contents of U
+        PUSHJ   P,HWDPNT
+        PUSHJ   P,INLMES
+         ASCIZ~ /  Contents of T1 = /
+        POP     P,T1            ;Get saved value
+        PUSHJ   P,HWDPNT        ;Print as halfwords
+
+{Page 102}
+...
+CCPTR:  POINT 7,CCASC
+CCASC:  ASCIZ~ /\^C
+/
+
+...
+CUPTR:  POINT 7,CUASC
+CUASC:  ASCIZ~ /\^U
+/
+
+UPARPT: POINT 7,UPASC
+UPASC:  ASCIZ~ /\^
+/
+
+COPTR:  POINT 7,COASC
+COASC:  ASCIZ~ /\^O
+/
+
+FLLBSC: POINT 7,BSLASC
+BSLASC: ASCIZ~ /\
+/
+
+
+{Page 105}
+...
+PRTBTM: PUSHJ   P,INLMES##      ;Called from STOPCD(NOBASE)
+         ASCIZ~ /No response from base.  Please reload it.  PDP-10 is still up.
+/
+        MOVSI   T1,(1B0)        ;Set flag saying NOBASE message output done
+
+{Page 120}
+...
+;INPUT TO DDT   - CALL AC,[SIXBIT /DDTIN/]  WHERE AC/ ADDR
+;ADDR GETS UP TO 21 WORDS OF ASCIZ~, BREAKING ON ANY CHARACTER
+
+DDTIN:: PUSHJ   P,TTYFNU                ;SET U AND F FOR THIS TTY
+...
+
+;DDTOUT - CALL AC,[SIXBIT /DDTOUT/], AC/ ADDR, ADDR/ ASCIZ~ /XXX/
+
+DDTOUT::UMOVE   M,(M)   ;GET ADDRESS
+
+{Page 126}
+...
+        MOVE    T2,[ILDB POINTER TO MESSAGE IN USER SPACE]
+        MOVE    T4,[BYTE COUNT, 0 IF MESSAGE IS ASCIZ~]
+        PUSHJ   P, STTLK
+          ERROR RETURN  ;T1/ ERROR CODE (SEE DEFINITIONS BELOW)
+
+{Page 127}
+...
+        SKIPN   T4              ;If count started at 0, then
+         JUMPE  T3,STTLK3       ; end at null in ASCIZ~
+        PUSHJ   P,COMTYO        ;PRINT THE CHARACTER
+        SKIPE   T4              ;If byte count supplied,
+
+{Page 130}
+...
+
+;OUTSTR OUTPUTS A STRING OF ASCIZ~ CHARACTERS
+
+
+
+{Page 191}
+...
+PRTBVR: PUSHJ   P,INLMES##      ;Called from STOPCD(BASEOK)
+         ASCIZ~ /Code in base is version /
+        LDB     T1,[POINT 8,BASVER,23]
+        PUSHJ   P,PRTDEC##
+...
+;       PUSHJ   P,INLMES##
+;        ASCIZ~ / - debug flag is /
+;       MOVEI   T1,[ASCIZ~ /OFF/]
+;       MOVSI   T2,(BV.DBG)
+;       TDNE    T2,BASVER       ;Is it set?
+;        MOVEI  T1,[ASCIZ~ /ON/]        ;Yes
+;       PUSHJ   P,CONMES##      ;STOPCD processor will provide CRLF
+        POPJ    P,
+
+{Page 212}
+...
+;Output string to CTY.  Called from ONCE and COMMON when loading BOOTS
+;       MOVEI   P1,[ASCIZ~ /string/]
+;       JSP     T1,CTYTYP
+;        <only return>
+
+CTYTYP::MOVSI   P3,440700!P1    ;POINTER FOR ASCIZ~
+CTYTYL: ILDB    T3,P3           ;GET CHARACTER
+        JUMPE   T3,(T1)         ;RETURN
+
+{Page 215}
+...
+                 SETZM NOXEXE      ;Allow INITIA to be run later
+                 MOVEI T1,[ASCIZ~ /INITIALIZATION complete
+please log in: /]
+                 PJRST CONMES##]
+        MOVEI   T1,[ASCIZ~ /SETUUO forcing INITIA on TTY1,TTY2,TTY3,TTY4,TTY5
+/]
+        PUSHJ   P,CONMES##      ;TELL OPERATOR WHAT IS HAPPENING
+
+{Page 253}
+...
+;*;     MOVEI   P1,[BYTE(7)7,15,7,7,7   ;CR, no LF because of INITIA
+;*;             ASCIZ~ \Attempting to resync with network base
+;*;\]
+;*;     JSP     T1,CTYTYP       ;Acceptance timeout -- type CTY message
+
+SEGCON.MAC        
+{Page 9}
+...
+        JSP T1,ERRMES##
+        ASCIZ~ /
+PLEASE DONT SPECIFY A HISEGMENT EXTENSION/
+
+
+SIMIO.MAC        
+{Page 11}
+...
+SIMIOY: PUSHJ   P,INLMES##      ;This routine called by STOPCD processor
+         ASCIZ~ /UUO is /       ;"MAP" or "FCREAT"
+        SKIPL   T2,SIMITU       ;SIXBIT names are negative
+         ADDI   T2,'0'          ;If small integer, make printing digit
+...
+        PUSHJ   P,INLMES##
+         ASCIZ~ /, returned error code = /
+        MOVE    T1,SIMIT1       ;Get saved value
+        PUSHJ   P,HWDPNT##      ;Print as halfwords
+...
+        PUSHJ   P,INLMES##
+         ASCIZ~ /
+Word count and address = /
+        MOVE    T1,T4
+...
+        PUSHJ   P,INLMES##
+         ASCIZ~ /     Total free pages on disk = /
+PRINTF(<[SIMIOY Check DRBSTR instead of STRDDB?]>)
+        MOVEI   T2,STRDDB       ; Check right structure
+
+SWAMP.MAC        
+{Page 17}
+...
+        PUSH    P,U             ;THIS MUST BE AT TOP OF PDL.
+        MOVEI   T1,[ASCIZ~/ ?
+? BAD SAT ON /]
+        PUSHJ   P,DBLMSG        ;
+...
+        PUSHJ   P,DBLMSG        ;
+        MOVEI   T1,[ASCIZ~/ AT PAGE /]
+        PUSHJ   P,DBLMSG        ;
+    ;THEN OUTPUT THE PAGE NUMBER.
+...
+        PUSHJ   P,DBLMSG        ;
+        MOVEI   T1,[ASCIZ~/
+/]
+        PUSHJ   P,DBLMSG        ;FINISH UP WITH CRLF.
+
+UUOCON.MAC        
+{Page 24}
+...
+
+HNMAM:  ASCIZ~ /TYMSHR/
+
+
+{Page 35}
+...
+COMGM0: PUSHJ   P,INLMES##      ;The EVENT stopcode outputs the old time
+         ASCIZ~ /Time of day is being adjusted by /
+        MOVE    T1,DTMADJ##
+        IDIV    T1,JFYSEC##
+...
+                PUSHJ   P,INLMES##
+                 ASCIZ~ / minutes./
+                POPJ    P,]
+        PUSHJ   P,PRTDEC##      ;Output signed decimal number
+        PUSHJ   P,INLMES##
+         ASCIZ~ / seconds./     ;CRLF provided by stopcode output
+        POPJ    P,              ;End of TIMEOK event stopcode
+
+...
+ADDR:   COUNT,,JOB #            ;JOB=0 TO TALK TO CTY
+        ILDB POINTER TO STRING, ASCIZ~ IF COUNT=0
+
+!
+...
+        XCTFU   <MOVE T1,0(T1)> ;T1/ TALKEE JOB #
+        HLRZ    T4,T1           ;T4/ Byte count, 0 means string is ASCIZ~
+        HRRZS   T1              ;Job number (zero for CTY)
+        PUSHJ   P,STTLK##       ;TRY TO TALK
+...
+
+CONTROL WORD: BITS 18-35: ADDR OF SOURCE/DESTINATION ASCIZ~ STRING
+              1B0=0 FOR READ -- REQUIRES RC, OP, OR WC
+              1B0=1 FOR WRITE -- REQUIRES WC
+
+{Page 45}
+...
+        XWD SYSMXL##+WAYSYS+J,SYSTBL##  ;(51) - System-wide ERROR data
+        XWD WHYMXL##+WAYSYS+J,CRSHAC##  ;(52) - ASCIZ~ Reload string (CRSHAC)
+        XWD WAYJMP,CPOPJ        ;JBTRQT ;(53) - DEC: Total time in run queue
+        XWD WAYJMP,CPOPJ        ;JBTSPS ;(54) - DEC: Status word for CPUn(s)
+...
+        XWD WAYJMP,CPOPJ        ;.GTSCN ;(73) - DEC: Scanner data
+        XWD WAYJMP,CPOPJ        ;SNDTMP ;(74) - DEC: ASCIZ~ Last SEND ALL
+        XWD TTYMXL+WAYSYS+J,TTYTBL      ;(75) - SIXBIT Set TTY commands
+        XWD WAYJMP,CPOPJ        ;PIDTAB ;(76) - DEC: Process communications ID
+
+1) "ASCIZ"      576
+
+Search in: .X
+
+
+1) "ASCIZ"      576
+
+Search in: 
+
+1) "ASCIZ"      576
+
+Search in: ^C
+
+!EXIT
+   Z@

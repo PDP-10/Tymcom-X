@@ -1,0 +1,1388 @@
+TITLE CPXKON - Kontroller routine for IBM disks on an SA-10 channel
+;Created by Joe Smith from BPXKON as part of the 3650 project, November 1985.
+
+	STOPCD(,ENTRY,CPXKON)
+	ND	FTDPAG,0	;Use UNIBLK instead of UNIPAG
+
+;The KL invokes the CSHUNL macro to unload the cache so that the SA10 can
+;read the correct data from core memory.  There are no other CPU dependencies.
+
+;         Table of Contents for CPXKON (modified BPXKON)
+;
+;
+;			   Section			      Page
+;
+;    1. List of entry points . . . . . . . . . . . . . . . . .   2
+;    2. SA10/DISK
+;         2.1   Status bits  . . . . . . . . . . . . . . . . .   3
+;         2.2   CONI bits  . . . . . . . . . . . . . . . . . .   3
+;         2.3   Channel commands . . . . . . . . . . . . . . .   4
+;    3. BPXINT
+;         3.1   Interrupt handler  . . . . . . . . . . . . . .   5
+;         3.2   Dismiss interrupt  . . . . . . . . . . . . . .   5
+;         3.3   Read buffered log  . . . . . . . . . . . . . .   6
+;         3.4   Start unit . . . . . . . . . . . . . . . . . .   6
+;         3.5   Control-Unit end . . . . . . . . . . . . . . .   7
+;         3.6   Handle position done interrupt . . . . . . . .   7
+;         3.7   Decode error sense bytes . . . . . . . . . . .   7
+;         3.8   Data check . . . . . . . . . . . . . . . . . .   7
+;         3.9   Data tranfer interrupt . . . . . . . . . . . .   9
+;         3.10  SA-10 detected error (NXM, Parity, etc)  . . .  11
+;    4. READ/WRITE
+;         4.1   Description  . . . . . . . . . . . . . . . . .  12
+;         4.2   BPXRED - set up for reading  . . . . . . . . .  13
+;         4.3   BPXWRT - set up for writing  . . . . . . . . .  13
+;         4.4   BPXSSO - Set up search address . . . . . . . .  14
+;         4.5   BPXSSC - Set up a SEEK command . . . . . . . .  14
+;         4.6   BPXSSR - Set up a search ID= & TIC . . . . . .  15
+;         4.7   BPXSDA - Set device address  . . . . . . . . .  15
+;    5. BPXADD
+;         5.1   Add a page to the request list.  . . . . . . .  16
+;         5.2   BPXA0/BPXA1/BPXA4 - Add to channel command l .  17
+;         5.3   TRNCNT - Truncate count on track boundry . . .  17
+;         5.4   SETCMD - Set up new SEARCH, TIC, and READ/WR .  18
+;         5.5   SETXFR - Set up transfer commands  . . . . . .  18
+;    6. BPXFIN - Finish up the command list  . . . . . . . . .  19
+;    7. STRTUP - Start up the disk unit  . . . . . . . . . . .  19
+;    8. BPXPOS - Position request  . . . . . . . . . . . . . .  19
+;    9. BPXSTP - Stop disk unit if HUNG TIMER goes off . . . .  19
+;   10. BPXUPA - Skip return if Kontroller is up . . . . . . .  19
+;   11. BPXCPY - Determine capacity and status of unit . . . .  20
+;   12. BPXHRD - Nothing special for hard errors . . . . . . .  20
+;   13. BPXSFT - Nothing special for soft errors . . . . . . .  20
+;   14. BPXOFS - Nothing special for offset recovery . . . . .  20
+;   15. Capacity test data for 3330 or 3350  . . . . . . . . .  21
+SUBTTL	List of entry points
+
+COMMENT ~
+  ;Routines for ONCDSK
+BPXCPY - Capacity test
+BPXUPA - Skip return if Kontroller is up
+  ;Routines for I/O
+BPXRED - Prepare for reading (BPXADD may by called several times before BPXFIN)
+BPXWRT - Prepare for writing    "       "       "       "       "       "
+BPXADD - Specifies next physical core address to be read/written
+BPXFIN - End of request, start unit specified to BPXRED/BPXWRT
+  ;Routines to select best unit
+BPXPOS - Position to cylinder
+BPXLTM - Instead of returning latency time, this routine reads buffered log
+BPXSTP - Stop and restart hung device
+  ;Interrupt level routine
+BPXINT - Interrupt routine - calls FILINT when done
+  ;Error recovery
+BPXHRD - Capture status of hard errors
+BPXSFT - Capture status of soft errors
+BPXOFS - Do track-offset adjustment
+BPXRCL - Recalibrate by movings heads to cylinder 0
+~  ;End COMMENT
+
+
+;GENERAL FILSER EXTERNALS
+
+	EXTERNAL KCMDTA,KCMERR,KCMOFL,KCMRER,KCMPOS,%OFLER,%OFLFM
+
+;ENTERNALS IN KONTROLER DATA BLOCK AND DEV DEPENDENT KON DATA
+
+	EXTERNAL BPXCUB
+	EXTERNAL KONBMX,KONBSU,KONPTR,KONCHN,KONCPY
+
+;CHANNEL EXTERNALS
+	EXTERNAL CHNGO,CHNSTB,CHNCLR,CHNBMX,CHNIIE,CHNACT,CHNMER
+
+;UNIT EXTERNALS
+	EXTERNAL UNICOM,UNPDEV,UNICYL,UNYBPY,UNYPPY,UNYBPT,UNYPPT,UNICHR
+IFE FTDPAG,<EXTERN UNIBLK>		;Old name for UNIPAG
+IFN FTDPAG,<EXTERN UNIPAG>		;Formerly UNIBLK
+	EXTERNAL UNYPUN,UNIPPU,UNYUTP,UNISWC,UNIACT,UNIONC
+	EXTERNAL UNICNA,UNICNC,UNICCC,UNIRCT
+	EXTERNAL UNISNS,UNISND,UNISNC,UNISVC,UNISCM
+
+;IN COMMON FOR PAGE DATA (WHEN FIXING ERRORS)
+	EXTERNAL EPT.PN,EPT,CURUPT
+
+;GENERAL EXTERNALS
+	EXTERNAL CPOPJ,CPOPJ1
+SUBTTL	SA10/DISK -- Fake CONI bits (reported to FILIO)
+
+ERRCMR== 1B30	;COMMAND REJECT
+ERRBOP== 1B29	;BUS OUT PARITY
+ERRBIP== 1B28	;BUS IN PARITY
+ERRPRT== 1B27	;PROTECTION (SET FILE MASK) FAILURE
+ERRUNK== 1B26	;UNKNOWN ERROR (NO BITS CHECK BUT UNIT CHECK)
+ERROVR== 1B25	;OVERRUN
+ERRNXM== 1B24	;NXM
+ERRPAR== 1B23	;PARITY ERROR
+ERRSRC== 1B22	;SEARCH ERROR (NO RECORD FOUND)
+ERRINV== 1B21	;INVALID TRACK FORMAT
+ERRRCV== 1B20	;RECOVERABLE DATA CHECK
+ERRDTA== 1B19	;UNRECOVERABLE DATA CHECK
+ERRCNT== 1B18	;COUNT ERROR (CHANNEL TERMINATION)
+ERRBSY==(1B17)	;BUSY
+ERRATN==(1B16)	;ATTENTION FLAG
+ERRUXC==(1B15)	;UNIT EXCEPTION
+ERREQP==(1B14)	;PERMANENT EQUIPMENT CHECK
+ERREQC==(1B13)	;EQUIPMENT CHECK
+ERRLEN==(1B12)	;LENGTH ERROR
+ERRCON==(1B11)	;CONTROL ERROR
+ERRSEL==(1B10)	;SELECT ERROR
+ERRWPT==(1B9)	;WRITE PROTECT ERROR (COMMAND REJECT ALSO ON)
+
+SUBTTL	SA10/DISK -- Status word
+
+  ;SA-10 channel error bits
+ESTAT== (0B1)	;Ending status (transfer complete)
+ISTAT== (1B1)	;Initial status (transfer could not be started)
+ASTAT== (2B1)	;Async status (drive on-line, seek done)
+DSTAT== (3B1)	;Dummy status (from PINT or from SET STATUS)
+SELER== (1B2)	;SELECT ERROR
+BUSIER==(1B3)	;BUS IN PARITY ERROR
+CONERR==(1B4)	;CONTROL ERROR
+;	(1B5)	;(always zero)
+LENERR==(1B6)	;LENGTH ERROR
+PINT==  (1B7)	;Program requested interrupt (from command list)
+
+  ;Storage Control Unit bits
+ATTEN== (1B8)	;ATTENTION
+STSMOD==(1B9)	;STATUS MODIFIER (when set with BUSY means C.U. Busy)
+CUEND== (1B10)	;CONTROL UNIT END
+BUSY==  (1B11)	;BUSY
+CHEND== (1B12)	;CHANNEL END
+DEVEND==(1B13)	;DEVICE END
+UCHK==  (1B14)	;UNIT CHECK
+UXCP==  (1B15)	;UNIT EXCEPTION
+
+  ;The rest of the word at CHNSTB(PG) is 8 bits of device address, 12 bits zero
+SUBTTL	SA10/DISK -- Channel commands
+
+SENSE==4	;SENSE
+BPXWT==5	;WRITE
+BPXRD==6	;READ
+READMT==206	;READ MULTITRACK (not used - it reads R0 data)
+SEEK==7		;SEEK
+SEEKCY==13	;SEEK CYLINDER (USED FOR SEEK UUO)
+RCOUNT==22	;READ COUNT
+RECAL==23	;RECALIBRATE
+SETSEC==43	;SET SECTOR
+SRCIDE==61	;SEARCH ID=
+RRBL==244	;READ AND RESET BUFFERED LOG
+
+;SA-10 CONTROL BITS
+
+NOMEMT==200	;NO MEMORY TRANSFER
+XCTCMD== 40	;EXECUTE THIS COMMAND (NO-OP IF THIS BIT IS OFF)
+CHAIN==  20	;CHAIN TO NEXT COMMAND
+IGNLEN==  2	;IGNORE LENGTH ERROR
+OFFSET==  1	;BYTE MODE OFFSET (so SEARCH ID= and SEEK can use same data)
+TRWORD== 00	;TRANSFER WORD MODE (BYTES 1-4 + HALF 5, 6-9 + OTHER HALF 5)
+TRBYTE== 10	;TRANSFER BYTE MODE (32 BITS PER WORD)
+TRBIT== 100	;TRANSFER BIT STREAM MODE (NATURAL MODE)
+TRTAPE==110	;TRANSFER TAPE COMPATABILITY (DEC 36-BIT CORE DUMP)
+
+BYTMOD==TRBYTE+CHAIN+XCTCMD	;Send SEEK and SEARCH ID= bytes to controller
+			;IGNLEN removed from BYTMOD since the count is exact
+NOXFR==NOMEMT+XCTCMD+IGNLEN	;No memory transfer (for RECAL and NO-OP)
+WRDMOD==TRBIT+XCTCMD+CHAIN	;Read/write 36 bit data as 9 byte per word pair
+
+TICBIT==(1B1)	;BIT FOR TIC
+
+	DEFINE XOR(A,B),<A!B-A&B>
+SUBTTL	BPXINT -- Interrupt handler
+
+;At this point J points to the Kontroller Data Block,
+; PG points to the Channel Data block, and
+; M points to the SA-10 Data Block
+
+BPXINT::MOVE	T1,@CHNSTB(PG)	;Get the status word (location 305 in low core)
+	AOS	P3,SAXPTR##	;Save last ^D512 status words
+	ANDI	P3,777		;Wrap within the buffer
+	MOVEM	P3,SAXPTR##
+	MOVEM	T1,SAXBUF##(P3)
+	LDB	P3,[POINT 4,T1,23] ;Get unit # (P3 used in @KONPTR)
+	MOVE	U,@KONPTR(J)	;Get pointer to unit CB (BPA0CB, etc)
+	SKIPL	CHNSTB(PG)	;If SA10 detected a memory error
+	TLNE	T1,ANYERR	; or any other error
+	 JRST	ERRCHK		;Check for unusual condition
+	TLNN	T1,PINT!STSMOD	;Not tested by ANYERR, and not expected
+	TLNN	T1,DEVEND	;Device end must be on to get data
+	 JRST	ERROR		;Should never happen
+
+;If an attempt is made to start I/O on both halves of a 3652, the following
+;sequence of status words are returned:
+;    6uuu----	Previous tranxfer succeeded
+;		Here is where I/O to 301 and 341 are both started (by mistake)
+;20410341----	Initial: unit 341 is busy and cannot start requested I/O
+;    6301----	Request to 301 succeeded (301 and 341 both not busy now)
+;40002341----	Async: unit 341 device end, note that CH end is not set
+;		Here is where 341 needs to be restarted
+;    6341----	Request to 341 succeeded
+
+	SETZB	P1,P2		;No error, P1 has fake CONI, P2 SYNDROM
+	PUSH	P,P2		; and fake DATAI is on the stack
+	TLNE	T1,CHEND	;Channel End and Device End both on?
+	 JRST	DATACK		;Yes, xfer succeeded
+	AOS	BPBUSY		;No, DEVEND without CHEND means the disk
+	HRRZ	T2,UNICOM(U)	; is no longer busy, and the request
+	PUSHJ	P,STRTU		; that was pre-empted by the other half
+	JRST	DISMS1		; of the 3652 can start now.
+
+DATACK:	JUMPE	U,DISMS1	;WE GET HERE AFTER STATUS READ
+	MOVE	T1,UNICOM(U)	;Get addr of command list in RH
+	LDB	T2,[POINT 8,(T1),15]	;AND GET FIRST COMMAND
+	CAIN	T2,SEEK		;IS IT A SEEK (HEAD AND CYL)
+	 JRST	DATA		;YES, THEN IT WAS A DATA TRANS
+	CAIE	T2,RECAL
+	CAIN	T2,SEEKCY
+	 JRST	POSINT		;POSITION INTERRUPT, RECAL OR SEEK UUO OR ERROR
+	CAIN	T2,RRBL		;READ AND RESET BUFFERED LOG?
+	 JRST	POSNTS		;TREAT AS POSITION INTERUPT AND CHECK SENSE BYTE
+	SKIPN	(T1) 		;IS ENTIRE WORD 0?
+	 JRST	POSINT		;YES, MUST BE ON-LINE
+	JRST	ERRSEN		;A TIC FOR THE SENSE
+
+SUBTTL	BPXINT -- Dismiss interrupt
+
+DISMS1:	POP	P,T1		;ADJUST STACK
+DISMIS:	MOVSI	T1,(1B0!1B1!1B2)
+	ANDCAM	T1,CHNSTB(PG)	;Reset memory error bits
+	XCT	CHNGO(PG)	;Restart the SA10 channel (in case it lost GO)
+	XCT	CHNCLR(PG)	; and clear status flag
+	POPJ	P,		;All done with this disk interrupt
+
+ANYERR==UCHK!BUSY!CUEND!LENERR!CONERR!BUSIER!SELER!ATTEN!UXCP
+
+;HERE IF ANY ERROR BIT WAS SET
+
+ERRCHK:	TLNE	T1,UCHK		;IS IT A UNIT CHECK
+	 JRST	RDSTS		;YES, WE MUST DO A READ STATUS
+	TLNE	T1,BUSY
+	 JRST	CHKBSY		;CHECK BUSY
+	TLNE	T1,CUEND	;CONTROL UNIT END?
+	 JRST	KONENC		;IF SO, RESTART WAITING DEVICES
+	JRST	ERROR		;ASSUME ERROR CONDITION
+SUBTTL	BPXINT -- Read buffered log
+
+RDSTS:	SKIPE	UNISVC(U)	;HAVE WE ALREADY SET UP THE SENSE?
+	 JRST	[MOVE	T2,UNICOM(U) ;Yes, address of command list in RH
+		 JRST	RDSTSS]	  ;AND GO
+	MOVE	T3,CHNSTB(PG)	;HERE TO READ STATUS, SAVE SECOND
+	MOVE	T3,1(T3)	;OF STATUS STORED BY SA-10
+	MOVEM	T3,UNISVC(U)	;HAS COUNT INFO
+	MOVEI	T3,UNISNS(U)
+	HRLI	T3,TICBIT	;SET UP FOR TIC TO SENSE
+	MOVE	T2,UNICOM(U)
+	EXCH	T3,(T2)		;SET IT AND GET OLD COMMAND
+	MOVEM	T3,UNISCM(U)	;Saved command
+RDSTSS:	PUSHJ	P,STRTU		;GET UNIT READY TO START
+	JRST	DISMIS		;AND GET OUT OF INTERRUPT
+
+SUBTTL	BPXINT -- Start unit
+
+STRTU:	MOVE	T3,KONBSU(J)	;Base is 300 (hex C0)
+	ADD	T3,P3		;Generate unit number for the SA10
+STRTU1:	HRLI	T2,(15B11)	;"Start code" for the block-mux
+	DPB	T3,[POINT 8,T2,7];Combine unit number with the start code
+	HLRZ	T3,KONBMX(J)	;Get address of block multiplexor list
+	ADD	T3,P3		;Address within block-mux list
+	MOVEM	T2,(T3)		;Store addr of command list in block mux list
+	MOVE	T2,(T2)		;Get first command
+	AND	T2,[BYTE (8)0,377,377,0]	;Keep CMD and UNIT only
+	IOR	T2,UNICYL(U)	;Put cylinder # in low-order 12 bits
+	TRO	T2,4000		;Set this nonzero to signify command
+	AOS	T3,SAXPTR##	;Increment pointer
+	ANDI	T3,777		;Wrap within buffer
+	MOVEM	T3,SAXPTR##
+	MOVEM	T2,SAXBUF##(T3)	;Store command for debugging
+	POPJ	P,
+
+;Here on a BUSY indication.  BUSY+STSMOD means control unit (3674) is busy.
+
+CHKBSY:	TLNN	T1,STSMOD	;IS IT BUSY AND STATUS MODIFIER
+	 JRST	DEVBSY		;NO, SOME TYPE OF DEVICE BUSY
+CUBSY:	MOVN	T2,P3		;CONTROL UNIT BUSY
+	MOVSI	T3,(1B0)	;SET A MASK THAT UNIT NEEDS RESTART
+	LSH	T3,(T2)
+	IORM	T3,BPXCUB(J)
+	TLNE	T1,CUEND	;CHECK FOR CONTROL UNIT END ALSO
+KONENC:	 PUSHJ	P,KONEND	;YES, RESTART WAITERS
+	JRST	DISMIS		;AND JUST DISMIS IF NOT
+SUBTTL	BPXINT -- Control-Unit end
+
+;Memorex 3672 and Ampex control units handle 2 strings = 16 disks (0-17)
+;Memorex 3674 handles 4 strings = 32 disks (00-37) if no logical volumes
+;Memorex 3674 + 4 strings of 3652 = 64 logical volumes (00-77)
+;   When CUEND comes in, we need to start all waiting units that are
+; connected to the control unit.  The old BPXKON assumes only 16 disks
+; per controller.  But if we attempt to start I/O on unit 340 and the
+; controller is busy, then when it becomes not busy it will report the
+; lowest unit assigned to the controller.  The code added here will
+; restart units 340-377 when not-busy comes in on unit 300.
+
+KONEND:	PUSH	P,J		;Save KON address
+	   ;This *HACK* is to allow 3 strings on one 3674 controller
+	MOVEI	J,BPACB##	;*HACK* Start at 1st string *HACK*
+	   ;The *HACK* is supposed to fix THUNG problems on F38
+KONEN1:	HLLZ	T1,BPXCUB(J)	;Get mask of 16 unit busy flags
+	HRRZS	BPXCUB(J)	;Clear them in KON data block
+	MOVEI	P3,0		;Start with relative unit 0
+	TLZ	T1,(1B16!1B17)	;Keep only bits 0-15 (2 strings per KON)
+	JUMPN	T1,CRST		;Continue if interrupt for this KON
+KONEN2:	HLRZ	T1,KONCHN(J)	;Pointer to next KON
+	JUMPE	T1,JPOPJ##	;No next kontroller, unaccountable interrupt
+	MOVE	J,T1		;Switch to next set of 16 units
+	JRST	KONEN1		;See if 3rd or 4th string caused CUEND
+IF2,<PRINTX [Hack at KONEN1 needs to be eliminated]>
+
+CRST:	JFFO	T1,.+2		;Find first unit that was busy
+	 JRST	KONEN2		;Got all of them, now try BPB and BPC
+	LSH	T1,1(T2)	;Get rid of bit JFFO found
+	ADD	P3,T2		;Update unit number (00-17)
+	SKIPN	U,@KONPTR(J)	;Get pointer to unit's CB (indexed by P3)
+	 AOJA	P3,CRST		;No such unit
+	HRRZ	T2,UNICOM(U)	;Point to channel command list
+	PUSHJ	P,STRTU		;Restart unit
+	AOJA	P3,CRST		;And check for more on this KON
+
+;31-Jan-87 It is not an error to get a device busy.  It simply means
+;  that this half of the 3652 disk can not start anything until the
+;  other half completes its transfer.  The old code retried the xfer
+;  immediately, and said "hard error" after 100 busies in a row.  /JMS
+
+DEVBSY:	TLNE	T1,CUEND!DEVEND	;Is it BUSY+<DEVEND!CUEND>
+	 JRST	[AOS	BPSTRD	  ;Count # of times got BUSY+CUEND
+		 JRST	RDSTS]	  ;Treat as UNIT CHECK, read sense bytes
+	MOVSI	T1,(1B0)	;Just plain device busy
+	IORM	T1,UNISTS##(U)	;Remember this fact
+	MOVSI	T1,1		;Count this occurrance
+	ADDM	T1,BPBUSY	; in LH of BPBUSY
+	JRST	DISMIS		;Wait for ASTAT!DEVEND
+
+BPDATA:	BLOCK	4
+	4,,0		;4 entries ,, link for GETLNK
+	.LINK 1,.-1	;LOADER will fix-up RH of prevous word
+	BPDATA,,[SIXBIT /BPSTRD/
+		 SIXBIT /BPXMAX/
+		 SIXBIT /BPXFAK/
+		 SIXBIT /BPBUSY/]
+BPSTRD=:BPDATA+0	;# of times BUSY+<CUEND!DEVEND> occured
+BPXMAX=:BPDATA+1	;Maximum requested pages for a single transfer
+BPXFAK=:BPDATA+2	;# of times TRNCNT filled up UNICOM
+BPBUSY=:BPDATA+3	;# of BUSY alone ,, # of DEVEND without CHEND
+SUBTTL	BPXINT -- Handle position done interrupt
+
+POSNTS:	AOS	UNISNC(U)	;INCREMENT SENSE COUNT (READ AND RESET LOG)
+POSINT:	MOVN	T2,P3		;GET SET TO GENERATE A BIT FOR DEVICE
+	MOVSI	T1,(1B0)
+	LSH	T1,(T2)
+	TDNE	T1,KONCPY(J)
+	 JRST	BPXCNX		;THIS IS THE RESULT OF A CAPACITY TEST
+POSDIS:	HRLI	T1,KCMPOS
+	SETZB	P1,(P)		;NO CONI OR DATAI INFO
+FILDIS:	POP	P,T3		;GET DATAI TO CORRECT PLACE
+FILDS1:	MOVE	T2,UNICOM(U)
+	SETZM	(T2)		;ZERO OUT COMMAND AREA SO RECOGNIZE ON-LINE
+	MOVE	T2,P1		;CONI
+	XCT	CHNGO(PG)	;Set GO and PIA
+	XCT	CHNCLR(PG)	;AND CLEAR STATUS FLAG
+	JRST	FILINT##	;Go tell FILIO
+
+
+SUBTTL	BPXINT -- Decode error sense bytes
+
+ERRSEN:	MOVE	T2,UNISCM(U)
+	AOS	UNISNC(U)	;COUNT A SENSE DONE
+	MOVEM	T2,(T1)		;RESTORE THE FIRST COMMAND
+	MOVEI	T1,0		;ALSO ZERO UNISVC FOR NEXT SENSE
+	EXCH	T1,UNISVC(U)	;AND THE COUNT INFO
+	MOVE	T2,CHNSTB(PG)
+	MOVEM	T1,1(T2)
+	PUSH	P,U		;AT END OF SENSE, RESTART WAITERS
+	PUSH	P,P3		;THIS TAKES CARE OF BUSY, CUEND
+	PUSHJ	P,KONEND	;WHICH MUST WAIT FOR SENSE TO FINISH
+	POP	P,P3		;NORMALLY NO WAITERS SO MAKES LITTLE
+	POP	P,U		;OR NO DIFF IF NOT BUSY, CUEND
+	JUMPN	P1,DATACK	;FORGET IT IF SOME OTHER ERROR DETECTED
+	HLLZ	T2,UNISND(U)	;GET STATUS BITS
+	TLZ	T2,(1B16!1B17)	;Check only bits 0-15
+	JFFO	T2,BYT0		;CHECK FOR ANY ON
+	HRR	T2,UNICOM(U)	;LOOKS LIKE ENVIRON DATA
+	PUSHJ	P,STRTU
+	JRST	DISMS1		;JUST RESTART UNIT
+
+BYT0:	JRST	@BYT0T(T3)	;DISPATCH ON BIT
+
+BYT0T:	CMDRJC	;COMMAND REJECT BYTE 0 BIT 0
+	OFLIN	;OFF-LINE (INTERVENTION REQUIRED) BYTE 0 BIT 1
+	BUSOPA	;BUSS OUT PARITY ERROR BYTE 0 BIT 2
+	EQCHK	;EQUIPMENT CHECK BYTE 0 BIT 3
+	DTACHK	;DATA CHECK BYTE 0 BIT 4
+	OVRUN	;PERMANENT OVERRUN BYTE 0 BIT 5
+	UNKNO	;UNKNOWN, BIT UNUSED BYTE 0 BIT 6
+	UNKNO	;UNKNOWN, BIT UNUSED BYTE 0 BIT 7
+
+
+BYT1T:	UNKNO	;UNKNNOWN PERMANENT ERROR OTHER SHOULD BE ON
+		;BYTE 1 BIT 0
+	INVTRK	;INVALID TRACK BYTE 1 BIT 1
+	UNKNO	;UNKNOWN EOC BYYTE 1 BIT 2
+	UNKNO	;UNKNOWN UNUSED BYTE 1 BIT 3
+	NOREC	;NO RECORD FOUND BYTE 1 BIT 4
+	PROTEC	;FILE PROTECTED BYTE 1 BIT 5
+	UNKNO	;WRITE INHIBITED CMD REJECT SHOULD BE ON BYTE 1 BIT 6
+	UNKNO	;OPERATION INCOMPLETE, OTHER SHOULD BE ON TOO BYTE 1 BIT 7
+
+
+PROTEC:	TROA	P1,ERRPRT	;PROTECT ERROR
+OVRUN:	 TRO	P1,ERROVR	;DATA OVERRUN
+ERRNO:	MOVE	P2,RTYZRO	;NO RETRYS
+ERRCOM:	MOVE	T1,UNISND+1(U)	;PHYSICAL DRIVE NUMBER IS HERE
+	MOVEM	T1,(P)
+ERRCM1:	SKIPN	UNIRCT(U)	;HAS RETRY PATTERN BEEN SET YET?
+	 MOVEM	P2,UNIRCT(U)	;NO, SET IT
+	JRST	DATACK		;AND CHECK ON TRANSFER
+
+BUSOPA:	TRO P1,ERRBOP
+ERRONE:	MOVE P2,RTYONE	;ONE RETRY
+	JRST ERRCOM
+
+OFLIN:	MOVE	T1,UNISND+1(U)
+	MOVEM	T1,(P)
+	LDB	T2,UNYPUN
+	MOVNS	T2
+	MOVSI	T1,(1B0)
+	LSH	T1,(T2)
+OFLIN2:	ANDCAM	T1,KONCPY(J)	;TURN OFF CAPACITY TEST BIT IF OFF-LINE
+	MOVSI	T1,KCMOFL
+	JRST	FILDIS		;Dismiss interrupt and go to FILINT
+
+EQCHK:	MOVSI	T1,(1B8)
+	TDNN	T1,UNISND(U)
+	 TLOA	P1,ERREQC
+	TLOA	P1,ERREQP	;Permanent equipment check
+ERRTEN:	SKIPA	P2,RTYTEN
+	 JRST	ERRNO		;NO RETRY ON PERM ERROR
+	JRST	ERRCOM		;10 RETRIES ON CORRECTABLE ERROR
+
+UNKNO:	TRO	P1,ERRUNK	;UNKNOWN ERROR
+	JRST	ERRTEN		;RETRY 10 TIMES
+
+NOREC:	TROA	P1,ERRSRC	;CALL IT A SEARCH ERINVTRK:	 TRO	P1,ERRINV
+ERRDT0:	MOVE	P2,RTYDT0	;DATA ERROR, 0 RETRYS
+	JRST	ERRCOM
+
+CMDRJC:	TRO	P1,ERRCMR
+	MOVSI	T1,(1B14)
+	TDNE	T1,UNISND(U)
+	TLO	P1,ERRWPT	;WRITE PROTECT ERROR
+	JRST	ERRNO
+
+	DEFINE SYND(RTY,RCL,RRT,MOD)
+<	XWD RRT+200000+UNPDEV*MOD,RCL_9+RTY>
+
+RTYCNT:	SYND (^D100,0,0,1)
+RTYZRO:	SYND(0,0,0,1)
+RTYONE:	SYND(1,0,0,1)
+RTYTEN:	SYND(^D10,0,0,1)
+RTYDT0:	SYND(0,0,0,0)
+
+SUBTTL	BPXINT -- Data check
+
+DTACHK:	MOVSI	T1,(1B17)	;SEE IF CORRECTABLE
+	TDNN	T1,UNISND(U)
+	 JRST	DTAUNC		;NO, NOT CORRECTABLE
+	LDB	P3,[POINT 24,UNISND+5(U),23]	;GET SYNDROME BYTES
+	LSH	P3,^D12		;LEFT JUSTIFY
+	MOVEI	P4,0
+	LDB	P1,[POINT 16,UNISND+4(U),15]
+	LDB	P2,[POINT 8,UNISND+3(U),31]
+	DPB	P2,[POINT 8,P1,19]	;HERE IS THE RESTART DISP
+	LDB	P2,[POINT 16,UNISND+4(U),31]	;HERE IS THE ERROR DISP
+	SUB	P1,P2		;NUMBER OF BYTES TO OFFSET FROM START
+	LSH	P1,3		;CONVERT P1 TO NUMBER OF BITS
+	IDIVI	P1,^D36		;NOW HAVE WORDS IN P1, BITS IN P2
+	MOVNS	P2
+	LSHC	P3,(P2)		;AND SHIFT SYNDROM TO DOUBLE WORD POSITION
+	JUMPN	P3,GORCV	;SEE IF ANY LEFT IN P3
+	ADDI	P1,1		;NO, 1 EXTRA WORD
+	EXCH	P3,P4		;AND GET BITS TO P3
+GORCV:	HRRZ	T1,CHNSTB(PG)	;GET POINTER TO COMMAND CHAIN
+	SOS	P2,1(T1)	;POINTS TO FIRST DATA WORD OF RECORD
+	SKIPL	(P2)		;POINTER ALWAYS POINTS 1 AFTER 1ST DATA WD
+	AOJA	P2,.-1		;GET IT TO POINT TO LAST
+	ADDI	P2,2		;IF LAST RECORD, NOW 1 AFTER HALT
+	HRRZS	P2		;AND GET RID OF COUNT. NOW LOOKS LIKE TO END OF RECORD
+	EXCH	P2,1(T1)	;GET THE OLD WORD PNTS TO 1ST TRANS
+LOKRCV:	LDB	T1,[POINT 11,(P2),11]	;GET COUNT
+	MOVNS	T1
+	ANDI	T1,3777
+	CAMLE	T1,P1		;IS IT LESS OR EQUAL TO OFFSET COUNT
+	 JRST	FNDRCV		;IF YES, WE HAVE FOUND THE TRANS WORD
+	SUB	P1,T1		;DECREMENT OFFSET REMAINING
+	SKIPL	(P2)		;AND IF MORE TRANSFER WORDS
+	AOJA	P2,LOKRCV	;TRY NEXT BLOCK OF DATA
+FINRCV:	MOVEI	P1,ERRRCV
+	MOVEI	P2,0		;ALL DONE, RECOVERABLE ERR AND NOT RETRY
+	JRST	ERRCOM
+
+;Change EPT so %ERR points to the page with correctable data
+
+FNDRCV:	LDB	T2,[POINT 24,(P2),35]
+	JUMPE	T2,NOTRN	;NO TRANSFER IF ADDRESS IS 0
+	ADD	T2,P1		;ADD IN THE OFFSET
+	LDB	T1,[POINT 13,T2,26]	;PAGE NUMBER
+	ANDI	T2,777		;AND DISP WITHIN PAGE
+	TRO	T1,PGE.A!PGE.W!PGE.P	;SET ACCESS
+	DPB	T1,[EPTPGP (%ERR.N)]
+	CLRPTO	%ERR		;CLEAR PAGE TABLE ENTRY FOR %ERR
+	XORM	P3,%ERR(T2)	;FIX UP THE ERROR
+NOTRN:	JUMPE	P4,FINRCV	;IF REST OF BYTES 0, DONE
+	MOVE	P3,P4
+	MOVEI	P4,0		;MOVE BYTES AND SET REMAINDER TO
+	AOJA	P1,LOKRCV	;COUNT OF 1 MORE, LET COMMON CODE LOOK
+
+DTAUNC:	TRO	P1,ERRDTA	;UNRECOVERABLE
+	JRST	ERRNO		;NO MORE RETRIES
+SUBTTL	BPXINT -- Data tranfer interrupt
+
+;Here from BPXINT when CHNSTB(PG) says there were no errors
+
+DATA:	MOVE	T1,CHNSTB(PG)	;GET SET TO COUNT WORDS TRANS
+	SOS	T1,1(T1)	;THIS IS THE TERMINATE WORD
+	HRRZ	T3,UNISWC(U)	;Saved word count (of last transfer)
+	HLRZ	T2,UNISWC(U)	;EXPECTED END command word
+	CAIN	T2,(T1)		;Did channel execute last command in list?
+	 JRST	DTADON		;YES, ALL OK
+				;No, need to find where it went wrong
+	HRRZS	UNISWC(U)	;FOR COUNT CHECKING
+	HRRZ	T2,UNICOM(U)	;POINTER TO COMMAND LIST
+	MOVEI	T3,0		;COUNT SO FAR
+
+;Decode the command list
+
+CNTLP:	SKIPGE	T4,(T2)		;BIT 0 ONLY ON FOR HALT IN DATA TANS
+	 JRST	CNTDON		;IT IS A HALT
+	CAIN	T2,(T1)		;DO WE END NOW?
+	 JRST	CNTDON		;YES, FINISHED COUNTING
+	TLNN	T4,(1B2)	;THIS IS THE EXECUTE BIT
+	 AOJA	T2,CNTLP	;IF NOT ON, THIS MUST BE TIC
+	TLNN	T4,(1B4)	;CHECK BYTE MODE
+	 AOJA	T2,DTATRN	;NOT BYTE MODE, MUST BE DATA
+	ADDI	T2,1		;CHECK FOR TRANSFER
+BYTARG:	CAIN	T2,(T1)
+	 JRST	CNTDON		;ENDED HERE
+	SKIPGE	(T2)
+	 AOJA	T2,CNTLP	;NEGATIVE IS LAST TRANS
+	AOJA	T2,BYTARG	;ELSE MORE TRANSFER WORDS
+
+DTATRN:	LDB	T4,[POINT 11,(T2),11]	;GET COUNT FIELD
+	CAIN	T2,(T1)
+	 JRST	LSTCNT		;IF TERMINATE HERE, THIS IS PARTIAL COUNT
+	TRC	T4,3777		;ONES COMPLEMENT
+	ADDI	T3,1(T4)	;INCREMENT COUNT
+	SKIPGE	(T2)
+	 AOJA	T2,CNTLP	;NEGATIVE IS LAST TRANSFER
+	AOJA	T2,DTATRN	;MORE DATA
+
+LSTCNT:	LDB	T1,[POINT 11,T1,11]	;PARTIAL TRANS, GET REMAINING COUNT
+	SUB	T1,T4		;SUBTRACT ORIGINAL COUNT
+	ANDI	T1,3777		;JUST IN CASE ALL REALLY TRANS (T1=0)
+	ADD	T3,T1
+CNTDON:	CAMN	T3,UNISWC(U)	;IS IT THE SAME?
+	 JRST	DTADON		;YES, FINISHED
+CNTBAD:	TRO	P1,ERRCNT	;SET COUNT ERROR FLAG
+	SKIPE	(P)		;IS THERE DATAI INFO
+	 JRST	DTADON		;YES, SOME OTHER ERROR ALSO
+	SETOM	(P)		;FLAG SOFT ERROR
+	MOVE	P2,RTYCNT
+	SKIPN	UNIRCT(U)
+	 MOVEM	P2,UNIRCT(U)	;SET TO RETRY
+
+DTADON:				;Word count in T3, error bit in P1
+IFE FTDPAG,<
+	ADDI	T3,177		;MUST BE EVEN NUMBER OF RECORDS
+	LSH	T3,W2BLSH	;NUMBER OF BLOCKS TRANSFERED
+>
+IFN FTDPAG,<
+	ADDI	T3,777		;Round up to full page
+	LSH	T3,W2PLSH
+>
+	SKIPN	T1,T3		;Number of sectors
+	 AOS	T1,T3		;At least one
+	ADD	T1,UNICCC(U)	;ADD IN COUNT SO FAR
+	HRLI	T1,KCMDTA	;CODE FOR DATA TRANSMITTED OK
+	JUMPE	P1,FILFAK	;FINISHED, JUMP IF NO ERRORS
+	TRNN	P1,ERRRCV	;IS IT RECOVERABLE DATA?
+	 TLOA	T1,KCMERR	;Hard error
+	  TLO	T1,KCMRER	;Recoverable error
+	JRST	FILDIS		;Dismiss interrupt and go to FILINT
+	PFALL	FILFAK
+;HERE TO REGENERATE COMMAND LIST WITHOUT CALLING FILIO
+
+FILFAK:	SKIPN	UNICNA(U)	;IS THERE MORE TO DO (NEXT CYLINDER)?
+	 JRST	FILDIS		;NO MORE TO REGEN
+	ADDM	T3,UNICCC(U)	;INCREASE BLOCK COUNT
+;The following instruction removed in P034/P31
+;It does not work with the upgraded SA10 - they're too fast
+;*;	XCT	CHNGO(PG)	;SET GO BEFORE BUILDING COMMAND LIST!
+	XCT	CHNCLR(PG)	;;AND CLEAR STATUS FLAG
+	POP	P,P4		;GARBAGE WORD
+
+COMMENT & WE KNOW THAT THIS TRANSFER WILL BE ON RECORD 1 OF
+THE HEAD NUMBERED ONE HIGHER THAN THE FIRST TRANSFER THE
+LAST TIME. ALSO THE SEEK, SET SECTOR, SEARCH ID EQUAL, READ OR WRITE
+ARE ALREADY SET UP. ALL WE HAVE DO DO IS MODIFY THE ADDRESS OF
+THE SEEK AND SET SECTOR AND CALL THE ADD ROUTINE.  &
+
+	AOS	BPXFAK		;Count # of times thru here
+	PUSHJ	P,BPXSET	;SET UP P1 AND P3
+	MOVEI	T1,1
+	DPB	T1,[POINT 8,(P3),23]	;RECORD 1
+	MOVSI	T1,(BYTE (8) 0,1)	;NOW INCREMENT THE HEAD NUMBER
+	ADDB	T1,(P3)
+	LDB	T1,[POINT 16,T1,15]	;NOW GET JUST THE HEAD
+	LDB	P2,UNYBPT	;Blocks per track (18 or 20 or 25 or 28)
+	LSH	P2,B2WLSH	;# of word per track
+	IMUL	T1,P2		;# of words from start of cylinder
+	LDB	P4,UNYPPY	;Pages per cylinder
+	LSH	P4,P2WLSH	;Words until end of cylinder
+	SUB	P4,T1		;P4 gets words until end of cylinder
+	LDB	T1,UNYUTP	;Get unit type
+	HRRZ	T1,RECTBL(T1)	;Get addr of table (ignore T4 in LH)
+	MOVE	T1,(T1)		;Get info for first record in table
+	MOVEM	T1,1(P3)	;SET SECTOR data for record 1
+	HRLI	P1,4(P1)	;NOW SET UP FOR MORE ADDITIONS
+	ADDI	P1,^D9
+	SUBI	P3,3
+	SETZM	UNISWC(U)
+	HRL	P3,BPBRK1	;NOT IMMEDIATE IN CASE CHANGED FOR BREAKPOINTS
+	MOVE	T1,UNICNC(U)	;Continue word count
+	MOVE	T2,UNICNA(U)	;Continue word address
+	SETZM	UNICNA(U)	;IN CASE THIS ONE FINISHES IT
+	PUSHJ	P,BPXAD1	;Add request to command list (using T1&T2)
+	  JFCL
+	PJRST	BPXFIN		;AND GO
+SUBTTL	BPXINT -- SA-10 detected error (NXM, Parity, etc)
+
+ERROR:	SETZB	P1,P2
+	PUSH	P,P1		;SET DATAI AND CONI, RETRY INFO
+	SETOM	(P)		;FLAG AS CHANNEL IN DATAI WORD
+	SKIPGE	CHNSTB(PG)
+	 JRST	MEMERR		;MEMORY ERROR
+	TLNE	T1,SELER
+	 JRST	SELERR		;SELECT ERROR TRY AGAIN
+	MOVE	P2,RTYCNT	;SET FOR LOTS OF RETRYS
+	TLNE	T1,LENERR	;LENGTH ERROR
+	 TLO	P1,ERRLEN
+	TLNE	T1,CONERR
+	 TLO	P1,ERRCON
+	TLNE	T1,BUSIER
+	 TRO	P1,ERRBIP
+	TLNE	T1,BUSY
+	 TLO	P1,ERRBSY
+	TLNE	T1,ATTEN
+	 TLO	P1,ERRATN
+	TLNE	T1,UXCP
+	 TLO	P1,ERRUXC
+	JRST	ERRCM1		;CHECK ON DATA NOW
+
+SELERR:	TLO	P1,ERRSEL
+	MOVE	P2,RTYONE	;ONE RETRY
+	JRST	ERRCM1
+
+MEMERR:	MOVE	P2,RTYCNT	;LOST OF RETRYS
+	MOVE	T1,CHNMER(PG)
+	TRO	T1,1		;FLAG NO STATUS INFORMATION BUT MEM DATA
+	MOVEM	T1,(P)
+	MOVE	T1,CHNSTB(PG)
+	TLNE	T1,1B19		;HALVES HAVE BEEN SWITCHED
+	 TRO	P1,ERRPAR
+	TLNE	T1,1B20
+	 TRO	P1,ERRNXM
+	MOVSI	T1,7B20
+	ANDCAM	T1,CHNSTB(PG)	;RESET ERROR BITS
+	JRST	ERRCM1
+SUBTTL	READ/WRITE -- Description
+
+COMMENT &
+THESE ROUTINES SET UP THE START OF THE COMMAND LIST FOR A
+READ OR WRITE. UNICOM(U) POINTS TO THE COMMAND LIST AREA.
+COMMANDS ARE BUILT FROM THE FRONT (LOW ADDRESS) DOWN AND
+DATA (FOR SEEK SET SECTOR ETC) FROM THE BACK UP. AFTER
+BPXWRT OR BPXRED IS CALLED, THE DATA IS AS FOLLOWS
+
+  UNICOM+0/	A SEEK COMMAND
+	+1/	 THE DATA TRANSFER FOR THE SEEK (points to #3)
+	+2/	A SET SECTOR COMMAND
+	+3/	 THE DATA TRANSFER FOR THE SET SECTOR  (points to END)
+#1	+4/	A SEARCH ID =
+	+5/	 THE DATA TRANSFER FOR THE SEARCH (points to #3)
+	+6/	A TIC TO THE SEARCH AT #1
+	+7/	THE READ OR WRITE COMMAND
+#2	+10/	...
+	.../	HALTS TO START OF DATA
+	.../	...
+#3	.../	THE DATA FOR THE SEEK (AND SEARCH ID=)
+	.../	(2 WORDS)
+  (END) .../	THE DATA FOR THE SET SECTOR COMMAND
+
+REGISTERS P1, P2, P3, AND P4 ARE ALSO SET UP FOR BPXADD AND BPXFIN.
+P1 LEFT HALF POINTS TO THE SEARCH (#1)
+P1 RIGHT HALF POINTS TO THE FIRST FREE COMMAND LOCATION (#2+1)
+
+P2 CONTAINS THE NUMBER OF WORDS LEFT TO END OF TRACK OR END OF
+	CYLINDER WHICHEVER COMES FIRST
+
+P3 LEFT HALF CONTAINS A DISPATCH ADDRESS FOR BPXADD
+P3 RIGHT HALF CONTAINS A POINTER TO THE NEXT PLACE TO PUT A
+	SEARCH DATA LIST (#3-2)
+
+P4 CONTAINS THE NUMBER OF WORDS LEFT TO END OF CYLINDER
+	FOR TRANSFER CONTINUATION AT INTERUPT LEVEL
+&
+
+;SET UP P1 AND P3
+
+BPXSET:	HRRZ	P1,UNICOM(U)	;P1 points to where command words go
+	HLRO	P3,UNICOM(U)	;Size of command area (room for 18 blocks)
+	MOVNS	P3		;(takes 7 words in list to transfer 1 block)
+	ADDI	P3,-2(P1)	;Start 2 words from the end
+	SETZM	UNISVC(U)	;Clear save count in case hung restart
+	POPJ	P,		;P1 and P3 set up
+SUBTTL	READ/WRITE -- BPXRED - set up for reading
+SUBTTL	READ/WRITE -- BPXWRT - set up for writing
+
+BPXWRT::SKIPA	T2,[BYTE (8) WRDMOD,BPXWT]
+BPXRED:: MOVSI	T2,(BYTE (8) WRDMOD,BPXRD)
+	LDB	T3,UNYPUN	;Get relative unit number (00 to 17)
+	ADD	T3,KONBSU(J)	;Add offset to first unit's address
+	DPB	T3,[POINT 8,T2,23] ;Put 8-bit device address in with command
+	SETZM	UNICCC(U)	;No continuation count so far
+	SETZM	UNICNA(U)	;No continuation address
+	PUSHJ	P,BPXSET	;Set P1 to command area, P3 to argument area
+	SUBI	P3,1		;Reserve 1 word for set sector argument
+	MOVEM	T2,7(P1)	;Store the read or write command
+
+	PUSHJ	P,BPXSSO	;Set up search data, T4+P2+P4
+	LDB	T3,UNYUTP	;Get unit type (T4 has record #)
+	MOVE	T3,@RECTBL(T3)	;Translate record number to SET SECTOR byte
+	MOVEM	T3,4(P3)	;Store for SET SECTOR command
+
+	PUSHJ	P,BPXSSC	;Generate seek command
+	TLC	T2,(BYTE (8) 0,XOR (SETSEC,SEEK)) ;Change SEEK to SET SECTOR
+	MOVEM	T2,(P1)		;Store SET SECTOR command
+	MOVEI	T3,4(P3)	;Address of byte
+	HRLI	T3,(BYTE (12) -1);One byte
+	MOVEM	T3,1(P1)	;Now have SET SECTOR command
+	ADDI	P1,2		;Increment into command list
+	HRLS	P1		;Save pointer to the SEARCH ID
+	PUSHJ	P,BPXSSR	;Set up the SEARCH ID=
+	ADDI	P1,2		;Increment into command list
+	SETZM	UNISWC(U)	;No saved word count
+
+COMMENT &
+USING BPXA1 CAUSES A PROBLEM IF BREAKPOINTS ARE SET, SINCE THE CHANNEL WILL
+START BEFORE THE COMMAND LIST IS COMPLETED.
+CHANGE BPBRK1 FROM <HRLI P3,BPXA1> TO <HRLI P3,BPXA0> WHEN DEBUGGING.
+&
+BPBRK1:	HRLI	P3,BPXA0	;Routine for BPXADD to call (used to be BPXA1)
+	POPJ	P,		;Finished, P1-P4 must be preserved for BPXADD
+SUBTTL	READ/WRITE -- BPXSSO - Set up search address
+
+;Called from BPXRED, BPXWRT, BPXPOS with disk page number in UNIPAG
+;Returns T4 = Record number (1-18, 1-5, or 1-7)
+;	 P2 = words to end of track
+;	 P4 = words to end of cylinder
+;	Stores CYL,HEAD,REC data in two words pointed to by P3
+;	Also sets UNICYL(U) to the target cylinder
+
+BPXSSO:
+IFE FTDPAG,<
+	MOVE	T3,UNIBLK(U)	;Get requested disk block address
+	LSH	T3,B2PLSH	;Convert to pages
+>
+IFN FTDPAG,<
+	MOVE	T3,UNIPAG(U)	;Get requested disk page address
+>
+	LDB	P4,UNYPPY	;Get pages per cylinder
+	IDIV	T3,P4		;T3 gets cylinder, T4 position within cylinder
+	MOVEM	T3,UNICYL(U)	;Set current cylinder
+	DPB	T3,[POINT 32,(P3),31]	;Set 2 bytes of 0 and 2 bytes of CYL
+	SUB	P4,T4		;Find pages to end-of-cylinder
+	LSH	P4,P2WLSH	;# of words until end of cylinder
+
+;Determine head # and record #.  Blocks 1-18, pages 1-5, pages 1-7
+
+	MOVE	T3,T4		;Page number within cylinder
+	SKIPL	UNICHR(U)	;Formatted in blocks?
+	 LSH	T3,P2BLSH	;Yes, convert to block within cylinder
+	LDB	P2,UNYPPT	;Get pages per track  (3330=5, 3350=7)
+	SKIPL	UNICHR(U)	;Formatted in blocks?
+	 LDB	P2,UNYBPT	;Yes, get blocks per track (3330=18)
+	IDIV	T3,P2		;T3 gets head number, T4 record within track
+	DPB	T3,[POINT 16,1(P3),15]	;Set head number
+	SUB	P2,T4		;Find records to end of track
+	SKIPGE	UNICHR(U)	;Formatted in pages?
+	 LSH	P2,P2BLSH	;Yes, get blocks until end of track
+	LSH	P2,B2WLSH	;# of words until end of track
+	ADDI	T4,1		;Record numbers start at 1 not 0
+	DPB	T4,[POINT 8,1(P3),23]	;Set record number
+	SUBI	P3,2		;Adjust data pointer
+	POPJ	P,
+
+
+SUBTTL	READ/WRITE -- BPXSSC - Set up a SEEK command
+
+;Some command (READ or WRITE) is in T2.
+;P1 is updated to point past the SEEK command
+;P3 is points to two before where the SEEK data is stored
+
+BPXSSC:	TLZ	T2,(BYTE (8) 377,377)	;Leave device number
+	TLO	T2,(BYTE (8) BYTMOD+IGNLEN,SEEK)
+BPXSC1:	MOVEM	T2,(P1)		;Store SEEK or SEEKCY command
+	MOVSI	T3,(BYTE (12) -6) ;SEEK data is 6 bytes
+	HRRI	T3,2(P3)	;Where the SEEK data bytes are
+	MOVEM	T3,1(P1)	;Store pointer to seek data
+	ADDI	P1,2		;Increment to next command location
+	POPJ	P,
+SUBTTL	READ/WRITE -- BPXSSR - Set up a search ID= & TIC
+
+BPXSSR:	TLZ	T2,(BYTE (8) 377,377)	;Leave device number
+	TLO	T2,(BYTE (8) BYTMOD+OFFSET,SRCIDE) ;Search ID equal
+	MOVEM	T2,(P1)		;(offset so SRCIDE and SEEK use same data)
+	HRLI	T3,(BYTE (12) -5) ;Search data is 5 bytes
+	HRRI	T3,2(P3)	;Address of data bytes
+	MOVEM	T3,1(P1)	;Store pointer for command
+	HRRZ	T3,P1		;Address of this search command
+	TLO	T3,TICBIT	;Generate TIC to SEARCH ID=
+	MOVEM	T3,2(P1)	;Store TIC
+	ADDI	P1,3		;Increment to next command location
+	POPJ	P,
+
+
+SUBTTL	READ/WRITE -- BPXSDA - Set device address
+;Returns with T2 containing only the device address
+
+BPXSDA:	LDB	T2,UNYPUN	;Get unit number
+	ADD	T2,KONBSU(J)	;Offset for device address of first unit
+	ANDI	T2,377
+	LSH	T2,^D<35-23>	;Position to 3rd byte (bits 16-23)
+	POPJ	P,
+SUBTTL	BPXADD -- Add a page to the request list.
+
+COMMENT &
+T1 has number of pages, T2 has physical memory page number.
+P1(RH) points to next free word in command list.
+P1(LH) points to the SEARCH ID= command as set up by BPXSSR.
+P2 has words until end of track
+P4 has words until end of cylinder
+P3(RH) points to next free double word for storing record # bytes.
+P3(LH) is one of the following:
+
+BPXA0	Add a transfer, do not start unit.
+BPXA1	Add a transfer then start unit (DOES NOT WAIT FOR BPXFIN).
+BPXA4	Add a transfer but set up the SEARCH ID= and data for search.
+TRNHD1	Need a SEEK HEAD to go to next track in current cylinder.
+&
+
+;P034/P05 Changed to use pages instead of words.
+;	  T1 has number of pages to transfer, T2 has physical page number
+;T1 is almost always 1 on a multi-pack system
+
+BPXADD::CAMLE	T1,BPXMAX	;Save biggest request
+	 MOVEM	T1,BPXMAX	;For curiosity's sake
+IFN FTDPAG,<
+	LSH	T1,P2WLSH	;# of words to transfer
+	LSH	T2,P2WLSH	;Word address of physical page in memory
+>
+	ADDI	T2,1		;Increment transfer address (for SETCA & ADD)
+BPXAD1:	PUSH	P,T2		;Continue here from interrupt level (FILFAK)
+	HLRZ	T3,P3		;Dispatch address in LH of P3
+	JRST	(T3)		;Goto BPXA0,BPXA1,BPXA4,TRNHD1
+SUBTTL	BPXADD -- BPXA0/BPXA1/BPXA4 - Add to channel command list
+
+;BPXA0 - Use search arg from BPXSSR, don't start disk yet
+;BPXA1 - Use search arg from BPXSSR, start disk unit before list is completed
+;BPXA4 - Call SETCMD to build search arg, don't start disk yet
+;  T1 has word count, stack has modified word address
+;WARNING: Use BPXA1 at your own risk.  It's safer to use BPXA0
+
+BPXA1:	PUSHJ	P,SETXFR	;Set up the transfer (1 block or 1 page)
+	MOVEM	T3,-1(P1)	;Store word count and address
+	PUSHJ	P,STRTUP	;Start channel (before command list is done!!!)
+	JRST	BPXAC3		;Go do next block or page
+
+;Loop back here to add 1 block at a time to transfer list
+;On a 3330 formatted in blocks, some page requests are split across tracks.
+
+BPXA4:	PUSHJ	P,SETCMD	;Inc record number, build search ID= for it
+BPXA0:	PUSHJ	P,SETXFR	;Set up the transfer (1 block or 1 page)
+	MOVEM	T3,-1(P1)	;Store word count and address
+
+BPXAC3:	JUMPLE	P2,TRNCNT	;End of track or command list full
+	HRLI	P3,BPXA4	;Set new dispatch address
+	JUMPG	T1,BPXA4	;Do more records if count nonzero
+T2POP1:	AOS	-1(P)		;Skip return (meaning OK to add more)
+T2POPJ:	POP	P,T2		;Clean up stack
+	POPJ	P,
+
+SUBTTL	BPXADD -- TRNCNT - Truncate count on track boundry
+
+;Get here from BPXAC3 when P2=0, meaning end of track.
+;If there is room in UNICOM to continue building a command list, then reset
+;P2 to a smaller limit and continue on next surface.  If there is not room in
+;UNICOM, then set UNICNA+UNICNC to call FILFAK when command list is done.
+;Called with word address on stack, remaining word count in T1
+
+TRNCNT:	JUMPLE	P4,T2POPJ	;Give error return of at end of cylinder
+	LDB	T4,[POINT 8,3(P3),23]	;Get last record number
+	LDB	T3,UNYBPT	;Get highest block number
+	SKIPGE	UNICHR(U)	;Formatted in pages?
+	 LDB	T3,UNYPPT	;Get highest page number
+	CAME	T4,T3		;Last record on the track?
+	 JRST	T2POPJ		;No, command list area in UNICOM is full
+
+;Hit end of current track.  See if can continue building list for next head.
+CPXBP1::	;Temp label for DDT
+	PUSH	P,T3		;Save max record #
+	HRRZ	T3,P3		;Get end of free space
+	SUBI	T3,2(P1)	;See how much more will fit in UNICOM
+	IDIVI	T3,5+2		;5 command words, 2 words of data per request
+	POP	P,T4
+	CAMLE	T3,T4		;More than enough room for a track?
+	 MOVE	T3,T4		;Yes, stop at end of track
+	SKIPGE	UNICHR(U)	;If formatted in pages,
+	 LSH	T3,P2BLSH	; temporarily convert to blocks
+	LSH	T3,B2WLSH	;Number of words
+	JUMPLE	T1,TRNCN1	;Just reset P2 if no more words to transfer
+	CAML	T1,P4		;Almost impossible for T1 to exceed P4
+	 MOVE	T1,P4		;Don't let transfer cross cylinder
+	MOVE	P4,T1		;Fake end of cylinder to be after this transfer
+	CAMG	T1,T3		;Will remainder of transfer fit in UNICOM?
+	 JRST	TRNHED		;Yes, switch to new head
+	POP	P,UNICNA(U)	;No, set continue address for interrupt level
+	MOVEM	T1,UNICNC(U)	;Set continue word count for FILFAK
+	POPJ	P,		;Error return, no more possible this time
+
+TRNCN1:	CAIGE	T3,1000		;Room for one more page? (4 more blocks)
+	 JRST	T2POPJ		;No, say out of room
+	HRLI	P3,TRNHD1	;Set new dispatch address
+TRNHED:	LDB	P2,UNYBPT	;Get # of words per track
+	LSH	P2,B2WLSH	; ...
+	CAML	P2,T3		;Is calculated limit in T3 smaller?
+	 MOVE	P2,T3		;Yes, enough room to handle only this much
+	CAML	P2,P4		;Don't go past end of cylinder
+	 MOVE	P2,P4		;P2 and P4 both set up now
+	JUMPLE	T1,T2POP1	;Just skip return if done with this request
+
+;Time to start a new surface.  Select next head.
+
+TRNHD1:	DMOVE	T3,2(P3)	;Get previous track and head numbers
+	TDZ	T4,[BYTE (8) 0,0,377]	;Zero record number
+	ADD	T4,[BYTE (8) 0,1,001]	;Increment head number, set record 1
+	DMOVEM	T3,(P3)		;New CYL,HEAD,RECORD
+	HLRZ	T2,P1		;Get pointer to most recent SEARCH ID=
+	MOVE	T2,3(T2)	;Get device # from READ or WRITE command
+	SUBI	P3,2		;Fake up P3 since BPXSSC uses 2(P3)
+	PUSHJ	P,BPXSSC	;Build a SEEK command to next head, this cyl
+	ADDI	P3,2		;Cancel SUBI P3,2
+	PUSHJ	P,SETCM1	;Copy rest of SEARCH,TIC,READ
+;Word count in T1, word address on stack
+	JRST	BPXA0		;And add another block/page to the list
+SUBTTL	BPXADD -- SETCMD - Set up new SEARCH, TIC, and READ/WRITE commands
+;This makes a modified copy of the data set up by a previous call to BPXSSR
+
+SETCMD:	DMOVE	T3,2(P3)	;Get the 6 bytes of data for SEARCH ID=
+	ADDI	T4,1B23		;Inc record # (count in P2 prevents overflow)
+	DMOVEM	T3,(P3)		;Store new SEARCH ID= data
+
+;Enter here from TRNHD1
+
+SETCM1:	MOVE	T3,P1		;LH = addr of SEARCH, RH = first avail word
+	BLT	T3,4(P1)	;Copy SEARCH,TRANS,TIC,READ,TRANS
+	HRRM	P3,1(P1)	;Update TRANS for SEARCH
+	HRRM	P1,2(P1)	;Update addr in TIC
+	HRLS	P1		;LH = addr of most recent SEARCH
+	ADDI	P1,5		;Now P1 is set for next time
+	SUBI	P3,2		;And P3
+	POPJ	P,
+
+
+SUBTTL	BPXADD -- SETXFR - Set up transfer commands
+;T1 has word count, -1(P) has word address
+;P2 has words to end of track, P4 has words to end of cylinder
+;Returns T3 = data for READ command
+;  T1,-1(P),P2,P4 updated
+
+SETXFR:	MOVEI	T3,200		;128 words per block
+	SKIPGE	UNICHR(U)	;Formatted in pages?
+	 MOVEI	T3,1000		;Yes, 512 words per page
+;*;	CAMLE	T3,T1		;Less than a full page?
+;*;	 MOVE	T3,T1		;Yes, do a partial block
+	ADDM	T3,UNISWC(U)	;Words to be transfered
+	SUB	T1,T3		;Adjust count
+	SUB	P2,T3		;Words remaining on track
+	SUB	P4,T3		;Words remaining on cylinder
+	MOVE	T2,-1(P)	;Word address in PDP-10 memory
+	ADDM	T3,-1(P)	;Update transfer address
+	SETCA	T3,		;Two's complement = one's complement + 1
+	ROT	T3,-^D12	;BYTE(12)^-WORDCOUNT(24)-1
+	ADD	T3,T2		;T2 has had 1 added to it
+	POPJ	P,		;T3 has BYTE(12)-WORDCOUNT(24)ADDRESS
+SUBTTL	BPXFIN - Finish up the command list
+;P1 points to next word in command list, P2 has words to end of cylinder
+
+BPXFIN::MOVSI	T3,(BYTE (8) 200) ;HALT command
+	MOVEM	T3,(P1)		;Set HALT and do not wait for CLEAR STATUS
+	HRLM	P1,UNISWC(U)	;Save end of unit pointer
+	PFALL	STRTUP		;Start unit and return
+
+SUBTTL	STRTUP - Start up the disk unit
+
+STRTUP:	HRRZ	T2,UNICOM(U)	;Address of first word in command list
+	HRLI	T2,(15B11)	;Set status to START DEVICE
+	LDB	T3,[POINT 8,(T2),23]	;Get unit number
+	DPB	T3,[POINT 8,T2,7]	;Store in 1st byte of T2
+	SUB	T3,KONBSU(J)	;Get first relative unit number
+	HLRZ	T4,KONBMX(J)	;Address of start of block mux device list
+	ADD	T3,T4		;Addr for this unit
+	MOVEM	T2,(T3)		;Store pointer to command list
+	MOVE	T2,7(T2)	;Get read or write command
+	AND	T2,[BYTE (8)0,377,377,0]	;Keep CMD and UNIT only
+	IOR	T2,UNICYL(U)	;Put cylinder # in low-order 12 bits
+	TRO	T2,4000		;Set this nonzero to signify command
+	AOS	T3,SAXPTR##	;Increment pointer
+	ANDI	T3,777		;Wrap within buffer
+	MOVEM	T3,SAXPTR##
+	MOVEM	T2,SAXBUF##(T3)	;Store command for debugging
+	HRRZ	T2,KONCHN(J)	;Get channel block address
+	XCT	CHNIIE(T2)	;Enable interrupts
+	XCT	CHNGO(T2)	;Tell it to go
+	POPJ	P,
+
+SUBTTL	BPXPOS - Position request
+
+BPXPOS::PUSHJ	P,BPXSET	;Set up command addresses in P1 and P3
+	PUSHJ	P,BPXSSO	;Set up SEEK and SEARCH commands
+	PUSHJ	P,BPXSDA	;Set device address in T2
+	TLO	T2,(BYTE (8) BYTMOD+IGNLEN,SEEKCY) ;Use other seek command
+	PUSHJ	P,BPXSC1	;Set the SEEK
+	JRST	BPXFIN		;Store HALT, start device
+
+;RECALIBRATE REQUEST
+
+BPXRCL::PUSHJ	P,BPXSDA	;Set device address in T2
+	TLO	T2,(BYTE (8) NOXFR,RECAL) ;No transfer of data, do a RECAL
+	MOVE	P1,UNICOM(U)	;Set up P1 to command list
+	MOVEM	T1,(P1)		;Store at beginning of list
+BPXRCC:	AOJA	P1,BPXFIN	;Increment P1, store HALT, start device
+
+;Perform latency calculation for disk page number specified in T1.
+; The latency is the time required for the disk to rotate until the requested
+; page is under the heads.  The number of milliseconds is returned in T1.
+
+;Actually, this routine reads the buffered error log from SA10 since
+;reading the rotational position sensing returns invalid data.
+
+BPXLTM::PUSHJ	P,BPXSET	;Set up P1 and P3 to point to command list
+	PUSHJ	P,BPXSDA	;Set the device address
+	TLO	T2,(BYTE (8) BYTMOD+IGNLEN,RRBL) ;Read and reset buffered log
+	MOVEM	T2,(P1)		;Store in command list
+	MOVSI	T3,(BYTE (12) -^D24) ;Want to get 24 bytes back
+	HRRI	T3,UNISND(U)	;Store SENSE data here
+	MOVEM	T3,1(P1)
+	AOJA	P1,BPXRCC	;Increment P1 twice and start device
+
+SUBTTL	BPXSTP - Stop disk unit if HUNG TIMER goes off
+;Preserves T1, error return if device not going, skip if it is now stopped
+
+STPPTR:	BLOCK	1		;Copy of SAXPTR
+SAXSTP:	BLOCK	1000		;Copy of SAXBUF after a HUNG or THUNG
+
+BPXSTP::MOVE	T2,[SAXBUF##,,SAXSTP]
+	BLT	T2,SAXSTP+777	;Save tracks for hung device
+	MOVE	T2,SAXPTR##
+	MOVEM	T2,STPPTR	;Save pointer into ring buffer
+	LDB	T2,UNYPUN	;GET THE UNIT NUMBER
+	HLRZ	T3,KONBMX(J)	;AND THE BLOCK MUX ADDRESS
+	ADD	T2,T3
+	LDB	T3,[POINT 4,(T2),11]	;GET THE CONTROL CODE
+	CAIN	T3,17		;AND SEE IF ITS STOP
+	 POPJ	P,		;YES, FORCE UNIT RESTART
+	HRRZ	T2,KONCHN(J)	;GET A POINTER TO CHANNEL
+	MOVE	T3,CHNACT(T2)	;COUNT OF INTERUPTS THIS CHANNEL
+	CAME	T3,UNIACT(U)	;SAME AS FOR UNIT
+	 JRST	BPXST2		;NO, MAYBE MISSED GO OR SOME OTHER
+				;UNIT HAS DONE A SEL RESET OR JUST
+				;WAITING FOR SOMEONE ELSE
+	MOVE	T3,CHNGO(T2)	;AN APPROPRIATE COMMAND
+	TRC	T3,7B29		;CONVERT GO TO RESET (SELECTIVE)
+	XCT	T3		;ISSUE IT
+	AOSA	CHNACT(T2)	;AND PREVENT ONES FROM OTHER UNITS
+				;SEL RESET SHOULD CAUSE CONTROL CHECK ON HUNG UNIT
+BPXST2:	 MOVEM T3,UNIACT(U)	;SO WE KNOW NEXT TIME THROUGH
+	XCT	CHNIIE(T2)	;ENABLE AND GO JUST IN CASE
+	XCT	CHNGO(T2)	;WE MAY HAVE LOST A CONO BIT
+	JRST	CPOPJ1		;FORCE NO RESTART IN DEV INDEP. CODE
+
+SUBTTL	BPXUPA - Skip return if Kontroller is up
+
+BPXUPA::HRRZ	T3,KONCHN(J)
+	LDB	T2,[POINT 7,CHNGO(T3),9]	;GET DEVICE
+	MOVE	T1,[CONI T1]
+	DPB	T2,[POINT 7,T1,9]
+	XCT	T1
+	JUMPE	T1,CPOPJ	;NONE, NO SA-10
+	PUSHJ	P,RSTSA
+	HRRZ	T2,KONBSU(J)
+	MOVEI	T1,UPCHK
+	PUSHJ	P,DOIT
+	JUMPLE	T1,CPOPJ	;DID NOT, GIVE UP
+	MOVSI	T1,SELER
+	TDNE	T1,(T4)		;IS IT SELECT ERROR?
+	 POPJ	P,		;YES, OFF-LINE
+	MOVEI	T1,CHNBMX(T3)
+	TLO	T1,600000
+	MOVEM	T1,-1(T4)	;RESET LIST BASE POINTER TO BLOCK MULTIPLEXER MODE
+	JRST	CPOPJ1
+
+UPCHK:	BYTE (8) NOXFR,3	;NO-OP
+	0
+
+RSTSA:	MOVE	T1,CHNGO(T3)	;RESET SA-10
+	HRRI	T1,1B18!1B19
+	XCT	T1
+	POPJ	P,
+
+DOIT:	MOVE	T4,CHNSTB(T3)	;POINTER TO BASE ADR
+	DPB	T2,[POINT 8,(T1),23]	;SET DEVICE
+	TLO	T1,(1B1)
+	EXCH	T1,-1(T4)	;SET CMD
+	SETZM	(T4)
+	PUSH	P,T1
+IFCPU (KL),<;IF KL, MUST SWEEP CACHE TO GET COMMAND TO MEMORY.
+	CSHUNL			;START SWEEP, GET OLD NUMBER IN T1
+	CAMN	T1,CSUCNT##	;WAIT UNTIL NUMBER INCREMENTS
+	 JRST	.-1		;BEFORE SETTING GO FLAG IN CHANNEL.
+>;END IFCPU (KL)
+	MOVE	T1,CHNGO(T3)
+	TRZ	T1,7		;CLEAR PIA
+	XCT	T1
+	MOVEI	T1,^D50000
+	SKIPN	(T4)
+	SOJG	T1,.-1
+	POP	P,-1(T4)
+	POPJ	P,
+SUBTTL	BPXCPY - Determine capacity and status of unit
+
+BPXCPY::LDB	T2,UNYPUN
+	MOVN	T3,T2
+	MOVSI	T1,(1B0)	;SET A BIT FLAG THAT UNIT IS IN TEST
+	LSH	T1,(T3)
+	IORM	T1,KONCPY(J)
+	PUSHJ	P,BPXSDA	;Set device address in T2
+	TLO	T2,(BYTE (8) BYTMOD+IGNLEN,SEEKCY)
+	MOVE	T1,UNICOM(U)
+	MOVEM	T2,(T1)
+	MOVE	T2,SEK600	;A SEEK TO CYL 600
+	MOVEM	T2,1(T1)
+	MOVSI	T2,(BYTE (8) 200)
+	MOVEM	T2,2(T1)
+	MOVEI	T1,^D600
+	MOVEM	T1,UNICYL(U)
+	SETZM	UNIONC(U)	;Set to 0 until seek to cyl 600 is done
+	LDB	P3,UNYPUN
+	HRRZ	T2,UNICOM(U)	;BASE ADDRESS OF CMD LST
+	PUSHJ	P,STRTU		;PUT THE START IN THE BLOCK MUX LIST
+	HRRZ	T1,KONCHN(J)
+	XCT	CHNIIE(T1)	;MAKE SURE INTERUPT ENABLED
+	XCT	CHNGO(T1)	;SET GO FLAG
+	POPJ	P,
+
+
+;Status bits returned during capacity test of a 3650
+;200503000000	Status modifier + busy (control unit is busy for 300-317)
+;204303000000	Length error + CU end + busy on unit 300
+;000063000000	CH end + dev end on 300 (control unit not busy anymore)
+;000073000000	CH end + dev end + unit check on 300 (seek to cyl 600 failed)
+;000063000000	CH end + dev end (read count on record 0 succeeded)
+;000063000000	CH end + dev end (read primary HOM page succeeded)
+;000063000000	CH end + dev end (read secondary HOM page succeeded)
+;000073010000	CH end + dev end + unit check on 301 (seek to cyl 600 failed)
+;000063010000	  repeat these 4 for each unit on BPA
+;000063010000	
+;000063010000	
+;200503400000	Status modifier + busy (control unit is busy for 340-357)
+;		  repeat above for each unit
+
+;HERE WHEN WE GET AN INTERUPT FROM THE UNIT IN TEST
+
+BPXCNX:	MOVE	T2,UNICYL(U)	;T1 has KONCPY bit
+	CAIE	T2,^D600	;Attempt to seek to cylinder 600?
+	 JRST	BPXCP2		;No, check sense bits
+	TRZE	P1,ERRCMR	;Is COMMAND REJECT on?
+	 TDZA	T3,T3		;Yes, 3350/3650 does not go up to 600
+	  MOVEI	T3,1		;No, 3330/3675 won't reject this command
+	DPB	T3,UNYUTP	;0=3350, 1=3330 (2=3350-pages, 3=3330-pages)
+	JUMPN	P1,ERROFL	;Anything else is an error, call it OFF-LINE
+	POP	P,T1		;Clear stack
+	SETZM	UNICYL(U)	;The next test will position to 0
+	HRRZ	T2,UNICOM(U)	;Start of command list
+	HRR	T1,T2		;Destination
+IF2,<PRINTX Need to re-implement the write-enable test for 3650>
+REPEAT 0,<	;IF 3330-I AND 3330-II ONLY
+	HRLI	T1,WRT100		;NOW TRY TO WRITE ON RECORD 100
+	BLT	T1,11(T2)		;PUT IN COMMAND LIST
+	ADDM	T2,6(T2)		;ADJUST THE TIC
+	LDB	T3,UNYPUN
+	ADD	T3,KONBSU(J)		;GENERATE UNIT NUMBER
+	DPB	T3,[POINT 8,0(T2),23]	;IN SEEKCY
+	DPB	T3,[POINT 8,2(T2),23]	;AND IN SEEK
+	DPB	T3,[POINT 8,4(T2),23]	;AND IN SEARCH ID =
+	DPB	T3,[POINT 8,7(T2),23]	;AND IN WRITE
+>  ;End IFE FT3350
+	HRLI	T1,RED001		;Now read COUNT field on record 001
+	BLT	T1,13(T2)		;Put in command list
+	ADDM	T2,6(T2)		;Adjust the TIC
+	ADDM	T2,10(T2)		;Where to store the data
+	LDB	T3,UNYPUN
+	ADD	T3,KONBSU(J)		;Generate unit number (300-377)
+	DPB	T3,[POINT 8,0(T2),23]	;Put in SEEKCY
+	DPB	T3,[POINT 8,2(T2),23]	; and in SEEK
+	DPB	T3,[POINT 8,4(T2),23]	; and in SEARCH ID =
+	DPB	T3,[POINT 8,7(T2),23]	; and in READ COUNT
+					;T3 has unit, T2 points from UNICOM
+	PUSHJ	P,STRTU1		;FILL IN BLOCK MX LIST
+	JRST	DISMIS			;AND GO
+
+SUBTTL	BPXHRD - Nothing special for hard errors
+BPXHRD::POPJ	P,		;The sense bytes have already been read
+
+SUBTTL	BPXSFT - Nothing special for soft errors
+BPXSFT::POPJ	P,		;The sense bytes have already been read
+
+SUBTTL	BPXOFS - Nothing special for offset recovery
+BPXOFS::POPJ	P,		;The IBM controller has already done it
+SUBTTL	Capacity test data for 3330 or 3350
+
+;3330-II has 808 cylinders.  The attempt to seek to cylinder 600 will succeed.
+;3350 has only 555 cylinders.  The attempt to seek to cylinder 600 will fail.
+
+SEK600:	BYTE (12) -6 (24) .+1	;6 bytes, address
+	BYTE (16) 0,^D600,0	;Bin 0, cylinder 600, head 0
+
+;Test for write-enable, attempt to write one byte into record 100.
+;PAKCOP formats the disk to have records 1-18 and 100.
+
+WRT100:	BYTE (8) BYTMOD+IGNLEN,SEEKCY	;+0 Use SEEKCY to fake test at DATACK+3
+	BYTE (12) -6 (24) SEK0		;+1
+	BYTE (8) BYTMOD+IGNLEN,SEEK	;+2 So it really positions
+	BYTE (12) -6 (24) SEK0		;+3
+	BYTE (8) BYTMOD+IGNLEN+OFFSET,SRCIDE ;+4 Search for record 100
+	BYTE (12) -5 (24) SEK0		;+5
+	TICBIT,,<.-2>-WRT100		;+6 Transfer back to +4
+	BYTE (8) BYTMOD+IGNLEN,BPXWT	;+7
+	BYTE (12) -1 (24) SEK0		;+10 Write 1 byte of zero
+	BYTE (8) 200			;+11 End of command list
+
+SEK0:	BYTE (16) 0,0,0 (8) 100		;BIN 0 CYL 0 HEAD 0 REC 100
+
+;Read the COUNT field of CYL 0 HEAD 0 REC 1
+
+RED001:	BYTE (8) BYTMOD+IGNLEN,SEEKCY	;+0 Use SEEKCY to fake test at DATACK+3
+	BYTE (12) -6 (24) SEK1		;+1
+	BYTE (8) BYTMOD+IGNLEN,SEEK	;+2 So it selects right head
+	BYTE (12) -6 (24) SEK1		;+3
+	BYTE (8) BYTMOD+IGNLEN+OFFSET,SRCIDE ;+4 Search for record 1
+	BYTE (12) -5 (24) SEK1		;+5
+	TICBIT,,<.-2>-RED001		;+6 Transfer back to +4
+	BYTE (8) BYTMOD+IGNLEN,RCOUNT	;+7 Read COUNT field
+	BYTE (12) -8 (24) RED002-RED001	;+10 Store 8 bytes at +12 and +13
+	BYTE (8) 200			;+11 End of command list
+RED002:	BYTE (8) 0,0,0,0,0,0,0,0 ;+12,+13 Count stored here, DL in last 2 bytes
+
+SEK1:	BYTE (16) 0,0,0 (8) 1		;BIN 0 CYL 0 HEAD 0 REC 1
+
+ERROF2:	SKIPA	T2,[%OFLFM]	;Say OFF-LINE because of format
+ERROFL:	 MOVEI	T2,%OFLER	;Say OFF-LINE because of error
+ERROF1:	MOVEM	T2,UNIONC(U)	;Store %OFLER or %OFLFM
+	JRST	OFLIN2		;Send OFF-LINE signal
+
+;T1 has KONCPY bit
+
+BPXCP2:	MOVEI	T3,0		;In case we can write
+REPEAT 0,<	;IF 3330-I AND 3330-II ONLY
+	JUMPE	P1,BPXCDN	;Finished, no error
+	MOVEI	T2,%OFLFM	;Get code for bad format
+	TRNE	P1,ERRSRC	;Did search for record 100 fail?
+	 JRST	ERROF1		;Yes, not in TYMCOM-X format, mark as off-line
+	TDZ	P1,[ERRWPT,,ERRCMR];Reset bits that come on when write protected
+	JUMPN	P1,ERROFL	;If any other bit set, it is an error
+	MOVSI	T3,(1B1)	;Set this bit to say write protect
+>  ;End FT3350
+BPXCDN:	MOVEM	T3,UNIONC(U)	;Store 1B1 for write-protect, 0 if OK
+	LDB	T3,UNYUTP	;0=3350-B, 1=3330-B
+	HRRZ	T2,UNICOM(U)	;Point to start of command list
+	LDB	T2,[POINT 16,RED002+1-RED001(T2),31]
+	CAIN	T2,^D<512*9/2>	;Is data length 2304 bytes?
+	 ADDI	T3,2		;Yes, 2=3350-P, 3=3330-P
+	DPB	T3,UNYUTP	;0&1 = blocks, 2&3 = pages
+	MOVSI	T2,(0B0+1B8)	;1 block per record when formatted in blocks
+	SKIPGE	CPYDAT(T3)	;Unit formatted in pages?
+	 MOVSI	T2,(1B0+4B8)	;Yes, set the sign bit, 4 blocks per record
+	MOVEM	T2,UNICHR(U)
+	LDB	T2,CPYBPT	;Blocks per track
+	DPB	T2,UNYBPT
+	LDB	T2,CPYPPC	;Pages per cylinder
+	DPB	T2,UNYPPY
+	LDB	T2,CPYPPU	;Pages per unit
+	MOVEM	T2,UNIPPU(U)
+	ANDCAM	T1,KONCPY(J)	;Reset test bit
+	SETZM	UNISNC(U)	;Zero sense count
+	JRST	POSDIS		;And give interrupt to FILIO at FILINT
+
+CPYBPT:	POINT  5,CPYDAT(T3),5	;Blocks per track
+;;;BPC:	POINT 10,CPYDAT(T3),15	;Blocks per cylinder
+CPYPPC:	POINT  8,CPYDAT(T3),13	;Pages per cylinder = BPC/4
+;;;BPU:	POINT 20,CPYDAT(T3),35	;Blocks per unit
+CPYPPU:	POINT 18,CPYDAT(T3),33	;Pages per unit = BPU/4
+
+;3330 has 18 blocks per track, 19 heads, 808 cylinders,  68680 pages
+;3330 has  5 pages per track,  19 heads, 808 cylinders,  76760 pages
+;3350 has  7 pages per track,  30 heads, 555 cylinders, 116550 pages
+	RADIX 10
+;*;	BYTE (1) 0 (5) 18 (10) 18*19-2(20)<18*19-2>*404	;3330-I  (100 megabytes)
+	      ;Pages, B/track, B/cylinder, Blocks per unit
+CPYDAT:	BYTE (1) 0 (5) 25 (10) 25*30-2(20)<25*30-2>*555 ;3650 in blocks
+	BYTE (1) 0 (5) 18 (10) 18*19-2(20)<18*19-2>*808	;3330-II (200 megabytes)
+	BYTE (1) 1 (5) 4*7(10) 4*7*30 (20) 28*30*555	;3350/3650 in pages
+	BYTE (1) 1 (5) 4*5(10) 4*5*19 (20) 20*19*808	;3330-II in pages
+
+	RADIX	8	;This table must be in same order as CPYDAT
+RECTBL:	Z B3650-1(T4)					;3650 in blocks
+	Z B3330-1(T4)					;3330 in blocks
+	Z P3650-1(T4)					;3650 in pages
+	Z P3330-1(T4)					;3330 in pages
+
+;THIS TABLE IS GENERATED ON THE BASIS OF DATA FROM READ SECTOR
+;  See PAKCOP.MAC for the calculation that produces these numbers.
+;3330 = 18 blocks @ 2,9,15,22,29,36,42,49,56,63,69,76,83,90,97,103,110,117
+;3330 =  5 pages  @ 2,       25,       48,        71,      95
+;3350 =  7 pages  @ 1,   17,    34,    50,     66,    83,    99
+;3350 = 25 blocks @
+;1,6,11,16,21,26,31,36,41,46,51,56,61,66,71,76,81,86,91,96,101,106,111,116,121
+
+	DEFINE RECGEN (A)
+<IRP A <	BYTE (8) A>>
+
+B3330:	RECGEN <002,011,017,026,035,044,052,061,070,077> ;18 blocks
+	RECGEN <105,114,123,132,140,147,156,165>;174	 ; on 3330
+
+P3330:	RECGEN <2,31,60,107,137>;166		;5 pages on 3330 (20 blocks)
+
+B3650:	RECGEN <001,006,013,020,025,032,037,044,051,056,063,070,075> ;25 blocks
+	RECGEN <102,107,114,121,126,133,140,145,152,157,164,171>;177 ; on 3350
+
+P3650:	RECGEN <1,21,41,61,101,121,141>;161	;7 pages on 3350 (28 blocks)
+
+	$END	(CPX)		;End of CPXKON (CPXLIT: CPXEND:)
+
+  w3jG

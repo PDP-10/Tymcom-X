@@ -1,0 +1,214 @@
+!
+!;Find STOPCDs with names (have a parenthesis after the word "STOPCD")
+!TYPE STOPCN.TEC
+<_STOPCD^ES($; 0L .U1 L Q1,.P %0$>  !Output lines with "STOPCD (" and count!
+
+
+EXIT
+
+!MUNG MONLOG,STOPCN,STOPCD.NAM
+
+Use: .MUNG MONLOG,SEARCH,RESULT.LOG
+Does: an ER for each file in MON.CMD, then executes SEARCH.TEC on the file
+%TECSEF Superseding existing file
+S.MAC   	1
+CONFKI.MAC   	0
+CONFKL.MAC   	0
+CONFKS.MAC   	0
+CONFF3.MAC   	0
+KISYM.MAC   	0
+KLSYM.MAC   	0
+KSSYM.MAC   	0
+F3SYM.MAC   	0
+ACTSER.MAC   	0
+APXKON.MAC   	0
+BOTLOD.MAC   	0
+BPXKON.MAC   	0
+CDRSER.MAC   	0
+CIOPR.MAC   	0
+CLOCK1.MAC   	5
+CLUBS.MAC   	0
+COMCON.MAC   	3
+COMMOD.MAC   	3
+COMMON.MAC   	1
+COMTXT.MAC   	0
+CORE1.MAC   	29
+CPXKON.MAC   	0
+CTYSIM.MAC   	16
+DDT.MAC   	0
+DEBUG.MAC   	0
+DR11C.MAC   	0
+DZKON.MAC   	0
+EDDT.MAC   	0
+ERRCON.MAC   	15
+F3TSER.MAC   	8
+FILFND.MAC   	27
+FILIO.MAC   	12
+FILRIB.MAC   	20
+FILUUO.MAC   	41
+FRMSER.MAC   	0
+FTASER.MAC   	3
+IOCSS.MAC   	1
+JOBDAT.MAC   	0
+KMCDDT.MAC   	0
+KMCSER.MAC   	0
+KSCOMM.MAC   	0
+KSIORG.MAC   	0
+LP2SER.MAC   	2
+LPTSER.MAC   	0
+MAGSER.MAC   	7
+MAPIO.MAC   	4
+MONBTS.MAC   	0
+MTASER.MAC   	0
+ONCDSK.MAC   	0
+ONCE.MAC   	0
+PATCH.MAC   	0
+PCBIO.MAC   	5
+PICON.MAC   	15
+PLTSER.MAC   	0
+PTPSER.MAC   	0
+PTRSER.MAC   	0
+REFSTR.MAC   	2
+RMXKON.MAC   	0
+SCHED1.MAC   	5
+SCNSER.MAC   	50
+SEGCON.MAC   	1
+SETEKS.MAC   	0
+SETETY.MAC   	0
+SIMIO.MAC   	19
+SWAMP.MAC   	14
+TMPUUO.MAC   	0
+UUOCON.MAC   	9
+   	
+!
+!;Find all occurances of "STOPCD" not in a comment
+!TYPE STOPCD.TEC
+        ! Output all lines with the word STOPCD that is not part of a comment. !
+             ! QB has file name only, such as "COMMON.MAC", Q0 counts STOPCDs. !
+HK GB -4D I	$ HXB HK   ! Eliminate ".MAC", put tab after module name in QB !
+<_STOPCD$; .U2 0L .U1 L .U3 :Q1,Q2S;$"U Q1J GB Q1,.P Q1,.K Q1,Q3P %0$' Q3J>
+    ! Send to the log file the module name, a tab, and the line with "STOPCD". !
+
+
+EXIT
+
+!MUNG MONLOG,STOPCD,STOPCD.ALL
+
+Use: .MUNG MONLOG,SEARCH,RESULT.LOG
+Does: an ER for each file in MON.CMD, then executes SEARCH.TEC on the file
+%TECSEF Superseding existing file
+S.MAC   	2
+CONFKI.MAC   	0
+CONFKL.MAC   	0
+CONFKS.MAC   	0
+CONFF3.MAC   	0
+KISYM.MAC   	0
+KLSYM.MAC   	0
+KSSYM.MAC   	0
+F3SYM.MAC   	0
+ACTSER.MAC   	19
+APXKON.MAC   	3
+BOTLOD.MAC   	0
+BPXKON.MAC   	2
+CDRSER.MAC   	1
+CIOPR.MAC   	8
+CLOCK1.MAC   	6
+CLUBS.MAC   	8
+COMCON.MAC   	8
+COMMOD.MAC   	4
+COMMON.MAC   	3
+COMTXT.MAC   	0
+CORE1.MAC   	102
+CPXKON.MAC   	1
+CTYSIM.MAC   	35
+DDT.MAC   	0
+DEBUG.MAC   	4
+DR11C.MAC   	2
+DZKON.MAC   	46
+EDDT.MAC   	0
+ERRCON.MAC   	32
+F3TSER.MAC   	9
+FILFND.MAC   	28
+FILIO.MAC   	14
+FILRIB.MAC   	21
+FILUUO.MAC   	45
+FRMSER.MAC   	18
+FTASER.MAC   	11
+IOCSS.MAC   	12
+JOBDAT.MAC   	0
+KMCDDT.MAC   	0
+KMCSER.MAC   	1
+KSCOMM.MAC   	0
+KSIORG.MAC   	0
+LP2SER.MAC   	3
+LPTSER.MAC   	1
+MAGSER.MAC   	8
+MAPIO.MAC   	47
+MONBTS.MAC   	1
+MTASER.MAC   	3
+ONCDSK.MAC   	10
+ONCE.MAC   	16
+PATCH.MAC   	0
+PCBIO.MAC   	27
+PICON.MAC   	17
+PLTSER.MAC   	1
+PTPSER.MAC   	1
+PTRSER.MAC   	1
+REFSTR.MAC   	11
+RMXKON.MAC   	2
+SCHED1.MAC   	36
+SCNSER.MAC   	99
+SEGCON.MAC   	25
+SETEKS.MAC   	0
+SETETY.MAC   	0
+SIMIO.MAC   	45
+SWAMP.MAC   	38
+TMPUUO.MAC   	1
+UUOCON.MAC   	10
+   	
+!
+!;Convert to format suitable for sorting
+!TYPE STOPST.TEC
+ERSTOPCD.ALL$ EWSTOPCD.SRT$ !Purpose: Creates STOPCD.SRT sorted by name!
+<_($; .U2 0L .U1 L .U3 :Q1,Q3S,$"S !Search for STOPCD with comma in parens!
+ Q1J S	$ .,Q2K FK,$ FS,$	$ L Q1,.P -L ' L> EX
+
+
+EXIT
+
+!MUNG STOPST
+
+%TECSEF Superseding existing file
+
+!R PIP
+
+*STOPCD.SRT_STOPCD.SRT/W
+
+*SORT!
+
+*STOPCD.SRT=STOPCD.SRT/R80/K17.6
+
+SORTED 313 RECORDS
+
+*^Z
+
+
+EXIT
+
+!
+!DIRECT STOPCD.*
+
+STOPCD  SRT       8  31-JAN-89 1140    ALL RD  NO      3554
+STOPCD  ALL      19  31-JAN-89 1136    ALL RD  NO      8764
+STOPCD  NAM      10  31-JAN-89 1130    ALL RD  NO      4175
+STOPCD  LOG       1  31-JAN-89 1130    ALL RD  NO      2560
+STOPCD  MEM      25  31-JAN-89 1128    ALL RD  NO     11990
+STOPCD  SCM       3  31-JAN-89 1121    ALL RD  NO       678
+STOPCD  CTL       2  19-JAN-88 1432    ALL RD  NO        83
+STOPCD  TEC       2  18-JUL-87 1505    ALL RD  NO        81
+STOPCD  85        3  17-JUL-85 1545    ALL RD  NO       864
+
+!
+!LOGOUT
+1052.76 tru
+terminal time: 0:10:45

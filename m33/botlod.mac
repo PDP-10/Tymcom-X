@@ -1,0 +1,702 @@
+SUBTTL	Program to load BOOTS from IBM disks on an SA10 channel
+;Note that this routine runs on both the KI and the KL, no CPU dependencies.
+
+IF1,<IFNDEF P,<UBTLOD==-1;>UBTLOD==0>	;Set UBTLOD if P defined via S.MAC
+IFE UBTLOD,<TITLE BOTLOD - Load BOOTS from disk on a 146 restart>
+IFN UBTLOD,<TITLE UBTLOD - Create DSK:BOTLOD.KL and PTP:BOTLOD.KI>
+
+COMMENT ~	Revision history for BOTLOD.
+
+V20  ??-???-??	Loads from KI paper tape, relocates itself into physical
+BOTLOD.M00	addresses 774000-777777 on KI's with at least 256K of core.
+		BOOTS is 6 blocks long, starting at record 13 of track 0 cyl 0,
+		going to record 18 of track 0 cylinder 0.
+
+V20  24-JUN-76	BOOTS is now 7 blocks long, the 7th block is on record 0 of
+BOTLOD.M01	track 1 cylinder 0 (an imbedded SEEK and SEARCH ID= was added).
+
+V20   2-JUN-78	No change in KI version, the KL version is loaded by KLCDP into
+BOTLOD.M02	locations 334000-337000 (last 2K of unmapped core).
+
+xxx  10-DEC-85	Converted BOTLOD.M02 to use IFCPU macros.
+BOTLOD.M03	(Just to get a CREF listing.)
+
+V21  20-JAN-86	Rewrote BOTLOD for the 3650 project (7 pages per track).
+BOTLOD.M04	Make KI and KL versions exactly the same, load into page 334.
+		Read all 3 pages (12 blocks) reserved for BOOTS into pages
+		335-337, using READ MULTITRACK commands.
+
+V22  16-Feb-86	READ MULTITRACK appears to read R0, which is not wanted.  Moved
+BOTLOD.M05	BOTLOD to page 333, BOOTS to pages 334-336, data in 337.  Three
+		different command lists are tried: 3650 with 7 pages per track,
+		3675 with 5 pages per track, 3675 with 18 blocks per track.
+
+V23  27-Mar-86	Change the timing in the STRTIT routine.  Make it match the
+BOTLOD.M06	algorithm used in COMMON.MAC.
+
+V24   7-Aug-86	Put BOTLOD in MON##.CMD so it is part of the monitor.  If
+BOTLOD.MAC	assembled without S.MAC, user-mode BOTLOD is created.
+
+~  ;End of COMMENT
+	VERSIO==24
+
+IFN UBTLOD,<	;Define ACs same as S.MAC
+	U=1+<F=1+<PG=1+<J=1+<P=1+<S=0>>>>>	;5,4,3,2,1,0
+	W=1+<T4=1+<T3=1+<T2=1+<T1=1+U>>>>	;12,11,10,7,6
+	P4=1+<P3=1+<P2=1+<P1=1+<M=1+W>>>>	;17,16,15,14,13
+	LOC	137
+JOBVER::EXP	VERSIO		;Version number of BOTLOD
+	RELOC
+>  ;End IFN UBTLOD
+SUBTTL	Definitions
+
+;Disk Page Number 1 is Head 0 Records 5-8 on 3330-II or 3675B  (block format)
+;Disk Page Number 1 is Head 0 Record 2 on 3650 or 3675P        (page format)
+;
+;DPN    3330      3650    Use
+; 0   H0R01-R04   H0R1    IPL     IBM Initial Program Load, KS/8080 boot pointer
+; 1   H0R05-R08   H0R2    HOM1    Primary HOM page
+; 2   H0R09-R12   H0R3    BAT1    Primary BAT page
+; 3   H0R13-R18   H0R4    BOOT1   First 4 blocks of BOOTS
+; 4  H0R17/H1R2   H0R5    BOOT2   Two blocks on 1st track, two on 2nd track
+; 5   H1R03-R06   H0R6    BOOT3   Last 4 blocks of BOOTS    (H1R1 on 3675P)
+; 6   H1R07-R10   H0R7    HOM2    Secondary HOM page        (H1R2 on 3675P)
+; 7   H1R11-R14   H1R1    BAT2    Secondary BAT page        (H1R3 on 3675P)
+; 8   H1R15-R18   H1R2    SATRIB  RIB for SAT.SYS on DSKB0:
+
+	J=J		;SA-10 number, 0 or 1
+	F=F		;Channel number, 0 to 3
+	U=U		;Disk unit, X'C0' to X'FF'
+	P1=P1		;Pointer to SABASE
+	P2=P2		;Pointer to command list
+	P=P		;Stack
+	T1=T1		;Temp
+	T2=T2		;Used for CONI status input
+	T3=T3		;Used for CONO command output
+	T4=T4		;Temp
+
+	APR== 000	;CPU Arithmetic processor
+	PI==  004	;Priority interrupt system
+	PAG== 010	;Pager
+
+	PC.USR==(1B5)	;User mode bit in PC flags
+
+;BOTLOD - Called via 146 restart, or when ONCE wants to reload BOOTS from disk
+;  BOTLOD is BLT'ed to the first half of page 334 and executed from there.
+;  Pages 335,336,337 are undisturbed (COMMON puts context pages there).
+;  BOOTS is read in to pages 774 + 775 + 776, and uses page 777.
+
+BOTLOD::MOVSI	0,(JRST (1))	;Return instruction
+	JSP	1,0		;Get PC and flags
+	SUBI	1,.		;Set for relocation
+IFN UBTLOD,<
+	TLNE	1,PC.USR	;In user mode?  (1B5)
+	 JRST	USERM		;Yes, write BOTLOD to PTP or DSK
+>  ;End IFN UBTLOD
+	CONO	PAG,0		;Disable paging on KL,KS,F3, turn off cache
+	MOVEI	0,400000	;Load right for KI (do not update accts others)
+	DATAO	PAG,0		;Disable paging on KI
+	HRLZI	0,BTS001(1)	;Source (position independent)
+	HRRI	0,BOOTFI	;Destination (fixed at 334000)
+	BLT	0,BTSEND	;Put where paper-tape or DECtape puts BOTLOD
+	JRST	BOOTFI		;Go to BOOT First Instruction
+SUBTTL	Program to load BOOTS from IBM disks on an SA10 channel
+
+	BOOTS=774000			;CRASH code copies UPT to pages 335-337
+BTS000:	IOWD	BOTLEN,BOOTFI		;1st word of SAV file and paper tape
+BTS001:	PHASE	334000			;Put this below 112K boundry for KLDCP
+
+BOOTFI::CONO	APR,200000		;BOOTS First Instruction = Reset I/O bus
+	CONO	PI,10400+1177		;Clear PI, off PI, off selected PI
+	MOVE	P,[IOWD PDLLEN,EPDL]	;Set up stack
+	MOVE	T1,NOSA10		;Set up HALT instruction
+	MOVEM	T1,BOOTS		; if nothing can be read
+
+;Try both SA10 device codes
+
+	MOVSI	J,-SAXN			;AOBJN for two SA10's
+SALOOP:	XCT	BPCNI1(J)		;Do CONI into T1
+	SKIPE	T1			;Bit 17 always set on a working SA10
+	 PUSHJ	P,SAFND			;Go check out this I/O device
+	AOBJN	J,SALOOP		;Try next SA10
+	SKIPN	BOOTS			;Was nonzero data read in?
+NOSA10:: HALT	NOSA10			;Could not find BOOTS anywhere
+	JRST	BOOTS			;*HACK* Yes, go to it anyway
+
+;Found an SA10, try all 4 channels on it
+
+;J/ SAX number, 0 or 1
+;F/ channel number, 0 to 3
+;P1/ pointer to 4-word block in SABASE
+
+SAFND:	MOVSI	F,-CHANN		;AOBJN to do 4 channels on each SA10
+SAFND1:	MOVEI	T1,^D100000		;Loop counter
+	MOVE	T3,REQSTS(F)		;Request status be stored
+	XCT	BPCNO3(J)		;  CONO SA,540     (550,560,570)
+	MOVE	T2,SSBITS(F)		;Check if SS bit has come on yet
+	XCT	BPCNS2(J)		;  CONSO SA,100       (40,20,10)
+	 SOJG	T1,.-1			;Not yet, wait a while
+	SKIPE	T1			;If we did not time out,
+	 PUSHJ	P,CHFND			;Go investigate this channel
+	AOBJN	F,SAFND1		;Try all 4 channels
+	POPJ	P,			;Done all, try next SA10
+SUBTTL	CONO and CONI bits for SA10
+
+	SAXN==2		;Up to 2 SA10 devices per CPU
+	SAX1==274	;First SA10 device code
+	SAX2==400	;Second SA10 device code
+
+SABASE:	EXP	300		;Base of block in absolute low core for channels
+	EXP	320		; (Set by DIP switches on the SA10)
+BPCNI1:	CONI	SAX1,T1		;Check if device responds
+	CONI	SAX2,T1
+BPCNS2:	CONSO	SAX1,(T2)	;Skip if status stored
+	CONSO	SAX2,(T2)
+BPCNO3:	CONO	SAX1,(T3)	;Set GO, STATUS, etc
+	CONO	SAX2,(T3)
+
+;CONO commands to SA10
+	SA.RST==400000	;Reset SA10 and all 4 channels on it
+	SSTS==     640	;Set STATUS STORED bit for channel
+	CSTS==     600	;Clear STATUS STORED bit for channel
+	SREQ==     540	;Request status for channel
+	BUSY==     440	;Set GO flag for channel
+	CHN0==      00	;This command is for channel 0 (tape on TYMCOM-X)
+	CHN1==      10	;This command is for channel 1 (disk on TYMCOM-X)
+	CHN2==      20	;This command is for channel 2 (not used by TYMCOM-X)
+	CHN3==      30	;This command is for channel 3 (not used by TYMCOM-X)
+	PIA==        7	;Set PI Assignment
+
+	CHANN==4	;4 channels, index by F
+SETBSY:	EXP BUSY+CHN0,BUSY+CHN1,BUSY+CHN2,BUSY+CHN3	;Set BUSY (GO)
+REQSTS:	EXP SREQ+CHN0,SREQ+CHN1,SREQ+CHN2,SREQ+CHN3	;Request status
+CLRSTS:	EXP CSTS+CHN0,CSTS+CHN1,CSTS+CHN2,CSTS+CHN3	;Clear status-stored
+SETSTS:	EXP SSTS+CHN0,SSTS+CHN1,SSTS+CHN2,SSTS+CHN3	;Set status-stored
+
+;CONI bits from SA10		;Bit 17 always on for CONI and SKIPE
+IEBITS:	EXP	40000,20000,10000,04000		;Chan interrupt enabled
+GOBITS:	EXP	02000,01000,00400,00200		;GO flag is set for channel
+SSBITS:	EXP	00100,00040,00020,00010		;Status has been Stored
+SUBTTL	Found a working SA10 channel
+
+;J/ SAX number, 0 or 1
+;F/ channel number, 0 to 3
+;U/ disk unit number in 3rd byte
+;P1/ pointer to 4-word block in SABASE
+
+CHFND:	HRRZ	P1,F			;Channel number
+	IMULI	P1,4			;4 words per channel
+	ADD	P1,SABASE(J)		;Set initial command address
+	MOVE	T1,[TIC,,NOPCMD]	;Transfer to no-op command
+	MOVEM	T1,(P1)			;Set CCW for this channel
+	MOVE	U,NOOPD0		;NO-OP to first disk on this channel
+CHFN1:	MOVEM	U,NOPCMD		;Store command
+	PUSHJ	P,STRTIT		;Start device
+	  JRST	CHFN2			;Device not responding (U modified)
+	PUSHJ	P,UTFND			;Found working unit, read from it
+CHFN2:	CAML	U,MAXDEV		;Last device?
+	 POPJ	P,			;Done, try next channel
+	ADDI	U,<BYTE(8)0,0,1>	;No, increment unit number in 3rd byte
+	JRST	CHFN1			;Try next disk unit
+
+;Found a working disk unit.  Third byte of DU has unit number
+;J/SAX#, F/Channel #, P1/Channel base, P2/Command list
+
+UTFND:	LDB	T1,[POINT 8,U,23]	;Get device/controller address
+	MOVEI	P2,LIST0		;Start of command lists
+
+;Modify all occurrances of FDISKA to be current device address
+
+UTFND0:	HLRZ	T2,(P2)			;Get LH of command
+	CAIN	T2,TIC			;Transfer in channel?
+	 ADDI	P2,1			;Yes, skip over it
+	DPB	T1,[POINT 8,0(P2),23]	;No, store new device address
+	ADDI	P2,2			;Point to next pair
+	CAIGE	P2,LIST9		;Hit end of last list?
+	 JRST	UTFND0			;No, do more commands
+
+;Tell SA10 to look at command list and read BOOTS from the disk
+
+	MOVSI	P2,-NLISTS		;Try all supported formats
+READIT:	MOVE	T1,LISTS(P2)		;Point to a command list
+	MOVEM	T1,(P1)			;Tell channel where to go
+	PUSHJ	P,STRTIT		;Start channel and device
+	  JRST	NOREAD			;Some sort of error
+	MOVE	T1,BOOTS		;Check first word
+	CAMN	T1,BOOTFI		;Is it CONO APR,200000 ?
+	 JRST	BOOTS			;All good.  Go start it
+NOREAD:	AOBJN	P2,READIT		;Try the next one
+	POPJ	P,			;All tries to read failed
+
+LISTS:	TIC,,LIST1			;3650 in blocks
+	TIC,,LIST2			;3675 in blocks
+	TIC,,LIST3			;3650 in pages
+	TIC,,LIST4			;3675 in pages
+NLISTS==.-LISTS
+SUBTTL	Routine to start I/O on the channel and device
+
+;Bits returned from channel in SABASE+1
+	;     ==(3B1)		;Type of status 0=end,1=init,2=async,3=requested
+	SELERR==(1B2)		;Select error - no control unit at this address
+	;     ==(1B3)		;Bus In Parity Error
+	;     ==(1B4)		;Control error
+	;     ==(0B5)		; always zero
+	LENERR==(1B6)		;Length error - count does not match
+	;     ==(1B7)		;Program requested interrupt
+	;  ==(BYTE (8)0,200)	;Attention
+	SM== (BYTE (8)0,100)	;Status modifier
+	CUE==(BYTE (8)0,040)	;Control unit end
+	BSY==(BYTE (8)0,020)	;Control unit busy (SM=1) or string busy (SM=0)
+	CE== (BYTE (8)0,010)	;Channel end
+	DE== (BYTE (8)0,004)	;Device end
+	;  ==(BYTE (8)0,002)	;Unit check
+	;  ==(BYTE (8)0,001)	;Unit exception
+	;   ==BYTE (8)0,000,377	;Device address
+
+;Here to start I/O on an IBM disk, skip return if successful
+;J/SAX#, F/Channel #, P1/300,304,310,314, 320,324,330,334
+
+STRTIT:	MOVEI	T1,^D50000		;Wait for previous activity to stop
+	SOJG	T1,.			;*HACK*
+STRT1:	MOVE	T3,SETSTS(F)		;Tell channel to store status now
+	XCT	BPCNO3(J)		;  CONO SA,640
+	MOVE	T3,SETBSY(F)		;Set the GO flag
+	XCT	BPCNO3(J)		;  CONO SA,440
+	MOVE	T3,CLRSTS(F)		;Clear the Status Stored bit
+	XCT	BPCNO3(J)		;  CONO SA,600
+
+	MOVEI	T1,^D100000		;Time out loop
+	MOVE	T2,SSBITS(F)		;Wait for Status Stored bit to set
+	XCT	BPCNS2(J)		;  CONSO SA,100
+	 SOJG	T1,.-1
+	JUMPE	T1,STRT4		;Timed out, channel is not working
+	MOVE	T2,1(P1)		;Get status word
+	TLNE	T2,SELERR		;Select error?
+	 JRST	STRT4A			;Yes, no disks at this address
+	TLNN	T2,BSY			;BUSY?
+	 JRST	STRT3			;No, transfer is done
+	TLNE	T2,SM			;BUSY and STATUS MODIFIER?
+	 JRST	STRT2			;Yes, wait for CONTROL UNIT END
+	TLNE	T2,CUE			;BUSY and CONTROL UNIT END?
+	 JRST	STRT1			;Yes, restart
+STRT3:	TLNN	T2,CE+DE		;Channel End and Device End?
+	 JRST	STRT5			;No.  BSY should not be off!
+	TLNN	T2,175114		;Any errors?
+	 JRST	CPOPJ1			;No, give skip return
+
+;Here for reasonable errors, such as unit exists but is off-line
+
+STRT5:	MOVEI	T3,SA.RST		;Reset all channels on the SA10
+	XCT	BPCNO3(J)		;  CONO SA,400000
+	POPJ	P,			;Error return to try next unit
+
+;Here on timeout
+STRT4:	MOVE	U,MAXDEV		;Go to new channel
+
+;Here on select error - no disk string responded to this address
+STRT4A:	TRO	U,<BYTE (8)0,0,7>	;Skip rest of disk string
+	POPJ	P,			;Give error return from STRTIT
+
+;Here for BSY+SM = SCU (3672/3674) is busy (as opposed to 3673+3675 busy)
+
+STRT2:	MOVE	T3,CLRSTS(F)		;Clear status stored bit
+	XCT	BPCNO3(J)		;  CONO SA,600
+	MOVE	T2,SSBITS(F)		;Wait for new status to be stored
+	XCT	BPCNS2(J)		;  CONSO SA,100
+	 JRST	.-1
+	MOVE	T2,1(P1)		;Get new status
+	TLNE	T2,CUE			;Control Unit End?
+	 JRST	STRT1			;Finally.  Now go get device status
+	JRST	STRT2			;No, wait unit it does show up
+
+
+CPOPJ1:	AOS	(P)			;And skip return for success
+CPOPJ:	POPJ	P,
+SUBTTL	Command list for IBM 3330-II disks
+
+  ;1st byte = mode for channel
+BYTMOD== 10+40+20+2	;Byte mode, execute, CMD chain, ignore length error
+OFSMOD== 10+40+20+2+1	;Offset byte mode for SEARCH ID==
+WRDMOD==100+40+20	;Read words in natural mode, execute, CMD chain
+NOXFER==200+40		;Don't transfer bytes to/from memory, execute CMD
+DHALT== 200		;No memory transfer, don't execute (end of command list)
+TIC=(BYTE(8)100)	;200000 = Tranfer In Channel = GOTO command
+
+  ;2nd byte = command to disk
+NOOP==   3		;No operation (to test for SELECT ERROR)
+SENSE==  4		;Read sense bits
+WRITE==  5		;Write one record
+READ==   6		;Read one record
+SEEK==   7		;Position to cylinder, select head
+SEARCH==61		;Search for ID=
+
+  ;3rd byte = device address
+FDISKA==300		;First TYMCOM-X disk address (C0-DF on 1st 3674)
+LDISKA==377		;Last  TYMCOM-X disk address (D0-FF on 2nd 3674)
+NOOPD0:	BYTE	(8)NOXFER,NOOP,FDISKA	;NOOP for first disk address X'C0'=300
+MAXDEV:	BYTE	(8)NOXFER,NOOP,LDISKA	;NOOP for last disk address  X'FF'=377
+
+;Arguments for SEEK and SEARCH ID
+  ;Disk page 3 is record 4 for 3650 pages and 3675 pages
+H0R4:	BYTE	(16)0,0,0(8)^D3+1	;BIN 0, CYL 0, HEAD 0, REC  4
+  ;Disk page 3 is record 13 for 3650 blocks and 3675 blocks
+H0R13:	BYTE	(16)0,0,0(8)^D12+1	;BIN 0, CYL 0, HEAD 0, REC 13
+  ;3675 in pages does not have record 6, but 3650 in pages does
+H0R6:	BYTE	(16)0,0,0(8)^D5+1	;BIN 0, CYL 0, HEAD 0, REC  6
+  ;3675 in blocks does not have record 19, but 3650 in blocks does
+H0R19:	BYTE	(16)0,0,0(8)^D18+1	;BIN 0, CYL 0, HEAD 0, REC 19
+  ;3675 has to continue on record 1 on the next track
+H1R1:	BYTE	(16)0,0,1(8)^D0+1	;BIN 0, CYL 0, HEAD 1, REC  1
+
+LIST0:!		;Start address of UTFND0
+
+;The tests are done in the following order:
+; 3650 in blocks has a record 19, the others do not.
+; 3675 in blocks has a record 13, the page mode packs do not.
+; 3650 in pages has a record 7, 3675 in pages does not.
+; 3675 in pages will get "record not found" for all the above tests.
+
+;Command list for 3650 formatted in blocks (25 blocks per track)
+
+LIST1:	BYTE	(8)BYTMOD,SEEK,FDISKA	;SEEK
+	BYTE	(12)-6(24)H0R13		; to BIN 0, CYL 0, HEAD 0
+	BYTE	(8)OFSMOD,SEARCH,FDISKA	;SEARCH ID=
+	BYTE	(12)-5(24)H0R13		; for CYL 0, HEAD 0, REC 13 (DPN=3)
+	  XWD	TIC,.-2			;TIC if search fails
+	 BYTE	(8)WRDMOD,READ,FDISKA	;READ
+	 BYTE	(12)-200(24)BOOTS+0000	; Disk block 12 into core page 774
+	 BYTE	(8)WRDMOD,READ,FDISKA	;READ
+	 BYTE	(12)-200(24)BOOTS+0200	; Block 13
+	 BYTE	(8)WRDMOD,READ,FDISKA	;READ
+	 BYTE	(12)-200(24)BOOTS+0400	; Block 14
+	 BYTE	(8)WRDMOD,READ,FDISKA	;READ
+	 BYTE	(12)-200(24)BOOTS+0600	; Block 15
+	 BYTE	(8)WRDMOD,READ,FDISKA	;READ
+	 BYTE	(12)-200(24)BOOTS+1000	; Disk block 16 into core page 775
+	 BYTE	(8)WRDMOD,READ,FDISKA	;READ
+	 BYTE	(12)-200(24)BOOTS+1200	; Block 17
+					;(3675 in blocks fails this next seek)
+	BYTE	(8)BYTMOD,SEEK,FDISKA	;SEEK
+	BYTE	(12)-6(24)H0R19		; to BIN 0, CYL 0, HEAD 1
+	BYTE	(8)OFSMOD,SEARCH,FDISKA	;SEARCH ID=
+	BYTE	(12)-5(24)H0R19		; for CYL 0, HEAD 0, REC 19 (DPN=4.5)
+	  XWD	TIC,.-2			;TIC if search fails
+	 BYTE	(8)WRDMOD,READ,FDISKA	;READ
+	 BYTE	(12)-200(24)BOOTS+1400	; Block 18 is in record 19
+	 BYTE	(8)WRDMOD,READ,FDISKA	;READ
+	 BYTE	(12)-200(24)BOOTS+1600	; Block 19
+	 BYTE	(8)WRDMOD,READ,FDISKA	;READ
+	 BYTE	(12)-200(24)BOOTS+2000	; Disk block 20 into core page 776
+	 BYTE	(8)WRDMOD,READ,FDISKA	;READ
+	 BYTE	(12)-200(24)BOOTS+2200	; Block 21
+	 BYTE	(8)WRDMOD,READ,FDISKA	;READ
+	 BYTE	(12)-200(24)BOOTS+2400	; Block 22
+	 BYTE	(8)WRDMOD,READ,FDISKA	;READ
+	 BYTE	(12)-200(24)BOOTS+2600	; Block 23
+	BYTE	(8)NOXFER,NOOP,FDISKA	;NO OP
+	BYTE	(8)DHALT		;End of command list
+IF2,<IFN <LIST2-.>,<PRINTX ? UTFND0 expects LIST2 to follow LIST1>>
+
+;Command list for 3675 formatted in blocks (18 blocks per track)
+
+LIST2:	BYTE	(8)BYTMOD,SEEK,FDISKA	;SEEK
+	BYTE	(12)-6(24)H0R13		; to BIN 0, CYL 0, HEAD 0
+	BYTE	(8)OFSMOD,SEARCH,FDISKA	;SEARCH ID=
+	BYTE	(12)-5(24)H0R13		; for CYL 0, HEAD 0, REC 13 (DPN=3)
+	  XWD	TIC,.-2			;TIC if search fails
+	 BYTE	(8)WRDMOD,READ,FDISKA	;READ
+	 BYTE	(12)-200(24)BOOTS+0000	; Disk block 12 into core page 774
+	 BYTE	(8)WRDMOD,READ,FDISKA	;READ
+	 BYTE	(12)-200(24)BOOTS+0200	; Block 13
+	 BYTE	(8)WRDMOD,READ,FDISKA	;READ
+	 BYTE	(12)-200(24)BOOTS+0400	; Block 14
+	 BYTE	(8)WRDMOD,READ,FDISKA	;READ
+	 BYTE	(12)-200(24)BOOTS+0600	; Block 15
+	 BYTE	(8)WRDMOD,READ,FDISKA	;READ
+	 BYTE	(12)-200(24)BOOTS+1000	; Disk block 16 into core page 775
+	 BYTE	(8)WRDMOD,READ,FDISKA	;READ
+	 BYTE	(12)-200(24)BOOTS+1200	; Block 17
+	BYTE	(8)BYTMOD,SEEK,FDISKA	;SEEK
+	BYTE	(12)-6(24)H1R1		; to BIN 0, CYL 0, HEAD 1
+	BYTE	(8)OFSMOD,SEARCH,FDISKA	;SEARCH ID=
+	BYTE	(12)-5(24)H1R1		; for CYL 0, HEAD 1, REC 0 (DPN=4.5)
+	  XWD	TIC,.-2			;TIC if search fails
+	 BYTE	(8)WRDMOD,READ,FDISKA	;READ
+	 BYTE	(12)-200(24)BOOTS+1400	; Block 18
+	 BYTE	(8)WRDMOD,READ,FDISKA	;READ
+	 BYTE	(12)-200(24)BOOTS+1600	; Block 19
+	 BYTE	(8)WRDMOD,READ,FDISKA	;READ
+	 BYTE	(12)-200(24)BOOTS+2000	; Disk block 20 into core page 776
+	 BYTE	(8)WRDMOD,READ,FDISKA	;READ
+	 BYTE	(12)-200(24)BOOTS+2200	; Block 21
+	 BYTE	(8)WRDMOD,READ,FDISKA	;READ
+	 BYTE	(12)-200(24)BOOTS+2400	; Block 22
+	 BYTE	(8)WRDMOD,READ,FDISKA	;READ
+	 BYTE	(12)-200(24)BOOTS+2600	; Block 23
+	BYTE	(8)NOXFER,NOOP,FDISKA	;NO OP
+	BYTE	(8)DHALT		;End of command list
+IF2,<IFN <LIST3-.>,<PRINTX ? UTFND0 expects LIST3 to follow LIST2>>
+
+;Command list for 3650 formatted in pages (7 pages per track)
+
+LIST3:	BYTE	(8)BYTMOD,SEEK,FDISKA	;SEEK
+	BYTE	(12)-6(24)H0R4		; to BIN 0, CYL 0, HEAD 0
+	BYTE	(8)OFSMOD,SEARCH,FDISKA	;SEARCH ID=
+	BYTE	(12)-5(24)H0R4		; for CYL 0, HEAD 0, REC 4 (DPN=3)
+	  XWD	TIC,.-2			;TIC if search fails
+	 BYTE	(8)WRDMOD,READ,FDISKA	;READ
+	 BYTE	(12)-1000(24)BOOTS+0000	; Disk page 3 into core page 774
+	 BYTE	(8)WRDMOD,READ,FDISKA	;READ
+	 BYTE	(12)-1000(24)BOOTS+1000	; Disk page 4 into core page 775
+					;(3675 in pages fails this next seek)
+	BYTE	(8)BYTMOK,FDISKA	;SEEK
+	BYTE	(12)-6(24)H0R6		; to BIN 0, CYL 0, HEAD 0
+	BYTE	(8)OFSMOD,SEARCH,FDISKA	;SEARCH ID=
+	BYTE	(12)-5(24)H0R6		; for CYL 0, HEAD 0, REC 6 (DPN=5)
+	  XWD	TIC,.-2			;TIC if search fails
+	 BYTE	(8)WRDMOD,READ,FDISKA	;READ
+	 BYTE	(12)-1000(24)BOOTS+2000	; Disk page 5 into core page 776
+	BYTE	(8)NOXFER,NOOP,FDISKA	;NO OP
+	BYTE	(8)DHALT		;End of command list
+IF2,<IFN <LIST4-.>,<PRINTX ? UTFND0 expects LIST4 to follow LIST3>>
+
+;Command list for 3675 formatted in pages (5 pages per track)
+
+LIST4:	BYTE	(8)BYTMOD,SEEK,FDISKA	;SEEK
+	BYTE	(12)-6(24)H0R4		; to BIN 0, CYL 0, HEAD 0
+	BYTE	(8)OFSMOD,SEARCH,FDISKA	;SEARCH ID=
+	BYTE	(12)-5(24)H0R4		; for CYL 0, HEAD 0, REC 4 (DPN=3)
+	  XWD	TIC,.-2			;TIC if search fails
+	 BYTE	(8)WRDMOD,READ,FDISKA	;READ
+	 BYTE	(12)-1000(24)BOOTS+0000	; Disk page 3 into core page 774
+	 BYTE	(8)WRDMOD,READ,FDISKA	;READ
+	 BYTE	(12)-1000(24)BOOTS+1000	; Disk page 4 into core page 775
+	BYTE	(8)BYTMOD,SEEK,FDISKA	;SEEK
+	BYTE	(12)-6(24)H1R1		; to BIN 0, CYL 0, HEAD 1
+	BYTE	(8)OFSMOD,SEARCH,FDISKA	;SEARCH ID=
+	BYTE	(12)-5(24)H1R1		; for CYL 0, HEAD 1, REC 0 (DPN=5)
+	  XWD	TIC,.-2			;TIC if search fails
+	 BYTE	(8)WRDMOD,READ,FDISKA	;READ
+	 BYTE	(12)-1000(24)BOOTS+2000	; Disk page 6 into core page 776
+NOPCMD:	BYTE	(8)NOXFER,NOOP,FDISKA	;NO OP
+	BYTE	(8)DHALT		;End of command list
+IF2,<IFN <LIST9-.>,<PRINTX ? UTFND0 expects LIST4 to be last>>
+
+LIST9:!		;End address for UTFND0
+
+LITS:	LIT
+	JRST	BOOTFI		;Last word read from PTR is executed in RIM
+BOTLEN=.-BOOTFI			;Length of Exec mode BOTLOD
+	JRST	BOOTFI		;Last word of SAV file is JRST to start addr
+	PDLLEN==20
+EPDL:	BLOCK	PDLLEN		;Stack
+BTSEND:	DEPHASE			;End of BOTLOD
+
+	UPDL=EPDL-BOOTFI+BTS001		;Stack when in user mode
+	UNUSED==BOOTFI+1000-BTSEND	;Block of unused words on page 334
+
+;DEFINE PR(A,B),<IF2,<	PRINTX [A B]>>
+;	LALL
+;PR(BOTLOD starts at,\BOOTFI)
+;PR(Length of BOTLOD =,\BOTLEN)
+;PR(BOTLOD ends at,\BTSEND)
+;PR(\UNUSED,words unused in page 334)
+
+IFE UBTLOD,<END>		;End of BOTLOD that is part of the Monitor
+SUBTTL	Program to output "RELOAD TAPE" on KI
+
+BEL000:	IOWD	ENDSZ,PRLP	;00
+	PHASE	1
+PRLP:	MOVEI	0,STR		;01 Point to ASCIZ message
+	HRLI	0,(POINT 7,0)	;02
+PRLP1:	ILDB	17,0		;03
+	JUMPE	17,PRLP		;04 Loop at end of string
+	CONSZ	TTY,20		;05 Wait until output done
+	 JRST	.-1		;06
+	DATAO	TTY,17		;07 Output character
+	JRST	PRLP1		;10
+STR:	BYTE	(7) "G"-100,177,177,177,177	;11
+	ASCII	/RELOAD TAPE..../		;12,13,14
+	BYTE	(7) "G"-100,177,177,177,15,12,177,177,177,177 ;15,16
+	BYTE	(7) 0		;17
+	JRST	PRLP		;20 Last word read from tape is executed
+ENDSZ==.-PRLP
+	DEPHASE
+
+LABEL:	^B1111111		;B
+	^B1001001
+	^B1001001
+	^B1001001
+	^B0110110
+	0
+	0
+	^B0111110		;O
+	^B1000001
+	^B1000001
+	^B1000001
+	^B0111110
+	0
+	0
+	^B0111110		;O
+	^B1000001
+	^B1000001
+	^B1000001
+	^B0111110
+	0
+	0
+	^B0000001		;T
+	^B0000001
+	^B1111111
+	^B0000001
+	^B0000001
+	0
+	0
+	^B0100110		;S
+	^B1001001
+	^B1001001
+	^B1001001
+	^B0110010
+LABLEN==.-LABEL
+SUBTTL	User mode program to punch BOTLOD on paper tape for KI-10
+
+	PT==1	;Software channel used for output
+
+USERM:	RESET				;User-mode BOTLOD
+	MOVE	P,[IOWD PDLLEN,UPDL]
+	OUTSTR	[ASCIZ	/
+BOTLOD - creates program to load BOOTS in to a KI or KL processor.
+/]
+	PUSHJ	P,GETNUM		;Ask for number of copies for KI version
+	  JRST	NOPUNC			;Doesn't want any
+
+	MOVE	T2,[-LABLEN,,LABEL]
+HEADER:	MOVE	T3,(T2)			;Get byte of header
+	PUSHJ	P,PTOUT			;Output "BOOTS" in block letters
+	AOBJN	T2,HEADER
+	MOVE	T2,[-LABLEN,,LABEL]
+	PUSHJ	P,FEED
+HEADR1:	MOVE	T3,(T2)			;Get byte of header
+	PUSHJ	P,PTOUT			;Output "BOOTS" in block letters
+	AOBJN	T2,HEADR1
+	PUSHJ	P,FEED
+	PUSHJ	P,FEED
+
+COPLP:	MOVEI	T1,"0"(P1)		;Loop counter
+	OUTCHR	T1
+	PUSHJ	P,FEED			;Blank tape
+	MOVE	T2,[-<BOTLEN+1>,,BTS000];IOWD + data
+	PUSHJ	P,DUMPIT		;Output PTP:BOTLOD.KI
+	SOJG	P1,COPLP
+
+	OUTCHR	["0"]
+	PUSHJ	P,FEED			;More blank tape
+	MOVE	T2,[-<ENDSZ+1>,,BEL000]	;IOWD + data
+	PUSHJ	P,DUMPIT		;Output "RELOAD TAPE" routine
+	PUSHJ	P,FEED
+
+	CLOSE	PT,0
+	STATZ	PT,760000		;Check for errors
+	  JRST	PTPERR
+	EXIT
+
+NOPUNC:	OUTSTR	[ASCIZ	/Do you want to create KL-BOTLOD? /]
+	INCHRW	T1
+	CAIE	T1,"Y"
+	CAIN	T1,"y"
+	 JRST	WRITEL
+	EXIT
+
+;Routine to write KL version
+
+WRITEL:	OPEN	PT,[17			;DUMP mode
+		SIXBIT	/DSK/
+		XWD	0,0]
+	  JRST	NODSK
+	MOVE	T1,[SIXBIT /BTLDKL/]
+	MOVE	T2,[SIXBIT /SAV/]
+	SETZB	T3,T4
+	ENTER	PT,T1			;Create DSK:BTLDKL.SAV
+	  JRST	NODSK
+	OUT	PT,KL.SAV		;Output it in SAV file format
+	 SKIPA	T1,OKMSG
+NODSK:	  MOVEI	T1,[ASCIZ  /?Could not create DSK:BTLDKL.SAV/]
+	OUTSTR	(T1)
+	CLOSE	PT,
+	RELEAS	PT,
+	EXIT	
+
+OKMSG:	[ASCIZ	/
+Created BTLDKL.SAV - it needs to be converted to BOTLOD.A10 for KLDCP./]
+SUBTTL	Check if PTP: is available, get number of copies to punch
+
+GETNUM:	OPEN	PT,[10			;BINARY mode
+		SIXBIT	/PTP/
+		XWD	OBUF,0]
+	  JRST	NOPTP			;CAN NOT GET PTP
+	OUTSTR	[ASCIZ /Number of copies of KI-BOTLOD to punch on paper tape /]
+NUMRD1:	MOVEI	P1,0
+NUMRD:	INCHWL	T4
+	CAIG	T4,"9"
+	CAIGE	T4,"0"
+	 JRST	WTLF			;FINISHED WITH NUMBER
+	IMULI	P1,^D10
+	ADDI	P1,-"0"(T4)
+	JRST	NUMRD
+
+	INCHWL	T4
+WTLF:	CAIE	T4,12
+	 JRST	.-2			;WAIT FOR END OF LINE
+	JUMPE	P1,NONE			;Nonskip return of 0
+	CAILE	P1,^D9			;SET SOME LIMITS ON TAPE SIZE
+	 JRST	BADNUM
+	MOVE	T1,[SIXBIT /BOTLOD/]
+	MOVE	T2,[SIXBIT /KI/]
+	SETZB	T3,T4
+	ENTER	PT,T1			;IN CASE OF "ASSIGN DSK PTP"
+	  JRST	NOPTP
+	OUTPUT	PT,
+	AOS	(P)			;Skip return
+	POPJ	P,
+
+NONE:	RELEAS	PT,
+NOPTP:	POPJ	P,			;Nonskip return
+
+BADNUM:	OUTSTR	[ASCIZ /
+Number out of range, try again: /]
+	JRST	NUMRD1
+SUBTTL	Buffered mode output routines
+
+FEED:	MOVEI	T3,0			;Blank tape
+	MOVEI	T4,200			;128 frames
+	PUSHJ	P,PTOUT
+	SOJG	T4,.-1
+	POPJ	P,
+
+PTOUT:	IDPB	T3,OBUF+1		;Call with 8-bit byte in T3
+	SOSG	OBUF+2
+	OUT	PT,
+	  POPJ	P,			;No errors
+PTPERR:	OUTSTR	[ASCIZ /
+?Error punching paper tape  /]
+	EXIT
+
+DUMPIT:	MOVE	T4,(T2)			;T2 has AOBJN pointer
+	MOVEI	U,6			;Split each word into 6 bytes
+DUMPT1:	MOVEI	T3,0
+	LSHC	T3,6			;Get next 6 bits from T4
+	TRO	T3,200			;Binary mode format
+	PUSHJ	P,PTOUT
+	SOJG	U,DUMPT1		;6 bytes per word
+	AOBJN	T2,DUMPIT		;Output more words
+	POPJ	P,
+
+
+	SAVLEN==1+BOTLEN+1		;IOWD, data, JRST
+KL.SAV:	IOWD	SAVLEN,BTS000		;Write it in SAV file format
+	0				;With JRST BOOTFI as jump word
+
+
+OBUF:	BLOCK	3
+BOTLIT:	LIT
+BOTEND:	END	BOTLOD			;$END (BOT)
+  4@ã

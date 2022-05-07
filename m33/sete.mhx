@@ -1,0 +1,9 @@
+gfd m33
+ru patlog
+SETE.PAT - Update monitor passwords - remove #4 (Todd), add #5 (Lois).
+copy patlog,patlog.dmp
+send @cralst
+@@patlog
+
+mail
+del patlog,sete.log,patlog.dmp

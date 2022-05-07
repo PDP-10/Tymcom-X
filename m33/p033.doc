@@ -1,0 +1,93 @@
+
+
+
+The P033 release of the TYMCOM-X monitor  introduces  a  complete,  user
+controlled paging facility.  The user can control his address space page
+by page, declare a set of pages in  his  address  space  to  be  in  his
+"working  set", map pages from files into his address space, and trap on
+references to pages not in his working set.
+
+P033 is compatible with  P032  and  earlier  monitors  except  for  some
+aspects  of sharable writable high segment function.  However, there are
+some user observable differences  between  P033  and  earlier  monitors,
+which are outlined below.
+
+     1.  Gettabs for high segments will fail return, since the system no
+         longer  keeps  information  about high segments.  high segments
+         are just pages mapped into the  user's  address  space  from  a
+         .HGH,  .SHR,  or  .SWR  file (see below for information on .SWR
+         files).
+
+     2.  The RUN UUO,  RUN  command  and  the  GET  command  remove  the
+         previous  contents  of  the  caller's address space following a
+         successful lookup of the first file in the file search sequence
+         (.SHR,  .HGH,  .SAV,  .SWR).  In P032 and earlier monitors, the
+         job's low segment was not removed until  completely  connecting
+         to  the  new  high  segment.   This  allowed programs to obtain
+         certain error codes from a RUN uuo issued from the low  segment
+         which  are  no  longer  available.  In P033, only the "file not
+         found" error can be returned from the RUN uuo.  All other error
+         conditions  (I/O error, for example) will cause a monitor error
+         message and stop the job.
+
+     3.   RUNSEG and GETSEG UUOs  remove  the  old  hiseg  after  having
+         successfully  looked  up the new hiseg.  Therefore, errors such
+         as "transmission error"  and  "not  enough  core"  can  not  be
+         returned to the program if the GETSEG or RUNSEG was issued from
+         the old hiseg.  These errors can be returned to the program  if
+         the call was issued from the loseg.
+
+     4.  REMAP UUOs issued from a position in the address space which is
+         affected  (moved or removed) during execution of the REMAP will
+         cause the error message "REMAP UUO failure, VM  space  mangled"
+         if the REMAP fails.
+
+     5.  The CORE uuo will  allow  a  low  segment  of  256K.   Monitors
+         previous to P033 only allowed 255K.
+
+     6.  Sharable writable high segments work  differently  under  P033.
+         Sharable writable high segment programs must be run from a file
+         with the extension ".SWR (Sharable WRitable)".  It is no longer
+         possible  to expand sharable writable high segments with a CORE
+         UUO.  The data format of a .SWR file is identical  to  that  of
+         .SHR  files, so it is only necessary to rename a .SHR file to a
+         .SWR file in order to allow the program to continue to sharably
+         write into itself.
+
+         An important difference between  sharable  writable  hisegs  in
+         P033  and  those in earlier monitors is that there is no longer
+                                                                  Page 2
+
+
+         any "swapping copy" of the modified high  segment.   Thus,  any
+         changes   made   to   the  sharable  writable  hiseg  are  made
+         permanently to the .SWR file.
+
+         Another  important  difference  exists  for  sharable  writable
+         hisegs in the new monitor.  If the hiseg originated from a .SWR
+         file to which the user did not have  update  priviledges,  then
+         the  program  is  made  RUN  ONLY.   If  the  .SWR file has any
+         licenses,  the  program  is  always  made  RUN   ONLY,   update
+         priviledges  or  not.   All  forms  of "meddling" (performing a
+         start  command  with  an  argument,  for  example)   are   thus
+         prevented.   This  ensures  that  all  writes by the hiseg into
+         itself are under program control.
+
+         Therefore, if you have a sharable writable hiseg program  which
+         you RENAME as a .SWR file to run under P033, you will find that
+         it is always RUN ONLY (unless it is an  unlicensed  program  in
+         your directory).
+
+     7.  A program running with a hiseg obtained from  a  .HGH  or  .SHR
+         file  is  always  allowed  to  write  enable and write into its
+         hiseg.  Such modifications are not visible to any other user of
+         the  hiseg,  and do not cause any change whatsoever to the .HGH
+         or .SHR file.  Writing into such a hiseg causes the job to  get
+         its  own private writable page, containing the same data as the
+         original hiseg page, into which  it  then  writes.   Note  that
+         there  is no longer any difference between .HGH and .SHR files.
+         In both cases, the hiseg is shared page by page, private copies
+         of  the  pages  being  created for a writer when he writes into
+         that page.
+
+     8.  The file search sequen

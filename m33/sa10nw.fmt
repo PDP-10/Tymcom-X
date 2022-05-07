@@ -1,0 +1,435 @@
+SUBTTL	SA10NW.FMT - formatting portion of SA10NW.SAV with annotations
+
+;DETERMINE TYPE OF DISK PACK -- DEVICE ADDR IN A
+
+DSET0:	DPB A,[POINT 8,DSETP,23]	;INTO SEEK COMMAND
+	DPB A,[POINT 8,DSETP2,23]	;AND INTO NOP
+	MOVEM A,DSETD
+	ANDI A,<1_LNPAKS>-1		;Look at only low order 4 or 5 bits
+	CAIL A,NPACKS			;Can never fail if NPACKS is power of 2
+	 JRST ILLDRV
+	HRR G,A				;Unit number
+	MOVSI C,DSETT0-DSETT1		;- # POSSIBILITIES
+DSET1:	MOVE A,DSETT0(C)		;1ST NONEXISTENT CYL
+	DPB A,[POINT 16,DSETPD,31]	;CC
+	MOVEI A,DSETP			;CHAN PGM ADDR
+	PUSHJ P,SARNX0			;TRY THE SEEK
+	SKIPGE A,SENSED			;LOOK AT COMMAND REJECT BIT
+	 AOBJN C,DSET1			;IF COMMAND REJECT
+	TLNE A,377774
+	 POPJ P,			;DON'T CLOBBER DATA ON OTHER ERRS
+	SOJGE C,CPOPJ			;ERR IF NONE GOOD - BACK UP TO WORKING ONE
+	MOVE A,DSETT0(C)
+	MOVEM A,DSETCY(G)		;TOTAL # CYLS
+	MOVE A,DSETT1(C)
+	MOVEM A,DSETUC(G)		;USER CYLS
+	MOVE A,DSETT2(C)
+	MOVEM A,DSETSU(G)		;# SURFS
+	IMUL A,DSETUC(G)
+	MOVEM A,NUTRAK(G)		;# USER TRACKS
+	MOVE A,DSETSU(G)
+	IMUL A,DSETCY(G)
+	MOVEM A,NTRAKS(G)		;TOTAL # TRACKS
+	SUB A,NUTRAK(G)
+	MOVEM A,NXTRAK(G)		;# EXTRA TRACKS
+	MOVE B,CRECL			;RECORD LENGTH IN WORDS
+	ASH B,-1
+	IMULI B,^D9			;9 BYTES PER 2 WORDS
+	ADD B,DSETT3(C)			;# OVERHEAD BYTES PER RECORD
+	MOVE A,DSETT4(C)		;TOTAL # BYTES PER TRACK
+	IDIV A,B
+	MOVEM A,DSETNR(G)		;# RECORDS PER TRACK
+	ASH A,^D<24+4>
+	MOVEM A,DSETR2(G)		;HIGHEST RECORD # IN BITS 0-7
+	MOVE A,DSETNR(G)
+	ADDI A,1
+	ASH A,^D<24+4>
+	MOVEM A,DIRW1V(G)		;1 PAST HIGHEST RECORD #
+	MOVE A,CRECL
+	IMUL A,DSETNR(G)
+	MOVEM A,NWTRAK(G)		;# WORDS PER TRACK
+	MOVEI A,BLKSKP			;Skip HOM, BAT blocks
+	IDIV A,DSETNR(G)
+	JUMPN B,[AOJA A,.+1]
+	MOVEM A,NSTRAK(G)		;# TRACKS TO AVOID AT BEGINNING
+	MOVE A,DSETT5(C)
+	MOVEM A,NSDBYT(G)		;# OF SPECIAL BYTES IN HOME ADDRESS
+	HRRZM C,DSETTY(G)		;TYPE CODE
+	AOS (P)
+	JRST CPOPJ1
+
+ILLDRV:	MOVEI C,[ASCIZ /
+DRIVE #%A TOO BIG.
+/]
+	JRST STYOXT
+
+
+;Data for finding highest legal cylinder number
+
+DSETP:	BYTE (8)70,SEEK,IDEV	;Command and device
+	IOW 6,DSETPD		;6 bytes of B B C C H H
+DSETP2:	BYTE (8)240,3,IDEV	;Chain to NOP to wait for completion
+	0			;End of command list
+
+DSETPD:	0			;Cyl # in bits 16-31
+	0			;Head #0
+
+;TOTAL # CYLS -- 1ST INVALID CYL #
+DSETT0:	^D1180	;IBM 3380E = twice as many cylinders as 3380
+	^D1120	;STC 3650 native (DEC microcode)
+	^D841	;CDC 9776 (native)
+	^D840	;IBM 3380 = CDC 9769 (30 heads of 9776 on STC SCU)
+	^D815	;IBM 3330-11
+	^D704	;IBM 3340-70
+	^D560	;IBM 3350
+	^D411	;IBM 3330-1
+	^D356	;IBM 3340-35
+
+;# CYLS FOR USER
+DSETT1:	^D1770	;?
+	^D1110
+	^D833
+	^D833
+	^D808
+	^D696
+	^D555
+	^D404
+	^D348
+
+;# SURFS
+DSETT2:	^D30
+	^D30
+	^D40
+	^D30
+	^D19
+	^D12
+	^D30
+	^D19
+	^D12
+
+;# OVERHEAD BYTES PER RECORD
+DSETT3:	^D185	;?
+	^D185
+	^D185
+	^D185
+	^D135
+	^D185
+	^D185
+	^D135
+	^D185
+
+;# BYTES PER TRACK
+DSETT4:	^D19254	;?
+	^D19254
+	^D19254
+	^D19254
+	^D13165
+	^D8553
+	^D19254
+	^D13165
+	^D8553
+
+;# BYTES AT FRONT OF HOME ADDRESS FOR SKIP DEFECT INFO
+DSETT5:	^D6	;?
+	^D6
+	^D6
+	^D6
+	^D0
+	^D2
+	^D6
+	^D0
+	^D2
+
+DSETE:	MOVEI C,[ASCIZ /
+SEEK TO CYL 348. REJECTED.
+/]
+	PUSHJ P,STYO
+	JRST CI0	;ABORT
+
+DSETD:	0
+DSETCY:	BLOCK NPACKS	;TOTAL # CYLINDERS
+DSETUC:	BLOCK NPACKS	;# CYLINDERS FOR USER
+DSETSU:	BLOCK NPACKS	;# SURFACES
+DSETNR:	BLOCK NPACKS	;# RECORDS PER TRACK
+DSETR2:	BLOCK NPACKS	;# RECORDS PER TRACK * 2000,,0
+DSETTY:	BLOCK NPACKS	;DISK DRIVE TYPE # (E.G. INDEX ON DSETT0)
+NWTRAK:	BLOCK NPACKS	;# WDS PER TRACK
+NTRAKS:	BLOCK NPACKS	;TOTAL # CYLS * SURFS
+NUTRAK:	BLOCK NPACKS	;# UCYLS * SURFS
+NXTRAK:	BLOCK NPACKS	;NTRAKS - NUTRAK
+NSTRAK:	BLOCK NPACKS	;# TRACKS PROTECTED FROM DSKT, BAFGO
+NSDBYT:	BLOCK NPACKS	;# SKIP DEFECT BYTES
+DIRW1V:	BLOCK NPACKS	;One past DSETR2 for DIRW routine
+SUBTTL	"F" = Format a pack
+
+;To format disk 300 on channel 1, use "300,1F"
+
+ND R0LEN,8		;LENGTH OF R0 IN BYTES
+R0WRD==<R0LEN+3>/4	;LENGTH OF R0 IN WORDS
+
+FMT:	MCONO SA0,400000
+	PUSHJ P,CSET		;SET UP FOR PROPER SA-10 CHANNL
+	SKIPL A,PREARG		;If number before comma
+	 MOVEM A,FMTD		; use that device code
+	LDB G,[POINT LNPAKS,FMTD,35]
+	MOVEI C,[ASCIZ /
+UWP NOT SET FOR DRIVE %G.
+/]
+	SKIPN UWP(G)		;Check if UWP+n was set nonzero via DDT
+	 JRST STYOXT
+	MOVEI C,[ASCIZ /
+FORMATTER READY, C TO CONTINUE:
+/]
+	PUSHJ P,ABORTQ
+	SETZM FMZBF		;Zeroed buffer = initial data
+	MOVE A,[FMZBF,,FMZBF+1]
+	BLT A,FMZBF+BLKSIZ*11/10-1
+	MOVE A,FMTD		;Device address
+	PUSHJ P,DSET0		;Determine disk drive size
+	  JRST FMTERR
+	MOVE A,DSETNR(G)	;Number of records in 1 track
+	ADDI A,1		;Add room for SEEK
+	IMULI A,R0WRD+2		;4 data words (16 bytes) per record
+	SKIPN B,NSDBYT(G)	;ANY DEFECT SKIPPING?
+	 JRST FMTNSD		;NO
+	ADDI B,3		;Round up
+	LSH B,-2		;4 bytes per word
+	MOVEM B,NSDWRD		;REMEMBER FOR LATER
+	ADDI A,1(B)		;INCLUDE THIS PER TRACK (ALSO 1 WD FOR READ HA)
+FMTNSD:	IMUL A,DSETSU(G)	;Times number of surfaces
+	MOVEM A,FMT1T		;# of data words needed for 1 track
+	MOVE P,[-LPDL,,PDL-1]
+	XCT IORST		;Reset the I/O bus
+	XCT PIRST		;Turn off PI system
+;Contents of the accumulators
+;A/  temp
+;B/  # of special bytes		If 3350
+;C/  TIC,,CMDLST		Points to next available word in command list
+;D/  DEV in bits 16-13		Device code
+;E/  CYL in bits 0-15, HEAD in bits 16-31
+;F/
+;G/  unit number		0-17 or 0-37, LSB of DEV
+;H/  pointer to data area for storing C C H H # KL DL DL 9 10 11 12 13 14 15
+;I/  FMTM=0 normal, FMTM=+1 to rewrite R0, FMTM=-1 to rewrite HA and R0
+;J/  REC in bits 0-7, zero (KL) in 8-15, data length (DL) in 16-31
+;K/  word to be stored 0(C), RH often set to RH of H
+
+	MOVE D,FMTD		;Device to format
+	LSH D,^D<8+4>		;Put in DEV field (bits 16-23)
+	MOVE I,FMTM		;0=HA,R0 are good; 1=WRT R0; -1=WRT HA,R0
+	MOVE J,CRECL		;Record length (^D128 or ^D512)
+	IMULI J,^D9		;72 bits = 9 bytes per 2 words
+	ADDI J,1
+	ASH J,-1		;Size in bytes
+	LSH J,4			;REC=0 in 0-7, KL=0 in 8-15, DL in 16-31
+	MOVEI E,0		;Start with cyl 0 head 0
+
+;Here to do 1 cylinder
+
+FMT1:	TRZ E,7760		;Reset HEAD field back to 0
+	MOVE H,ADRLO		;Addr to build C C H H # KL DL DL
+	MOVSI C,200000		;A TIC command
+	ADD C,H			;Command list
+	ADD C,FMT1T		; starts after data area
+	MOVEM C,FWP0		;Remember pointer to start of command list
+	JUMPE I,FMT1A		;Must set FM (File Mask) to write R0 or HA
+	MOVE K,[BYTE (8)70,37]	;'1F' Set File Mask
+	PUSHJ P,FMTS0		;CMD and DEV
+	MOVE K,[-1,,[BYTE (8)300]]	;Allow ALL
+	PUSHJ P,FMTS1
+
+;Here to do 1 track
+
+FMT1A:	TRNE E,7760		;Always SEEK if head 0
+	 JUMPGE I,FMT1B		; or if writing HA's
+	MOVE K,[BYTE (8)70,7]	;'07' Seek
+	PUSHJ P,FMTS0		;CMD and DEV
+	MOVE K,[400000-2,,[0]]	;2 bytes of B B (chained to next 4)
+	PUSHJ P,FMTS1
+	MOVSI K,-4		;4 bytes of C C H H
+	PUSHJ P,FMTS1A		;H has addr
+FMT1B:	JUMPL I,FMT1C		;FMTM=-1 to rewrite HA and R0
+	JUMPG I,FMT1D		;FMTM=+1 to rewrite R0
+	MOVE K,[BYTE (8)70,61]	;'31' Search Id Equal
+	TRNE E,7760		;Record 0?
+	 TLO K,1000		;Set Multi-Track, command = 'B1'
+	PUSHJ P,FMTS0		;CMD and DEV
+	MOVSI K,-5		;5 bytes
+	PUSHJ P,FMTS1A		;H points to C C H H #
+	PUSHJ P,FMTS2		;Store TIC back to SEARCH
+FMT1E:	TLZ J,776000		;Start with record 0
+
+;Here to do 1 record
+
+FMT2:	MOVEM E,(H)		;Store C C H H
+	MOVEM J,1(H)		;Store # KL DL DL
+	MOVEI A,R0LEN_4
+	TLNN J,776000
+	 HRRM A,1(H)		;R0 has DL of 8
+	SETZM 2(H)		;Bytes 1-4 of record    R0WRD
+	SETZM 3(H)		;Bytes 5-8 of record
+	ADDI H,2+R0WRD		;Point to next data area
+	CAML J,DSETR2(G)	;Check for max record #
+	 JRST FMT2A		;No more records on this track
+	ADD J,[POINT (8)1,0,0]	;Increment record number
+	MOVE K,[BYTE (8)70,35]	;'1D' Write Count-Key-Data
+	PUSHJ P,FMTS0		;CMD and DEV
+	MOVSI K,400000-8-R0LEN	;16 bytes (8 of count, 8 special for R0)
+	PUSHJ P,FMTS1A		;Point to next CCHH#KDD slot
+	MOVN K,J		;Bytes per record (shifted over 4)
+	LSH K,^D18-4		;Put in LH
+	ADD K,[R0LEN,,0]	;Subtract -8 from count (the 8 special above)
+	HRRI K,FMZBF		;Buffer full of zeros
+;WARNING: If CRECL is more than ^D456, then this byte count exceeds 11 bits!
+	PUSHJ P,FMTS1		;Remaining 576-8 bytes of block
+	JRST FMT2		;Set CCHH for this record
+
+;End of track
+
+FMT2A:	ADDI E,<BYTE(8)0,0,0,1>	;Increment head # in bits 16-31
+	LDB A,[POINT 16,E,31]	;Get head #
+	CAMGE A,DSETSU(G)	;Compare with number of surfaces
+	 JRST FMT1A		;Go do more tracks on this cylinder
+
+;End of cylinder
+
+	MOVE K,[BYTE (8)240,3]	;'03' NOP
+	PUSHJ P,FMTS0		;CMD and DEV
+	SETZM (C)		;Zero marks end of command list
+	MOVE A,FWP0		;Start of command list
+	PUSHJ P,SCHNX		;Start channel command program for this cyl
+	  JRST CI0		;Give up if error
+	PUSHJ P,CHKCNC		;Check for Control-C
+	  JRST CI0
+	ADD E,[BYTE (8)0,1,0,0]	;Count to next cylinder
+	LDB A,[POINT 16,E,15]	;Get cylinder number
+	CAMGE A,DSETCY(G)	;Compare with total on disk
+	 JRST FMT1		;Go do another cylinder
+	MOVEI C,[ASCIZ /
+FORMATTER DONE.
+/]
+STYOXT:	PUSHJ P,STYO
+	JRST CI0
+
+;FMTM=+1 - Rewrite R0 (HA is good)
+;Add commands between the SEEK and the WRITE for record 1
+
+FMT1D:	MOVE K,[BYTE (8)70,71]	;'39' Search HA Equal
+	TRNE E,7760
+	 TLO K,1000		;Set Multi-Track 'B9' if not first track
+	PUSHJ P,FMTS0		;CMD and DEV
+	MOVSI K,-4		;4 bytes
+	PUSHJ P,FMTS1A		;H points to CCHH
+	PUSHJ P,FMTS2		;TIC back to previous SEARCH
+	JRST FMT1CR		;Build command to write R0
+
+;FMTM=-1 - Rewrite HA and R0
+;-1(C) points to the data address of the SEEK command
+
+FMT1C:	SKIPN B,NSDBYT(G)	;Any defect skipping?
+	 JRST FMT1NS		;Not a 3350
+
+;If the 3350 was formatted in emulation mode, and has been switched to native
+;  mode, then the Home Addresses need to be rewritten.  To rewrite the HA, you
+;  must first read the current HA, do a chained read sense bytes, and do a
+;  chained write HA.
+;H+0/ C C H H   from reading HA
+;H+1/ x x x x   data from chained Read Sense Bytes
+;H+2/ x x 0 0    "           "           "
+;H+3/ C C H H   new data for writing into HA
+
+FMT1SD:	MOVE A,NSDWRD		;Number of words for skip defect bytes
+	ADDI A,1		;Reserve 1 word for CCHH read in
+	ADDM A,-1(C)		;Reserve space for them
+	MOVE K,[BYTE (8)70,32]  ;'1A' Read Home Address
+	PUSHJ P,FMTS0		;CMD and DEV
+	MOVSI K,400000-1	;Skip 1 byte
+	PUSHJ P,FMTS1		; (the flag byte)
+	MOVSI K,-4		;Read 4 bytes of olc CCHH
+	PUSHJ P,FMTS1A		; to where H is currently pointing
+	ADDI H,1		;Skip over the read-in CCHH word
+	MOVE K,[BYTE (8)70,4]	;'04' Read Sense Bytes
+	PUSHJ P,FMTS0		;CMD and DEV
+	MOVSI K,400000-^D24(B)	;Skip 24-N bytes
+	PUSHJ P,FMTS1
+	MOVNS B			;-# of skip defect bytes (-6 for 3350)
+	HRLZS K,B		;Negative count in LH
+	PUSHJ P,FMTS1A		;Read them in where H points
+	MOVE K,[BYTE (8)70,71	;'39' Search HA Equal to make CU happy
+	PUSHJ P,FMTS0		;CMD and DEV
+	MOVSI K,-4		;4 bytes
+	HRRI K,-1(H)		;The CCHH from Read HA
+	PUSHJ P,FMTS1
+	PUSHJ P,FMTS2		;TIC back to SEARCH
+	MOVE K,[BYTE (8)70,31]	;'19' Write HA
+	PUSHJ P,FMTS0		;CMD and DEV
+	MOVE K,B		;-# of skip defect bytes
+	TLZ K,400000		;Chain them in front of new HA data
+	PUSHJ P,FMTS1A
+	ADD H,NDSWRD		;H points to HA data to be written
+	JRST FMT1SR		;Follow with rest of HA as usual
+
+;Simply write HA on 3330 disks
+
+FMT1NS:	MOVE K,[BYTE (8)70,31]	;'19' Write Home Address
+	PUSHJ P,FMTS0		;CMD and DEV
+FMT1SR:	MOVE K,[400000-1,,[0]]	;1 byte of zero
+	PUSHJ P,FMTS1		; flags a good HA
+	MOVSI K,-4		;4 bytes of new CCHH
+	PUSHJ P,FMTS1A
+FMT1CR:	MOVE K,[BYTE (8)70,25]	;'15' Write R0
+	PUSHJ P,FMTS0		;CMD and DEV
+	MOVSI K,-8-R0LEN	;8 bytes CCHH#KDD + 8 bytes of 0
+	PUSHJ P,FMTS1A
+	JRST FMT1E		;Do rest of records
+
+;Routine to write a command into the command list
+
+FMTS0:	ADD K,D			;Put DEV in bits 16-23
+FMTS3:	MOVEM K,(C)		;Store command or transfer word
+	ADDI C,1		;Point to next available place in command list
+	POPJ P,
+
+FMTS2:	MOVE K,C		;TIC ,, .
+	SUBI K,2		;Transfer In Channel to previous SEARCH
+	JRST FMTS3
+
+;Build data transfer word.  Call with <-n,,addr> for a single transfer.
+;Call with <400000-n,,addr> to chain next transfer to this one.
+
+FMTS1A:	HRR K,H			;Use addr in H
+FMTS1:	HLLZ A,K		;Get -count (from bits 0-17)
+;*;	TLC A,374000		;[JMS] Check if all these bits are on
+;*;	TLCE A,374000		;[JMS]
+;*;	 JRST XXX		;[JMS] Count too big
+	LSH A,CNTSFT		;12 bits count and 24 bits word address
+	SKIPL K			;If doing data chaining
+	 TLZ A,400000		; turn off sign bit
+	HLL K,A			;Put count in right spot
+	JRST FMTS3
+	CNTSFT==^D<18-12>
+
+ABORTQ:	PUSHJ P,STYO		;TYPE MESSAGE
+	PUSHJ P,TYI		;ACCEPT CHAR
+	CAIN B,"C"
+	 POPJ P,		;CHAR WAS C, CONTINUE
+FMTAX:	MOVEI C,[ASCIZ /
+ABORTED.
+/]
+	PUSHJ P,STYO
+	JRST CI0
+
+FMTERR:	MOVE A,STBUF		;Get status bits
+	PUSHJ P,SCHNC		;Output error status
+	JRST CI0
+
+CRECL:	BLKSIZ			;1 block = 128 words of 36 bits = 576 bytes
+
+FWP0:	0			;Pointer to channel program
+FMTM:	0			;Formatting mode
+FMTD:	IDEV			;Device addr (300-337 for TYMCOM-X)
+NSDWRD:	0			;Number of special words
+FMT1T:	0			;Size of command list to format 1 track
+
+;End of SA10NW.FMT
+     

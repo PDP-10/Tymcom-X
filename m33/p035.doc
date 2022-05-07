@@ -1,0 +1,311 @@
+P035.DOC - the combined list of changed since the P034/P monitor.
+This file includes P035A.DOC + P035B.DOC + P035C.DOC + P035D.DOC
+
+P034/Q was never released.  It was renamed to P035 and then to P035/A.
+P035/A was created on 15-Oct-86, but got held up until P035/B was ready.
+
+Significant changes to TYMCOM-X between P034/P and P035/B      30-Jan-87
+      (This list includes new features added in P035/A)
+
+Bug fixes:
+
+  1)  Fixed ILLINS crashes when account supervisor logs out another job.
+
+  2)  Fixed host initiated base crash when we sent it bad data.
+
+  3)  Fixed ancient bug where one page per unit would not be correctly
+      restored after an ASP rebuild.
+
+  4)  Fixed the bug that caused the REFRESH option to create a file with
+      a bad RIB.  This problem triggered a bug in DSKCLN and caused the
+      rash of FILAUS crashes on 3650 disks.  NOTE: This monitor requires
+      DSKCLN version 36J(103) or later.
+
+
+Performance improvements:
+
+  1)  The scheduler is now more responsive to interactive users.
+
+New features for General Users:
+
+  1)  TYMNET parameter "D" and KATAKANA mode now properly recognized.
+      The old method of "SET TTY TYPE 1" still works for Japanese customers.
+
+  2)  The SET TTY TYPE and TERMINAL TYPE commands also accept a six character
+      name, such as VT100, TYM444, etc.
+
+  3)  The SUBMIT command was added - it replaces PERP and DEFER.
+
+  4)  The TYMVALIDATE command was added to let customers validate new users.
+
+  5)  Error message such as "Device not avaliable" now output the correct
+      device name (instead of TTY name).
+
+  6)  The Control-T display (enabled by TTY RTCOMP in PDP mode) now outputs
+      the name of the program being run and last known PC (Program Counter).
+
+  7)  In addition to the job number, the PJOB command now prints the user
+      name and GFD name.  This is a quick way for a user to verify which
+      directory and which system the user is connected to.
+
+  8)  The VERSION command outputs the name of the current program and decodes
+      the version number.
+
+  9)  The HELP command has been changed to output help on a particular program
+      or a list of available topics.  For instance, "HELP DIFFER" gives help
+      on the DIFFER command, "HELP *" lists the names of all help files and
+      the names of all monitor commands.
+
+
+New messages printed on the CTY:
+
+  1)  Whenever the system date or time is changed, it is done so gradually and
+      a message "Date/time is now ..." is output when the adjustment is done.
+
+  2)  The time of day is reset whenever a new TYMNET supervisor takes over.
+      If the change is more than 60 minutes, the system is automatically SHUT.
+
+  3)  Most messages to the CTY are stamped with the Data Center's time zone.
+
+  4)  The BIGBEN message comes out every four hours and prints the system
+      name and the number of pages free on DSKB.  If DSKB gets below 1000
+      pages, the message comes out every 10 minutes.
+
+  5)  INFO stopcodes, EVENT stopcodes, and many other CTY messages are also
+      sent to the OPR terminal.
+
+  6)  EVENT stopcode NOBASE is output if the base stops talking to the PDP10.
+
+
+New features for Operators:
+
+  1)  The monitor verifies that it is running on the correct hardware by
+      checking the CPU serial number.
+
+  2)  The BOOTS command has been added to ONCE and to FILES so that the
+      operator can quickly recover from having loaded the wrong monitor.
+
+  3)  A "146 restart" has been defined.  If depositing 1 in location 30 or
+      restarting the CPU at location 147 does not get to BOOTS, "ST 146"
+      can be used as a last ditch attempt to get BOOTS loaded so a crash
+      dump can be taken without wiping out memory the way "P BOTLOD$" does.
+
+  4)  New command, "SET BIGBEN 120" causes the BIGBEN message to come out
+      every 120 minutes (instead of every 240 minutes).
+
+  5)  Anyone with license set can temporarily turn off all license using
+      the DISABLE command.  The ENABLE command restores previous license.
+
+  6)  A new license bit has been defined - QM for Queue Manager.  It is used
+      only by XEXEC/EXECX/SUBMIT for job processing.
+
+
+Changes to enhance reliability:
+
+  1)  INFO stopcodes work - system stays running after outputting information.
+
+  2)  System attempts to keep running after the base crashes.
+
+  3)  Files with RIB errors are reported to the CTY.  Hard read errors on RIB
+      pages are reported with stopcode RIBHRE, software detected failures are
+      reported with RIBERR.
+
+  4)  Cases where the system was stuck in a loop used to be reported as "System
+      hung, no output on CTY".  They now show up as stopcode KAF which outputs
+      the PC where the system was looping.
+
+
+Changes important to Systems Programmers:
+
+  1)  SPAGES.SYS is created when the structure is refreshed.
+
+  2)  GETTAB item 12,,5 has date/time the system came up.
+
+  3)  GETTAB tables +31 and +32 have GFD name corresponding to PPN in +2
+
+  4)  Items 127,131,136,154,163 added to CONFIG table 11.
+
+  5)  Add FINASS uuo to assign frame related interrupts.  This allows
+      different software interrupt channels to be assigned to each child frame
+      for logout-in-child, exit-in-child, interrupt-from-child.
+
+  6)  EDDT takes pointer to commands in AC 0 when started at CCL entry.
+
+  7)  The DSKCHR uuo indicates type of formatting (blocks versus pages).
+
+  8)  The login string for CREAUX is stored in the LDB so that outgoing
+      AUX circuits can be traced.
+
+  9)  The DATUUO has been modified to handle additional formats, including
+      DEC's one word date/time format.
+
+ 10)  LOGIN and CREFRM uuos take additional arguments - LDBLOG and project code.
+
+ 11)  New bit in CREFRM tells LOGINN to validate username and password.
+
+ 12)  SETUUO function 14 sets the KSYS timer.
+
+
+Changes to aid Crash Dump Analysis:
+
+  1)  NONAME stopcodes were given names after they occur.
+
+  2)  The current job's context pages are copied to pages 3-5 before dump.
+
+  3)  The DEBUG command added to ONCE to enable debugging routines.
+
+  4)  Special memory locations in low core belonging to the SA10 and to the
+      base are copied (snapshot) before creating a crash dump.
+
+  5)  The CPU error bits are decoded in english on APRFAT stopcodes.
+
+  6)  Stopcode type "PATCH" defined for counting times thru patched code.
+
+  7)  CRASH.SAV is created for 8192 pages to be able to save all of core.
+
+  8)  The contents of IRPPDP, ORP620, KEY620, etc are output on base crashes.
+
+[End of P035B.DOC]
+Significant changes to the TYMCOM-X Operating System.           10-Aug-87
+
+              Changes from P035/B to P035/C
+
+Bug fixes:
+
+ o  Fixed one cause of FILAMO crashes on a heavily loaded system.
+
+ o  Fixed IME crash caused by inactivity timer (SET AUTOLOGOUT command).
+
+ o  Fixed most cases of "serious restart error while writing to HOM pages".
+
+ o  Fixed KAF crash from tape read errors caused by ONTYME accounting data.
+
+ o  JBTUID is now cleared on logout so XEXEC can keep track of its jobs.
+
+
+Support for new disk hardware:
+
+ o  64 disks can be defined as 8 strings on 4 logical controllers.
+    The current maximum supported configurations are 32 disks with 128 jobs,
+    48 disks with 80 jobs, or 64 disks with 32 jobs.
+
+ o  4 strings of disks can be connected to a single Storage Control Unit
+    (Memorex 3674 or 3676).
+
+ o  Double capacity disks (Memorex 3652) are supported and appear as two
+    logical 3650 units.
+
+New features for Operators:
+
+ o  More information is reported about amount of memory on-line.
+
+ o  The unit-IDs and DSKB logical unit numbers of all on-line disks are
+    reported when the system comes up.
+
+ o  The SET KSYS command has been added to tell XEXEC when to stop
+    scheduling SUBMIT jobs.  (This function will be added to TAKEIT soon).
+
+
+Performance improvement:
+
+ o  RIBs to new files are always created on the unit with the most space.
+    This distributes files more evenly which speeds up DSKCLN.
+
+
+System reliability:
+
+ o  AR/ARX parity error trapping is now supported.  It can be enabled from
+    KLDCP by using the command "PE 36".
+
+ o  BAT (Bad-page Allocation Table) now works.  Any disk page with a read or
+    write error gets logged in the BAT page.  If it is not already marked
+    there, the INFO stopcode BADPAG is output to the CTY.  To get a list of
+    bad pages, use "TYPE BAT" when in FILE dialog, or use "RUN (MPL)TYPBAT"
+    after the system has come up.
+
+ o  The system can continue running after a single SAT failure, but stops on
+    the second SAT failure (in case the disk system has failed).  The two new
+    stopcodes are REDSAT (which means a hard read error occured while trying
+    to read in a SAT), and SAT2ND (which means a 2nd SAT was detected bad).
+    The old stopcode BADSAT means the count of bits in the SAT is incorrect,
+    and WRTSAT means a hard write error occured while trying to write a SAT.
+
+ o  More information is output whenever unrecognizable SA10 interrupts occur.
+    Stopcode SAXINY is printed when an unknown disk controller interrupts.
+
+
+More information stored in crash dumps for analysis:
+
+ o  Locations ERASTA, SBDST1, and SBDST2 now always set up with S-bus diags
+    for all types of crashes.
+
+ o  Disk operations and status bits are stored in a circular buffer for
+    tracking down problems with SA10/IBM disk system.
+
+ o  All output to the CTY is stored in a circular buffer and can be read
+    from a crash dump.  The operator's commands to ONCE are included also.
+
+
+[End of P035C.DOC]
+(OSP)P035D.DOC - List of changes from P035/C to P035/D.            3-Feb-88
+These are the "release notes" for the P035/D monitor.
+
+
+New messages for the OPR:
+  RIBHRE - Hard read error trying to lookup the RIB of a file.
+  RIBERR - Software detected error in the RIB of a file.
+  REDSAT - Hard read error trying to read a page of the SAT.
+  BADSAT - Software detected error in the count of bits in the SAT.
+  BADPAG - Hard read or hard write error detected, page gets marked in the BAT.
+
+New UUOs:
+  More entries in GETTAB table .GTCNF - see P035D.MEM for details.
+  Set KSYS command and UUO give programs warning when the system is
+    scheduled to go down.
+  Notice-in-Child and inactivity timer added (for XEXEC and SUBMIT jobs).
+  SYSDVF function 6 returns named buffers.  (Makes CTYLOG program faster.)
+  KS2020 can have up to 8 tape drives defined.  Don't die if no LP20.
+  Output event stopcode PTYSBL when a PTY gets a buffer-zap.
+  Fixed the problem of "slot out of ports" by no allowing excessive input.
+  Monitor edit number stored in GETTAB(70,11) where programs can look at it.
+  GETTAB table 130 has date/time job logged in.
+
+Performance enhancements:
+  Files are created with contiguous pages if possible.  This speeds up
+  sequential access to files (such as TITO saves) and makes BOOTS much
+  faster in loading the monitor.
+
+ONCE dialog:
+  TYPE BAD will decode the BAT pages and output a list of bad disk pages.
+  The date and time must be entered before refreshing the structure.
+  The creation date for SAT.SYS and HOME.SYS is the date when refreshed.
+  The command to dissolve the structure is spelled correctly (not DISOLVE).
+  The front-end file (FEFILE.SYS) on the 2020 is created correctly now.
+  TSTSUP commands have been added to allow for patching absolute pages on
+    disks.  This disaster recovery procedure has already been used to
+    salvage disk problems that would otherwise require a system rebuild.
+  A new startup command - NOINITIA - starts DSKCLN but no other part of the
+    autorestart procedure.  This was specifically added for TITO rebuilds.
+
+Miscellaneous:
+  The date and time defaults from SAT.SYS, so we should never see the
+    phony date of 1-JAN-64 ever again.
+  The current date/time is now more accurate on KS-2020 systems.
+  Stopcode SAXINY has been removed.
+  Device errors on 3650 disks are now logged in BAT pages like data errors.
+  The EBUS base can be reloaded without reloading the PDP-10.
+  Problems with the host/base interface are reported as INFO stopcodes instead
+    of DEBUG stopcodes, so that the system will not crash when they occur.
+
+Changes which affect general users:
+  The SEND command uses SENDMAIL to send TUMS mail instead of RPG mail.
+  The MAIL command now checks for both RPG mail and TUMS mail.
+
+License and privileges:
+  The ENABLE and DISABLE commands can set/clear specific licenses.
+  A new license has been defined - HR allows home-files read privileges.
+  New UUO to allow operators to get all license when doing TITO restore.
+  SET AUTOLOGOUT modified to not allow users to disable inactivity timeout.
+
+[End of P035D.DOC]
+   

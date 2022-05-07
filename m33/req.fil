@@ -1,0 +1,469 @@
+procedure REQUEST
+begin
+
+%
+This procedure is designed for inputting data for monitor configuration
+changes and requests.  Data will then be checked, and configuration file
+written with procedure GEN
+%
+
+fields
+       IN.DATE	as date 'ZM/ZD/YY',	% date of request %
+       EFF.DATE as date 'ZM/ZD/YY',	% effective date %
+       OLD.DATE as date 'ZM/ZD/YY',	% effective date for old order %
+       IN.SYSNO as '5ZN',		% system number for request %
+       OLD.SYSNO as '5ZN',		% for duplicate monitors %
+       IN.SITE as '15C',		% new site name %
+       OLD.VALUE as '-6N',		% value %
+       IN.VALUE as '-6N' default -99,	% for new value % 
+       IN.CPU as '5C',			% name for new cpu %
+       NEWCPU as 'N',			% cpu symbol %
+       THIS.SYMBOL as '6C',		% for symbol % 
+       YES.OR.NO  as '10C',		% for responses %
+       NEW.HARD.FLAG as 'N',		% for new hardware %
+       NEW.FLAG as 'N',			% for new systems %
+       NEW.CNT as '6N',			% for remark counter %
+       SYMBOL.FLAG as 'N'		% to flag symbols used %
+
+
+procedure SITE.NAME
+%
+   accept and verify input for site name
+%
+begin
+
+  IN.SITE.NAME:
+    begin
+    Type "Site: "
+    Accept IN.SITE
+    Let IN.SITE = upper.case(IN.SITE)
+    Select SITE via SITEID = IN.SITE then
+      insert into HOST.SITE
+    else
+      begin
+      Type "Is this a new site for Tymshare? "
+      Accept YES.OR.NO
+      If upper.case(substr(YES.OR.NO,1,1)) = 'Y' then
+        begin
+        Type "System number prefix for site : "
+        Accept PREFIX
+        Let PREFIX = upper.case(PREFIX)
+        Insert into SITE using (IN.SITE for SITEID)
+        Select largest REMARK via (SYSNO,EDATE) then
+          let NEW.CNT = CNT + 1
+        else let NEW.CNT = 1
+        let CNT = NEW.CNT
+        let LINE = "New site, " + trim(IN.SITE)
+        Insert into REMARK
+        end
+      else
+        begin
+        Type "Valid sites are: ",@cr
+        for each SITE 
+          Type @cr,trim(SITEID)
+        Type @cr,@cr
+        repeat IN.SITE.NAME
+        end
+      end
+  end  % IN.SITE.NAME %
+end  % SITE.NAME %
+procedure DUPMON
+%
+     if duplicate monitor is requested, this puts appropriate values in
+OLD.SYSNO, and NEWCPU and appropriate remark in REMARK
+%
+begin
+    DUP.QUEST:
+    begin
+    Type "Duplicate monitor from another system? "
+    Accept YES.OR.NO
+    If UPPER.CASE(SUBSTR(YES.OR.NO,1,1)) = 'Y' then
+      begin
+      Type "System: " 
+      Accept OLD.SYSNO
+      Select largest HOST.CPUTYP via SYSNO = OLD.SYSNO then
+        Let NEWCPU = CPUTYP
+      else 
+        begin
+        Type "No monitor for system ",OLD.SYSNO as "5LN"," in data base",@cr
+        Repeat DUP.QUEST
+        end
+      Let CNT = 2
+      Let LINE = "Use Monitor from System " + OLD.SYSNO AS '5C'
+      Insert into REMARK
+      end
+  end
+end  
+
+procedure CPU.NAME
+%
+      accept and verify CPU name, assign value for CPUTYP
+%
+  begin
+    CPU.NAME.IN:
+    begin
+    Type "CPU: "   
+    Accept IN.CPU
+    Let IN.CPU = upper.case(IN.CPU)
+    let SYMBOL.FLAG = 0
+    for each CPU where CPUNAM = IN.CPU 
+      begin
+      let NEWCPU = CPUTYP
+      let SYMBOL.FLAG = 1
+      end
+    if SYMBOL.FLAG = 0 then
+      begin
+      Type "Invalid CPU",@cr,"Valid CPU's are",@cr
+      for each CPU 
+        Type @tab 20,trim(CPUNAM),@cr
+      Type @cr,@cr
+      repeat CPU.NAME.IN
+      end
+    end  % CPU.NAME.IN %
+    Let CPUTYP = NEWCPU
+    Insert into HOST.CPUTYP
+    
+  end
+
+
+procedure INPUT.VALUE
+%
+   List symbols for cpu type with descriptions and default values.  If
+another value other than the default is requested, check it against the
+boundary conditions for that value.  Insert into CONFIG.
+%
+begin
+        Type @cr,
+"Enter values for the following symbols if other than the default is desired",
+          @cr,@cr, 
+"SYMBOL - DESCRIPTION                            [DEFAULT VALUE]",@cr,@cr
+
+    For each SYM via CPUTYP = NEWCPU
+      begin
+      select SYM.DESC via KEY then
+        SYMBOL.VALUE:
+        begin
+        Type SYMBOL," - ",trim(DESC),"  ["
+        If DEFVAL = -1 then
+          Type "Undefined"
+        else
+          if SYMBOL = "BPA" or DEFVAL < 10 then Type DEFVAL as "5LN"
+          else type "^D",DEFVAL as "5LN"
+
+        Type "] : "
+        Accept IN.VALUE
+        If IN.VALUE = DEFAULT then
+          Let IN.VALUE = DEFVAL
+        else
+          If IN.VALUE < MINVAL or IN.VALUE > MAXVAL then 
+            begin
+            Type "VALUE MUST BE BETWEEN ",MINVAL," AND ",MAXVAL,@cr
+            Repeat SYMBOL.VALUE
+            end
+        end
+    If IN.VALUE # -1 then
+      begin
+      Let VALUE = IN.VALUE
+      insert into CONFIG
+      end
+    end
+end
+
+procedure CHANGE.VALUE
+%
+     list symbols with descriptions and present values for changes,
+  checking inputted values against boundary conditions
+%
+begin
+   select largest ORDER via SYSNO = IN.SYSNO then
+     let OLD.DATE = EDATE
+   Type @cr, "Enter new value for the following symbols if change is desired",
+      @cr,@cr, "SYMBOL - DESCRIPTION - PRESENT VALUE",@cr,@cr
+   for each CONFIG via SYSNO = IN.SYSNO, where EDATE = OLD.DATE
+     begin
+     Select SYM.DESC via key then
+       NEW.VALUE:
+       begin
+       Let THIS.SYMBOL = SYMBOL
+       If SYMBOL = "BPA" then let IN.VALUE = VALUE 
+       else
+          begin
+          Type SYMBOL," - ",trim(DESC)," -  "
+          if SYMBOL = "BPB" then type "BPA+BPAMX - => "
+          else
+            begin
+            if VALUE > 9 then type "^D"
+            type VALUE as "5LN"," => "
+            end
+          Accept IN.VALUE
+          If IN.VALUE = default then
+            Let IN.VALUE = VALUE
+          else
+           begin
+           select largest HOST.CPUTYP via SYSNO = IN.SYSNO then
+             select SYM via key then
+              If IN.VALUE ge MINVAL and IN.VALUE le MAXVAL then
+                nothing         
+              else
+               begin
+               Type "Value must be between ",MINVAL," and ",MAXVAL,@cr
+               Repeat NEW.VALUE
+               end
+           end
+          end
+        end
+     Insert into CONFIG using (IN.SYSNO for SYSNO,THIS.SYMBOL for SYMBOL,
+          EFF.DATE for EDATE,IN.VALUE for VALUE)
+     end
+
+end
+       
+       
+
+
+procedure INIT.SYSTEMS
+begin
+
+Let EDATE = TODAY
+For each HOST
+  select largest HOST.SITE via SYSNO then nothing
+  else
+    begin
+    type "INITIAL ENTRIES FOR SYSTEM ",SYSNO as '5LN',@cr
+    apply SITE.NAME
+    apply CPU.NAME
+    apply INPUT.VALUE
+    end
+end
+
+ENTRIES:
+begin
+
+Type "TYMCOM-X MONITOR CONFIGURATION REQUEST",@cr,@cr,
+  "Requestor's name [",trim(USER.NAME),"]: "
+Accept REQBY
+If REQBY = 'INIT' then
+  begin
+  apply INIT.SYSTEMS
+  finish ENTRIES
+  end
+If REQBY = default then let REQBY = user.name
+Type "Telephone: "
+Accept REQTEL
+Type "Date  (mm/dd/yy) [today]: "
+Accept IN.DATE
+
+If IN.DATE = DEFAULT then let IN.DATE = TODAY
+Let REQDATE = IN.DATE
+
+% Accept system number for monitor, and check to see if it is a new
+system.  If a new system verify and set NEW.FLAG %
+
+IN.SYSTEM:
+begin
+  Type "System number: "
+  Accept IN.SYSNO
+  Let SYSNO = IN.SYSNO
+  Select HOST via SYSNO then NOTHING
+    else begin
+    Type "New system  O.K.? "
+    Accept YES.OR.NO
+    If UPPER.CASE(SUBSTR(YES.OR.NO,1,1)) = 'Y' then
+      begin
+      let NEW.FLAG = 1
+      Type "Utilization of system : "
+      Accept UTIL
+      Let UTIL = upper.case(substr(UTIL,1,45))
+      end
+    else begin
+      Type "No system ",IN.SYSNO as "5LN"," in data base",@cr
+      Repeat IN.SYSTEM
+      end
+    end
+end
+
+Type "Date required (mm/dd/yy) [today]: "
+Accept EDATE
+If EDATE = default then Let EDATE = TODAY
+Let EFF.DATE = EDATE  % Needed later for some inserting %
+
+% Is this is new hardware, or old hardware from another system? %
+
+  Let NEW.HARD.FLAG = 0
+  Let OLD.SYSNO = 0 
+  Type "New hardware? [no]: "
+  Accept YES.OR.NO
+  If UPPER.CASE(SUBSTR(YES.OR.NO,1,1)) = 'Y' then
+    begin
+    Let CNT = 1
+    Let LINE = "New Hardware"
+    Insert into REMARK
+
+    %  If a duplicate monitor of a another system is requested, DUPMON   
+       will insert appropriate value in OLD.SYSNO and NEWCPU %
+
+    apply DUPMON
+    If OLD.SYSNO = 0 then  let NEW.HARD.FLAG = 1  % No duplicate %
+    end
+  else
+    begin
+    Type "Is this old hardware previously used for another system? [no]: "
+    Accept YES.OR.NO
+    If UPPER.CASE(SUBSTR(YES.OR.NO,1,1)) = 'Y' then
+      begin
+      Type "System no: "
+      Accept OLD.SYSNO
+      Let CNT = 1
+      Let LINE = "Hardware was previously used for System " + OLD.SYSNO AS '5C'
+      Insert into REMARK
+      Type "Use monitor for system ",OLD.SYSNO as "5LN","? [no]: "
+      Accept YES.OR.NO
+      If upper.case(substr(YES.OR.NO,1,1)) = 'Y' then 
+        begin
+        select largest HOST.CPUTYP via SYSNO = OLD.SYSNO then
+          begin    
+          let NEWCPU = CPUTYP
+          let CNT = 2
+          let LINE = "Use monitor from System " + OLD.SYSNO as '5C'
+          Insert into REMARK
+          end
+        else 
+          begin
+          Type "No monitor for system ",OLD.SYSNO as "5LN"," in data base",@cr
+          apply DUPMON
+          end
+        end
+      else apply DUPMON
+      end
+    end
+
+%    insert values for site and cpu; these always must be inserted if
+this is a new system, for old systems they only need to be inserted if
+changed.   %
+
+If NEW.FLAG = 1 then
+  begin
+  apply SITE.NAME
+  If OLD.SYSNO = 0 then
+    Apply CPU.NAME
+  else
+    if NEWCPU # 0 then
+      Insert into HOST.CPUTYP using (IN.SYSNO for SYSNO,EFF.DATE for EDATE,
+        NEWCPU for CPUTYP)
+  Select SYS.REPORT via (NET, SYSNO = IN.SYSNO) then nothing
+  Else 
+    begin
+    Insert into SYS.REPORT using ( IN.SYSNO for SYSNO, 'TYM' for NET,
+      'X' for OS, IN.CPU for CPUNAM, IN.SITE for SITEID )
+    Insert into SITE using ( IN.SITE for SITEID )
+    end
+  end
+else
+  begin
+  Type "New site for ",IN.SYSNO as "5LN","? [no]: "
+  Accept YES.OR.NO
+  If upper.case(substr(YES.OR.NO,1,1)) = 'Y' then
+    Apply SITE.NAME
+  If OLD.SYSNO ne 0 then
+    Select largest HOST.CPUTYP via SYSNO = IN.SYSNO then
+      If CPUTYP # NEWCPU and NEWCPU # 0 then 
+        Insert into HOST.CPUTYP using (IN.SYSNO FOR SYSNO, EFF.DATE FOR
+	  EDATE, NEWCPU for CPUTYP)
+      else nothing
+    else 
+      Insert into HOST.CPUTYP using (IN.SYSNO FOR SYSNO, EFF.DATE FOR EDATE,
+        NEWCPU for CPUTYP)
+  else
+    begin
+    Type "New CPU?: "
+    Accept YES.OR.NO
+    If upper.case(substr(YES.OR.NO,1,1)) = 'Y' then
+      apply CPU.NAME
+    end
+  end
+
+%
+     now input the values for the configuration file.  First case is for 
+     a duplicate monitor
+%
+If OLD.SYSNO ne 0 then
+  begin
+  select largest ORDER via SYSNO = OLD.SYSNO then
+    let OLD.DATE = EDATE
+  for each CONFIG via SYSNO = OLD.SYSNO, where EDATE = OLD.DATE 
+    begin
+      let OLD.VALUE = VALUE
+      let THIS.SYMBOL = SYMBOL
+      insert into CONFIG using (IN.SYSNO for SYSNO,THIS.SYMBOL for SYMBOL,
+        EFF.DATE for EDATE,OLD.VALUE for VALUE)
+    end
+  end
+else
+
+%
+     next for new hardware, or for a new system, where all values must
+     be inputted
+%   
+  if NEW.HARD.FLAG = 1 or NEW.FLAG = 1 then
+    apply INPUT.VALUE
+
+  else                     % next, to change just a few values %
+    apply CHANGE.VALUE
+
+If NEW.FLAG = 1 then
+  begin
+  Type "Put new monitor in what file? "
+  Accept MONFILE
+  end
+else
+  begin
+  Type "New monitor will be put in (sys)newmon.sav on system ",
+  IN.SYSNO as "5LN", ".  O.K.? [yes] :"
+  Accept YES.OR.NO
+  If upper.case(substr(YES.OR.NO,1,1)) # 'N' then
+    let MONFILE = "(SYS)NEWMON.SAV"
+    else
+    begin
+    Type "Put new monitor in what file? "
+    Accept MONFILE
+    end
+  end
+
+Type "Production monitor? [yes]: "
+Accept YES.OR.NO
+If ( (upper.case(substr(YES.OR.NO,1,1)) = 'Y') or (YES.OR.NO = default) ) then
+  let MONTYPE = "PRODUCTION"
+else
+  begin
+  Type "Field test, experimental, or special version? "
+  Accept MONTYPE
+  end
+Insert into ORDER
+
+Type "Add any additional remarks, extra <cr> at end",@cr
+Select largest REMARK via (SYSNO,EDATE) then
+  let NEW.CNT = CNT + 1
+else let NEW.CNT = 1
+Let CNT = NEW.CNT
+Accept LINE
+While LINE ne DEFAULT do
+  begin
+  insert into REMARK
+  let CNT = CNT + 1
+  accept LINE
+  end
+
+if CNT ne NEW.CNT then
+  begin
+  let CNT = CNT + 1
+  let LINE = '    /'+trim(REQBY)+' '+(TODAY as DATE 'ZM/ZD/YY') as '8C'
+  insert into REMARK
+  end
+
+let OKBY = DEFAULT
+let GENBY = DEFAULT
+let MONFILE = DEFAULT
+insert into MONITOR
+
+end
+end    

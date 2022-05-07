@@ -1,0 +1,559 @@
+begin	"MONED1"
+
+require '13 version;
+
+comment
+	This program replaces MONED1.MAC (kludge).  This version will
+	derive the correct system name as follows:
+		1. It will find the largest value of NNNN such that
+		the file Pnnnn.MEM exists.  This will be used for
+		the major version number.
+		2. It will find the last entry in this file P####.MEM
+		of the form
+			/LDD
+			----
+		Where "L" is one or more letters, and "DD" is two or
+		more digits.  This will become the minor version number.
+		3. If there are non blank lines following this entry,
+		a new entry will be made at the end of the file of
+		the same form, with the same letters, with a one larger
+		numeric part.
+	The program will derive the next SYStemID from the first word of
+	(M33)SYSID.DAT (which is mapped and AOS'd to allow simultaneous
+	update).  This SYSID will be written to the CNFN##.MAC file
+	along with the monitor version name and assembly date. Then RPG 
+	will be called with the proper command in SVC to assemble, load 
+	and save the monitor.  A short log is kept in CNFN##.MAC of all
+	the data from the past few assemblies for that particular system.
+;
+
+require "(SAILIB)SAIL.DEF" source!file;
+require "(SAILIB)EXTEND.REQ" source!file;
+require "(SAILIB)MAPLIB.REQ" source!file;
+
+string MySys,SDate,UName;
+simple procedure Ini;
+begin
+    setformat(-2,0);
+    MySys _ cvs(calli(!xwd('33,'11),'41));
+    SDate _ StDate(calli(0,'14),0);
+    UName _ cv6str(calli(-'22,'41)) & cv6str(calli(-'21,'41));
+end;
+require ini initialization;
+
+recursive string procedure INCR(string S);
+! incriment the first letter of string S...skip I and O;
+begin	"INCR"
+    integer C;
+    case C _ lop(S) of begin
+	[0] return( "A" );
+	["I"-1] return( ("I"+1) & S );
+	["O"-1] return( ("O"+1) & S );
+	["Z"] return( "A" & INCR(S) );
+	else return( (C+1) & S )
+    end;
+end	"INCR";
+
+define	Dashes = {"------------------------------------------------"};
+integer MemChan;		! channel for .MEM file;
+integer MemSize;		! # of last existant .MEM file page;
+integer MemVer;			! numeric MEM file version;
+integer MemPtr;			! word pointer to file;
+integer AppPtr;			! append pointer to file;
+r!p(MAP1) MemPages;		! list of pages;
+
+procedure OpenMemFile (string FileName);
+begin	"OpenMemFile"
+    MemChan _ OpFile (FileName,"RWOM",16);
+    if MemChan < 0 then usererr(!rh(MemChan),2,
+	"?OpFile error in phase "& cvs(-!lh(MemChan))& ": ","X");
+    chnior (MemChan, MemSize, '10);! UGETF;
+    MemPtr _ !rh(MemSize) * '200 -1;
+    MemSize _ (!rh(MemSize) + 3) % 4;! convert to pages;
+    MemPages _ null!record;
+    AppPtr _ -1;
+end	"OpenMemFile";
+
+procedure CloseMemFile;
+begin	"CloeMemFile"
+    integer I;
+    while MemPages do begin "unmap"
+	getmap (MemPages,"U",0,0);	! unmap and delete;
+	MemPages _ MAP1:up[MemPages];
+    end "unmap";
+    I _ chniov (MemChan,AppPtr+1,'45);	! set end of file pointer;
+    if not !SKIP! then usererr(I,2,"?!CHFTR failed: ","X");
+    chniov (MemChan, 0, 0);	! release channel;
+end	"CloeMemFile";
+
+procedure MapRW (integer Ptr);
+begin	"MapRW"
+    r!p(MAP1) H;
+    H _ MAP1CR (0,511,0);
+    MAP1:ui[h] _ Ptr land '777000;
+    MAP1:up[h] _ MemPages;
+    MemPages _ h;
+    if getmap (H,"O",MemChan,1+ Ptr lsh -9) < 0 then 
+	usererr(1+Ptr lsh -9,2, "?getmap failed for page ","X");
+	! creates page if necessary;
+end	"MapRW";
+
+simple integer procedure ReadWord;
+begin	"ReadWord"
+    integer W;
+    if MemPtr < 0 then return(0);
+    while MemPages = null!record or MemPtr < MAP1:ui[MemPages] 
+	do MapRW (MemPtr);
+    W _ MAP1:a[MemPages][MemPtr land '777];
+    MemPtr _ MemPtr -1;
+    return (W);
+end	"ReadWord";
+
+simple string procedure ReadLine;
+begin	"ReadLine"
+    own integer W,P,C; string S;
+    S _ null;
+    do begin "getchar"
+	if P=0 then begin 
+	    if MemPtr < 0 then return (S);
+	    W _ ReadWord; 
+	    if W and AppPtr < 0 then AppPtr _ MemPtr +1;
+	    P _ 5; 
+	end;
+	C _ W lsh (P*7-36) land '177;
+	P _ P -1;
+	if C > '40 then S _ C & S;
+    end until C=#lf;
+    return (S);
+end	"ReadLine";
+
+simple procedure WriteLine (string S);
+begin	"WL"
+    while MemPages = null!record or AppPtr > MAP1:ui[MemPages]+'777
+	do MapRW (AppPtr);
+    S _ cvastr(MAP1:a[MemPages][AppPtr land '777]) & S & crlf;
+    while length(S) do begin
+	while MemPages = null!record or AppPtr > MAP1:ui[MemPages]+'777
+	  do MapRW (AppPtr);
+	MAP1:a[MemPages][AppPtr land '777] _ cvasc(S[1 for 5]);
+	S _ S[6 to inf];
+	AppPtr _ AppPtr + 1;
+    end;
+    AppPtr _ AppPtr - 1;
+end	"WL";
+
+simple procedure WriteHeading (string S);
+begin	"WH"
+    WriteLine (null);
+    WriteLine (S);
+    WriteLine (Dashes[1 for length(S)]);
+end	"WH";
+
+string	MinVer,			! global for default if <CR>;
+	MajVer;			! global for default if <ESC>;
+string	LastMaj;		! global for last major version #;
+boolean	TextMin,		! no min head follows last text;
+	TextMaj;		! no maj head follows last text;
+
+simple procedure ParseMEM;
+comment
+	There are two types of headers in the file: major and minor.
+	MinVer is the last minor header which has text after it.
+	MajVer is the last major header which has text after it.
+	Note that this routine scans the file backwards.
+;
+begin	"ParseMEM"
+    boolean TextFlag;
+    string S,Min1,Maj1;
+    TextFlag_ TextMin_ TextMaj_ false; 
+    LastMaj_ MinVer_ MajVer_ Min1_ Maj1_ null;
+    setformat(-3,0);
+    do begin
+	S _ ReadLine;
+	if equ(S,dashes[1 for length(S)]) then S _ null;
+	if length(LastMaj)=0 and S="P" and S[5 to 5]="/"
+	    then LastMaj _ S;
+	if S="P" and S[5 to 5]="/" 
+	    then if TextFlag 
+		then if length(MajVer)=0 
+		    then MajVer _ S 
+		    else
+		else Maj1 _ S
+	else if S="/" and length(S)<7 
+	    then if TextFlag 
+		then if length(MinVer)=0 
+		    then MinVer _ S 
+		    else
+		else Min1 _ S
+	else if length(S) then begin
+	    TextFlag _ true;
+	    if length(Min1)=0 then TextMin _ true;
+	    if length(Maj1)=0 then TextMaj _ true;
+	end;
+    end until MemPtr < 0 or (length(MinVer) and length(MajVer));
+    if length(MinVer)=0 or length(MajVer)=0 then
+	if TextFlag or length(Min1)=0 or length(Maj1)=0
+	    then usererr(0,0,"?cant parse .MEM file","X")
+	    else begin
+		MinVer_ Min1;
+		MajVer_ Maj1;
+	    end;
+    if equ("/A",MajVer[inf-1 to inf]) ! kludge to handle new files;
+	then MinVer _ "P"& cvs(MemVer-1)& MinVer
+	else MinVer _ "P"& cvs(MemVer)& MinVer;
+end	"ParseMEM";
+
+string procedure NameMEM;
+! return the version number from the name of the appropriate .MEM file;
+begin	"NameMEM"
+    integer Flag, Chan,Eof;
+    MEMver _ 030;
+    setformat(-3,0);		! 3 digits;
+    open(Chan_getchan,"DSK",0,0,0, 0,0,EOF);
+    if EOF then usererr(EOF,2,"?open failure for DSK: ","X");
+    Flag _ false;
+    do begin
+	lookup(Chan,"P"&cvs(MEMver_MEMver+1)&".MEM",Eof);
+    end until (MEMver > 099) or ((Flag _ Flag or not Eof) and Eof);
+    if MEMver > 099 then return(null);
+    MEMver _ MEMver - 1;
+    release(Chan);
+    return("P" & cvs(MEMver) & ".MEM");
+end 	"NameMEM";
+
+integer MNB1,MNB2,MNB3,MNB4;
+
+simple procedure IniBreak;
+begin
+    setbreak(MNB1_getbreak,"-",null,"SINK");
+    setbreak(MNB2_getbreak,"0123456789",null,"RINK");
+    setbreak(MNB3_getbreak,"/",null,"SINK");
+    setbreak(MNB4_getbreak,"-0123456789",null,"RINK");
+end;
+require IniBreak initialization;
+
+simple procedure MonParse (
+	string S;
+	reference string A,B,C );
+!
+	P033/FA01-2
+         AAA B CC
+;
+begin
+    own integer I;
+    scan(S,MNB2,I);
+    A_scan(S,MNB3,I);
+    B_scan(S,MNB4,I);
+    C_scan(S,MNB1,I);
+end ;
+
+string procedure NextSYSID;
+begin
+    integer A,B,I,C;
+    string S;
+    r!p(map1) D;
+    C _ Opfile("(M33)SYSID.DAT","RWBHM227P",-1);
+    if C < 0 then usererr(C,2,"?OPFILE for file (M33)SYSID.DAT: ","X");
+    D _ Map1cr(0,0,0);
+    I _ GetMap(D,"O",C,1);
+    if I < 0 then usererr(I,2,"?GETMAP error for file (M33)SYSID.DAT: ","X");
+    while MAP1:A[d][0] leq 0 do begin
+	print("?counter file (M33)SYSID.DAT missing or damaged",crlf,
+	    "	enter next SYSID to assign as a decimal integer: ");
+	MAP1:A[d][0] _ intscan(S_inchwl,I);
+    end;
+    I _ location(MAP1:A[d][0]);
+    start!code
+	protect!acs 1;
+	MOVE 1,I;	! get address of mapped counter word;
+	AOS 1,(1);	! incriment counter and save new value in AC;
+	SOS 1;		! compute original value;
+	MOVEM 1,I;	! keep it around for later;
+    end;
+    GetMap(D,"Y",C,1);
+    GetMap(D,"Z",C,1);
+    chniov(C,0,0);
+    getformat(A,B);
+    setformat(-5,0);
+    S _ "M"& cvs(I);
+    setformat(A,B);
+    return(S);
+end;
+
+integer ApoTab,HypTab,SemTab;
+simple procedure P10INI;
+begin
+    setbreak (ApoTab_getbreak,"'",null,"FINS");
+    setbreak (HypTab_getbreak,"-",null,"FINA");
+    setbreak (SemTab_getbreak,";",null,"FINS");
+end;
+require P10INI initialization;
+
+string procedure CnfnVersion( string SysNo );
+begin	"CnfnVersion"
+    integer IChan, Brk,Eof;
+    string FName, Ver;
+    FName _ "CNFN"& SysNo& ".MAC";
+    open (Ichan_Getchan,"DSK",0,1,0, 256,Brk,Eof);
+    if EOF then usererr(Eof,2,"?unable to open DSK: ","X");
+    lookup (IChan,FName,Eof);
+    if EOF then return(null);
+    do input(IChan, ApoTab) until EOF or BRK;
+    if EOF then usererr(0,0,"?format error 1 in "& FName,"X");
+    input(IChan, HypTab);
+    if not BRK then usererr(0,0,"?format error 3 in "& FName,"X");
+    Ver _ input(IChan, ApoTab);
+    if not BRK then usererr(0,0,"?format error 4 in "& FName,"X");
+    release(IChan); 
+    return(ver);
+end	"CnfnVersion";
+
+procedure CnfnUpdate( string SysNo, SName, SDate );
+begin	"CnfnUpdate"
+    integer IChan,OChan, Brk,Eof,I;
+    string FName, OSName, OSDate, OSysid, S, NSName, NSDate, NSysid;
+    FName _ "CNFN"& SysNo& ".MAC";
+    open (Ichan_Getchan,"DSK",0,1,0, 256,Brk,Eof);
+    if EOF then usererr(Eof,2,"?unable to open DSK: ","X");
+    open (Ochan_Getchan,"DSK",0,0,1, 0,0,Eof);
+    if EOF then usererr(Eof,2,"?unable to open DSK: ","X");
+    lookup (IChan,FName,Eof);
+    if EOF then usererr(Eof,2,"?unable to lookup "& FName& ": ","X");
+    enter (OChan,FName,Eof);
+    if EOF then usererr(Eof,2,"?unable to enter "& FName& ": ","X");
+    do begin "copy"
+	out (OChan, input(IChan, ApoTab));
+    end "copy" until EOF or BRK;
+    if EOF then usererr(0,0,"?format error 1 in "& FName,"X");
+    OSName _ input(IChan, ApoTab);
+    if EOF then usererr(0,0,"?format error 2 in "& FName,"X");
+    NSName _ scan(OSName,HypTab,Brk) & SName;
+    if not Brk then usererr(0,0,"?format error 3 in "& FName,"X");
+    cprint (OChan, "'", NSName, "'");
+    do begin "copy"
+	out (OChan, input(IChan, ApoTab));
+    end "copy" until EOF or BRK;
+    if EOF then usererr(0,0,"?format error 4 in "& FName,"X");
+    OSDate _ input(IChan, ApoTab);
+    if EOF then usererr(0,0,"?format error 5 in "& FName,"X");
+    NSDate _ SDate;
+    cprint (OChan, "'", NSDate, "'");
+    do begin "copy"
+	out (OChan, input(IChan, ApoTab));
+    end "copy" until EOF or BRK;
+    if EOF then usererr(0,0,"?format error 6 in "& FName,"X");
+    OSysid _ input(IChan, ApoTab);
+    if EOF then usererr(0,0,"?format error 7 in "& FName,"X");
+    NSysid _ NextSYSID;
+    cprint (OChan, "'", NSysid, "'");
+    do begin "copy"
+	out (OChan, input(IChan, SemTab));
+    end "copy" until EOF or BRK;
+    SDate _ (SDate & "    ") [1 for 10];
+    cprint (OChan, "; ", SName, #ht, SDate, NSysid, "   ", UName, crlf);
+    for I _ 75 downto 0 do begin "copy"
+	! don't let history make file too big, keep to 1 data page;
+	if not Brk then done;
+	cprint (OChan, ";", input(IChan, SemTab));
+    end "copy";
+    if Brk then cprint (OChan, "; ---prior history deleted---", crlf);
+    release(IChan); release(OChan);
+end	"CnfnUpdate";
+
+integer	CrlfTab;
+simple procedure CrlfIni;
+setbreak(CrlfTab_getbreak,#lf,#cr,"FINS");
+require CrlfIni initialization;
+
+procedure MsgUpdate( string SysNo, SName, SDate );
+begin	"MsgUpdate"
+    integer IChan,OChan, Ieof,Oeof,Brk,I;
+    string FName, OSName, OSDate, S, NSName, NSDate;
+    FName _ "ACCESS.MSG";
+    open (Ichan_Getchan,"DSK",0,1,0, 256,Brk,IEof);
+    if IEOF then usererr(IEof,2,"?unable to open DSK: ","X");
+    open (Ochan_Getchan,"DSK",0,0,1, 0,0,OEof);
+    if OEOF then usererr(OEof,2,"?unable to open DSK: ","X");
+    lookup (IChan,FName,IEof);
+    enter (OChan,FName,OEof);
+    if OEof then usererr(OEof,2,"?unable to enter "& FName& ": ","X");
+    out (OChan, "[ "& SysNo &" "& SName &" "& SDate &" /"& UName &" ]"&crlf);
+    while not IEof do begin "copy"
+	string L;
+	L _ input(IChan,CrlfTab);
+	if IEof then done;
+	if not (equ(L[1 for 2],"[ ") and equ(L[inf-1 for 2]," ]"))
+	    then out (OChan, L& crlf);
+    end "copy";
+    close (IChan); release (IChan);
+    close (OChan); release (OChan);
+end	"MsgUpdate";
+
+procedure MemUpdate (string S);
+begin	"MemUpdate"
+    string Q,A,B,C;
+    setformat(-2,0);
+    MonParse(S, A,B,C);
+    if length(C)
+	then begin "minor release"
+	    WriteHeading ( "/"&B&cvs(cvd(C)+1) );
+	end
+	else begin "major release"
+	    WriteLine (#ff);
+	    WriteHeading ( "P"&A&"/"&incr(B) );
+	    WriteHeading ( "/"&B&"01" );
+	end;
+end	"MemUpdate";
+
+label	SuperLabel;
+integer	BTSM1,BTSM2;
+simple procedure BTSMini;
+begin
+setbreak(BTSM1_getbreak,#ff&#lf,#cr&" "&#ht,"KINS");
+setbreak(BTSM2_getbreak,#ff&#lf,null,"FINS");
+end; require BTSMini initialization;
+
+procedure SuperMajor(string S);
+begin
+    integer CI,CO,E,BRK;
+    string A,B,C;
+    open (CI_getchan,"DSK",0,1,0, 256,BRK,E);
+    MonParse(LastMaj, A,B,C);
+    lookup(CI,"P"&A&".MEM",E);
+    open (CO_getchan,"DSK",0,0,1, 0,0,E);
+    MonParse(S, A,B,C);
+    enter(CO,"P"&A&".MEM",E);
+    while not E do if equ(input(CI,BTSM1),LastMaj) then done;
+    if E then usererr(0,0,"?end of .MEM file looking for "&LastMaj,"X");
+    cprint(CO,S,crlf,dashes[1 for length(S)],crlf);
+    input(CI,BTSM2);		! skip the ----'s;
+    while not E do out(CO,input(CI,BTSM2)&BRK);
+    print("[P",A,".MEM created]",crlf);
+    release(CI); release(CO);
+    WriteLine(null);
+    WriteLine("[this file last modified "&SDate&" by "&UName&"]");
+    WriteLine(null);
+    WriteLine("******************************************");
+    WriteLine("***  make further changes in P"&A&".MEM  ***");
+    WriteLine("******************************************");
+    CloseMemFile;
+    OpenMemFile(NameMEM);
+    ParseMem;
+    goto SuperLabel;
+end;
+
+!	M A I N   P R O G R A M	;
+
+string A,B,C;			! monitor name fragments;
+string SysID;			! system "id";
+string SName;			! temp name;
+string SvcCmd;			! command string for RPG;
+boolean NoMEM;		       	! there is no .MEM file;
+
+ttyup(true);
+if equ(MySys,"118") then MySys _ "KS";
+if equ(MySys,"930") then MySys _ "F3";
+
+while true do begin
+	print ("System id [",MySys,"]: ");
+	SysID _ inchwl;
+  	if !SKIP!=#esc then print(" = ",SysID_MySys,crlf);
+	if SysID = "?" then begin print(
+"Enter the id for the system to assemble for in the form:
+   ##
+such that MON##.CMD and CNFN##.MAC are relavent
+or enter <cr> or <esc> to use ",MySys,"
+");		continue end;
+	if length(SysID) > 2 then begin print(
+"?too many characters, type ""?"" for help
+");		continue end;
+	if length(SysID)=0 then SysID _ MySys;
+	done;
+end;
+
+if length(SName _ NameMEM) then begin "MemFileFound"
+    print("[default version from ",SName,"]",crlf);
+    OpenMemFile ( SName );
+    ParseMEM;
+    if AppPtr < 0 then usererr(0,0,
+    	"?.MEM file is empty! Don't do that to me!","X");
+    NoMEM _ false;
+end "MemFileFound" 
+else if length(SName _ CnfnVersion(SysID)) then begin "CnfnVersionFound"
+    print("[default version as per CNFN",SysID,".MAC]",crlf);
+    NoMEM _ true; MinVer _ MajVer _ SName;
+end "CnfnVersionFound"
+else usererr(0,0,"?no CNFN"&SysID&".MAC file","X");
+
+while true do begin
+	string A,B,C;
+	MonParse (MinVer, A,B,C);
+	print ("Version [", MinVer, "]: ");
+	SName _ inchwl;
+	if length(SName)=0 then SName_MinVer;
+	if !SKIP!=#esc then print(" = ",SName_MajVer,crlf);
+	if SName = "?" then begin print(
+"Enter the desired monitor version in one of these forms:
+   ",B,C,"
+   /",B,C,"
+   P",A,"/",B,C,"
+or enter <cr> to use ",MinVer); 
+	    if not NoMEM then print("
+or enter <esc> to use ",MajVer);
+	    print(crlf); 
+	    continue 
+	end;
+	if length(SName) then begin
+	    string A1,B1,C1;
+	    if SName="/" then SName _ "P"& A& SName;
+	    if length(SName)<6 then SName _ "P"& A& "/"& SName;
+	    MonParse (SName, A1,B1,C1);
+	    if length(A1)=0 or length(B1)=0 then begin print(
+		"?type ? for help",crlf); continue end;
+	    if NoMEM then done;
+	    if cvd(A)+1 = cvd(A1) and equ(B1,"A") and length(C1)=0
+		then SuperMajor(SName);
+	    if cvd(A) neq cvd(A1) then begin print(
+		"?must be in current .MEM file",crlf); continue end;
+	end;
+	done;
+end;
+
+SuperLabel:
+CnfnUpdate (SysID, SName, SDate);
+MsgUpdate (SysID, SName, SDate);
+if not NoMEM then begin
+    if equ(SName,MinVer) and TextMin
+    or equ(SName,MajVer) and TextMaj
+    or not(equ(SName,MinVer) or equ(SName,MajVer))
+	then MemUpdate (SName);
+    CloseMemFile;
+end;
+
+MonParse (SName, A,B,C); B _ lop(B);
+SvcCmd _ "LOAD /SAVE:"& SysID& (if C then "X"&B&C else A&B&C)& 
+	" @(M33)MON"& SysID& 0; 
+
+print(SvcCmd,crlf);
+tmpout ("SVC", SvcCmd, !SKIP!);
+if !SKIP! then begin "disk!"
+    integer C,E;
+    setformat(-3,0);
+    open(C_getchan,"DSK",0,0,1, 0,0,E);
+    enter(C,cvs(call(0,"PJOB"))&"SVC.TMP",E);
+    out(C,SvcCmd);
+    release(C);
+end "disk!";
+start!code "RUNER"
+    label RUNBLK;
+	MOVEI	1,RUNBLK;
+	HRLI	1,1;
+	CALLI	1,'35;
+	JRST	4,;
+RUNBLK:	0+cvsix("SYS");
+	0+cvsix("RPG");
+	0; 0; 0; 0; 0;
+end "RUNER";
+
+end	"MONED1" .
+  

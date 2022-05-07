@@ -1,0 +1,25 @@
+
+
+
+To generate DDT object files:
+
+     1.  COMP @DDTMAK.CMD
+
+     2.  LOA FILDDT.REL/SAV:FILDDT
+
+     3.  LOA FRMDDT.REL/SAV:FRMDDT
+
+     4.  LOA DDT.REL/SAV:DDT
+
+     5.  GET DDT
+
+     6.  DDT
+
+     7.  .JBSA/$$Q,,DDT
+
+     8.  Type control-C
+
+     9.  SAVE DDT
+
+The checksum for DDT.SAV may not match  that  given  on  the
+transmittal.  All other checksums should match.

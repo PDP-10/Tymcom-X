@@ -1,0 +1,13 @@
+SUBTTL	CONFIG - CONFIGURATION DEFINITION - KL
+XP SYSNO,'D35'
+XP APRSN,<'KL',,^D1096>	;CPU type and serial number
+XP APRNAM,<'QQ',,2107>	;Hardware and base number
+XP TIMZON,^D<-6>	;Central Standard Time
+XP INADFL,^D30		;Inactivity time out system wide default
+
+XP JOBS, ^D128		;Number of jobs (including null job)
+XP PORTS,^D128		;TYMNET ports 0-127     (RPORTN was 127)
+XP TAPES,^D4		;Number of tape drives
+XP DISKS,^D<2*8>	;Number of disks (3674 with 2 strings BPA)
+XP DSKTYP,'3675B'	;Memorex 3675 disks, formatted in blocks
+

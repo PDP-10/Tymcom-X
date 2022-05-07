@@ -1,0 +1,884 @@
+P034/Q
+------
+
+/P01
+----
+
+FILIO:	Change WRTSAT from INFO to a DSKCLN type STOPCD.
+ERRCON:	Change HALT at DIEREH(DIE+1) to JSR CRS147
+COMMON:	Change HALT at CRASHX+1 to JSR GOBOOT
+CORE1:	Change [HALT] at INSTYP+5 to [STOPCD].    /JMS 9-26-85
+
+PICON:	Check for page fault while in user mode when running the null job.
+COMCON:	Change PJOBX to output "Frame" number.
+/JMS 9-30-85
+
+FILUUO:	Add routine CHGNAM.  It is called by CHGPPN to make sure that the GETTAB
+	tables +31 and +32 match the GFD's PPN in GETTAB table +2.
+UUOCON:	Call CHGNAM during LOGIN uuo.
+FRMSER:	Call CHGNAM during CREFRM uuo.  Both LOGIN and CREFRM accept additional
+	arguments.  The first 5 are still the same: PPN,PRV,AUN,UNM,UN1.
+	The new optional arguments are: #6=LDBLOG, #7=PJC1, #8=PJC2, #9=PJC3.
+	All three words of the project code must be specified if any are.
+/JMS 9-30-85
+
+/P02
+----
+
+FRMSER:	Fix bug in new code in FRMSER - AC W was getting clobbered.
+FILUUO:	Change PPNUSR and USRPPN to not check the core blocks while translating
+	PPN to username during a STOPCD.  The stopcode FILAUS has been known to
+	Ill Mem Ref in this routine.    /JMS 10-8-85
+
+
+/P03
+----
+
+ERRCON:	Add routine DSKCLN which will set the needs-full-DSKCLN flag and
+	output message to the CTY, but will continue the system.
+SIMIO:	Make SIMUUX stopcode call DSKCLN and output more data on which
+	uuo failed.
+FILIO:	Make WRTSAT stopcode call DSKCLN and output unit # and page #.
+	Note: The routine CPLSAT in SWAMP is the one that outputs the
+	message "? BAD SAT ON BPA5 ..." to both OPR and the CTY.
+/JMS 10-9-85
+
+CLOCK1:	Fix "(MAIL)TUMS.SAV not found" and "illegal name" from stale JBT entries
+	Have CLRJBT clear JBTNM1 and JBTNM2 when it clears JBTPPN.
+/JMS 10-13-85
+
+COMMON,FILIO,FILUUO,SWAMP:	Change INFO/JOB stopcodes in these modules
+	to use the DSKCLN subroutine where necessary.
+/JMS 10-13-85
+
+/P04
+----
+
+ERRCON:	Fix job stopcodes to not reload the system when a type-out routine
+	was given.  This was happenning in SIMUUF.  Also made PCP global
+	(to print PC) and modified RADX10 to output negative numbers.
+SIMIO:	Changed many JSP T2,MAPERR to JRST MAPER1 and MOVEM T1,SIMIT1.
+	This will preserve more information for FCR.E+4 stopcodes.
+	Changed stopcode SIMUUF to output PC and number of free disk pages.
+/JMS 10-23-85
+
+FRMSER:	Changed TLO T3,ABSGAN at ABSAC0-1 to TRO since ABSGAN is in RH.
+PICON:	Changed POPJ at EVICT+5 to JRST TPOPJ.  This bug caused 20 ILLINS
+	crashes on D25, and occured when an account supervisor tried to
+	kill another job in the same GAN, and the killer had no license.
+/JMS 10-23-85
+
+COMMON:	Add UVAR(UPTUUO) just before UPTPDL.
+UUOCON:	Add MOVEM M,UPTUUO to store original user-mode MUUO in fixed location.
+ERRCON:	Output UPTUUO during stopcode if the return address on the top of
+	the stack does not match the PC in UPTMUP.  This condition will be
+	true when a stopcode occurs while the monitor is doing an exec UUO
+	during a user UUO (ie CHANIO MAPF on behalf of the OUTPUT UUO).
+/JMS 10-23-85
+
+F3SYM:	Added DEFINE PRINTF(TEXT),<IF2,<PRINTX TEXT>> to output reminders.
+K?SYM:	Added DEFINE PRINTF(TEXT),<> to not output reminders on these systems.
+COMMON,ERRCON,SIMIO,FRMSER,PICON,UUOCON,MAPIO,SCNSER: Changed IF2,<PRINTX TEXT>
+	to PRINTF(TEXT) so that the people building monitors for transmittal
+	won't see the messages stating that such-and-such needs more work.
+/JMS 10-23-85
+
+/P05
+----
+
+PICON:	At KEYSET+6, added SKIPN .CPCPC before WRPI REQCLK to avoid
+	initiating a channel 7 interrupt cycle during STOPCD typeout.
+/JMS 11-4-85
+
+COMMOD,ONCDSK:	Update comments, change some INTERNAL to :: and EXTERNAL to ##.
+/JMS 11-12-85
+
+FILIO:	Remove LSH T1,9 and LSH T2,9 in front of both PUSHJ P,@KONADD(J).
+APXKON,BPXKON,RMXKON:	Change xxXADD to use pages instead of words.
+FHXKON,DPXKON:	Obsolete disk drivers renamed to (OSARC).
+	This change documents an existing condition: All disk I/O is done
+	a page at a time.  After /P05 is tested, then the definition of
+	UNIBLK (current disk block address) may be changed.  /JMS 11-12-85
+
+COMMON,ONCDSK:	The code in ONCDSK to calculate PROT and PROT0 (for in-core
+	protect times) based on disk type produced garbage on F3 (as a result
+	of dividing by zero).  PROT and PROT0 are now set in COMMON based on
+	IFCPU(<KI,KL>).  The way that SCHED1 uses these numbers should be
+	changed someday.  /JMS 11-13-85
+
+/P06
+----
+
+COMMOD,ONCDSK,FILIO,APXKON,BPXKON,RMXKON: Rename UNIBLK to UNIPAG.
+	All I/O is done in pages (except in low-level RMXKON and BPXKON).
+	Comment out most references to UNYPPL (partial page transfers).
+/JMS 11-14-85
+
+/P07
+----
+
+COMMOD:	Change name of UNIBPT/UNYBPT to UNIRPT/UNYRPT since the device drivers
+	are concerned with records per track, not blocks per track.
+APXKON,BKXKON,RMXKON:	Change UNYBPT to UNYRPT.
+FILIO:	Remove references to UNYPPL since all transfers are in pages.
+	This appears to fix problem with MDDT not working in P06.  /JMS 11-19-85
+
+/P08
+----
+
+COMMOD:	Change UNIRPT again.  Now the sign bit of UNICHR is set if the unit
+	if formatted in pages.  UNYBPT points to blocks per track, UNYPPT
+	to pages per track, UNYBPY points to blocks per cylinder, UNYPPY to
+	pages per cylinder.  Bits 1-8 of UNICHR not used.
+APXKON,BPXKON,RMXKON:	Use UNYBPT or UNYPPT as appropriate instead of UNYRPT.
+/JMS 11-22-85
+
+/P09
+----
+
+BPXKON:	Changed all occurrances of SUBI XX,200 to use 1000 if the disk is
+	formatted in pages.  /JMS 11-27-85
+
+ERRCON,CONF??:	Move hardware designation into LH of .CPLOG, use the RH for
+	the PDP-10 base number.  /JMS 11-27-85
+
+/P10
+----
+
+CONF24:	Define additional 16 units on BPB.  Total of 32 disks in 4 strings.
+/JMS 12-4-85
+
+COMMON,PICON:	Don't output long stopcode message from DEPOSIT-NONZERO-IN-30.
+	Set the STOPPC to DM30.1 (since command is DM 30,1).  /JMS 12-4-85
+
+BPXKON:	Determine type of disk by trying to SEEK to cylinder 600.  Determine
+	format of disk by reading the COUNT field of record 1.  Set UNYUTP as:
+	0: 3650 in blocks,   103875 pages total (used to be 3330-I in blocks)
+	1: 3330-II in blocks, 68680 pages total (old standard)
+	2: 3650 in pages,    116550 pages total (new)
+	3: 3330-II in pages,  76760 pages total (new)
+UNYTYP=0 defined for testing purposes only, no program should depend on it.
+/JMS 12-12-85
+
+/P11
+----
+
+S.MAC:	Change STOPCD definition.  Add "STOPCD(,ENTRY,COMCON)" at the
+	beginning of COMCON to define the default block for stopcodes that
+	have no names (they all do an XCT S$NAME where S$NAME=COMCON).
+	This allows ERRCON to output the offset from the start of the module
+	to the unnamed stopcode, and makes the literal pool smaller.
+
+ALL:	Add "STOPCD(,ENTRY,XXX)" at the beginning of each source module.
+/JMS 1-2-86
+
+MON##.CMD	Added new module.  MONBTS has only one dummy entry point now,
+	the portions of COMMON that reload BOOTS from the disk will be put
+	in this module.  /JMS 1-2-86
+
+SETETY:	Removed Ron Saltgaver's SETE password (SALTYRON).  /JMS 1-6-86
+
+/P12
+----
+
+COMMOD:	Add ND DSKTYP,^D<3330> and define DSKTYP=^D<3650> in CONF24.MAC
+BPXKON:	Put in kludge to set disk type to 3650 pages on system 24.
+/JMS 1-7-86
+
+FILUUO:	Translate [1,4]=(SYS) without scanning core blocks (for STOPCD output).
+ERRCON:	Output more info on NONAME stopcodes.  /JMS 1-7-86
+
+SCNSER,ONCE,COMMON,CTYSIM: Change name of SCNDDB to CTYDDB.
+COMMON:	Store address of CTYLDB in LINTAB+0 so TTY0:=CTY:.
+ERRCON:	Output to CTYLDB for EVENT and INFO stopcodes.  /JMS 1-7-86
+
+FILIO:	Add STOPCD(.,STOP,PGEUOR,PRTPGU,<Paging error: Unit out of Range>)
+	to get more info from C24.  /JMS 1-7-86
+
+MON##.CMD:	Added .MAC to all lines so RPG won't try to compile xx.P11.
+
+COMMON:	Don't put CTYLDB in LINTAB until further testing is done.  /JMS 1-9-86
+
+/P13
+----
+
+SCNSER: Added space in the LDB to hold a copy of AUXSTR after a circuit
+	has been built.  This will allow circuit tracking from the host
+	on a port by port basis.  /CARL 1-10-86
+
+/P14
+----
+
+COMCON:	Equate TERMIN command with TTY command, add SUBMIT to run SYS:SUBMIT,
+	add WHERIS to run RPG (add WHE to still run SYSTAT for WHERE).
+/JMS 1-20-86
+
+COMMON:	Set DEBUGF on non-F3 to reload on JOB and DEBUG stopcodes.  This
+	is temporary so that the crash can be saved.  Re-arrange code in
+	preparation of moving LODBTS into MONBTS.MAC, make LODBTS understand
+	3650 formatted in pages.  /JMS 1-24-86
+
+COMCON:	Add .DSKCL and FINISH to forced command table, put table in alphabetical
+	order.  ".DSKCL" runs DSKCLN not logged in as [2,5].  /JMS 1-27-86
+
+/P15
+----
+
+FILUUO:	Removed kludge that said SYS:[proj,prog] = DSKB:[1,4]
+	EXCEPT that SYS:[1,1] = DSKB:[1,1].  This was a hold-over from
+	the level-C disk structure..  /JMS 1-31-86
+
+PCBIO:	If all the disks are write-protected, the system dies with
+	NONAME stopcode at CTLFN1+7.  Gave it the name of NOWRIT.  /JMS 1-31-86
+
+ERRCON:	Change the format of output of NONAME stopcodes.  Output "?HALT"
+	at the beginning of STOP stopcodes and put quotes aroung the
+	stopcode name.  /JMS 1-31-86
+
+/P16
+----
+
+COMMOD:	Add pointer to front-end file for KS to the home page.  /CARL 2-4-86
+
+COMMON:	JRST BOTLOD in MONBTS to test new BOTLOD routine.  /JMS 2-6-86
+
+FILIO:	Don't put pages in OHT if running READONLY, to try to get ASP working
+	on the 3650 project.  /JMS 2-10-86
+
+/P17
+----
+
+COMMON:	Add code to SVSETS to save locations 150-167 (base pointers) into
+	BASAVE, and save locations 300-337 (SA-10 pointers) into SASAVE.
+	/JMS 2-18-86
+
+REFSTR: Standardized FBOOTB=3, NBOOTP=3, LPNSAT=10 on all processors.
+	Put IFCPU(KS) conditionals around all FEFILE.SYS code and store
+	length,,first for each unit that an FE area is created on in
+	HOMFEP and UNIFEP.  Removed previous HOMFEF code, see HOMSPG.
+	Put IFN FTSPAG conditionals around all new code for SPAGES.SYS
+	to reserve cylinders 1 and 2 on all units.  Rib page address is
+	stored in HOMSPG (old location of SWAP.SYS rib).  /CARL 2-21-86
+
+COMMOD: Defined HOMFEP, UNIFEP, HOMSPS (system pack set), HOMSPG (spare).
+	Defined STRSPS to contain the structure SYSTEM PACK-SET ID.  This
+	will eventually be set by ONCDSK when the structure DDB is built
+	for "each" structure.  /CARL 2-21-86
+
+FILUUO: Modified the DSKCHR uuo to return STRSPS as word #17, the old
+	first page for swapping on this unit word, and UNIFEP as word
+	#12, the old pages for swap on this unit word.  /CARL 2-21-86
+
+/P18
+----
+
+REFSTR: Added MOVE U,FSTUNI after the JUMN U,xxxxx loops prior to calls
+	to RBNFI9 to make sure that the proper unit was setup for the
+	rib.  /CARL 2-25-86
+
+/P19
+----
+
+REFSTR: Fixed updating of RIBALP for SPAGES and FEFILE so that everything
+	is in working order.  /CARL 2-28-86
+
+/P20
+----
+
+FILUUO: Changed DSKCHR uuo to test for STRucture using presence of a DDB
+	pointer rather than 0 sat pages on this unit.  /CARL 3-5-86
+
+FILUUO: Modified all references to STRDDB+ to loop through all structures
+	(new code commented out) or added PRINTFs describing what needs to
+	be done in the future to STRDDB.  /CARL 3-5-86
+
+CLOCK1: Modified references to STRDDB+ (see FILUUO above).  Put in code
+	for once a minute check of pages available to check all structures
+	(new code commented out).  /CARL 3-5-86
+
+COMMON: Modified references to STRDDB+ (see FILUUO above).  /CARL 3-5-86
+
+COMCON: Modified references to STRDDB+ (See FILUUO above).  Changed CORE
+	command to look at all structures (new code commented)  /CARL 3-5-86
+
+FILIO:  Modified references to STRDDB+ (See FILUUO above).  /CARL 3-5-86
+
+CORE1:	Modified STRDDB references (See FILUUO above).  All referenes use
+	STRDDB instead of DRBSTR for the proper AUN or file.  /CARL 3-6-86
+
+MAPIO:	Modified STRDDB references (See FILUUO above).  /CARL 3-6-86
+
+FRMSER:	Modified STRDDB references (See FILUUO above).  /CARL 3-6-86
+
+SWAMP:	Modified STRDDB references (See FILUUO above).  Most were changed
+	to MOVEI ac,STRDDB ... although a few were able to use the fact of
+	an existing "intact" unit data block to obtain HRRZ ac,UNISTR(U)
+	so as to make it as transparent as possible.  Many PRINTFs were put
+	in to alert monitor developers to changes.  /CARL 3-6-86
+
+/P21
+----
+
+COMMOD: Added the long awaited STRNXT field as the left half of STRP4C
+	which is virtually unused.  Renamed STRSPS to STRSID which is
+	STRucture Set ID.  STRHSH may have this same function but isn't
+	very readable by humans at the moment.  /CARL 3-8-86
+
+ONCDSK/REFSTR: Changed MOVE/MOVEM pairs which act on HOMP4C and STRP4C
+	to HRRZ/HRRM pairs to only act on the right half.  /CARL 3-8-86
+
+FILUUO: Uncommented the HLRZ ac,STRNXT loops of various UUOs.  Modified
+	the SYSSTR UUO to really work in the case of more than a single
+	structure.  Currently there is only 1 structure.  /CARL 3-8-86
+
+FILIO:  Add more paranoia in checking for bad unit number.  Add routine
+	PRTPGY which outputs core page number, unit number, disk page number.
+ERRCON: Use right AC when printing PC of IME.  Output "HALT stopcode" instead
+	of "STOP stopcode" (looks nicer to Operations).  /JMS 3-12-86
+
+PICON:  Don't output full "CRASH" stopcode when the nonzero quantity deposited
+	in 30 is 7 or less (because on F3 it's easiest to deposit 4 in 30).
+
+MAPIO:  Don't make U nonzero at SPRBNS, it kept DSKCLN from working!
+	/JMS 3-14-86
+
+/P22
+----
+
+ERRCON:	Move PRTCRS to PICON (it outputs contents of SAV30 and KEY620).
+PICON:	When nonzero is detected in 30, check if KEY620 is 0 or 633751506262.
+	If neither, then STOPCD(.,STOP,BASE,PRTCRS,<BASE initiated crash>).
+COMMON:	Make sure SAV30, BASAVE, and SASAVE are all updated together (they are
+	the saved contents of 30, IRING/ORING pointers, and SA10 pointers).
+
+TYPOUT.MEM - Update list of TTY output routines.  /JMS 3-24-86
+
+SCNSER:	Put BIOZAP.PAT into the source.  Add SUBTTLs for CONTEN.TEC /JMS 4-8-86
+
+SCNSER:	New handling for message types 3 and 4 from the base.
+	TYPCRS=3 used to mean that the base has crashed and we should too.
+	TYPDIE=4 used to mean that the base wants us do crash.
+	TYPRES=3 now means base has crashed, reloaded, and is telling us what
+	version of code it is running.  We should marks all ports as being
+	zapped, and return TYPRAK=4 to the base to acknowlege the reset.
+	When the base gets message type 3, it returns message type 4 which also
+	has the base version number.  The three formerly unused bytes of both
+	messages now have the debug flag, the version number, and the release
+	number of the code.  Note: The above description does not apply to the
+	2020, since it uses message type 3 to determine how many DR11s are
+	connected to the KMC.
+
+COMMON:	Define location BASVER as NSWTBL+5.  It gets BYTE(8)DEBUG,VERSION,RELEAS
+	Add routine CTYDEC to output decimal number on the CTY (for BIGBEN).
+
+CLOCK1:	BIGBEN outputs free disk space on the CTY every 8 hours.  /JMS 4-8-86
+
+/P23
+----
+
+COMMON,CLOCK1,ONCE:	Set GETTAB values so that local time can be used for
+	timestamps on the CTY.  The value TIMZON in CONFxx is used for this.
+	TIMZON=^D<-8> for Pacific Standard Time.  /JMS 4-11-86
+
+UUOCON:	Start work on the DATUUO to return time in UDT format.  /JMS 4-11-86
+
+ONCDSK:	Find the RIB to SAT.SYS by reading the HOM page, instead of using the
+	"constant" LPNSAT.  This bug affected the 2020 since P20.  /JMS 4-11-86
+
+/P24
+----
+
+S	Make INFO and EVENT stopcodes PUSHJ P,NODIE so that these types
+	can be processed differently.
+ERRCON:	For now, NODIE is 2 JFCL's in front of DIE.  /JMS 4-16-86
+
+UUOCON:	Add another bit to the DATUUO for "halfword format", where LH has
+	number of days since 1-Jan-1964 or since 18-Nov-1858 and RH has
+	fraction of a day (increments every 0.3296 seconds).  Documented
+	in (MONDOC)DATUUO.MEM.  /JMS 4-22-86
+
+FILUUO:	PUSH/POP T4 around call to DATCOM in .CHUFD routine.
+CLOCK1:	Change BIGBEN to every 4 hours, UDTFIX uses new DATCOM.
+	Change name of GETUDT to GETULT since it gets user local time.
+COMCON:	Change GETUDT to GETULT.  /JMS 4-22-86
+
+COMMON:	Change location 146 to JRST BOTLOD and replace the HALT in COMMON
+	(when it cannot load BOOTS from disk) to JRST BOTLOD.  /JMS 4-22-86
+
+MONBTS:	Got the new BOTLOD code working on C24.  /JMS 4-22-86
+
+SCNSER:	Define SCNVER=1, SCNREL=0 for message types 3 and 4 to the base.
+	Change %CHRMX to ^D30 for more efficient use of the ORING and to match
+	what the EBUS base uses.  Fix bug at MDRLUP which would hang the 2020
+	when no DR's responded.  Output request for supervisor clock before
+	the message with host and port numbers, so that it can be easily patched
+	to output message type 3 instead.  /JMS 4-23-86
+
+SCNSER:	Change name of terminal characteristic #15 to match TYMNET.  It is a
+	4-bit field, was called "TYP", now is "PD" for "parameter D".
+	Added name "KAT" for #16, which is a 1-bit field for Katakana mode.
+	Added AUXCAL set parameter 102 to set KAT.  The following are defined
+	in TYMNET and need to be added to SCNSER:
+	  TOB = Terminate Output on Break (translate BREAK to char gobbler)
+	  ESC = Echo ESCape at the TYMSAT end
+	  QM  = Q-mode, where "}" and "~" echo at the TYMSAT (TTY NO ALTMODE)
+	  SPA = Space Parity, where the TYMSAT ands off the 8th bit on output
+/JMS 4-24-86
+
+P034/Q
+------
+
+/P25
+----
+
+S:	Add LICQM=1B11 for license to manipulate the XEXEC queue.
+/JMS 4-29-86
+
+CLOCK1,COMMON: Use NULPDL## instead of [IOWD EPLLEN,UPT+UPTPDL].
+
+SCNSER:	Define OPROUT as a coroutine to set COMTOA.  It is called with the
+	number of LDBs to use in T1.  0 = go directly to the CTY using a wait
+	loop, 1 = go to the CTY's LDB only, 2 = go to both CTYLDB and OPRLDB.
+ERRCON:	Use OPROUT instead of DIETYO for outputing stopcode messages.
+CLOCK1:	Change BIGBEN to use OPROUT and LOCTIM, print name of STR (DSKB).
+
+COMCON:	Move PRTDEC (alias RADX10) here from ERRCON, make PRT2 global.
+	Replace INLMES+":" with PRCOL, INLMES+"," with PRCOM, INLMES+" " with
+	PRSPC.  Allow "!" in addition to ";" for comments at command level.
+	Output reminder to set date and time every prompt until it is set.
+/JMS 5-2-86
+
+S,COMMOD: Move definition of SAX0,SAX1 device codes from S to the modules
+	that need them.  The disk definitions in COMMON really need to go
+	in COMMOD.  /JMS 5-2-86
+
+COMMON:	Put IRING/ORING in page 2 onprocessors.  This moves the null job
+	UPT to page 3 on all processors.  Reserve 3 pages for UPT so that the
+	currently running job's context pages can be BLT'ed to absolute pages
+	3,4,5 when taking a dump.  Add IRINGX/ORINGX which get a snapshot of
+	the rings when taking a dump.  The ring pointers (150-167 or 2000-2017)
+	are saved in absolute locations 170-207.  Locations 173 and 177 are
+	modified to point to IRINGX and ORINGX.  This makes it possible for
+	a program such as CRSHID to look at the rings at the instant that
+	the crash occurred.  /JMS 5-2-86
+
+ERRCON,COMMON: If a slow stopcode (HALT,JOB,CPU,DEBUG,DISK) occurs in the
+	middle of a fast stopcode (INFO,EVENT), don't die with recursion in
+	the stopcode handler.  Instead, let the second stopcode go to
+	completion, then abort the first one by reloading the system.
+/JMS 5-2-86
+
+CORE1:	Add STOPCD(.,STOP,PFLJB0,,<Page fault in the null job>) at USRFLT+1
+	(PAGFLU+15), just before stopcode PFLLDC.  This is to detect errors
+	in the pager (hardware problems).  /JMS 5-2-86
+
+PICON:	When nonzero is detected in 30, check the key.  If KEY620=4 then
+	STOPCD(.,STOP,BASE04,,<Base detected bad message from 10>), else
+	STOPCD(.,INFO,BASE,,<Base crashed>).  In the latter case, set the
+	flag BASDWN, continue the system, and attempt to resync with the
+	base when it comes back.
+SCNSER:	Add Carl's code to resync with the base at clock level when the
+	flag BASDWN is nonzero.  /JMS 5-2-86
+
+SCNSER:	Increase the number of characters allowed in the input buffer before
+	waking the job from 72 to 132 (for LA36 terminals).  /JMS 5-2-86
+
+
+UUOCON,SCNSER: Add to function .STTKL=10 of the SETUUO.  The first word now
+	has an optional byte count in LH, job number in RH.  If the LH is
+	zero, then the string is terminated by a null (ASCIZ), if nonzero,
+	then it is the count of characters to output.  If the RH is zero,
+	then output to the CTY.  /JMS 5-2-86
+
+ERRCON,SCNSER: Do not enable channel 1 interrupts during a continuable
+	stopcode.  Instead, CTYTYO updates the key after every character
+	it sends to the CTY during stopcode output.  /JMS 5-2-86
+
+SEGCON:	Do not mess with JOBSA when program is run at CCL entry.
+/JMS 5-2-86
+
+/P26
+----
+
+SETETY:	Changed SETE password.  /JMS 5-7-86
+
+ONCE:	Fix BOOTS command to do a 146 restart and go to BOTLOD.  /JMS 5-12-86
+
+ONCDSK:	Fix BOOTS command in FILES dialog to do a 146 restart.  Output the
+	physical unit name and pack-id on all disks, 4 per line.
+	Copy HOMFEP to UNIFEP.  The Front-End Pointer (FEP) is nonzero only
+	on 2020 disks that have been refreshed by P034/P20 or later.
+	If UNIFEP is zero on a KS disk, then the 8080 boot area is 64
+	pages starting with page 8 (<100,,10> octal).  /JMS 5-13-86
+
+FILUUO:	Fix DSKCHR uuo to return accurate data on the KS.  If UNIFEP is
+	nonzero, then it points to the 8080 area and BOOTS is in pages
+	3,4 & 5 like the KI, KL, F3.  A zero in UNIFEP implies that the 8080
+	area is in the old postion, <100,,10>.  /JMS 5-13-86
+
+FILUUO:	Change the DSKCHR uuo match routine from TOPS-10 philosophy to TYMCOM-X
+	philosophy.  That is, physical and logical names are 5 characters long.
+	(Such as DSKB1, DSKB17, BPA2, BPA12.)  Therefore, when looking for
+	DSKB1, do not accept DSKB10 as a match.  /JMS 5-16-86
+
+UUOCON:	Added more documentation at INSSIM describing what instructions need
+	to be simulated on a KI and F3.  Replaced CAIN skip chain with a
+	dispatch table.  Simulate ADJSP on the KI.  /JMS 5-16-86
+
+PICON:	Moved routine to update the KEY into SCNSER, call via JSP T1,UPDKEY.
+	When nonzero is detected in 30, JSP T1,CHKBAS in SCNSER to check if
+	this is a base initiated crash.  Eliminated call to CH2RMT since
+	we do not support RMTSER.  /JMS 5-16-86
+
+COMMON:	Add global variables KEYTIM, IRPTIM, ORPTIM.  Removed CH2RMT.
+	Documented and updated FETTBL - table of feature-test settings.
+	/JMS 5-16-86
+
+SCNSER:	Add timers KEYTIM, IRPTIM, ORPTIM.  They are all incremented every
+	clock tick when SCNSER runs, and are reset when the key is updated,
+	when a message is seen in the IRING, and when a message is put in
+	the ORING, respectively.  If the neither the key nor the input ring
+	has been updated in the last 3 minutes, output EVENT(NOBASE).  When
+	the base comes back and sends us a type 3 or type 4 message, then
+	output EVENT(BASEOK) and print the version number of the base code.
+
+	Routine UPDKEY added to update the key and check its previous value.
+	Routine CHKBAS added to check if the nonzero value in 30 matches
+	the base's ring pointers.  If so, check the key and output either
+	STOPCD (.,STOP,BASE04,PRTCRS,<Bad message type from host>) or
+	STOPCD (.+1,INFO,BASE,PRTCRS,<BASE has crashed - bad KEY620>).
+
+	Note that if the base tells us it is crashing, we will output an
+	INFO stopcode on the CTY, detach all ports, and patiently wait for
+	the base to be reloaded.  When it does, we output the EVENT stopcode
+	BASEOK and continue operation.  /JMS 5-16-86
+
+/P27
+----
+
+CTYSIM:	CONSOLE mode was broken.  Fix to not STOPCD when message type 3 or
+	message type 4 is seen in the ORING.  /JMS 5-22-86
+
+SCNSER:	Make sure the initial messages in the ORING are in KMC format on the
+	2020.  Garbled message caused CTYSIM to die in CONSOLE mode.
+/JMS 5-22-86
+
+COMCON:	Don't die with UIL crash from "TALK JOB 0 THIS IS A TEST".
+/JMS 5-30-86
+
+SCNSER:	Change timeout for NOBASE message to 90 seconds of inactivity, do not
+	timeout in CONSOLE mode.  Output BASEOK message on the F3 when resync
+	is done.  In the SETUUO function to talk to a job, if job 0 is requested
+	use subroutine OPROUT to go to both OPR and CTY.  (OPROUT will output a
+	CRLF if the CTY is not already at the left margin.  /JMS 5-30-86
+
+COMCON:	Add TYMVAL command to run (SYS)TYMVAL.  ("TYM" is still a valid
+	abbreviation to go to TYMEX mode.)  Fix bug in TYMEX prompt introduced
+	in P25.  Output prompt if ^T (USESTA) typed in command mode.
+	Output bell in TALK message.  Modify VERSION command to use one of two
+	formats depending on the contents of user location 137.  If bits 3-11
+	are all zero, use TYMSHARE format of "LH.RH".  If bits 3-11 nonzero,
+	output in DEC format.  /JMS 5-30-86
+
+ONCE,COMMON,UUOCON,PICON,SCNSER: Purge all references to RMTSER.
+/JMS 6-1-86
+
+COMMON:	Add JBTFNT (frame interrupt assignments).  This table is set up like
+	JBTINT and has JBYLCF (logout in child frame), JBYECF (exit in child
+	frame), JBYSIP (software interrupt from parent), JBYSIC (s.i. from
+	child), JBYSIS (s.i. from sibling), and JBYSIA (s.i. from any).
+PICON,CLOCK1: Clear JBTFNT whenever JBTINT is cleared.
+UUOCON: Add FINASS[CALLI -151] to set frame assignments in JBTFNT.
+ERRCON:	Check JBYECF before checking JBYEXC when telling parent about exit
+	in child frame.  JBYEXC is in the parent's table, and gives an
+	interrupt on a single channel when any child exits.  JBYECF, on the
+	other hand, is stored in the child's table.  This allows the parent
+	to assign a different interrupt channel for each child.
+FRMSER:	Start work on FINASS and FRMOP function .FOCSI=44.  /JMS 6-1-86
+
+/P28
+----
+
+FRMSER:	Added table CNTFRM which is AOSed once for each FRMOP executed to
+	allow us to keep track of FRMOPs by function.  /CARL 6-4-86
+
+
+FRMSER:	Complete work on Exit in Child Frame and Logout in Child Frame.
+/JMS 6-5-86
+
+CLOCK1:	Move the instructions that turn off JNA from CLOCK1 to FRMSER.
+	KSTOP now calls FRMDSN (Frame De-assign) to do this.  /JMS 6-5-86
+
+/P29
+----
+
+SCNSER:	For TTYBMT and TTYBPN stopcodes, output IRPPDP, ORPPDP, IRING(IRPPDP),
+	ORP620, IRP620, SAV30, and KEY620.  This will make it easier to tell if
+	the Bad Message Type or Bad Port Number STOPCD resulted from the base
+	zeroing IRP620 and ORP620 unexpectedly.  /JMS 6-12-86
+
+ERRCON:	Output contents of KEY620 always when nonzero in 30, even if it looks
+	like the base was not the cause of nonzero in 30.  /JMS 6-12-86
+
+
+COMMON:	Correct off-by-one BLT when saving copy of IRING and ORING.
+/JMS 6-16-86
+
+FRMSER:	Finish adding FRMCSI - Cause Software Interrupt.  /JMS 6-16-86
+
+CLOCK1:	Output both J and JOB on PAGZER stopcodes (UPT is zero).
+/JMS 6-16-86
+
+COMMON:	Moved ECF and LCF out of JBTFNT into a new table JBTPNT.
+PICON,ERRCON,FRMSER: Use JBTPNT for Lost Child Frame and Exit in Child Frame.
+CLOCK1:	Do not clear JBTPNT in CLRJBT, since that word applies to the parent.
+/JMS 6-17-86
+
+COMCON:	Output program name before version number.  /JMS 6-17-86
+
+/P30
+----
+
+S,ERRCON:	Add stopcode type PATCH.  It will output a message like:
+	%% PATCH stopcode FOOBAR at 25-Jun-86 17:11
+/JMS 6-25-86
+
+BPXKON:	Rename 3650 device driver to CPXKON, restore old BPXKON from (OSP).
+RMXKON,APXKON:	Add FTDPAG feature test, nonzero if FILIO requests pages.
+COMMON,FILIO:	Add FTDPAG feature test so KI/KL can run with old BPXKON
+	if FTDPAG=0 and with the new CPXKON(3650) if FTDPAG=-1.  /JMS 6-25-86
+
+SCNSER:	Remove check for bad port numbers on message type 3 and 4, since
+	John Kopf's new code returns flag bit 200 when we come up.
+	Remove stopcode TTYBZP - don't demand port 0 for supervisor clock.
+/JMS 6-26-86
+
+ONCDSK:	Use symbol UNIONC instead of UNIPAG to get the result of the capacity
+	tests (unit off-line, unit write-protected, etc).  /JMS 6-26-86
+
+ERRCON:	Add label DIEDDT at a JFCL that is executed when a serious stopcode
+	occurs (not for INFO, EVENT, or PATCH stopcodes).
+DDT:	Change 1 Control-B to use DIEDDT instead of DIE+3 as breakpoint.
+COMMON:	CRSDEV and CRSMAP have self modifying code.  Never attempt to execute
+	them twice.  If we get a STOPCD while trying to set DSKCLN type in
+	the home blocks, then "HALT BOTLOD".  The operator can CONTINUE the
+	CPU to try to get BOOTS.  /JMS 6-27-86
+
+COMMON:	Fix 146 restart to load BOOTS on F3 and KS.  /JMS 6-28-86
+
+/P30
+----
+
+IOCSS:	Possible explanation for SIMUUF and KILUP2 errors:
+	The RESET uuo calls IOKILL which calls IOALL which calls RELEA5.
+	At RELEA5 + a few, there was a "JRST .+3" which has been changed to
+	"JRST RELE5A".  The bug affected programs that used SIMIO on channels
+	above 17, but only when they had certain job numbers.
+***	This is patch #11 for the P monitor, in RESET.PAT  /JMS 7-1-86
+
+S and others: Changed all references from BLKSPP to P2BLSH (to convert pages to
+	blocks).  Added B2PLSH, P2WLSH (pages to words), W2PLSH, B2WLSH (blocks
+	to words), W2BLSH.  This replaces BLKLSH, -BLKLSH, PAGLSH, -PAGLSH.
+	/JMS 7-1-86
+
+SCNSER:	Clear LDBOUT when sending a ZAP to TYMNET.  Otherwise a left-over
+	character gobbler may get released while an aux circuit is partially
+	built (which will cause ISIS to crash the base with KEY=354).
+***	This is patch #12 for the P monitor, in ZAPGOB.PAT  /JMS 7-2-86
+
+SCNSER:	Call COMGMS when date/time received from the supervisor, even if we
+	already have a valid date/time (the SUP is more accurate than the
+	KL's interval timer).  This means that the date/time will be reset
+	once a day (when the new SUP takes over).  /JMS 7-3-86
+
+UUOCON:	Add routine COMGMS to set GMT time and cause an EVENT stopcode
+	whenever the date/time is changed by more than 10 seconds.
+	The old date/time and the new date/time get printed on the CTY and on
+	the OPR terminal if any.  /JMS 7-3-86
+
+
+/P31
+----
+
+IOCSS:	On RESET, release all devices regardless of JOBHCU.  /JMS 7-9-86
+
+UUOCON:	Add suggestion from WRS to adjust the time of day gradually when
+	supervisor clock message is received (or when OPR does SET TIME).
+	Event stopcode TIMEOK is output when new time is requested, save
+	the first valid date time in SYSUDT in UDT format.  /JMS 7-10-86
+
+CLOCK1:	Adjust TIME when DTMADJ is nonzero (clock runs at double speed or
+	half speed until it is correct).  When DTMADJ becomes zero, output
+	"Date/time is now dd-Mmm-yyyy hh:mm:ss" using OPRDTM.
+	Moved <PUSHJ P,MINUTE> to tail end of once-a-second code (it was at
+	the beginning).  Do the same for HOUR and DAY.  Call UDTFIX every
+	second to make sure LOCSEC,LOCMIN,LOCHOR,LOCDAY,LOCMON,LOCYER are
+	all correct with respect to adjusted TIME.  /JMS 7-10-86
+
+SCNSER:	Move the PUSHJ P,HNGALL to SCNSEC (it was in CLOCK1 once-a-second).
+COMMON:	Moved KSSEC here from CLOCK1.  Don't give BOOTS "/D<CR><CR>" on a
+	146 restart.  /JMS 7-10-86
+
+COMCON:	Add MOVE, DUPLIC, and ZAP to commands which run programs from SYS:.
+	Add routine OPRDTM to output date/time on OPR and CTY.  /JMS 7-10-86
+
+ONCE:	Force OPR to CHANGE SYSTEM if SYSNUM is zero (such as "KL00-P034/P32".
+	Initialize QQYTTY to 1/2 second (was 1/10 second).  /JMS 7-14-86
+
+SCHED1:	Incorporate Bill Soley's SCHED1.PAT into the source code.
+	Put jobs that come out of I/O wait into PQ2 instead of PQ1.
+	Initially put jobs that are up to 32 K into PQ1 instead of PQ3.
+	Change PQ2 <-> PQ3 transition from 1 second to 1/2 second.
+	Give interactive jobs a longer quantum (QQYTTY in ONCE).  /JMS 7-14-86
+
+COMMON:	When the KL does RDERA and read SBUS diags, use three different sets
+	of locations.  One for parity error, one for stopcodes (including INFO)
+	and one just before loading BOOTS.  /JMS 7-14-86
+
+PICON:	Decode the error bits from <CONI APR,SAVAPR> at APRFAT.  /JMS 7-15-86
+
+COMMON:	Define SYSUDT to be in the nonswapping table, item 5.  It gets set to
+	the universal date/time of when the system came up.  Its value is
+	minus one if the date/time has not been set yet.  /JMS 7-15-86
+
+ONCDSK:	Don't ask OPR if DSKCLN mode is null, use FAST.  /JMS 7-16-86
+
+CTYSIM:	Output ORING and IRING pointers on CTYBMT stopcode.  Jump to CTYBRK
+	when ^Z B while in CONSOLE mode, or ^Z alone on CTY in NETWORK mode.
+SCNSER:	Call CTYINP (new routine in CTYSIM) to check for input from CTY.
+DDT:	Change MAKBUF 1 so 1^B uses CTYBRK correctly.  /JMS 7-16-86
+
+CPXKON:	Remove one case where SA-10 was told to go before command list was set
+	up properly.  Added labels CPXBP1 and CPXBP2 for EDDT.  /JMS 7-16-86
+
+CLOCK1:	Don't do once-a-minute code every 30 seconds when advancing the clock.
+	Make sure that HNGTIM decremented every 60 ticks (+/-1), and HNGMIN
+	is decremented every 60 seconds (+/-1).  The once-an-hour code is
+	called every time LOCMIN is zero, which is not 60 minutes apart when
+	the clock is being adjusted.  /JMS 7-17-86
+
+ONCDSK:	Use label instead of <JRST .+4>.  /JMS 7-17-86
+
+/P32
+----
+
+IOCSS:	Put in a counter to not loop forever when chasing down the DDB chain.
+	Stopcode DDBCNE(DDB Chain has No End).  C33 has a crash where the TTY
+	DDBs loop back, causing COMCON to loop at clock level trying to locate
+	SYS.  /JMS 7-17-86
+
+SCNSER:	When updating the key during channel 1, check how long it's been since
+	SCNTIC ran at channel 7.  If more than 1 minute, crash with KAF
+	stopcode (Keep Alive Failure).  /JMS 7-17-86
+
+COMMON:	Avoid using literals (XCTBU) at CRASHZ when saving PREVAC.  /JMS 7-17-86
+
+SCNSER:	When TTYKDB kills a TTY DDB by removing it from the active DDB chain,
+	save the current, forward, and back pointers of the current, next, and
+	previous DDBs.  After the DDB has been killed, check if the DDB chain
+	is still intact, die with DDBCNE if not.  /JMS 7-22-86
+
+IOCSS:	Give "?Address check for device ..." if the three-word buffer header
+	is in JOBDAT or the ACs.  Using the ACs is a no-no, since interrupt
+	service routines (such as LPTSER) would update the wrong AC block
+	if the Monitor was executing a UUO for the user when the interrupt
+	occurred.  /JMS 7-22-86
+
+CLOCK1:	Leave tracks for CRSHID by putting PC back in CH7.  Output CONFIG name
+	instead of "BIGBEN at".  /JMS 7-23-86
+
+/P33
+----
+
+SCNSER:	Replace both POPJs at RCVNSP with AOJA P4,SCNIN1 so we won't hang
+	when a new supervisor takes over (KI/KL only bug introduced after
+	/P19).  Save the date/time of the takeover in SUPTIM.  /JMS 8-4-86
+
+COMMON:	Add variable SUPTIM.  Add routine ODEBUG to set DEBUGF.
+/JMS 8-4-86
+
+ONCE:	Add DEBUG command, which calls ODEBUG to set debugging flags.
+/JMS 8-4-86
+
+ONCDSK:	Allow the size of CRASH.SAV to be 8192+1 pages.  The extra page
+	is for whenever we rename CRASH.SAV to be CRASH.EXE.  /JMS 8-4-86
+
+COMMON:	INFO stopcodes never worked on KI.  Because IG.LLH was defined as
+	"(1B0)" instead of "1B0", the routine to save all AC sets turned off
+	paging.  This caused UIL when P pointed to a per process page.  Put
+	in ",," where necessary, until S.MAC is revised.  /JMS 8-7-86
+
+/P34
+----
+
+CLOCK1:	Use SKIPN instead of SKIPE when calculating null time.  (The original
+	instruction was JUMPN J,.+2 before I changed it.  /JMS 8-11-86
+
+COMMON:	Improper use of EXECAC macro at CPUSTS caused KL to get NXM
+	during STOPCD processing (it did not fail on the KS due to sheer
+	luck).  Replaced the macro with an explicit WRUBR.  /JMS 8-14-86
+
+SETETY:	Rewrote so that SETE passwords and licenses can be specified in
+	the config files.  In particular, CONFTW.MAC has the password
+	hash for slot 0 in TRW's monitor.  /JMS 8-15-86
+
+ERRCON:	Record CPU status block for all but EVENT/INFO/PATCH stopcodes.
+	/JMS 8-19-86
+
+/P35
+----
+
+SCNSER:	For Japanese customers, make "TTY TYPE 1" do "SET TTY D 15" for MAGNUM
+	and "SET TTY KATAKANA" for the TYMSAT.  Make "TTY TYPE VT100" same as
+	"SET TTY CLASS VT100".  /JMS 9-8-86
+
+CPXKON:	Fix bug where read error on first block of a page would cause PGEZER.
+FILIO:	Fixed one place where P4 had pages when expecting blocks (read error).
+	Change names of stopcodes from PGExxx to SWPxxx (swap in/out errors).
+	Output disk unit and page number when SWPZER occurs (alias PGEZER).
+	/JMS 9-8-86
+
+CPXKON,BPXKON,APXKON,RMXKON,COMMOD,FILIO: Go back to FTDPAG=0 to allow for
+	block-by-block recovery of bad spots on disks formatted in blocks.
+	/JMS 9-8-86
+
+
+COMCON:	Add DISABLE command to save frame license then turn off license.
+	Add ENABLE to set frame license back to what it was at the time
+	of the DISABLE.  Like TOPS-10, these commands do not allow for
+	enabling or disabling specific licenses (yet).  /JMS 9-8-86
+
+/P36
+----
+
+SWAMP:	Fix typo that caused the system to crash horribly when a bad SAT was
+	detected.  Output more info in STOPCD(BADSAT).  /JMS 9-16-86
+
+SCNSER:	Call LOGLDB whenever command port is given to a job using RETACH uuo.
+FRMSER:	Add CF.PLI=1B15 to CREFRM to run LOGINN in child frame and have it
+	prompt "please log in", to get username and password.  Add routine
+	LOGLDB to copy UPTLOG to LDBLOG if LDBLOG is zero.  /JMS 9-16-86
+
+/P37
+----
+
+COMMON:	Fix bug in CRASHX when AC block was getting changed.  Moved the
+	primitive disk read/write routines out of COMMON and into MONBTS.
+MONBTS:	Defined routine NEWMON to reload monitor.  /JMS 9-30-86
+
+UUOCON:	SHUT the system and ding the CTY's bell whenever the date/time is
+	adjusted by more than 60 minutes.  /JMS 9-30-86
+
+ERRCON:	Output more info from the MAP instruction on an IME.  Create PRTSYS as
+	a seperate routine to output the configuration info.  /JMS 9-30-86
+
+ONCE:	Use PRTSYS to output config info when the monitor is reloaded.
+	Complain if the APR serial number does not match what is in config.
+	Increase CTY width from 72 to 80 columns.  /JMS 9-30-86
+
+CLOCK1:	Amplify comments near CLKINT.  Calculate day of week for OPRDTM.
+	Slight change in how SECOND calls MINUTE.  /JMS 9-30-86
+
+/P38
+----
+ 0@

@@ -1,0 +1,1457 @@
+TITLE UUOTYM
+subttl	UUOTYM
+
+
+OPDEF	INIT	[41B8]	;Open a Channel
+OPDEF	AUXCAL	[42B8]	;perform port i/o functions
+    .AXI8C== 0    ;input char [wait/bka/img]
+    .AXI8S== 1    ;input char [skip/bka/img]
+    .AXI8B== 2    ;input char [wait/img]
+    .AXO8==  3    ;output char [IMG]
+    .AXO8I== 4    ;output char [IMG/IMM]
+    .AXPTR== 5    ;output string [PTR]
+    .AXCBI== 6    ;clear input buffer
+    .AXCBO== 7    ;clear output buffer
+    .AXSIC== 10   ;skip if char
+    .AXLDE== 11   ;leave deferred echo mode
+    .AXSYB== 12   ;send yellow ball
+    .AXS8B== 13   ;set image break char
+    .AXCRD== 14   ;r/s compute-CR-delay bit
+    .AXIBR== 15   ;r/s input baud rate
+    .AXOBR== 16   ;r/s output baud rate
+    .AXEP==  17   ;r/s even-parity bit
+    .AXHD==  20   ;r/s half-duplex bit
+    .AXPA==  21   ;r/s parameter A
+    .AXPB==  22   ;r/s parameter B
+    .AXPC==  23   ;r/s parameter C
+    .AXHNX== 24   ;r/s host-no-XON bit
+    .AXNTE== 25   ;r/s no HT/VT/FF bit
+    .AXTBK== 26   ;r/s tabs-as-breaks bit
+    .AXWID== 27   ;r/s line width
+    .AXFC1== 30   ;r/s filler class 1
+    .AXFC2== 31   ;r/s filler class 2
+    .AXSFS== 32   ;set port file status bits (obsolescent)
+    .AXSI==  33   ;simulate input
+    .AXEBM== 34   ;enter block i/o mode
+    .AXIBW== 35   ;input block and wait
+    .AXIBS== 36   ;input block and skip
+    .AXOB==  37   ;block output
+    .AXTBI== 40   ;terminate block input
+    .AXTBO== 41   ;terminate block output
+    .AXLBM== 42   ;leave block i/o mode
+    .AXSLV== 43   ;slave command port
+    .AXICW== 44   ;input char [wait/bka]
+    .AXICS== 45   ;input char [skip/bka]
+    .AXIWL== 46   ;input char [wait]
+    .AXISL== 47   ;input char [skip]
+    .AXSIL== 50   ;skip if break char
+    .AXOCI== 51   ;output char [IMM]
+    .AXOST== 52   ;output string [STR]
+    .AXRMX== 53   ;r/s remote-XON bit
+    .AXRBS== 54   ;r/s remote-BS-echo bit
+    .AXRVX== 55   ;r/s reverse-XON bit
+    .AXTYP== 56   ;r/s terminal type
+    .AXBS==  57   ;r/s BS-for-char-delete bit
+    .AXHNG== 60   ;send hangup
+    .AXPSM== 61   ;read port-status msg
+    .AXERA== 62   ;r/s Erase-for-char-delete bit
+    .AXEDE== 63   ;r/s force deferred-echo bit
+    .AXCFS== 64   ;change port file status bits
+    .AXLCO== 65   ;r/s Lower-case-output bit
+    .AXBBP== 66   ;r/s backspace break/punctuation bit
+    .AXOPC== 67   ;output string [PTR+count]
+    .AXSOB== 70   ;send orange ball
+OPDEF	CHANIO	[43B8]	;do channel i/o functions
+    .CHREL== 0    ;release device
+    .CHCLS== 1    ;close a file
+    .CHOPT== 2    ;output from channel
+    .CHIPT== 3    ;input from channel
+    .CHLK==  4    ;select file for input
+    .CHENT== 5    ;select file for output
+    .CHUSI== 6    ;set file pointer by block
+    .CHUSO== 7    ;set file position by block
+    .CHUGF== 10   ;read disk file position
+    .CHREN== 11   ;rename or delete a file
+    .CHMTA== 12   ;perform magtape functions
+    .CHOPN== 13   ;Open a Channel
+    .CHIN==  14   ;input from channel
+    .CHOUT== 15   ;output from channel
+    .CHSS==  16   ;set file status bits
+    .CHGS==  17   ;read file status bits
+    .CHSZ==  20   ;skip if file status bits clear
+    .CHSO==  21   ;skip if file status bits set
+    .CHIBF== 22   ;create input buffer ring
+    .CHOBF== 23   ;create output buffer ring
+    .CHSK==  24   ;seek to current page
+    .CHWT==  25   ;wait until device inactive
+    .CHMBF== 26   ;move buffers
+    .CHFSI== 27   ;set file pointer by block
+    .CHFSO== 30   ;set file position by block
+    .CHPSI== 31   ;set file pointer by page
+    .CHPSO== 32   ;set file position by page
+    .CHUFD== 33   ;read UFD
+    .CHMGN== 34   ;manipulate update-interlock bit
+    .CHMFP== 35   ;map file pages
+    .CHDFP== 36   ;delete file page
+    .CHXFP== 37   ;exchange file pages
+    .CHCFP== 40   ;create file page
+    .CHMEN== 41   ;select file for multi-update output
+    .CHVRB== 42   ;validate RIB
+    .CHSMP== 43   ;super-map file pages
+    .CHFFI== 44   ;Find First Interesting Page
+    .CHFTR== 45   ;Truncate File
+OPDEF	FRMOP	[44B8]	;Frame Operation
+    .FOJMP== 0    ;gate jump to frame
+    .FOCFM== 1    ;create frame
+    .FORVA== 2    ;read frame virtual address
+    .FOWVA== 3    ;write frame virtual address
+    .FOSAA== 4    ;start frame at absolute address
+    .FOHLT== 5    ;halt frame
+    .FORPC== 6    ;Read Frame PC
+    .FOREP== 7    ;VREPLC to/from another frame
+    .FOVRM== 10   ;VREMOV in another frame
+    .FOVCL== 11   ;VCLEAR in another frame
+    .FOCFH== 12   ;Create Handle
+    .FODFH== 13   ;Destroy Handle
+    .FOCLR== 14   ;Clear a Frame
+    .FORSI== 15   ;Read Standard Access Rights Info
+    .FORAR== 16   ;Read Handle Access Rights
+    .FORER== 17   ;Read Handle Effective Rights
+    .FOSMF== 20   ;Set Max Frame Rights
+    .FOCHR== 21   ;Change Handle Rights
+    .FOSVA== 22   ;start frame at vector address
+    .FOHST== 23   ;Read Halt Status Block
+    .FOGFT== 24   ;Graft Frame Subtree
+    .FOCON== 25   ;continue frame
+    .FOGIN== 26   ;Gate-jump Initialization
+    .FOVCH== 27   ;Validate Child Rights
+    .FOCAR== 30   ;Read Child Access Rights
+    .FOCER== 31   ;Read Child Effective Rights
+    .FOGET== 32   ;Setup frame core image from file
+    .FORUN== 33   ;RUN program in frame
+    .FOSAV== 34   ;SAVE frame core image on file
+    .FOSSA== 35   ;SAVE frame core image on SHR file
+OPDEF	SETSTV	[47B8 0,-137]	;set start vector address
+OPDEF	VPEEK	[47B8 0,-136]	;Virtual/Physical PEEK
+OPDEF	RETACH	[47B8 0,-135]	;move port from frame to frame
+OPDEF	EVICT	[47B8 0,-134]	;Cause Notice to Quit Interrupt
+OPDEF	PGRSTS	[47B8 0,-133]	;read/clear REFBIT fault info
+OPDEF	PGISTS	[47B8 0,-132]	;read/clear ill mem ref fault info
+OPDEF	SETABK	[47B8 0,-131]	;Set/Clear Address Break
+OPDEF	LOGOFF	[47B8 0,-130]	;Run Alternate Logout Program
+OPDEF	SETALP	[47B8 0,-127]	;Set Alternate Logout Program
+OPDEF	SETOTF	[47B8 0,-126]	;set other-frame FD
+OPDEF	CONT	[47B8 0,-125]	;Put port in user level
+OPDEF	PUTROY	[47B8 0,-124]	;Put Royalty Record in Stream
+OPDEF	BLTPAG	[47B8 0,-123]	;change data in page uninterruptibly
+OPDEF	PIDSET	[47B8 0,-122]	;Manipulate Process' PID
+
+OPDEF	BITPOK	[47B8 0,-120]	;read/modify/write in monitor memory
+OPDEF	RDHIST	[47B8 0,-117]	;(not available)
+OPDEF	SNOOP	[47B8 0,-116]	;(not available)
+OPDEF	POLPRT	[47B8 0,-115]	;Poll Ports for Events
+OPDEF	CLBADD	[47B8 0,-114]	;Join Club
+OPDEF	CLBLEV	[47B8 0,-113]	;Leave a Club
+OPDEF	CLBINW	[47B8 0,-112]	;Get Interlock,wait
+OPDEF	CLBINI	[47B8 0,-111]	;Get Interlock,No Wait
+OPDEF	CLBRLI	[47B8 0,-110]	;Release Club Interlock
+OPDEF	CLBMEM	[47B8 0,-107]	;Read Club Member List
+OPDEF	CLBSTS	[47B8 0,-106]	;Read Status of Club Member
+OPDEF	CLBWAK	[47B8 0,-105]	;Wake Up Club Member
+OPDEF	CLBHNG	[47B8 0,-104]	;Hang Club Member
+OPDEF	VPGFIL	[47B8 0,-103]	;get mapped-file name for page
+OPDEF	VDSKPT	[47B8 0,-102]	;read disk pointer
+OPDEF	PGFSTS	[47B8 0,-101]	;read and clear page fault words
+OPDEF	PGESTS	[47B8 0,-100]	;read/clear page-error status words
+OPDEF	VFSTAT	[47B8 0,-77]	;check private/file page
+OPDEF	VALPAG	[47B8 0,-76]	;validate pages
+OPDEF	PREREF	[47B8 0,-75]	;prereference a page
+OPDEF	WSCTL	[47B8 0,-74]	;do working set functions
+    .WSRBM== 0    ;read working set bits
+    .WSRNG== 1    ;add/remove pages from working set
+    .WSSTL== 2    ;set WSLIM
+    .WSRSZ== 3    ;read WSSIZ
+    .WSRLM== 4    ;read WSLIM
+    .WSRMX== 5    ;read WSMAX
+OPDEF	REFBIT	[47B8 0,-73]	;manipulate reference bits
+    .RFRBM== 0    ;Read refbits
+    .RFSBM== 1    ;Set refbits from bitmap
+    .RFRNG== 2    ;set refbits by range
+OPDEF	PERSET	[47B8 0,-72]	;set/clear error bit
+OPDEF	PAGSTS	[47B8 0,-71]	;read page status word
+OPDEF	VPROT	[47B8 0,-70]	;set current protection for pages
+OPDEF	VCREAT	[47B8 0,-67]	;create private pages
+OPDEF	VCLEAR	[47B8 0,-66]	;unmap pages
+OPDEF	VREMOV	[47B8 0,-65]	;unmap pages
+OPDEF	VREPLC	[47B8 0,-64]	;replicate virtual pages
+OPDEF	PUTLSA	[47B8 0,-63]	;write local stream acctg record
+OPDEF	PUTSAR	[47B8 0,-62]	;write stream acctg record
+OPDEF	CHPRJ	[47B8 0,-61]	;change project code
+OPDEF	XCHARG	[47B8 0,-60]	;modify charges
+    .XCSAV== 0    ;save charging data
+    .XCRSC== 1    ;read saved charges
+    .XCRCC== 2    ;read current charges
+    .XCSET== 4    ;set charges
+    .XCTRN== 5    ;write transaction charges
+    .XCTCC== 6    ;Write TRU Component Checkpoint
+OPDEF	SETRCF	[47B8 0,-57]	;set restricted cmnd file
+OPDEF	TYMCHG	[47B8 0,-56]	;add TRU charges
+OPDEF	DATUUO	[47B8 0,-55]	;do time zone conversions
+
+
+
+
+
+
+OPDEF	AUXRED	[47B8 0,-46]	;read aux circuit port numbers
+OPDEF	ZAPCIR	[47B8 0,-45]	;zap an aux circuit
+OPDEF	CREAUX	[47B8 0,-44]	;create an aux circuit
+OPDEF	REDPIP	[47B8 0,-43]	;read in-progress bits
+OPDEF	TINASS	[47B8 0,-42]	;assign port interrupt causes
+OPDEF	SETTR2	[47B8 0,-41]	;set stack over/underflow instruction
+OPDEF	SETTR1	[47B8 0,-40]	;set arithmetic overflow instruction
+OPDEF	SETTIM	[47B8 0,-37]	;set timer interrupt
+OPDEF	INTASS	[47B8 0,-36]	;assign general interrupt causes
+OPDEF	INTACT	[47B8 0,-35]	;cause and uncause interrupts
+OPDEF	INTENB	[47B8 0,-34]	;enable and disable INTADR channels
+OPDEF	INTADR	[47B8 0,-33]	;initialize INTADR system
+OPDEF	HANG	[47B8 0,-32]	;hang a port or frame or frames
+OPDEF	CHKLIC	[47B8 0,-31]	;check settable license
+OPDEF	LEVDEF	[47B8 0,-30]	;leave deferred echo mode
+OPDEF	MOVBUF	[47B8 0,-27]	;move buffers
+OPDEF	SETMOD	[47B8 0,-26]	;set cmnd port file status
+OPDEF	RUNSEG	[47B8 0,-25]	;load and run a high segment
+OPDEF	SYSDVF	[47B8 0,-24]	;read system device data
+OPDEF	DISMIS	[47B8 0,-23]	;dismiss INTADR interrupts
+OPDEF	DSKCLR	[47B8 0,-22]	;initialize in-core file system data
+OPDEF	SETJAL	[47B8 0,-21]	;set frame status bits
+OPDEF	ONEJOB	[47B8 0,-20]	;skip if only frame and super-shut
+OPDEF	SETMAL	[47B8 0,-17]	;set mail-waiting bit
+OPDEF	GETTMC	[47B8 0,-16]	;(obs.) get terminal characteristics
+
+OPDEF	REDNXT	[47B8 0,-14]	;peek at input
+OPDEF	WAITCH	[47B8 0,-13]	;wait for input char
+OPDEF	POKE	[47B8 0,-12]	;write in monitor core
+OPDEF	SETPRV	[47B8 0,-11]	;set frame privilege word
+OPDEF	SETLIC	[47B8 0,-10]	;set process license
+OPDEF	SETE	[47B8 0,-7]	;set frame license
+OPDEF	ATTACH	[47B8 0,-6]	;attach command port to frame
+
+
+
+
+OPDEF	LIGHTS	[47B8 0,-1]	;display word in console lights
+OPDEF	RESET	[47B8 0,0]	;initialize frame state
+OPDEF	DDTIN	[47B8 0,1]	;DDT-mode input
+OPDEF	SETDDT	[47B8 0,2]	;set DDT start address
+OPDEF	DDTOUT	[47B8 0,3]	;DDT-mode output
+OPDEF	DEVCHR	[47B8 0,4]	;read device characteristics word
+
+OPDEF	GETCHR	[47B8 0,6]	;read device characteristics word
+
+OPDEF	WAIT	[47B8 0,10]	;wait until device inactive
+OPDEF	CORE	[47B8 0,11]	;allocate or free core
+OPDEF	EXIT	[47B8 0,12]	;stop frame execution
+
+OPDEF	DATE	[47B8 0,14]	;read date
+OPDEF	LOGIN	[47B8 0,15]	;log a frame in
+OPDEF	APRENB	[47B8 0,16]	;enable APRENB trapping
+OPDEF	LOGOUT	[47B8 0,17]	;log a frame out
+OPDEF	SWITCH	[47B8 0,20]	;read console switches
+OPDEF	REASSI	[47B8 0,21]	;reassign i/o device
+OPDEF	TIMER	[47B8 0,22]	;read time in jiffies
+OPDEF	MSTIME	[47B8 0,23]	;read time in ms
+OPDEF	GETPPN	[47B8 0,24]	;get frame PPN
+OPDEF	TRPSET	[47B8 0,25]	;Set/Clear User-IOT
+
+OPDEF	RUNTIM	[47B8 0,27]	;get TRUs
+OPDEF	PJOB	[47B8 0,30]	;get frame number
+OPDEF	SLEEP	[47B8 0,31]	;wait for N seconds
+
+
+OPDEF	GETLIN	[47B8 0,34]	;get command port name
+OPDEF	RUN	[47B8 0,35]	;load and run a program
+OPDEF	SETUWP	[47B8 0,36]	;set highseg write protection
+OPDEF	REMAP	[47B8 0,37]	;move top of lowseg to highseg
+OPDEF	GETSEG	[47B8 0,40]	;load a high segment
+OPDEF	GETTAB	[47B8 0,41]	;read monitor tables
+
+OPDEF	SETNAM	[47B8 0,43]	;set frame name
+OPDEF	TMPCOR	[47B8 0,44]	;do TMPCOR file i/o
+    .TCRFS== 0    ;get free space count
+    .TCRRF== 1    ;read TMPCOR file
+    .TCRDF== 2    ;delete TMPCOR file
+    .TCRWF== 3    ;write TMPCOR file
+    .TCRRD== 4    ;read TMPCOR directory
+    .TCRDD== 5    ;clear TMPCOR directory
+OPDEF	DSKCHR	[47B8 0,45]	;read disk characteristics
+OPDEF	SYSSTR	[47B8 0,46]	;read disk structure names
+OPDEF	JOBSTR	[47B8 0,47]	;Return frames next file structure
+OPDEF	STRUUO	[47B8 0,50]	;Manipulate file structures
+OPDEF	SYSPHY	[47B8 0,51]	;read physical unit names
+OPDEF	DEVSTS	[47B8 0,54]	;read device hardware status
+OPDEF	DEVPPN	[47B8 0,55]	;read PPN
+OPDEF	SEEK	[47B8 0,56]	;seek to current page
+OPDEF	DEVNAM	[47B8 0,64]	;read device physical name
+OPDEF	GOBSTR	[47B8 0,66]	;Get system search list
+OPDEF	HIBER	[47B8 0,72]	;wait for event
+OPDEF	WAKE	[47B8 0,73]	;wake sleeping frame
+OPDEF	CHGPPN	[47B8 0,74]	;change frame PPN
+OPDEF	SETUUO	[47B8 0,75]	;do SET command functions
+    .STTYO== 0    ;OUTSTR to OPR terminal
+    .STSTA== 1    ;set STATES
+    .STFAR== 2    ;finish auto-restart
+    .STTIM== 3    ;set time
+    .STDAT== 4    ;set date
+    .STWAT== 6    ;set WATCH bits
+    .STBST== 11   ;Set/Read BOOTS command string
+    .STRES== 12   ;Read/Set RESTART bits
+OPDEF	DEVSIZ	[47B8 0,101]	;read standard buffer size
+OPDEF	OPEN	[50B8]	;Open a Channel
+OPDEF	TTCALL	[51B8]	;perform cmnd port i/o
+OPDEF	INCHRW	[51B8 0,0]	;input char [wait/bka]
+OPDEF	OUTCHR	[51B8 1,0]	;output char [CMD]
+OPDEF	INCHRS	[51B8 2,0]	;input char [skip/bka]
+OPDEF	OUTSTR	[51B8 3,0]	;output string [STR/CMD]
+OPDEF	INCHWL	[51B8 4,0]	;input char [wait]
+OPDEF	INCHSL	[51B8 5,0]	;input char [skip]
+OPDEF	GETLCH	[51B8 6,0]	;read line characteristics
+OPDEF	SETLCH	[51B8 7,0]	;set line characteristics
+OPDEF	RESCAN	[51B8 10,0]	;rescan command line
+OPDEF	CLRBFI	[51B8 11,0]	;clear input buffer
+OPDEF	CLRBFO	[51B8 12,0]	;clear output buffer
+OPDEF	SKPINC	[51B8 13,0]	;skip if char
+OPDEF	SKPINL	[51B8 14,0]	;skip if break char
+OPDEF	IONEOU	[51B8 15,0]	;output char [CMD/IMG]
+OPDEF	OUTCHI	[51B8 16,0]	;output char [CMD/IMM]
+OPDEF	OUTPTR	[51B8 17,0]	;output string [PTR/CMD]
+OPDEF	RENAME	[55B8]	;rename or delete a file
+OPDEF	IN	[56B8]	;input from channel
+OPDEF	OUT	[57B8]	;output from channel
+OPDEF	SETSTS	[60B8]	;set file status bits
+OPDEF	STATO	[61B8]	;skip if file status bits set
+OPDEF	GETSTS	[62B8]	;read file status bits
+OPDEF	STATZ	[63B8]	;skip if file status bits clear
+OPDEF	INBUF	[64B8]	;create input buffer ring
+OPDEF	OUTBUF	[65B8]	;create output buffer ring
+OPDEF	INPUT	[66B8]	;input from channel
+OPDEF	OUTPUT	[67B8]	;output from channel
+OPDEF	CLOSE	[70B8]	;close a file
+OPDEF	RELEAS	[71B8]	;release device
+OPDEF	MTAPE	[72B8]	;perform magtape functions
+OPDEF	UGETF	[73B8]	;read disk file position
+OPDEF	USETI	[74B8]	;set file position by block
+OPDEF	USETO	[75B8]	;set file position by block
+OPDEF	LOOKUP	[76B8]	;select file for input
+OPDEF	ENTER	[77B8]	;select file for output
+
+
+subttl	FRAME PRIVILEGE (JBTPRV) BITS
+
+    JP.1UU==1b0   ;unused
+    JP.NAT==1B1   ;* no attach at login
+    JP.DST==1B2   ;* daylight savings applies
+    JP.ZON==37B7  ;* applicable time zone
+    JP.2UU==77B10 ;unused
+    JP.COR==177B17;* max core for frame
+    JP.EXO==1B18  ;execute only program
+    JP.DOP==3B20  ;* disconnect options
+    .JPLOG==0     ;Logout on disconnect
+    .JPDET==1     ;Detach on disconnect
+    .JPCON==2     ;Continue on disconnect
+    .JPDTO==3     ;Detach (15 min timeout)
+    JP.TYM==1B21  ;Tymshare proprietary
+    JP.ASV==1B22  ;Account supervisor
+    JP.MAL==1B23  ;Mail-waiting
+    JP.XOG==1B24  ;Execute only get
+    JP.3UU==1B25  ;unused
+    JP.RCM==1B26  ;* Restricted command mode.
+    JP.MOD==3B28  ;* monitor mode
+    .JPMPD==0     ;PDP-10 mode
+    .JPMXE==1     ;XEXEC mode
+    .JPMXJ==2     ;XEXECJ (Japan)  mode
+    .JPMSU==3     ;SUDS mode
+    JP.CRM==177B35;Maximum value for JP.COR
+
+
+subttl	FRAME LICENSE BITS
+
+    LC.WC== 1B0   ;Write Core (POKE UUO)
+    LC.RC== 1B1   ;Read Core (VPEEK UUO)
+    LC.OP== 1B2   ;Operator (SETUUO UUO)
+    LC.SY== 1B3   ;SYSTAT (read protected GETTAB tables)
+    LC.GD== 1B4   ;Get Devices
+    LC.TD== 1B5   ;Transfer Devices (REASSI UUO)
+    LC.ST== 1B6   ;Manipulate Structures
+    LC.HF== 1B7   ;Home Files
+    LC.JL== 1B8   ;Priviledged System Program
+    LC.AC== 1B9   ;Auxiliary Circuits
+    LC.XC== 1B10  ;XCHARG (adjust charges using the XCHARG UUO)
+    LC.RPS==3B15  ;read priviledges (a field)
+    .LCRP== 1     ;read project
+    .LCRF== 2     ;read files
+    .LCRA== 3     ;read absolute
+    LC.WPS==3B17  ;write priviledges (a field)
+    .LCWP== 1     ;write project
+    .LCWF== 2     ;write files
+    .LCWA== 3     ;write absolute
+
+
+subttl	FRAME STATUS BITS
+
+    JB.RUN==1B0   ;Frame is runnable
+    JB.CMW==1B1   ;Waiting to execute command
+    JB.MRQ==1B2   ;Waiting for page(s)
+    JB.JNA==1B3   ;Frame number assigned
+    JB.JER==1B4   ;Monitor detected error
+    JB.ESC==1B9   ;Escape seen in command mode
+    JB.WSC==37B14 ;Wait state code
+    JB.LOG==1B15  ;* Frame is logged in
+    JB.JRQ==1B16  ;Frame must be requeued
+    JB.JAC==1B17  ;Frame can't be stopped
+    JB.WAK==1B19  ;WAKE pending
+    JB.JA2==1B20  ;* Frame shouldn't be stopped.
+    JB.UTR==1B21  ;Trap to user on UUO exit.
+    JB.DCN==1B22  ;Waiting for oper action.
+    JB.PRF==1B24  ;Frame Prereferenced a page.
+    JB.SIP==1B25  ;Swap-in in progress.
+    JB.SCP==1B26  ;Swapper has taken pages.
+
+
+subttl	WATCH BIT DEFINITIONS
+
+    ST.WDY==1B19  ;time-of-day
+    ST.WRN==1B20  ;run time (TRUs)
+    ST.WWT==1B21  ;wait time
+    ST.WDR==1B22  ;disk reads (blocks)
+    ST.WDW==1B23  ;disk writes (blocks)
+
+
+subttl	FRAME DESCRIPTOR FORMAT
+
+    FD.ABS==0B20  ;absolute type FD
+    FD.FAM==1B20  ;family type FD
+    FM.CHL==0B23  ;child subtype
+    FM.PAR==1B23  ;parent subtype
+    FD.OTF==2B20  ;"other" frame
+    FD.CRH==3B20  ;created handle type FD
+    CH.FRM==0B23  ;frame handle subtype
+    CH.PRO==1B23  ;process handle subtype
+    CH.LIC==2B23  ;license handle subtype
+    FD.SLF==7B20  ;self
+
+
+subttl	MAP MANIPULATION RIGHTS
+
+    .ARRDM==0     ;Read Map
+    .ARCHM==1     ;Change Map
+
+
+subttl	VIRTUAL MEMORY DATA MANIPULATION RIGHTS
+
+    .ARRAC==2     ;Read ACs
+    .ARWAC==3     ;Write ACs
+    .ARVAR==4     ;Read VM data
+    .ARVAW==5     ;Write VM data
+
+
+subttl	FRAME CONTROL RIGHTS
+
+    .ARHLT==6     ;Halt frame
+    .ARSTP==7     ;Stop frame
+    .ARHNG==10    ;Hang frame
+    .ARCLR==11  ear frame and release devices
+    .ARSVA==12    ;Start at Vector Address
+    .ARSAA==13    ;Start at Arbitrary Address
+    .ARRVA==14    ;Restart at Vector Address
+    .ARRAA==15    ;Restart at Arbitrary Address
+
+
+subttl	READ FRAME STATUS RIGHTS
+
+    .ARRUN==16    ;Read User Name
+    .ARRDS==17    ;Read Frame State
+    .ARRAD==20    ;Read Accounting Data
+    .ARRFI==21    ;Read Frame Information
+    .ARRPI==22    ;Read Process Info
+
+
+subttl	ACCESS RIGHTS CONTROL RIGHTS
+
+    .ARSMF==23    ;Set Max Frame Rights
+
+
+subttl	WAKEUP RIGHTS
+
+    .ARWAK==24    ;Do Wake UUO on frame
+
+
+subttl	TTY ATTACHING AND DETACHING RIGHTS
+
+    .ARATT==25    ;Attach Port
+    .ARDET==26    ;Take Port away (Detach)
+
+
+subttl	FRAME TREE GRAFTING RIGHTS
+
+    .ARTKP==27    ;Take parent away from frame
+    .ARGVP==30    ;Give parent to frame
+    .ARGVC==31    ;Give child to frame
+
+
+subttl	FRMOP STANDARD ERROR CODES
+
+    FENOH%==1     ;no handle in slot
+    FEBDI%==2     ;Bad (nonmatching) universal ID number
+    FENRT%==3     ;no rights to do operation
+    FEBDF%==4     ;bad frame number
+    FENLC%==5     ;not enough license
+    FEUND%==6     ;undefined frame descriptor type
+    FENCH%==7     ;not a child
+    FECLP%==10    ;cannot lock context pages
+    FEBAR%==11    ;bad access rights code
+    FENPR%==12    ;no parent
+    FEBFD%==13    ;bad family dispatch type
+    FEBDH%==14    ;bad handle index number in FD
+    FEBFN%==15    ;bad FRMOP function code
+    FEADB%==16    ;address bad
+    FEIOE%==17    ;page I/O error
+    FEALR%==20    ;already running
+    FEALH%==21    ;already halted
+    FECSJ%==22    ;cannot stop frame with JACCT set
+    FEFHE%==23    ;handle descriptor expected, not given
+    FEFHU%==24    ;handle (index) already used
+    FENFH%==25    ;no frame handle indices left
+    FEBCN%==26    ;bad count
+    FEBTN%==27    ;bad table number
+    FEBHT%==30    ;bad handle type
+    FECCH%==31    ;can't create handle (access failure)
+    FEBSV%==32    ;bad start vector offset
+    FECII%==33    ;cannot make child its own inferior in frame tree
+    FECCF%==34    ;cannot continue frame
+    FECFJ%==35    ;cannot do frame jump
+    FEREM%==36    ;rights exceed maximum
+
+
+subttl	.FOCFM ERROR CODES
+
+    CF.NRD==0     ;no disk room
+    CF.FCE==1     ;frame capacity exceeded
+    CF.BAL==2     ;bad arg no license
+    CF.DDB==3     ;cannot create command port DDB
+
+
+subttl	SYSTEM START VECTOR INDICIES
+
+    SV.NSA==-1    ;normal start address (as found in .JBSA)
+    SV.CCL==-2    ;CCL start address (normal plus one)
+    SV.REN==-3    ;REENTER start address (as found in .JBREN)
+    SV.DDT==-4    ;DDT start address (as found in .JBDDT)
+    SV.CON==-5    ;CONTINUE start address
+
+
+subttl	HALT STATUS CLASSES & TYPES
+
+    HC.MEM==0     ;Memory Violations
+    HT.PCO==0     ;PC Out of Bounds
+    HT.IMR==1     ;Illegal Memory Reference
+    HT.WRV==2     ;Write Violation
+    HT.ADC==3     ;Address Check for Device X
+    HT.IMU==4     ;Ill Mem Ref in UUO
+    HT.IIA==5     ;Illegal Interrupt Address
+    HT.ABK==6     ;Address Break
+    HT.POV==7     ;PDL Overflow
+    HC.SYS==1     ;System-Related Errors
+    HT.PIO==0     ;Page I/O Error
+    HT.DFL==1     ;Disk Full during copy of .PRCW page
+    HT.PHE==2     ;Paging Hardware Error
+    HT.TPL==3     ;Too many Pages Locked, Cannot handle fault
+    HT.CIO==4     ;Context Page I/O Error
+    HT.PAR==5     ;Parity Error(s). All Core Removed
+    HC.DEV==2     ;Device Related Errors
+    HT.OCI==0     ;Output device Cannot Input
+    HT.ICO==1     ;Input device Cannot Output
+    HT.IDM==2     ;Illegal Data Mode for device X
+    HT.IUC==3     ;I/O to Unassigned Channel
+    HT.HDV==4     ;Hung Device
+    HT.DOP==5     ;Device X OPR action requested
+    HC.ILL==3     ;Illegal Instruction Traps
+    HT.ILU==0     ;Illegal UUO
+    HT.UUE==1     ;UUO error
+    HT.ILI==2     ;Illegal Instruction
+    HT.HLT==3     ;Halt
+    HC.EXI==4     ;Frame Exits
+    HT.EXI==0     ;Exit
+    HT.EX1==1     ;Exit 1,
+    HT.FEX==2     ;Fail Exit
+    HT.TLE==3     ;Time Limit Exceeded
+    HT.JSU==4     ;filename setup
+    HT.JSV==5     ;filename saved
+    HT.FCL==6     ;frame cleared
+    HC.RUN==5     ;RUN,RUNSEG & GETSEG UUO errors
+    HT.TRE==0     ;Transmission Error
+    HT.PGN==1     ;N Pages Required
+    HT.DNA==2     ;Device Not Available
+    HT.FNF==3     ;filename.ext not found
+    HT.NSF==4     ;Not a Save File
+    HT.EUF==5     ;filename.ext Attempted Enter UUO Failed
+    HT.CAN==6     ;Core Argument Not specified (magtape only)
+    HT.MHB==7     ;Magtape Hiseg Format Bad
+    HT.RMF==10    ;Remap UUO Fatal error
+    HT.MGF==11    ;Magtape GET failure
+    HT.NSA==12    ;No Start Address
+
+
+subttl	.FORSI ITEM NUMBERS
+
+    .SREXO==0     ;max frame rights for execute-only
+    .SRLIC==1     ;max frame rights for process with license
+    .SRALL==2     ;all rights defined by monitor
+    .SRRCL==3     ;AR conferred by Read Core (RC)
+    .SRSYL==4     ;AR comferred by Systat (SY)
+    .SRTYM==5     ;AR conferred by JP.TYM priviledge
+    .SRAUN==6     ;AR conferred by having same AUN
+    .SRJLL==7     ;AR conferred by Jacct (JL)
+    .SRWCL==10    ;AR conferred by Write Core (WC)
+
+
+subttl	JOB DATA AREA LOCATIONS
+
+    .JBUUO==40    ;LUUO storage location
+    .JB41== 41    ;LUUO instruction location
+    .JBREL==44    ;(Obsolescent) highest relative loc
+    .JBBLT==45    ;Loader BLT locations 45-47
+    .JBMUU==66    ;MUUO stored here on INTADR MUUO-trapping
+    .JBHCU==72    ;Highest-channel-used stored here
+    .JBDDT==74    ;DDT entry loc
+    .JBJDA==75    ;Begin Array of channel-in-use flags
+    .JBCNK==102   ;CHAIN temporary locs 102-110
+    .JBCN6==106   ;more CHAIN temporary locs 106-113
+    .JBPFI==114   ;(Obsolete) lower limit for I/O
+    .JBHRL==115   ;(Obsolescent) Hiseg length and ending loc
+    .JBSYM==116   ;Symbol-table pointer stored here
+    .JBUSY==117   ;Undefined-symbols table pointer
+    .JBSA== 120   ;Start Address of loaded program
+    .JBFF== 121   ;First Free loc for buffered I/O to use
+    .JBREN==124   ;REENTER command address stored here
+    .JBAPR==125   ;APRENB transfer address stored here
+    .JBCNI==126   ;APRENB simulated CONI word location
+    .JBTPC==127   ;APRENB trap PC loc
+    .JBOPC==130   ;Old PC loc set by DDT,START etc.
+    .JBCHN==131   ;loaded FORTRAN program information
+    .JBCOR==133   ;loc of last non-zero data in core image
+    .JBCST==136   ;For Customer Use
+    .JBVER==137   ;Version number
+    .JBDA== 140   ;First loc available to user program
+
+
+subttl	VESTIGIAL JOB DATA AREA LOCATIONS
+
+    .JBHSA==0     ;copy of .JBSA
+    .JBH41==1     ;copy of .JB41
+    .JBHCR==2     ;copy of .JBCOR
+    .JBHRN==3     ;.JBHRL,.JBREN restore word
+    .JBHNM==5     ;hiseg name
+    .JBHSM==6     ;pointer to hiseg symbol-table
+    .JBHGA==7     ;(Obsolete)
+    .JBHDA==10    ;first loc of hiseg available to user
+
+
+subttl	PAGE PROTECTION CODES
+
+    .PRRO== 1B7   ;read-only
+    .PRCW== 2B7   ;Copy-on-Write
+    .PRRW== 3B7   ;Read-Write
+
+
+subttl	VCREAT ERROR CODES
+
+    CRBCN%==0     ;count = 0
+    CRBVP%==1     ;bad page number
+    CRBPR%==2     ;bad protection
+    CREXV%==3     ;page already exists
+    CRLIM%==5     ;exceeded existing page limit
+    CRDFL%==6     ;disk full
+
+
+subttl	VPROT ERROR CODES
+
+    PTBCN%==0     ;count = 0
+    PTBVP%==1     ;bad page
+    PTBPR%==2     ;bad protection
+    PTNVP%==4     ;page does not exist
+    PTPRF%==5     ;protection failure (only lookup access
+
+
+subttl	WSCTL ERROR CODES
+
+    WSBCN%==0     ;count = 0
+    WSBVP%==1     ;bad virtual page
+
+
+    WSNVP%==4     ;virtual page does not exist
+    WSBFN%==5     ;illegal function code
+    WSCTL%==6     ;count too large
+    WSEWL%==7     ;exceeded working set size limit
+    WSLGM%==10    ;attempt to set limit over  max
+    WSLL3%==11    ;attempt to set limit under 3 pages
+
+
+subttl	PREREF ERROR CODES
+
+    PRBVP%==1     ;bad page
+    PRNVP%==4     ;page does not exist
+    PRNIW%==5     ;page not in working set
+
+
+subttl	BLTPAG ERROR CODES
+
+    BUCBB%==0     ;can't BLT backwards
+    BUNWP%==1     ;data not all within one page
+    BUCLP%==2     ;can't lock dest. page
+
+
+subttl	PERSET ERROR CODES
+
+    PEBCN%==0     ;bad count
+    PEBVP%==1     ;bad page
+    PENVP%==4     ;nonexistent page
+
+
+subttl	PGESTS WORD
+
+    EI.VAL==1B0   ;information is valid
+    EI.PAR==1B14  ;parity error on dirty page
+    EI.OER==1B15  ;output error
+    EI.DER==1B16  ;device error
+    EI.DTE==1B17  ;data error
+
+
+subttl	VALPAG ERROR CODES
+
+    VLBCN%==0     ;bad count
+    VLBVP%==1     ;bad page
+    VLNVP%==4     ;page does not exist
+    VLIOE%==5     ;i/o error occurred
+
+
+subttl	PAGE FAULT WORD
+
+    FI.VAL==1B0   ;this word contains valid data
+    FI.SAL==1B1   ;WSSIZ = WSLIM at time of fault
+    FI.VPN==777B26;Virtual Page number
+
+
+subttl	PGISTS WORD
+
+    II.ADR==777777B17       ;virtual address
+    II.PFW==777777B35       ;soft page fail word
+
+
+subttl	PGRSTS WORD
+
+    RI.VAL==1B0   ;information is valid
+    RI.ADR==777777B35       ;virtual address
+
+
+subttl	REFBIT ERROR CODES
+
+    RFBCN%==0     ;bad count
+    RFBVP%==1     ;bad page number
+    RFBFN%==5     ;bad function
+
+
+subttl	PAGE STATUS WORD
+
+    PS.UWS==1B0   ;in user working set
+    PS.REF==1B1   ;has been referenced
+    PS.MXW==1B2   ;maximally-writable
+    PS.SUP==1B3   ;super-mapped
+    PS.DDE==3B5   ;swap device error has occurred
+    PS.FIL==1B32  ;was a file-page (when mapped)
+    PS.CPR==7B35  ;current protection
+
+
+
+
+
+subttl	PAGSTS ERROR CODE
+
+    PSBVP%==1     ;bad page
+
+
+subttl	VPGFIL ERROR CODES
+
+    PFBVP%==1     ;bad vp number
+    PFNEX%==4     ;non-existent vp
+    PFNFP%==6     ;not file page
+
+
+subttl	STANDARD PAGING ERROR CODES
+
+    FLCTG%==0     ;virtual page count = 0
+    FLDVR%==1     ;Destination virtual page out of range
+    FLCPU%==2     ;current prot undefined
+    FLVEX%==4     ;virtual page exists
+    FLNEX%==4     ;page doesn't exist
+    FLSVR%==5     ;source VP out-of-range
+    FLPHP%==6     ;past highest page
+    FLFPZ%==7     ;a specified file page number is = 0
+    FLCOR%==10    ;caller's .PVCOR size limit will be exceeded
+    FLRBE%==11    ;RIB error
+    FLBDS%==12    ;bad SAT
+    FLCPL%==13    ;specified prot cannot be set for the VP
+    FLLKC%==14    ;file is LOOKUP only, cannot be mapped
+    FLHOL%==16    ;file page which must exist is a hole
+    FLNHL%==16    ;no hole at specified file page
+    FLSNM%==17    ;structure name bad
+    FLOPE%==20    ;i/o error on validation write of page
+    FLSAM%==21    ;same source and destination page numbers
+    FLNML%==22    ;file already selected
+    FLNOF%==23    ;no file selected
+    FLNWT%==24    ;no write allowed
+    FLAQA%==25    ;disk full or user's quota exceeded
+    FLCTL%==26    ;(not returned to user programs)
+    FLIPE%==27    ;(not returned to user programs)
+    FLNTF%==30    ;no page of desired kind found
+    FLNIM%==31    ;function not implemented
+    FLLGE%==32    ;suppress error logging not allowed
+    FLNSP%==33    ;(obsolete)
+
+
+subttl	FILE STATUS BITS
+
+    IO.IMP==1B18  ;improper mode
+    IO.DER==1B19  ;device error
+    IO.DTE==1B20  ;data error
+    IO.BKT==1B21  ;block too large
+    IO.ERR==17B21 ;error bit mask
+    IO.EOF==1B22  ;end of file
+    IO.ACT==1B23  ;device is active
+    IO.EVP==1B26  ;(FTA: only) even parity
+    IO.BK2==1B26  ;(TTY: only) break-on-punctuation bit
+    IO.NEE==1B27  ;(TTY: only) no-escape-echo bit
+    IO.NEC==1B28  ;(TTY: only) no-echo bit
+    IO.DEN==3B28  ;(FTA: only) recording density
+    IO.FCS==1B29  ;(TTY: only) full-character-set bit
+    IO.SYN==1B30  ;synchronous i/o
+    IO.UWC==1B31  ;user supplied word count
+    IO.MOD==77B35 ;data mode mask
+
+
+subttl	DATA MODES
+
+    .IOASC==0     ;ASCII
+    .IOASL==1     ;ASCII line
+    .IOKAT==2     ;Katakana
+    .IOIMG==10    ;Image
+    .IOIBN==13    ;Image Binary
+    .IOBIN==14    ;Binary
+    .IODPR==16    ;Dump Records
+    .IODMP==17    ;Dump
+
+
+subttl	DEVICE CHARACTERISTIC WORD
+
+    DV.DSK==1B1   ;is a disk
+    DV.CDR==1B2   ;is a card reader
+    DV.LPT==1B3   ;is a line printer
+    DV.TTA==1B4   ;is a frame's command port
+    DV.NZP==1B5   ;do not zap circuit on a RESET
+    DV.1UU==1B6   ;unused
+    DV.2UU==1B7   ;unused
+    DV.3UU==1B8   ;unused
+    DV.PTP==1B9   ;is a paper tape punch
+    DV.PTR==1B10  ;is a paper tape reader
+    DV.4UU==1B11  ;unused
+    DV.AVL==1B12  ;is available to this frame
+    DV.MTA==1B13  ;is a magtape
+    DV.TTY==1B14  ;is a terminal or aux circuit
+    DV.DIR==1B15  ;has a directory
+    DV.IN== 1B16  ;input possible
+    DV.OUT==1B17  ;output possible
+    DV.ASG==1B18  ;assigned by console
+    DV.ASP==1B19  ;assigned by program
+    DV.DMP==1B20  ;dump mode legal
+    DV.DPR==1B21  ;dump records mode legal
+    DV.BIN==1B23  ;binary mode legal
+    DV.IBN==1B24  ;image binary mode legal
+    DV.IMG==1B27  ;image mode legal
+    DV.KAT==1B33  ;katakana mode legal
+    DV.ASL==1B34  ;ascii line mode legal
+    DV.ASC==1B35  ;ascii mode legal
+
+
+subttl	SYSDVF FUNCTION CODES
+
+    .SDDDN==0     ;Non-port/disk;
+    .SDDDA==1     ;All;
+    .SDUNI==2     ;Unit DDBs;
+    .SDSTR==3     ;STR DDBs;
+    .SDFTA==4     ;Mag Tape DDBs;
+
+
+subttl	FILE PROTECTION CODES
+
+    FP.NO== 7     ;No access.
+    FP.LK== 6     ;Lookup access.
+    FP.RUN==5     ;Run access.
+    FP.RD== 4     ;Read access.
+    FP.AP== 3     ;Append access.
+    FP.UPD==2     ;Update access.
+    FP.CP== 1     ;Change-protection access.
+    FP.ALL==0     ;All access.
+
+
+subttl	DIRECTORY PROTECTION BITS
+
+    DP.LK== 4     ;Lookup access.
+    DP.CR== 2     ;New files access.
+    DP.RD== 1     ;Read access.
+
+
+subttl	EXTENDED LOOKUP BLOCK LOCATIONS
+
+    .RBPPN==1     ;PPN of UFD to search
+    .RBNAM==2     ;SIXBIT /filename/
+    .RBEXT==3     ;SIXBIT /extension/
+    .RBPRV==4     ;Priviledge word
+    .RBSIZ==5     ;File size in words
+    .RBVER==6     ;Version (not used by monitor)
+    .RBFUT==7     ;(not used by monitor)
+    .RBEST==10    ;Estimated file size (in blocks)
+    .RBALC==11    ;Allocated storage (in blocks)
+    .RBPOS==12    ;(not used)
+    .RBFT1==13    ;(not used)
+    .RBLIC==14    ;File license word
+    .RBMTA==15    ;(not used)
+    .RBDEV==16    ;zero
+    .RBSTS==17    ;File status bits
+    .RBELB==20    ;Error logical block
+    .RBXT1==21    ;zero
+    .RBQTF==22    ;Logged-in disk quota
+    .RBQTO==23    ;Logged-out disk quota
+    .RBMXA==24    ;
+    .RBUSD==25    ;
+    .RBAUT==26    ;Author (last writer's) PPN
+    .RBUNM==27    ;Username (SIXBIT)
+    .RBTRU==31    ;unused
+    .RBXT2==32    ;unused
+    .RBALP==33    ;Allocated pages
+    .RBSNM==34    ;number of spare RIBs
+    .RBPJC==35    ;Project-code block
+    .RBPID==40    ;Processor ID
+
+
+subttl	FILE SELECTION ERROR CODES
+
+    .ERFNF==0     ;File Not Found.
+    .ERIPP==1     ;Incorrect PPN.
+    .ERPRT==2     ;Protection failure.
+    .ERFBM==3     ;File being modified.
+    .ERAEF==4     ;Already existing file.
+    .ERISU==5     ;Illegal Sequence of UUOs.
+    .ERTRN==6     ;Transmission error.
+    .ERNSF==7     ;Not a saved file.
+    .ERNEC==10    ;Not enough core.
+    .ERDNA==11    ;Device not available.
+    .ERNSD==12    ;No such device.
+    .ERILU==13    ;(never happens)
+    .ERNRM==14    ;No room.
+    .ERWLK==15    ;(never happens)
+    .ERNET==16    ;Not enough table space.
+    .ERPOA==17    ;(never happens)
+    .ERBNF==20    ;(never happens)
+    .ERNTR==21    ;(never happens)
+    .ERLKM==22    ;(never happens)
+
+
+subttl	DSKCHR STATUS BITS
+
+    DC.OFL==1B1   ;unit offline
+    DC.HWP==1B2   ;unit hardware write-protected
+    DC.USF==1B6   ;unit unsafe
+    DC.MSB==1B9   ;unit has multiple SAT blocks
+    DC.TYP==7B17  ;type of name passed to DSKCHR
+    .DCTDS==0     ;generic DSK
+    .DCTFS==2     ;file structure
+    .DCTUF==3     ;unit within structure
+    .DCTCN==4     ;controller class
+    .DCTCC==5     ;controller within class
+    .DCTPU==6     ;unit within controller
+    DC.DCN==7B20  ;data channel number
+    DC.CNT==77B26 ;controller type
+    .DCCDR==0     ;FH  drum
+    .DCCFH==1     ;fixed-head disk
+    .DCCDP==2     ;DP  disk pack (RP01,RP02)
+    .DCCMD==3     ;mass disk
+    .DCCBP==4     ;BP  big pack (IBM 3330)
+    DC.CNN==7B29  ;controller number
+    DC.UNT==3B31  ;unit type
+    .DCUBU==0     ;Burroughs disk
+    .DCBBR==1     ;Bryant drum
+    .DCUD1==0     ;RP01
+    .DCUD2==1     ;RP02
+    .DCUDP==0     ;dual positioner
+    .DCUSP==1     ;single positioner
+    .DCUM1==0     ;3330 Model I
+    .DCUM2==1     ;3330 Model II
+    DC.UNN==7B35  ;unit number within controller
+
+
+subttl	GOBSTR ERROR CODES
+
+    DFGIF%==3     ;addr+2 is not in search list
+    DFGPP%==6     ;frame and PPN do not agree
+    DFGNP%==10    ;No license
+    DFGLN%==12    ;Bad length for list
+
+
+subttl	STRUUO FUNCTION CODES
+
+    .FSSRC==0     ;Define new search list for frame
+    .FSDSL==1     ;Define new search list
+    .FSDEF==2     ;Define new file structure.
+    .FSRDF==3     ;Redefine file structure.
+    .FSLOK==4     ;Lock file structure.
+    .FSREM==5     ;Remove file structure.
+    .FSULK==6     ;Test/Set UFD interlock.
+    .FSUCL==7     ;Clear UFD interlock.
+    .FSETS==10    ;Simulate hard errors.
+    .FSRRL==11    ;Read/reset log for 3330's.
+
+
+subttl	STRUUO ERROR CODES
+
+    FSILF%==0     ;Illegal function code
+    FSSNF%==1     ;Structure not found
+    FSSSA%==2     ;Structure single access only
+    FSILE%==3     ;Illegal list entry
+    FSTME%==4     ;Too many entries in list
+    FSUNA%==5     ;Unit not available
+    FSPPN%==6     ;PPN doesn't match
+    FSMCN%==7     ;Mount count greater then 1
+    FSNPV%==10    ;No license
+    FSFSA%==11    ;Structure already exists
+    FSILL%==12    ;Bad list length
+    FSUNC%==13    ;Unable to complete UUO
+    FSNFS%==14    ;System full of structures
+    FSNCS%==15    ;No free core
+    FSUNF%==16    ;Illegal unit
+    FSRSL%==17    ;File structure repeated in list
+
+
+subttl	CREAUX CONTROL BITS
+
+    CX.NZP==1B17  ;don't zap on RESET
+
+
+subttl	RETACH ERROR CODES
+
+    RTSAC%==1     ;insufficient access rights to source frame
+    RTSNX%==2     ;source frame does not exist
+    RTTAC%==3     ;insufficient access rights  to target frame
+    RTTNX%==4     ;target frame does not exist
+    RTSNA%==5     ;specified port not attached to source frame
+    RTTAT%==6     ;target frame already has port attached
+    RTSCP%==7     ;forced command already pending on port
+    RTAUX%==10    ;attaching aux circuit as command port
+    RTNRM%==11    ;no room for new port DDB
+
+
+subttl	CREAUX ERROR CODES (LEFT HALF)
+
+    CXSUP%==0     ;supervisor error code in right half
+    CX2AX%==1     ;too many circuits without Auxiliary Circuit (AC)
+    CXLOG%==2     ;not your username without Auxiliary Circuit (AC)
+    CXDCB%==3     ;no room in monitor
+    CXNRR%==4     ;supervisor did not respond
+    CXNRL%==5     ;supervisor did not respond
+    CXNCH%==6     ;supervisor did not supply a circuit
+    CXERR%==7     ;supervisor error from original request
+
+
+subttl	CREAUX ERROR CODES (RIGHT HALF)
+
+    CXSFE%==1     ;format error
+    CXSBU%==2     ;user not in mud
+    CXSBM%==3     ;bad mud
+    CXSHU%==4     ;host unavailable
+    CXSDF%==5     ;downline load or dialout request failure
+    CXSTO%==6     ;timeout
+    CXSAB%==7     ;access barred
+    CXSIS%==10    ;error in ISIS
+    CXSLQ%==11    ;long queue in supervisor
+
+
+subttl	PORT EVENT-STATUS BITS
+
+    LXRESC==1B0   ;escape seen
+    LXROBS==1B1   ;orange ball seen
+    LXRPSS==1B2   ;port status message seen
+    LXRICL==1B3   ;input characters lost
+    LXROCL==1B4   ;output characters lost
+    LXRCHR==1B5   ;character seen
+    LXRBRK==1B6   ;break condition seen
+    LXRYBS==1B7   ;yellow ball seen
+    LXRGOB==1B10  ;character gobbler seen
+
+
+subttl	LINE CHARACTERISTICS WORD
+
+    LC.ECS==1B2   ;"command line" exists,will be thrown away
+    LC.PSS==1B3   ;** a port status message has been seen
+    LC.OBS==1B4   ;** an orange ball has been seen
+    LC.HDX==1B5   ;* half duplex
+    LC.ESC==1B6   ;** an escape has been seen
+    LC.CRD==1B7   ;* compute carriage return delay (not LF)
+    LC.DFR==1B8   ;in deferred echo mode
+    LC.NOP==1B9   ;suppress output bit
+    LC.NFC==1B10  ;* no free carriage return
+    LC.BRK==1B11  ;input buffer contains a break character
+    LC.AXC==1B12  ;auxiliary circuit
+    LC.NCM==1B13  ;* no case mapping
+    LC.HHT==1B14  ;* hardware horizontal tabs
+    LC.LCP==1B15  ;local-copy (e.g. 2741) device
+    LC.PTM==1B16  ;* paper tape mode
+    LC.HFF==1B17  ;* hardware VT/FF
+    LC.PNO==777777B35       ;port number
+
+
+subttl	MTAPE FUNCTIONS
+
+    .MTWAT==0     ;wait for i/o completion
+    .MTREW==1     ;rewind
+    .MTEOF==3     ;write tape mark
+    .MTSKR==6     ;skip forward 1 record
+    .MTBSR==7     ;backspace 1 record
+    .MTEOT==10    ;go to logical end of tape
+    .MTUNL==11    ;rewind and unload
+    .MTBLK==13    ;erase gap
+    .MTSKF==16    ;skip forward 1 file
+    .MTBSF==17    ;backspace 1 file
+    .MTDEC==100   ;set DEC 9-track mode
+    .MTIC0==101   ;set IBM 9-track mode, byte adjust 0
+    .MTIC1==102   ;set IBM 9-track mode, byte adjust 1
+    .MTIC2==103   ;set IBM 9-track mode, byte adjust 2
+    .MTIC3==104   ;set IBM 9-track mode, byte adjust 3
+    .MT7E0==201   ;set special 7-track mode, byte adjust 0
+    .MT7E1==202   ;set special 7-track mode, byte adjust 1
+    .MT7E2==203   ;set special 7-track mode, byte adjust 2
+    .MT7E3==204   ;set special 7-track mode, byte adjust 3
+
+
+subttl	UGETF FUNCTION CODES
+
+    .UGCNT==0     ;return byte/word count of last input
+    .UGSEN==1     ;return drive sense data
+    .UGSTS==2     ;return drive status data
+    MT.PRO==1B0   ;write protected
+    MT.TAB==3B2   ;TU A & B
+    MT.LDP==1B3   ;load point
+    MT.EOT==1B4   ;end of tape indicator
+    MT.IBM==1B5   ;IBM compatible unit
+    MT.7TR==1B12  ;7 track capability
+    MT6250==1B13  ;6250 bpi capability
+    MT1600==1B14  ;1600 bpi
+    MT800== 1B15  ;800 bpi
+    MT556== 1B16  ;556 bpi
+    MT200== 1B17  ;200 bpi
+
+
+subttl	APRENB INTERRUPT BITS
+
+    AP.REN==1B18  ;Repetitive enable
+    CN.POV==1B19  ;Stack Overflow or Underflow
+    AP.POV==1B19  ;Stack Overflow or Underflow
+    CN.UUO==1B18  ;UUO or ill ins
+    AP.UUO==1B20  ;UUO or ill ins
+    CN.BRK==1B24  ;Break character
+    AP.BRK==1B21  ;Break character
+    CN.ILM==1B22  ;Ill mem ref
+    AP.ILM==1B22  ;Ill mem ref
+    CN.CHR==1B21  ;Character
+    AP.CHR==1B24  ;Character
+    CN.ESC==1B17  ;Escape (ctrl-C)
+    AP.ESC==1B25  ;Escape (ctrl-C)
+    CN.CLK==1B26  ;Clock tick
+    AP.CLK==1B26  ;Clock tick
+    CN.FOV==1B29  ;Floating overflow
+    AP.FOV==1B29  ;Floating overflow
+    CN.HNG==1B16  ;Hung device
+    AP.HNG==1B30  ;Hung device
+    CN.AOV==1B32  ;Integer overflow
+    AP.AOV==1B32  ;Integer overflow
+
+
+subttl	PORT INTERRUPT CAUSE CODES
+
+    .IAESC==0     ;Receipt of an escape.
+    .IACHR==1     ;Receipt of a character.
+    .IABRK==2     ;Receipt of a break character.
+    .IAIOW==3     ;Potential I/O wait
+    .IAROM==4     ;Room for more output characters.
+    .IALOS==5     ;Characters lost on input.
+    .IAORG==6     ;Receipt of an orange ball.
+    .IAZAP==7     ;Receipt of a circuit zapper.
+    .IAPSS==10    ;Port Status msg seen
+    .IAYEL==11    ;Receipt of Yellow Ball.
+    .IAGOB==12    ;Receipt of Character Gobbler.
+
+
+subttl	GENERAL INTERRUPT CAUSE CODES
+
+    .IAUUO==0     ;UUO or illegal instruction
+    .IACLK==1     ;Clock tick while running
+    .IAILM==2     ;Ill mem ref
+    .IAHNG==3     ;Hung device
+    .IATIM==4     ;SETTIM timer interrupt
+    .IADEV==5     ;Device error
+    .IAWAK==6     ;Wake UUO for this frame
+    .IAFEL==7     ;Page fault (WS=WSL)
+    .IAFLL==10    ;Page fault (WSWSL)
+    .IAREF==11    ;Reference-bit trap
+    .IAERR==12    ;Paging I/O error
+    .IANTQ==13    ;Notice to quit (sys going down)
+    .IAFEX==14    ;Frame exit in child
+
+
+subttl	INTRMT ERROR CODES
+
+    IRBCH%==1     ;bad I/O channel
+    IRBDR%==5     ;bad interrupt reason
+    IRBIC%==6     ;bad interrupt channel number
+    IRNIS%==7     ;no INTADR system in effect.
+
+
+subttl	CLUB INTERLOCK STATUS FLAGS
+
+    CB.NML==1     ;last interlock release was normal
+    CB.EVI==2     ;Ever Interlocked
+
+
+subttl	CLUB FACILITY STANDARD ERROR CODES
+
+    CBVPR%==1     ;VP number out of legal range
+    CBNEX%==2     ;VP does not exist (has no disk page mapped)
+    CBINC%==3     ;Caller already in a club for this VP
+    CBIDO%==4     ;Club ID number overflow
+    CBNIC%==5     ;Not in Club (from UUOs requiring club membership)
+    CBVPM%==6     ;VP mismatch
+    CBHIL%==7     ;Have Interlock,cannot perform UUO at this time
+    CBAIL%==10    ;Attempted to get Interlock, but it was busy
+    CBNIL%==11    ;No Interlock
+    CBCNT%==12    ;Requested count of club members is 0
+    CBNFC%==13    ;Not First Class
+    CBJNI%==14    ;Frame Not In your club,can't get info on it
+
+
+subttl	GETTAB TABLE NUMBERS
+
+    .GTFTR==-54   ;frame tree information
+    .GTUID==-53   ;Universal ID
+    .GTPNO==-52   ;Program Number
+    .GTSPW==-51   ;double precision pages-to-WS*size
+    .GTPWS==-50   ;pages to working-set
+    .GTMPC==-47   ;pages mapped/created
+    .GTMCY==-46   ;double precision microcycles
+    .GTKCM==-45   ;double precision K-core microcycles
+    .GTTRU==-44   ;double precision TRUs * 10^4
+    .GTTR2==-43   ;high order TRUs * 10^4
+    .GTMC2==-42   ;high order microcycles
+    .GTBIO==-41   ;block IO chars transmitted
+    .GTBET==-40   ;BIO elapsed time (sec)
+    .GTSOK==-37   ;TYMCHG TRUs * 10^4
+    .GTLNK==-36   ;debugging tables
+
+
+    .GTERN==-33   ;ENTER + RENAME count
+    .GTLPS==-32   ;tty input line position
+    .GTMOD==-31   ;tty mode (GETSTS info)
+    .GTLIM==-30   ;time limit (TRUs * 10^4)
+    .GTLIN==-27   ;TTY: name in SIXBIT; (lh)=0 if detached
+    .GTJOB==-26   ;frame who owns this port
+    .GTFPN==-25   ;File Proj-prog Number
+    .GTLOG==-24   ;LDBLOG info (Table 18-7b)
+    .GTAUN==-23   ;Accounting User Number
+    .GTUNM==-22   ;user name (1-6) SIXBIT
+    .GTUN1==-21   ;user name (7-12) SIXBIT
+    .GTLIC==-20   ;license word
+
+
+    .GTMC1==-15   ;low order microcycles
+    .GTKM2==-14   ;high order K-core microcycles
+    .GTBCS==-13   ;K-core break chars
+    .GTCNK==-12   ;attach time (sec)
+    .GTELP==-11   ;K-core seconds
+    .GTCOT==-10   ;characters output
+    .GTCIN==-7    ;characters input
+    .GTSOT==-6    ;K-core DSK blocks out
+    .GTSIN==-5    ;K-core DSK blocks in
+    .GTSRN==-4    ;K-core ENTER + RENAME
+    .GTSLK==-3    ;K-core LOOKUP
+    .GTDLK==-2    ;LOOKUP count
+
+    .GTSTS==0     ;Status Bits (Table 2-7 )
+
+    .GTPPN==2     ;Project Programmer Number
+    .GTNAM==3     ;SIXBIT user program name
+    .GTTR1==4     ;low order TRUs * 10^4
+    .GTKM1==5     ;low order K-core microcycles
+    .GTPRV==6     ;Privilege Bits (Table 2-3 )
+    .GTSWP==7     ;swapper status bits
+    .GTTTY==10    ;address of TTY DDB
+    .GTCNF==11    ;config data (Table 18-7 )
+    .GTNSW==12    ;nonswap data (Table 18-8c)
+
+
+    .GTODP==15    ;ONCE-time disk parameters (Table 18-9 )
+    .GTLVD==16    ;level-D disk (Table 18-8b)
+    .GTRCT==17    ;DSK blocks in
+    .GTWCT==20    ;DSK blocks out
+
+
+    .GTSLF==23    ;GETTAB table addresses
+
+    .GTWSC==25    ;wait states (Table 18-10 )
+
+
+
+
+subttl	.GTCNF ITEMS
+
+    .CNFG0==0     ;System Name (in ASCII)
+    .CNDT0==5     ;System Date (in ASCII)
+    .CNTAP==7     ;System Device Name (in SIXBIT)
+    .CNTIM==10    ;jiffies since midnight GMT
+    .CNDAT==11    ;days since 1 January 1964 GMT
+    .CNSIZ==12    ;words used by monitor
+    .CNOPR==13    ;operator console name (in SIXBIT)
+    .CNDEV==14    ;lh = address of first DDB
+    .CNNJB==15    ;largest possible frame number+1
+    .CNSTS==17    ;states word
+    .CNSER==20    ;cpu serial number
+    .CNNSM==21    ;memory cycle time (in nanoseconds)
+    .CNFRE==22    ;freecore bit map AOBJN pointer
+    .CNLOC==23    ;address of first freecore
+    .CNPTS==24    ;number of ports
+    .CNLGO==25    ;LOGOUT program name (in SIXBIT)
+    .CNJPS==26    ;jiffies per second
+    .CNJPM==27    ;jiffies per minute
+    .CNJPH==30    ;jiffies per hour
+    .CNHGH==31    ;highest addressible block in core
+    .CNHFD==32    ;Snoopy facility buffer size,,beginning loc
+    .CNSYS==33    ;system number
+    .CNFCW==34    ;freecore words allocated
+    .CNSCC==35    ;Soft Crash Countdown in seconds
+    .CNS30==36    ;XWD SAV30,NUMTAB ; info for crash analysis
+
+
+subttl	.GTLOG BITS (GETTAB -24)
+
+    LG.ZAP==1B1   ;a zapper has been received on this port
+    LG.GON==1B2   ;this port is gone
+    LG.HDX==1B6   ;this port is half-duplex
+    LG.NAX==1B16  ;1 if this port is not an aux circuit
+    LG.TID==27B11 ;terminal identifier code
+    LG.ND1==77B19 ;high-order 6 bits of the originating node number
+    LG.ND2==77B27 ;low-order 6 bits of the originating node number
+    LG.PORT==     ;TYMNET port number                         177B35
+
+
+subttl	.GTLVD (GETTAB 16) ITEMS
+
+    .LDMFD==0     ;MFD PPN [1,1]
+    .LDSYS==1     ;SYS PPN [1,4]
+    .LDFSF==2     ;FAILSAFE PPN  (obsolete)
+    .LDHLP==3     ;HELP PPN (obsolete)
+    .LDSPL==4     ;SPOOL PPN (obsolete)
+    .LDDRB==5     ;directory block pointers
+    .LDSTR==6     ;(obsolete)
+    .LDUNI==7     ;unit data block pointers
+    .LDSWP==10    ;(unused)
+    .LDCBN==11    ;number of file system core blocks
+    .LDSTP==12    ;standard file protection
+    .LDUFP==13    ;standard directory protection
+    .LDRPC==14    ;number of RIB PCBs
+    .LDSPC==15    ;number of SAT PCBs
+    .LDQST==16    ;sixbit name of fastest STR
+    .LDACT==17    ;accounting program PPN [6,270]
+    .LDCRS==20    ;(obsolete)
+    .LDLKB==21    ;longest meaningful LOOKUP block size
+
+
+subttl	.GTNSW ITEMS (GETTAB 12)
+
+    .NSCMX==10    ;maximum CORE request + 1
+    .NSCTL==12    ;# free core blocks left
+    .NSUPT==15    ;uptime (in jiffies)
+    .NSHJB==20    ;highest frame number currently assigned
+    .NSCLW==21    ;(obsolete) words cleared by CLRCOR
+    .NSLST==22    ;lost time (in jiffies)
+    .NSMMS==23    ;physical memory size (in words)
+    .NSTPE==24    ;# parity errors
+    .NSSPE==25    ;# spurious parity errors
+    .NSCPE==26    ;# oper cont from parity errors
+    .NSMPA==27    ;addr of last parity error
+    .NSMPW==30    ;contents of that word
+    .NSMPP==31    ;PC at the time of that error
+    .NSNUL==34    ;null time (tics)
+    .NSNMN==35    ;null time during the last minute (tics)
+    .NSALR==36    ;alarm (unhappy msg) bits
+    .NSMWM==37    ;monitor WS max size
+    .NSUID==40    ;latest UID issued (SYSUID)
+    .NSSTM==41    ;uptime of latest SCNSER cycle
+    .NSMXT==42    ;max time between SCNSER cycles
+
+
+subttl	.GTODP ITEMS (ONCE DISK PARAMETERS)
+
+    .ODSWH==0     ;highest block for swapping (obsolete)
+    .ODSWK==1     ;K of disk words for swapping (obsolete)
+    .ODPRT==2     ;in-core protect mult (tics/page)
+    .ODPRA==3     ;in-core protect offset (tics)
+    .ODMXP==4     ;max value for ICPT function
+    .ODDCT==5     ;action code for DSKCLN
+
+
+subttl	WAIT STATE CODES
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+subttl	SETABK CONTROL BITS
+
+    AB.FET==1B9   ;break on instruction-fetch
+    AB.RED==1B10  ;break on reads
+    AB.WRT==1B11  ;break on writes
+    AB.USR==1B12  ;0=monitor, 1=user address
+
+	END
+
+   n@Ç

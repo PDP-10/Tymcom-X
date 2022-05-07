@@ -1,0 +1,26 @@
+Last update: 9-Jan-86
+
+Equipment description           Serial #       ISG tag  Location
+========================        ===========     ======  ========
+
+  Carl Baltrunas        39100 Liberty St, Fremont       (415)794-2515
+Rainbow-100 microcomputer       WF ?????        none    home
+LK201 keyboard for Rainbow      BO ????????     none    home
+VR201 monitor for Rainbow       TA ?????        none    home
+LA50 printer for Rainbow        TC ??????       none    home
+NMI 75 microfiche reader        BA 101D864      ????    office
+NMI 75 microfiche reader        BA 005D409      none    home
+TYM444 HP2621 terminal          2023W03381      ????    office
+TYM444 HP2621 terminal          2023W03361      none    home
+TYM912 Penril 1200 modem        7018            none    home
+
+  Joe Smith             39100 Liberty St, Fremont       (415)794-2512
+Rainbow-100 microcomputer       WF 21537        259917  office
+LK201 keyboard for Rainbow      BO 31501241     none    office
+VR201 monitor for Rainbow       TA 16233        none    office
+LA50 printer for Rainbow        TC 24352A       207608  office
+NMI 75 microfiche reader        BA 007D196      none    office
+NMI 75 microfiche reader        BA 059D629      none    home
+TYM912 Penril 1200 modem        5450            none    home
+TYM444 HP2621 terminal          2023W02850      207823  office (next to 2020)
+

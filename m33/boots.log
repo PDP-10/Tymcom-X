@@ -1,0 +1,385 @@
+detach? 22:
+.gfd m33
+.o$
+!rolaid boots/r
+filename                        pages
+DSK:BOOT3B.KI[1,4]              3
+DSK:BOOT3B.KL[1,4]              3
+DSK:BOOT3P.KI[1,4]              3
+DSK:BOOT3P.KL[1,4]              3
+DSK:BOOT5B.KI[1,4]              3
+DSK:BOOT5B.KL[1,4]              3
+DSK:BOOT5P.KI[1,4]              3
+DSK:BOOT5P.KL[1,4]              3
+DSK:BOOTS.SAV[1,4]              2
+DSK:BOOTS1.SAV[1,4]             2
+End of SAIL execution
+!delete boots.rol
+!
+23:
+.gfd m33
+.o$
+!rolaid boots/r
+filename                        pages
+DSK:BOOT3B.KI[1,4]              3
+DSK:BOOT3B.KL[1,4]              3
+DSK:BOOT3P.KI[1,4]              3
+DSK:BOOT3P.KL[1,4]              3
+DSK:BOOT5B.KI[1,4]              3
+DSK:BOOT5B.KL[1,4]              3
+DSK:BOOT5P.KI[1,4]              3
+DSK:BOOT5P.KL[1,4]              3
+DSK:BOOTS.SAV[1,4]              2
+DSK:BOOTS1.SAV[1,4]             2
+End of SAIL execution
+!delete boots.rol
+!
+25:
+.gfd m33
+.o$
+!rolaid boots/r
+filename                        pages
+DSK:BOOT3B.KI[1,4]              3
+DSK:BOOT3B.KL[1,4]              3
+DSK:BOOT3P.KI[1,4]              3
+DSK:BOOT3P.KL[1,4]              3
+DSK:BOOT5B.KI[1,4]              3
+DSK:BOOT5B.KL[1,4]              3
+DSK:BOOT5P.KI[1,4]              3
+DSK:BOOT5P.KL[1,4]              3
+DSK:BOOTS.SAV[1,4]              2
+DSK:BOOTS1.SAV[1,4]             2
+End of SAIL execution
+!delete boots.rol
+!
+26:
+.gfd m33
+.o$
+!rolaid boots/r
+filename                        pages
+DSK:BOOT3B.KI[1,4]              3
+DSK:BOOT3B.KL[1,4]              3
+DSK:BOOT3P.KI[1,4]              3
+DSK:BOOT3P.KL[1,4]              3
+DSK:BOOT5B.KI[1,4]              3
+DSK:BOOT5B.KL[1,4]              3
+DSK:BOOT5P.KI[1,4]              3
+DSK:BOOT5P.KL[1,4]              3
+DSK:BOOTS.SAV[1,4]              2
+DSK:BOOTS1.SAV[1,4]             2
+End of SAIL execution
+!delete boots.rol
+!
+27:
+.gfd m33
+.o$
+!rolaid boots/r
+filename                        pages
+DSK:BOOT3B.KI[1,4]              3
+DSK:BOOT3B.KL[1,4]              3
+DSK:BOOT3P.KI[1,4]              3
+DSK:BOOT3P.KL[1,4]              3
+DSK:BOOT5B.KI[1,4]              3
+DSK:BOOT5B.KL[1,4]              3
+DSK:BOOT5P.KI[1,4]              3
+DSK:BOOT5P.KL[1,4]              3
+DSK:BOOTS.SAV[1,4]              2
+DSK:BOOTS1.SAV[1,4]             2
+End of SAIL execution
+!delete boots.rol
+!
+29:
+.gfd m33
+.o$
+!rolaid boots/r
+filename                        pages
+DSK:BOOT3B.KI[1,4]              3
+DSK:BOOT3B.KL[1,4]              3
+DSK:BOOT3P.KI[1,4]              3
+DSK:BOOT3P.KL[1,4]              3
+DSK:BOOT5B.KI[1,4]              3
+DSK:BOOT5B.KL[1,4]              3
+DSK:BOOT5P.KI[1,4]              3
+DSK:BOOT5P.KL[1,4]              3
+DSK:BOOTS.SAV[1,4]              2
+DSK:BOOTS1.SAV[1,4]             2
+End of SAIL execution
+!delete boots.rol
+!
+30:
+.gfd m33
+.o$
+!rolaid boots/r
+filename                        pages
+DSK:BOOT3B.KI[1,4]              3
+DSK:BOOT3B.KL[1,4]              3
+DSK:BOOT3P.KI[1,4]              3
+DSK:BOOT3P.KL[1,4]              3
+DSK:BOOT5B.KI[1,4]              3
+DSK:BOOT5B.KL[1,4]              3
+DSK:BOOT5P.KI[1,4]              3
+DSK:BOOT5P.KL[1,4]              3
+DSK:BOOTS.SAV[1,4]              2
+DSK:BOOTS1.SAV[1,4]             2
+End of SAIL execution
+!delete boots.rol
+!
+31:
+.gfd m33
+.o$
+!rolaid boots/r
+filename                        pages
+DSK:BOOT3B.KI[1,4]              3
+DSK:BOOT3B.KL[1,4]              3
+DSK:BOOT3P.KI[1,4]              3
+DSK:BOOT3P.KL[1,4]              3
+DSK:BOOT5B.KI[1,4]              3
+DSK:BOOT5B.KL[1,4]              3
+DSK:BOOT5P.KI[1,4]              3
+DSK:BOOT5P.KL[1,4]              3
+DSK:BOOTS.SAV[1,4]              2
+DSK:BOOTS1.SAV[1,4]             2
+End of SAIL execution
+!delete boots.rol
+!
+33:
+.gfd m33
+.o$
+!rolaid boots/r
+filename                        pages
+DSK:BOOT3B.KI[1,4]              3
+DSK:BOOT3B.KL[1,4]              3
+DSK:BOOT3P.KI[1,4]              3
+DSK:BOOT3P.KL[1,4]              3
+DSK:BOOT5B.KI[1,4]              3
+DSK:BOOT5B.KL[1,4]              3
+DSK:BOOT5P.KI[1,4]              3
+DSK:BOOT5P.KL[1,4]              3
+DSK:BOOTS.SAV[1,4]              2
+DSK:BOOTS1.SAV[1,4]             2
+End of SAIL execution
+!delete boots.rol
+!
+34:
+.gfd m33
+.o$
+!rolaid boots/r
+filename                        pages
+DSK:BOOT3B.KI[1,4]              3
+DSK:BOOT3B.KL[1,4]              3
+DSK:BOOT3P.KI[1,4]              3
+DSK:BOOT3P.KL[1,4]              3
+DSK:BOOT5B.KI[1,4]              3
+DSK:BOOT5B.KL[1,4]              3
+DSK:BOOT5P.KI[1,4]              3
+DSK:BOOT5P.KL[1,4]              3
+DSK:BOOTS.SAV[1,4]              2
+DSK:BOOTS1.SAV[1,4]             2
+End of SAIL execution
+!delete boots.rol
+!
+35:
+.gfd m33
+.o$
+!rolaid boots/r
+filename                        pages
+DSK:BOOT3B.KI[1,4]              3
+DSK:BOOT3B.KL[1,4]              3
+DSK:BOOT3P.KI[1,4]              3
+DSK:BOOT3P.KL[1,4]              3
+DSK:BOOT5B.KI[1,4]              3
+DSK:BOOT5B.KL[1,4]              3
+DSK:BOOT5P.KI[1,4]              3
+DSK:BOOT5P.KL[1,4]              3
+DSK:BOOTS.SAV[1,4]              2
+DSK:BOOTS1.SAV[1,4]             2
+End of SAIL execution
+!delete boots.rol
+!
+37:
+.gfd m33
+.o$
+!rolaid boots/r
+filename                        pages
+DSK:BOOT3B.KI[1,4]              3
+DSK:BOOT3B.KL[1,4]              3
+DSK:BOOT3P.KI[1,4]              3
+DSK:BOOT3P.KL[1,4]              3
+DSK:BOOT5B.KI[1,4]              3
+DSK:BOOT5B.KL[1,4]              3
+DSK:BOOT5P.KI[1,4]              3
+DSK:BOOT5P.KL[1,4]              3
+DSK:BOOTS.SAV[1,4]              2
+DSK:BOOTS1.SAV[1,4]             2
+End of SAIL execution
+!delete boots.rol
+!
+38:
+.gfd m33
+.o$
+!rolaid boots/r
+filename                        pages
+DSK:BOOT3B.KI[1,4]              3
+DSK:BOOT3B.KL[1,4]              3
+DSK:BOOT3P.KI[1,4]              3
+DSK:BOOT3P.KL[1,4]              3
+DSK:BOOT5B.KI[1,4]              3
+DSK:BOOT5B.KL[1,4]              3
+DSK:BOOT5P.KI[1,4]              3
+DSK:BOOT5P.KL[1,4]              3
+DSK:BOOTS.SAV[1,4]              2
+DSK:BOOTS1.SAV[1,4]             2
+End of SAIL execution
+!delete boots.rol
+!
+54:
+.gfd m33
+.o$
+!rolaid boots/r
+filename                        pages
+DSK:BOOT3B.KI[1,4]              3
+DSK:BOOT3B.KL[1,4]              3
+DSK:BOOT3P.KI[1,4]              3
+DSK:BOOT3P.KL[1,4]              3
+DSK:BOOT5B.KI[1,4]              3
+DSK:BOOT5B.KL[1,4]              3
+DSK:BOOT5P.KI[1,4]              3
+DSK:BOOT5P.KL[1,4]              3
+DSK:BOOTS.SAV[1,4]              2
+DSK:BOOTS1.SAV[1,4]             2
+End of SAIL execution
+!delete boots.rol
+!
+55:
+.gfd m33
+.o$
+!rolaid boots/r
+filename                        pages
+DSK:BOOT3B.KI[1,4]              3
+DSK:BOOT3B.KL[1,4]              3
+DSK:BOOT3P.KI[1,4]              3
+DSK:BOOT3P.KL[1,4]              3
+DSK:BOOT5B.KI[1,4]              3
+DSK:BOOT5B.KL[1,4]              3
+DSK:BOOT5P.KI[1,4]              3
+DSK:BOOT5P.KL[1,4]              3
+DSK:BOOTS.SAV[1,4]              2
+DSK:BOOTS1.SAV[1,4]             2
+End of SAIL execution
+!delete boots.rol
+!
+56:
+.gfd m33
+.o$
+!rolaid boots/r
+filename                        pages
+DSK:BOOT3B.KI[1,4]              3
+DSK:BOOT3B.KL[1,4]              3
+DSK:BOOT3P.KI[1,4]              3
+DSK:BOOT3P.KL[1,4]              3
+DSK:BOOT5B.KI[1,4]              3
+DSK:BOOT5B.KL[1,4]              3
+DSK:BOOT5P.KI[1,4]              3
+DSK:BOOT5P.KL[1,4]              3
+DSK:BOOTS.SAV[1,4]              2
+DSK:BOOTS1.SAV[1,4]             2
+End of SAIL execution
+!delete boots.rol
+!
+57:
+.gfd m33
+.o$
+!rolaid boots/r
+filename                        pages
+DSK:BOOT3B.KI[1,4]              3
+DSK:BOOT3B.KL[1,4]              3
+DSK:BOOT3P.KI[1,4]              3
+DSK:BOOT3P.KL[1,4]              3
+DSK:BOOT5B.KI[1,4]              3
+DSK:BOOT5B.KL[1,4]              3
+DSK:BOOT5P.KI[1,4]              3
+DSK:BOOT5P.KL[1,4]              3
+DSK:BOOTS.SAV[1,4]              2
+DSK:BOOTS1.SAV[1,4]             2
+End of SAIL execution
+!delete boots.rol
+!
+58:
+.gfd m33
+.o$
+!rolaid boots/r
+filename                        pages
+DSK:BOOT3B.KI[1,4]              3
+DSK:BOOT3B.KL[1,4]              3
+DSK:BOOT3P.KI[1,4]              3
+DSK:BOOT3P.KL[1,4]              3
+DSK:BOOT5B.KI[1,4]              3
+DSK:BOOT5B.KL[1,4]              3
+DSK:BOOT5P.KI[1,4]              3
+DSK:BOOT5P.KL[1,4]              3
+DSK:BOOTS.SAV[1,4]              2
+DSK:BOOTS1.SAV[1,4]             2
+End of SAIL execution
+!delete boots.rol
+!
+62: cannot build circuit
+65:
+.gfd m33
+.o$
+!rolaid boots/r
+filename                        pages
+DSK:BOOT3B.KI[1,4]              3
+DSK:BOOT3B.KL[1,4]              3
+DSK:BOOT3P.KI[1,4]              3
+DSK:BOOT3P.KL[1,4]              3
+DSK:BOOT5B.KI[1,4]              3
+DSK:BOOT5B.KL[1,4]              3
+DSK:BOOT5P.KI[1,4]              3
+DSK:BOOT5P.KL[1,4]              3
+DSK:BOOTS.SAV[1,4]              2
+DSK:BOOTS1.SAV[1,4]             2
+End of SAIL execution
+!delete boots.rol
+!
+70:
+.gfd m33
+.o$
+!rolaid boots/r
+filename                        pages
+DSK:BOOT3B.KI[1,4]              3
+DSK:BOOT3B.KL[1,4]              3
+DSK:BOOT3P.KI[1,4]              3
+DSK:BOOT3P.KL[1,4]              3
+DSK:BOOT5B.KI[1,4]              3
+DSK:BOOT5B.KL[1,4]              3
+DSK:BOOT5P.KI[1,4]              3
+DSK:BOOT5P.KL[1,4]              3
+DSK:BOOTS.SAV[1,4]              2
+DSK:BOOTS1.SAV[1,4]             2
+End of SAIL execution
+!delete boots.rol
+!
+74:
+.gfd m33
+.o$
+!rolaid boots/r
+filename                        pages
+DSK:BOOT3B.KI[1,4]              3
+DSK:BOOT3B.KL[1,4]              3
+DSK:BOOT3P.KI[1,4]              3
+DSK:BOOT3P.KL[1,4]              3
+DSK:BOOT5B.KI[1,4]              3
+DSK:BOOT5B.KL[1,4]              3
+DSK:BOOT5P.KI[1,4]              3
+DSK:BOOT5P.KL[1,4]              3
+DSK:BOOTS.SAV[1,4]              2
+DSK:BOOTS1.SAV[1,4]             2
+End of SAIL execution
+!delete boots.rol
+!
+95:
+.gfd m33
+.o$
+!rolaid boots/r
+?ROLAID?
+! 

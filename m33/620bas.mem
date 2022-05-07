@@ -1,0 +1,323 @@
+
+
+
+                         $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+                        $$$$                        $$$$
+                       $$$$                          $$$$
+                       $$$$$                        $$$$$
+                       $$$$$$                      $$$$$$
+                       $$$$$$$                    $$$$$$$
+                       $$$$$$$$                  $$$$$$$$
+                       $$$$$$$$$                $$$$$$$$$
+                       $$$$$$$$$$::::::::::::::$$$$$$$$$$
+                       $$$$$$$$$$$::::::::::::$$$$$$$$$$$
+                       $$$$$$$$$$$$::::::::::$$$$$$$$$$$$
+                       $$$$$$$$$$$$$::::::::$$$$$$$$$$$$$
+                       $$$$$$$$$$$$$$::::::$$$$$$$$$$$$$$
+                       $$$$$$$$$$$$$$$::::$$$$$$$$$$$$$$$
+                       $$$$$$$$$$$$$$$$::$$$$$$$$$$$$$$$$
+                       $$$$$$$$$$$$$$$ :: $$$$$$$$$$$$$$$
+                       $$$$$$$$$$$$$$  ::  $$$$$$$$$$$$$$
+                       $$$$$$$$$$$$$   ::   $$$$$$$$$$$$$
+                       $$$$$$$$$$$$    ::    $$$$$$$$$$$$
+                       $$$$$$$$$$$     ::     $$$$$$$$$$$
+                       $$$$$$$$$$      ::      $$$$$$$$$$
+                       $$$$$$$$$       ::       $$$$$$$$$
+                       $$$$$$$$      ::::::      $$$$$$$$
+                       $$$$$$$     ::::::::::     $$$$$$$
+                       $$$$$$    ::::::::::::::    $$$$$$
+                       $$$$$   ::::::::::::::::::   $$$$$
+                       $$$$  ::::::::::::::::::::::  $$$$
+                        $$$$::::::::::::::::::::::::$$$$
+                         $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+
+             TTTTT  Y   Y  M   M  SSSSS  H   H    A    RRRR   EEEEE
+               T     Y Y   MM MM  S      H   H   A A   R   R  E
+               T      Y    M M M  SSSSS  HHHHH  A   A  RRRR   EEE
+               T      Y    M   M      S  H   H  AAAAA  R  R   E
+               T      Y    M   M  SSSSS  H   H  A   A  R   R  EEEEE
+
+
+                  620 SYNCLD LOADING AND RELOADING PROCEDURES
+
+
+
+                          WRITTEN BY STEVEN CAROTHERS
+
+
+                          WESTERN COMPUTER OPERATIONS
+
+
+
+
+
+                                 SEPTEMBER 1979
+                                                                  Page 2
+
+
+                PROCEDURES AFTER SYNCLD HAS BEEN LOADED
+                ---------------------------------------
+
+
+          A.  RESTARTING BASE FROM ADDRESS ZERO
+              ---------------------------------
+
+
+                1.  TURN KEY TO POWER ON POSITION.
+
+                2.  RECORD ALL REGISTERS AND FILL OUT MAR IF
+                    NECESSARY BY PRESSING DOWN EACH REGISTER, ONE
+                    AT A TIME, AND RECORDING THE CONTENTS OF EACH.
+
+                3.  LOG INTO PROBE AND CONTACT NETWORK CONTROL
+                    BEFORE STARTING.
+
+                4.  PRESS STEP-SYSTEM RESET, AND MAKE SURE REPEAT
+                    KEY IS IN DOWN POSITION.
+
+                5.  HOLD DOWN BIT RESET AND TOGGLE THE REGISTERS,
+                    ONE AT AT TIME, UNTIL ALL THE REGISTERS HAVE
+                    BEEN DONE.
+
+                6.  PRESS P REGISTER-SYSTEM RESET (AT LEAST
+                    TWICE).
+
+                7.  PRESS RUN.
+
+                8.  CHECK PROBE.  AFTER BASE IS IN NETWORK, HOST
+                    WILL CRASH IF NOT ALREADY DOWN.
+
+                9.  MAKE SURE CRASH IS SAVED.
+
+               10.  IF THIS DOES NOT WORK, SET SENSE SWITCH 4 AND
+                    GO TO SECTION C.
+
+
+          B.  DOWNSTREAM LOAD BY TYMNET (NORMAL)
+              ----------------------------------
+
+
+                1.  CHECK WITH NETWORK CONTROL.
+
+                2.  BRING HOST DOWN ON TYMNET OK.
+
+                3.  TYMNET WILL BRING BASE DOWN AND BACKUP.
+
+                4.  BRING HOST UP ON TYMNET OK.
+                                                                  Page 3
+
+
+          C.  DOWNSTREAM LOAD BY TYMNET
+              -------------------------
+
+
+                1.  HAVE HOST IN DOWN STATUS AND CONTACT NETWORK
+                    CONTROL.
+
+                2.  PRESS STEP-SYSTEM RESET, AND MAKE SURE REPEAT
+                    KEY IS IN DOWN POSITION.
+
+                3.  HOLD DOWN BIT RESET AND TOGGLE ALL THE
+                    REGISTERS, ONE AT A TIME, UNTIL ALL THE
+                    REGISTERS HAVE BEEN DONE.
+
+                4.  IF A DIFFERENT LINE IS NEEDED FOR DOWNSTREAM
+                    LOADING, FAT FINGER IN THE NEW LINE IN THE
+                    FOLLOWING WAY:
+
+                          A.  PRESS U REGISTER-BIT RESET AND PLACE
+                              '54000' INTO IT.  THIS WILL ALLOW
+                              YOU TO PLACE NEW CONTENTS INTO
+                              ADDRESSES.
+
+                          B.  PRESS P REGISTER-BIT RESET AND ENTER
+                              THE PROPER ADDRESS.
+
+                          C.  PRESS A REGISTER-BIT RESET AND ENTER
+                              THE DATA FOR/THIS LOCATION.
+
+                          D.  PRESS STEP TO ENTER NUMBER INTO
+                              ADDRESS.
+
+                          E.  REPEAT STEPS B-D UNTIL ALL ADDRESSES
+                              CONTAIN THE PROPER ADDRESS.
+
+                          F.  PRESS U REGISTER-BIT RESET AND ENTER
+                              '14000'.  THIS WILL ALLOW YOU TO
+                              READ THE CONTENTS OF AN ADDRESS.
+
+                          G.  PRESS P REGISTER-BIT RESET AND ENTER
+                              ADDRESS, AND THEN PRESS A
+                              REGISTER-STEP.
+
+                          H.  IF THE ADDRESS CONTENTS IS
+                              INCORRECT, FOLLOW STEPS A-D TO ENTER
+                              PROPER NUMBER INTO ADDRESS, THEN GO
+                              BACK TO STEP F.
+
+                          I.  REPEAT STEPS G-H UNTIL ALL ADDRESSES
+                              HAVE BEEN CONFIRMED.
+
+                5.  PRESS P REGISTER.  ENTER '17640'.
+
+                6.  PRESS SYSTEM RESET (TWICE) AND RUN.
+
+                7.  CONTACT NETWORK CONTROL.
+                                                                  Page 4
+
+
+          D.  LOADING BOOTSTRAP IF SYNCLD NEEDS RELOADING.
+              -------------------------------------------
+
+
+                1.  LOG INTO PROBE AND CONTACT NETWORK CONTROL
+                    BEFORE STARTING.
+
+                2.  TURN KEY TO POWER ON POSITION.
+
+                3.  PRESS STEP-SYSTEM RESET-BIT RESET, AND MAKE
+                    SURE REPEAT KEY IS IN DOWN POSITION.
+
+                4.  HOLD DOWN BIT RESET AND TOGGLE THE REGISTERS,
+                    ONE AT A TIME, UNTIL ALL THE REGISTERS HAVE
+                    BEEN DONE.
+
+                5.  PRESS THE U REGISTER-BIT RESET AND ENTER
+                    '54000' INTO IT.  THIS WILL ALLOW YOU TO ENTER
+                    NEW CONTENTS INTO ADDRESSES.
+
+                6.  PRESS P REGISTER-BIT RESET AND ENTER STARTING
+                    ADDRESS '17733'.
+
+                7.  PRESS A REGISTER-BIT RESET.
+
+                8.  ENTER FIRST/NEXT LOCATION ON BOOTSTRAP.
+
+                9.  PRESS STEP SWITCH.  THIS LOADS THE NEW
+                    CONTENTS INTO THE SELECTED ADDRESS AND
+                    INCREMENTS THE REGISTER TO THE NEXT ADDRESS IN
+                    MEMORY.
+
+               10.  PRESS BIT RESET.
+
+               11.  REPEAT STEPS 7-10 UNTIL THE ENTIRE BOOTSTRAP
+                    IS ENTERED.
+
+               12.  CHECK BOOTSTRAP  (SECTION E).
+
+               13.  WHEN COMPLETED, ENTER '17733' IN P REGISTER. 
+                    PRESS SYSTEM RESET.
+
+               14.  GO TO SECTION F, STEP 7.
+                                                                  Page 5
+
+
+          E.  CHECKING BOOTSTRAP
+              ------------------
+
+
+                1.  TURN ON KEY TO POWER ON POSITION.
+
+                2.  PRESS STEP-SYSTEM RESET, AND MAKE SURE REPEAT
+                    KEY IS IN DOWN POSITION.
+
+                3.  HOLD DOWN BIT RESET AND TOGGLE EACH REGISTER,
+                    ONE AT AT TIME, UNTIL ALL THE REGISTERS HAVE
+                    BEEN DONE.
+
+                4.  ENTER '14000' INTO THE U REGISTER.  THIS WILL
+                    ALLOW YOU TO READ THE CONTENTS OF AN ADDRESS
+                    IN MEMORY.
+
+                5.  PRESS THE P REGISTER-BIT RESET AND ENTER
+                    '17733' INTO IN.
+
+                6.  PRESS A REGISTER-STEP TO DISPLAY THE CONTENTS
+                    OF THE ADDRESS.
+
+                7.  IF THE CONTENTS IS INCORRECT, YOU MUST:
+
+                          A.  PRESS U REGISTER-BIT RESET AND ENTER
+                              '54000' INTO THE REGISTER.
+
+                          B.  PRESS P REGISTER-BIT RESET AND ENTER
+                              THE ADDRESS DESIRED.
+
+                          C.  PRESS A REGISTER-BIT RESET AND ENTER
+                              THE FIRST/NEXT LOCATION.
+
+                          D.  PRESS STEP TO ENTER THE CONTENTS.
+
+                          E.  PRESS U REGISTER-BIT RESET AND ENTER
+                              '14000'.
+
+                          F.  PRESS P REGISTER-BIT RESET, ENTER
+                              THE ADDRESS DESIRED AND GO BACK TO
+                              STEP 6.
+
+                8.  REPEAT STEPS 6-7 UNTIL THE ENTIRE BOOTSTRAP
+                    HAS BEEN CONFIRMED.
+
+                9.  GO TO SECTION F, STEP 7.
+                                                                  Page 6
+
+
+                    INITIAL LOADING OF SYNCLD ON 620
+                  -----------------------------------
+
+
+          F.  LOADING A BASE FOR INITIAL SYNCLD
+              ---------------------------------
+
+
+              (ALSO FOR SYNCLD RELOAD AFTER SECTIONS D AND E)
+
+
+                1.  LOG INTO PROBE, AND CONTACT NETWORK CONTROL
+                    BEFORE STARTING.
+
+                2.  TURN KEY FROM CONSOLE DISABLE POSITION TO
+                    POWER ON.
+
+                3.  PRESS STEP.  MAKE SURE REPEAT KEY IS IN DOWN
+                    POSITION.
+
+                4.  HOLD DOWN BIT RESET AND TOGGLE THE REGISTERS,
+                    ONE AT A TIME, UNTIL ALL THE REGISTER HAVE
+                    BEEN DONE.
+
+                5.  ENTER '17733' INTO THE P REGISTER AND PRESS
+                    SYSTEM RESET.
+
+                6.  PRESS RUN ON BASE.  (SHOULD GO INTO STEP AT
+                    ADDRESS 17746)
+
+                7.  IF LOADING FROM LINE OTHER THAN 0, CONTACT
+                    NETWORK CONTROL FOR THE NEW LINE AND SET THE
+                    SENSE SWITHCES BY THE FOLLOWING METHOD:
+
+                          A.  EACH SENSE SWITCH IS WORTH A VALUE. 
+                              THEY ARE
+
+                                    SENSE SWITCH 1=4
+
+                                    SENSE SWITCH 2=2
+
+                                    SENSE SWITCH 3=1
+
+                          B.  IF YOU ARE TO SET LINE 5, PRESS DOWN
+                              SET SWITHCES 1 AND 3, LINE 4, PRESS
+                              DOWN SET SWITCH 4, ETC...
+
+                8.  SET THE P REGISTER TO POSITION 17640 AND PRESS
+                    RUN.
+
+                9.  CALL NETWORK CONTROL AND LET THEM KNOW THEY
+                    CAN NOW DOWNSTREAM LOAD THE  BASE.
+
+               10.  CHECK PROBE.  WHEN BASE IS IN NETWORK, CHECK
+                    WITH NETWORK CONTROL TO BE SURE THAT HOST CAN
+                    BE BROUGHT UP, AND THEN MAKE SURE SET SWITCHES
+                    ARE SET TO LINE 0.
+    

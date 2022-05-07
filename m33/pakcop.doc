@@ -1,0 +1,915 @@
+
+
+
+                     PAKCOP - THE PACK COPY PROGRAM
+                     ------ - --- ---- ---- -------
+
+
+       ((INTRODUCTION))
+
+            The PAKCOP program is the general  purpose  utility  package
+       for  establishing,  copying  and  otherwise dealing with the disk
+       packs used  on  the  TYMCOM-X  for  file  storage  and  swapping.
+       Through   this   program,  ID  information,  HOM  and  BAT  block
+       parameters, pack formatting and any use of alternate  tracks  can
+       be  established.   One  of the most commonly used capabilities is
+       the copying of entire packs to other  packs,  either  to  provide
+       off-line  backup  or  to  enable replacing error-prone disk packs
+       with other packs.
+
+            Since the effects of this  program  are  so  extensive,  the
+       interaction   of   other   processes  on  the  TYMCOM-X  must  be
+       eliminated:  PAKCOP is therefore a 'stand-alone' program - it can
+       only be run after the system has been taken down;  it must be the
+       only job running.  The important  consequences  of  this  program
+       also  require  that  the  operator  maintain the highest level of
+       caution and attentiveness  while  running  it  from  the  console
+       teletype.  The RESTART and LIST commands (described below) should
+       always be used whenever packs  are  moved.   During  copies,  the
+       running  packs  should  be  write protected.  All pack labels and
+       tags should be kept accurate.  In general, a good  precaution  is
+       to DOUBLE-CHECK EVERYTHING whenever you are using PAKCOP!
+
+
+       ((COMMAND DESCRIPTION))
+
+
+            When the PAKCOP program for the Ampex DM331 disk drives  (or
+       IBM  3330's)  is  loaded,  it  will  print its version number and
+       request that the date be typed in.  After the  date  is  entered,
+       the  program  will  check  the  status of all units and print the
+       information on the teletype.  PAKCOP  has  information  assembled
+       into  it about which units are on what SA-10, which channel, etc.
+       It can be assembled to handle the maximum  configuration  of  any
+       system  so that it is only necessary to have one copy.  Any units
+       not present on the system on which it is being run will simply be
+       reported as off-line.
+
+            Units  are  named  by  their  device  addresses  because  of
+       possible  differences  in  configuration  between  systems.   The
+       device address is in octal.  The low order digit  corresponds  to
+       the number on the address plug.
+
+
+            If an SA-10, SA-10 channel, or DC830 kontroller is off-line,
+       PAKCOP  will  report  that  along  with  a  list  of the units it
+       expected to find on that device.  Examples:  
+
+       KONTROLER OFF-LINE, UNITS 340-347
+       SA-10 CHANNEL OFF-LINE, UNITS 340-347,100-103
+       SA-10 OFF-LINE, UNITS 340-347,100-103,240-241
+                                                                  Page 2
+
+
+       If the SA-10, SA-10 channel, and kontroler  are  all  on-line,  a
+       report  will  be  made  for  each  unit.  If the unit is off-line
+       (turned off, no address plug with that number, etc.)  the  report
+       will be:
+
+       '365 OFF-LINE
+
+       If the unit is on line, the report will be
+
+       '362 ON-LINE'
+
+       possibly followed by one or more of the following:
+
+       DUAL DENSITY (unit is a model ii with twice model i capacity)
+       WRITE PROTECT (the read read/write switch is in read)
+       UNFORMATTED  (pack format improper; needs reformatting.)
+
+            If the unformatted message is given, PAKCOP is not  able  to
+       determine if the pack is write protected.  After the above report
+       of unit status, the program prompts with '*' for a command.  When
+       typing  to  PAKCOP,  rubout  and control U can be used just as at
+       monitor  level.   Typeout  may  be  suppressed  with  control  O.
+       Commands  may  be  abreviated  to as many characters as make them
+       unique.  Three characters are always enough.  when waiting for  a
+       command,  PAKCOP  will  ring  the  bell  once  every two seconds.
+       PAKCOP may be aborted at any time and returned to  command  level
+       by typing the (esc) or (alt) key.
+                                                                  Page 3
+
+
+                            GENERAL COMMANDS
+
+       SHH
+
+            This command causes PAKCOP to stop ringing  the  bell.   its
+       effect is canceled whenever a command is executed.
+
+       HELP
+
+            This  command  causes  a  list  of  commands  with  a  short
+       description of each to be printed.
+
+       STATUS
+
+            This command  prints  out  the  status  (unformatted,  write
+       protect, etc.) of each unit which is on-line.
+
+       RESTART
+
+            This command causes the program to retest the status of  all
+       units.  If a unit is turned on or changed form read to read/write
+       or read/write to read, this command must be used  for  PAKCOP  to
+       sense  the  new  status  of the unit.  It should be used whenever
+       packs are moved.
+
+       LOAD
+
+            This command causes PAKCOP to check the units on-line in  an
+       attempt  to  find a copy of the boot program.  If it finds one it
+       loads it in core and starts it.  If one is not found a message in
+       typed  and  a  restart is performed without needing the bootstrap
+       tape.
+                                                                  Page 4
+
+
+                             UNIT COMMANDS
+
+            The following commands require a unit or a set of  units  to
+       be  specified.   A single unit is specified by typing its number.
+       A set of units may be specified by typing a list  of  numbers  as
+       367,360,364,362  or  'ALL'  may  be  used.   If  ALL is used, the
+       command will affect all units which are  on-line.   If  the  unit
+       number  of  a  drive  which  is off-line, or if a bad string (not
+       numbers, etc.) is typed the operator will be asked to retype  the
+       drive list.  Each of the following commands is followed by either
+       (list) or (one unit) to indicate whether the command will  accept
+       a list of units or only one.
+
+       LIST (list)
+
+            This command lists information from the HOM and bat pages on
+       the  unit.   If  the  HOM  and  BAT pages are not correct or have
+       hardware errors one or more of the following messages may appear:
+
+       FIRST HOM PAGE HARDWARE READ ERROR
+       SECOND HOM PAGE HARDWARE READ ERROR
+       FIRST HOM PAGE CONSISTENCY ERROR
+       SECOND HOM PAGE CONSISTENCY ERROR
+       FIRST BAT PAGE HARDWARE READ ERROR
+       SECOND BAT PAGE HARDWARE READ ERROR
+       FIRST BAT PAGE CONSISTENCY ERROR
+       SECOND BAT PAGE CONSISTENCY ERROR
+
+       The information printed from the HOM and BAT pages is:
+
+       UNIT ID: 360103
+       STRUCTURE: DSKB LOGICAL UNIT: DSKB0
+       NO COPY DATE       OR      LAST COPY DATE 12-NOV-1973
+       NUMBER OF BAD REGIONS: 1
+       NUMBER OF BAD SECTORS: 1
+       RECORD,HEAD,CYL 5,13,107
+       1 RECORDS(S)  12-NOV-1973     OR     NO DATE
+
+            (If there are no errors indicated in the BAT pages  'NO  BAD
+       SPOTS' will be printed.)
+
+       INIT (one unit)
+
+            This command initializes the HOM and BAT pages  on  a  unit.
+       if the unit already has HOM pages, PAKCOP will ask 
+       UNIT ALREADY HAS HOM PAGES, OVERWRITE? 
+
+            An answer of YES is required (or Y or YE) in order to  write
+       new  HOM and BAT pages.  The command will then prompt 'ID:'.  The
+       id to be specified  is  any  6  characters.   However,  the  copy
+       command  expects the first two character to be the system number,
+       the second two characters to be the pack set number and the  last
+       two  characters  to  be  the pack number.  For swapper packs, the
+       current convention is to use the ID 3X99SW where 3X is the system
+       number.  If it becomes necessary to replace a swapper pack, a new
+       formatted pack can be given the  ID  3X88SW.   Then  the  running
+       swapper can be copied onto the new pack.
+                                                                  Page 5
+
+
+       NEW (one unit)
+
+            This command changes the id in the HOM page on the  selected
+       unit.  The unit must already have valid HOM pages.  The prompt is
+       'ID:'.
+
+            The 230's and 3330's  have  the  ability  to  use  alternate
+       tracks  to  take  care  of  bad  spots on a pack.  A track may be
+       marked as defective with a pointer to its alternate.  Every  time
+       the  defective track is referenced, the alternate will be read or
+       written instead.  This  avoids  problems  with  inconsistant  BAT
+       pages  on  a  copy.   PAKCOP  can  report and check the alternate
+       tracks that have been set up.  A  fresh  pack  has  133  possible
+       alternate tracks.
+
+       ALIST (list)
+
+            This command prints a list of which alternate tracks are  in
+       use  and  how many remain available.  The three possible messages
+       are:  
+
+       CYL,HEAD 405,2 DEFECTIVE
+       (The alternate track itself is bad)
+       CYL,HEAD 405,2 ALTERNATE FOR CYL,HEAD 139,5
+       (An alternate track has been set up, cyl 139 head 5 is defective)
+       131 ALTERNATE TRACKS REMAINING
+       (This the the number of alternate tracks still available for
+       use.)
+
+       AVERIFY (list)
+
+            This  command  checks  that  tracks  which  are  marked   as
+       alternates  are  in fact pointed to by tracks which are marked as
+       defective.  The  command  will  either  respond  with  'ALTERNATE
+       TRACKS  VERIFIED'  or a series of messages of the form 'INCORRECT
+       ALTERNATE TRACK.  CYL,HEAD 408,18'.
+
+       AFORMAT (list)
+
+            This command does the  averify  function  and  corrects  any
+       problems  found.   If  there  are  no  hardware  errors, the only
+       response is 'ALTERNATE TRACKS FORMATTED AND VERIFIED'.
+
+       VERIFY (list)
+
+            This command checks the formatting of the entire  pack.   If
+       the  formatting  is correct, the message 'VERIFIED UNIT 367' will
+       be printed.  If the format is  not  correct,  an  error  will  be
+       printed:  'UNIT 362 BAD ALTERNATE TRACK SETUP ON CYL 135 HEAD 15'
+       or 'INCORRECT FORMAT' followed by 'UNIT 365 DOES NOT VERIFY'
+
+            If the bad alternate track  message  is  printed,  give  the
+       printout  and  the  pack  to  your  shift supervisor.  the VERIFY
+       command calls the AVERIFY command.
+                                                                  Page 6
+
+
+       FORMAT (list)
+
+            This command establishes the correct format on  a  pack  the
+       format  command  calls  the  AFORMAT  command.  It also calls the
+       VERIFY command when it has finished to insure that the format has
+       been  correctly set.  If PAKCOP believes that the pack is already
+       formatted, it will ask:  'UNIT 365 ALREADY FORMATTED,  REFORMAT?'
+       An answer of YES will cause the pack to be reformatted.  If there
+       are no errors, the message 'FORMATTED  AND  VERIFIED,  UNIT  362'
+       will be printed.  Possible errors are:
+
+       UNIT 362 DOES NOT VERIFY
+       (the format was written with no error indication but won't
+       verify)
+
+       UNIT 362 BAD ALTERNATE TRACK SETUP ON CYL 135 HEAD 15
+       (save the printout and notify the shift supervisor)
+
+            Any hardware error will be followed by the message
+       'FORMAT ABORTED'.
+
+       COPY (list)
+
+            The copy command has several options which are selected
+       by KI console es 1,2, and 3. The copy command will always
+       print out a list of the options as currently selected.
+       the normal mode of operation is with none of the switches on.
+
+            SWITCH 1 OFF
+       alternate tracks will be assigned for pages
+       indicated bad in BAT pages (sense switch 1)
+
+            SWITCH 1 ON
+       copy will abort if any bad regions are
+       indicated in the BAT pages (sense switch 1)
+
+            SWITCH 2 OFF
+       copy will abort on read errors from source pack
+       for pages not marked bad (sense switch 2)
+
+            SWITCH 2 ON
+       read errors from source pack will be reported but
+       copy will continue (sense switch 2)
+
+            SWITCH 3 OFF
+       alternate tracks will be assigned for pages
+       with read or write errors on destination pack (sense switch 3)
+
+            SWITCH 3 ON
+       copy will abort on read or write errors on
+       destination pack (sense switch 3)
+
+            After printing the options currently in force, PAKCOP
+       prompts with:
+       'SOURCE DRIVES:'
+
+       a list of source drives may be specified. Since the program takes
+                                                                  Page 7
+
+
+       advantage of i/o overlap, copying more that one drive at a time
+       is an advantage.
+
+            After the list of source drives is typed, the following
+       is repeated for each source drive.
+       'COPY FROM 364 TO:'
+       PAKCOP now wants the unit number of the destination drive
+       for the specified source drive. After this number is
+       supplied, any of a number of errors may result.
+
+       SOURCE DRIVE NOT FORMATTED
+       DESTINATION DRIVE NOT FORMATTED
+       SOURCE DRIVE NOT WRITE PROTECTED
+       DESTINATION DRIVE WRITE PROTECTED
+       DESTINATION DRIVE ALREADY IN USE 
+       (the destination drive specified for more than one copy
+       operation)
+       SOURCE AND DESTINATION DRIVE NOT SAME TYPE 
+       (one is dual density and the other is single density)
+
+            Any of these messages will cause this copy (not all of them)
+       to  terminate.   Whenever  a  copy  terminates, a message will be
+       printed 'COPY FROM 364 TO 362 ABORTED'.  
+
+            PAKCOP will not read the HOM and BAT pages  on  both  units.
+       any  HOM or BAT page errors will abort the copy.  The HOM id's of
+       both units will be checked as well as the  copy  dates.   When  a
+       copy  is  completed, the copy date of the destination pack is set
+       to the current date.  Any one of a number of messages may now  be
+       printed 
+
+       DESTINATION COPY DATE LATER THAN SOURCE COPY DATE
+       SOURCE AND DESTINATION SYSTEM NUMBERS DIFFER
+       SOURCE AND DESTINATION UNIT NUMBERS DIFFER
+       SOURCE AND DESTINATION SET NUMBERS ARE THE SAME
+
+            Then the message 'COPY FROM 360106 TO 360206  OK?'  will  be
+       printed.   The  units  are  specified  by  their HOM id's in this
+       message.  If the answer is not YES, the copy will be aborted.  if
+       the answer is YES, the copy will proceed as follows:
+
+            The BAT pages of the destination unit will be  checked.   If
+       any  pages  are indicated as bad, they will be checked by writing
+       and reading some selected data patterns.  If any are really found
+       to  be  bad,  the  copy  will  either  abort or attempt to assign
+       alternate tracks depending on the setting of sense switch 1.   If
+       alternate  tracks  are  assigned,  a  message  will be printed as
+       'CYL,HEAD 407,3 ASSIGNED AS ALTERNATE FOR CYL,HEAD 125,8'  If  no
+       more  alternates  are  available,  the message 'NO MORE ALTERNATE
+       TRACKS AVAILABLE' will print and the copy will be aborted.
+
+            After the BAT  pages  on  the  destination  pack  have  been
+       checked,  the  copy  will proceed by reading data from the source
+       unit, writing it on the destination unit, reading  it  back  from
+       the  destination  unit, and comparing the data.  If no errors are
+       detected the HOM pages on the destination pack are  then  updated
+       with  the copy date and the structure information from the source
+                                                                  Page 8
+
+
+       pack.  the BAT pages of the  destination  pack  are  cleared.   A
+       final message is printed:  'COPY COMPLETED FROM 362 TO 364'
+
+
+                                 TIMING
+
+            Below are some of the timing figures  for  operations  which
+       can be done in parallel.
+
+               OPERATION       NUMBER OF UNITS
+               ---------       ---------------
+                               1       2       3
+               COPY            9:40    14:15   20:30
+               VERIFY          2:25     4:30    6:40
+               FORMAT          6:50    13:10   19:30
+
+               (APPROXIMATE TIMES ARE IN MINUTES AND SECONDS)
+                                                                  Page 9
+
+
+                            HIDDEN COMMANDS
+
+
+                                     NOTE
+
+           The following commands are protected or  hidden  in  that
+           they  require  two  commands  to  activate  them.   These
+           commands are not normally  used.   Their  use  should  be
+           limited  to  special  situations  and  to  maintence  and
+           supervisory personel.
+
+
+
+            To use one of these commands, type the command.  PAKCOP will
+       respond with 'TYPE HELP FOR A LIST OF COMMANDS' 
+
+            Then to start the appropriate command (assuming you are sure
+       about what you are about to do) type 'DO IT'.
+
+       REFRESH (one unit)
+
+            This command reformats an  entire  pack  including  the  HOM
+       pages  and  record 0's which are used to hold the alternate track
+       information.  Thus all alternate track information  is  reset  to
+       show  all  tracks  good and a format command is done.  the verify
+       portion of the format command is not done.
+
+       OLD (one unit)
+
+            This command asks for a source and a destination  unit.   It
+       then  makes a complete copy of the source unit on the destination
+       unit.  Nothing special is done for HOM or BAT pages.  Every  page
+       on  the  source  unit is coppxactly as it is.  All pages are
+       written on the destination unit, read  back,  and  checked.   any
+       error will abort the copy.
+
+       ASSIGN (one unit)
+
+            This command is used  to  force  the  setting  of  alternate
+       tracks.   It  will  ask for a cylinder and head.  If the track is
+       not one that is normally considered 'spare', an alternate will be
+       searched  for  and  set up.  The program will report the cylinder
+       and head  selected.   If  the  track  is  one  that  is  normally
+       considered 'spare', it is marked defective.
+
+       DEASSIGN (one unit)
+
+            This command is used to "unset" alternate tracks.  It is the
+       opposite  of  the  assign  command.   If the track indicated is a
+       'spare' and is marked defective, it is remarked as good.  if  the
+       track  is  not a 'spare' and is marked defective, both it and the
+       track assigned as its alternate are marked good.
+                                                                 Page 10
+
+
+       ((SAMPLE RUN))
+
+
+                            PROGRAM STARTUP
+
+       "ACCOUNTING DEVICE RELEASED"
+       "HANGUP RUN"                    ;THE SYSTEM IS TAKEN DOWN
+       "BOOTS LOADED"
+       PAKCOPCR>
+
+       "230 AND 3330 PACK COPY AND FORMAT (PAKCOP)"
+       "VERSION 11"
+
+       "TYPE DATE AS MM-DD-YYYY" 07-08-1976 (CR)
+       "300 ON-LINE, DUAL DENSITY
+       301 ON-LINE,DUAL DENSITY
+       302 ON-LINE, DUAL DENSITY       ;THE RUNNING SET
+       303 ON-LINE, DUAL DENSITY
+       304 ON-LINE, DUAL DNNSITY
+       305 OFF-LINE
+       306 OFF-LINE
+       307 OFF-LINE                    ;THE PROGRAM IS ASSEMBLED
+       310 OFF-LINE                    ;TO HANDLE THIS MAXIMUM
+       311 OFF-LINE                    ;NUMBER OF UNITS.
+       312 OFF-LINE
+       313 OFF-LINE
+       314 OFF-LINE
+       315 OFF-LINE
+       316 OFF-LINE
+       317 OFF-LINE"
+
+
+       "*"LIS(CR)                      ;CHECK HOMBLK INFO
+
+       "UNIT 300
+       UNIT ID: 340000
+       STRUCTURE: DSKB LOGICAL UNIT: DSKB0
+       LAST COPY DATE: 0:00 1-JULY-1976
+       NUMBER OF BAD REGIONS: 0        ;CHECK BATBLK INFO
+       NUMBER OF BAD SECTORS: 0
+       NO BAD SPOTS"
+
+       "UNIT 301
+       UNIT ID: 340001
+       STRUCTURE: DSKB LOGICAL UNIT: DSKB1
+       LAST COPY DATE: 0:00 1-JULY-1976
+       NUMBER OF BAD REGIONS: 0
+       NUMBER OF BAD SECTORE* 0
+       NO BAD SPOTS"
+
+       "UNIT 302
+       UNIT ID: 340002
+       STURCTURE: DSKB LOGICAL UNIT: DSKB2
+       LAST COPY DATE: 0:00 1-JULY-1976
+       NUMBER OF BAD REGIONS: 0
+       NUMBER OF BAD SECTORE: 0
+       NO BAD SPOTS"
+                                                                 Page 11
+
+
+       "UNIT 303
+       UNIT ID: 340003
+       STRUCTURE: DSKB LOGICAL UNIT: DSKB3
+       LAST COPY DATE: 0:00 1-JULY-1976
+       NUMBER OF BAD REGIONS: 0
+       NUMBER OF BAD SECTORS: 0
+       NO BAD SPOTS"
+
+       "UNIT 304
+       UNIT ID: 34SWAP
+       NO COPY DATE
+       NUMBER OF BAD REGIONS: 0
+       NUMBER OF BAD SECTORS: 0
+       NO BAD SPOTS"
+
+       "*"SH(CR)                       ;TO QUIET THE BELLS
+
+
+                             COPYING PACKS
+
+       (ALWAYS CHECK THE INFO ABOVE CLOSELY FOR PACK AND DRIVE STATUS.
+        NOW CHANGE PACKS: REMOVE PACK 2 AND 3 OF THE RUNNING SET
+        AND MOUNT PACKS 0 AND 1 OF THE 'COPY TO' SET; MAKE THE
+        REMAINING TWO PACKS OF THE RUNNING SET READ ONLY.)
+
+
+       "*"RESTART(CR)                  ;MAKE SURE ALL IS OK HERE
+       "300 ON-LINE, DUAL DENSITY, WRITE PROTECT
+       301 ON-LINE, DUAL DENSITY, WRITE PROTECT
+       302 ON-LINE, DUAL DENSITY
+       3-3 ON-LINE, DUAL DENSITY
+       304 OFF-LINE
+       305 OFF-LINE
+       (ETC)
+
+
+       "*"LIST(CR)
+
+       "DRIVE(S):" ALL(CR)
+
+       "UNIT 300
+       UNIT ID: 340000
+       STRUCTURE: DSKB LOGICAL UNIT: DSKB0
+       LAST COPY DATE: 0:00 1-JULY-1976
+       NUMBER OF BAD REGIONS: 0
+       NUMBER OF BAD SECTORS: 0
+       NO BAD SPOTS"
+
+       "UNIT 301
+       UNIT ID: 340001
+       STRUCTURE: DSKB LOGICAL UNIT: DSKB1
+       LAST COPY DATE: 0:00 1-JULY-1976
+       NUMBER OF BAD REGIONS: 0
+       NUMBER OF BAD SECTORS: 0
+       NO BAD SPOTS"
+
+       UNIT 302
+                                                                 Page 12
+
+
+       UNIT ID: 340100
+       STRUCTURE: DSKB LOGICAL UNIT: DSKB0
+       LAST COPY DATE: 0:00 17-JUNE-1976
+       NUMBER OF BAD REGIONS: 0
+       NUMBER OF BAD SECTORS: 0
+       NO BAD SPOTS"
+
+       "UNIT 303
+       UNIT ID: 340101
+       STRUCTURE: DSKB LOGICAL UNIT: DSKB1
+       LAST COPY DATE: 0:00 17-JUNE-1976
+       NUMBER OF BAD REGIONS: 0
+       NUMBER OF BAD SECTORS: 0
+       NO BAD SPOTS"
+
+
+       "*"COPY(CR)                     ;REMEMBER THE SENSE SWITCH
+                                       ;OPTIONS APPLY HERE.
+
+       "SOURCE DRIVES:" 300, 301(CR)
+
+       "COPY FROM 340000 (0:00 1-JULY-1976) OK?" Y(CR)
+       "COPY FROM 301 TO:" 303 (CR)
+
+       "COPY FROM 340001 (0:00 1-JULY-1976) TO 340101 (0:00
+       17-JUNE-1976)
+       OK?" Y(CR)
+       "COPY COMPLETED FROM 300 TO 302
+       COPY COMPLETED FROM 301 TO 303"
+
+
+       "*"SH(CR)
+
+       (AT THIS POINT YOU SHOULD UPDATE THE ID LABELS AND
+        CHANGE PACKS TO COPY THE REMAINING 2 PACKS IN SET)
+
+
+       "*"RESTART(CR)
+       "300 ON-LINE, DUAL DENSITY, WRITE PROTECT
+       301 ON-LINE, DUAL DENSITY WRITE PROTECT
+       302 ON-LINE, DUAL DNNSITY
+       303 ON-LINE, DUAL DENSITY
+       304 OFF-LINE
+       305 OFF-LINE
+       (ETC)
+
+
+       "*"LIS(CR)
+
+       "UNIT 300
+       UNIT ID: 340002
+       STRUCTURE: DSKB LOGICAL UNIT: DSKB2
+       LAST COPY DATE: 0:00 1-JULY-1976
+       NUMBER OF BAD REGIONS: 0
+       NUMBER OF BAD SECTORS: 0
+       NO BAD SPOTS"
+                                                                 Page 13
+
+
+       "UNIT 301
+       UNIT ID: 340003
+       STRUCTURE: DSKB LOGICAL UNIT: DSKB3
+       LAST COPY DATE: 0:00 1-JULY-1976
+       NUMBER OF BAD REGIONS: 0
+       NUMBER OF BAD SECTORS: 0
+       NO BAD SPOTS"
+
+       UNIT 302 
+       UNIT ID: 340102
+       STRUCTURE: DSKB LOGICAL UNIT: DSKB2
+       LAST COPY DATE: 0:00 17-JUNE-1976
+       NUMBER OF BAD REGIONS: 0
+       NUMBER OF BAD SECTORS: 0
+       NO BAD SPOTS"
+       UNIT 303
+       UNIT ID: 340103
+       STRUCTURE: DSKB LOGICAL UNIT: DSKB3
+       LAST COPY DATE: 0:00 17-JUNE-1976
+       NUMBER OF BAD REGIONS: 0
+       NUMBER OF BAD SECTORS: 0
+       NO BAD SPOTS"
+
+
+       "*"COPY(CR)
+
+       "SOURCE DRIVES:" 300, 301(CR)
+       "COPY FROM 300 TO:" 302(CR)
+
+       "COPY FROM 340002 (0:00 1-JULY-1976) TO 340102 (0:00
+       17-JUNE-1976)
+       OK?" Y(CR)
+       "COPY COMPLETED FROM 300 TO 302"
+       "COPY COMPLETED FROM 301 TO 303"
+
+
+       "*"LIST (CR)
+
+       "UNIT 300
+       UNIT ID:340002
+       STRUCTURE: DSKB LOGICAL UNIT: DSKB2
+       LAST COPY DATE: 0:00 1-JULY-1976
+       NUMBER OF BAD REGIONS: 0
+       NUMBER OF BAD SECTORS: 0
+       NO BAD SPOTS"
+
+       "UNIT 301
+       UNIT ID: 340003
+       STRUCTURE: DSKB LOGICAL UNIT: DSKB3
+       LAST COPY DATE: 0:00 1-JULY-1976
+       NUMBER OF BAD REGIONS: 0
+       NUMBER OF BAD SECTORS: 0
+       NO BAD SPOTS"
+
+       "UNIT 302
+       UNIT ID: 340102
+       STRUCTURE: DSKB LOGICAL UNIT: DSKB2
+                                                                 Page 14
+
+
+       LAST COPY DATE: 0:00 8-JULY-1976
+       NUMBER OF BAD REGIONS: 0
+       NUMBER OF BAD SECTORS: 0
+       NO BAD SPOTS"
+
+       "UNIT 303
+       UNIT ID: 340103
+       STRUCTURE: DSKB LOGICAL UNIT: DSKB3
+       LAST COPY DATE: 0:00 8-JULY-1976
+       NUMBER OF BAD REGIONS: 0
+       NUMBER OF BAD SECTORES: 0
+       NO BAD SPOTS"
+
+
+       "*"SH(CR)
+
+       (THIS SAMPLE 4 PACK SYSTEM HAS BEEN COPIED. NOW ALL THE
+        'COPY TO' PACKS ARE MOUNTED. MAKE SURE THE DRIVES ARE
+        NOT 'READ ONLY')
+
+
+       "*"RESTART(CR)
+       301 ON-LINE, DUAL DENSITY
+       302 ON-LINE, DUAL DENSITY
+       303 ON-LINE, DUAL DENSITY
+       "304 ON-LINE, DUAL DENSITY
+       305 OFF-LINE
+       (ETC)
+
+
+       "*"LIST(CR)
+
+       "DRIVE(S):" ALL(CR)
+
+       UNIT 300
+       UNIT ID: 340100
+       STRUCTURE: DSKB LOGICAL UNIT: DSKB0
+       LAST COPY DAT: 0:00 8-JULY-1976
+       NUMBER OF BAD REGIONS: 0
+       NUMBER OF BAD SECTORS: 0
+       NO BAD SPOTS"
+
+       "UNIT 301
+       UNIT: 340101
+       STRUCTURE: DSKB LOGICAL UNIT: DSKB1
+       LAST COPY DATE: 0:00 8-JULY-1976
+       NUMBER OF BAD REGIONS: 0
+       NUMBER OF BAD SECTORS: 0
+       NO BAD SPOTS"
+
+       "UNIT 302
+       UNIT ID: 340102
+       STRUCTURE: DSKB LOGICAL UNIT: DSKB2
+       LAST COPY DATE: 0:00 8-JULY-1976
+       NUMBER OF BAD REGIONS: 0
+       NUMBER OF BAD SECTORS: 0
+       NO BAD SPOTS"
+                                                                 Page 15
+
+
+       "UNIT 303
+       UNIT ID: 340103
+       STRUCTURE: DSKB LOGICAL UNIT: DSKB3
+       LAST COPY DATE: 0:00 8-JULY-1976
+       NUMBER OF BAD REGIONS: 0
+       NUMBER OF BAD SECTORS: 0
+       NO BAD SPOTS"
+
+       "UNIT 304
+       UNIT ID: 34SWAP
+       NO COPY DATE
+       NUMBER OF BAD REGIONS: 0
+       NUMBER OF BAD SECTORS: 0
+       NO BAD SPOTS"
+
+
+       "*"LOAD(CR)                     ;TO RESTART THE MONITOR
+        "BOOTS LOADED" (CR)            ;TYPE 2 CARRIAGE RETURNS HERE.
+
+
+       "C34-PO32/C  6-1-76 MONITOR JUST LOADED"
+
+
+                           FORMATTING A PACK
+
+       (ALL PACKS USED ON-LINE MUST BE FORMATTED.
+        IN THE CASE WHERE A PACK IS FROM ANOTHER
+        SYSTEM, THE HIDDEN COMMAND 'REFRESH' WOULD
+        BE USED FIRST TO REMOVE ALL TRACES OF THE
+        PREVIOUS SYSTEM'S DATA, ID, HOM PGS. ETC.
+        IF TIME ALLOWS, FORMAT EACH PACK THREE TIMES.
+        BE SURE NO SYSTEM PACKS ARE ON-LINE WHILE
+        YOU DO THIS.)
+
+       '*'FORMAT(CR)
+       'DRIVE(S):' ALL                         ;OR UNIT NO.
+
+       'UNIT 301 IS ALREADY FORMATTET, REFORMAT?' Y
+
+       'UNIT 302 IS ALREADY FORMATTED, REFORMAT?' Y
+
+       (ETC)
+
+       'FORMATTED AND VERIFIED, UNIT 301'              ;WHEN DONE
+
+       'FORMATTED AND VERIFIED, UNIT 302'
+       (ETC.)
+
+
+                          INITIALIZING A PACK
+
+       (WHEN A PACK IS INITIALIZED, HOM AND BAT PAGES ARE
+        SET UP. THIS COMMAND - AS WITH ALL OTHERS - SHOULD
+        BE PRECEDED BY A 'RESTART' AND 'LIST' OUTPUT CHECK.)
+
+       '*'INIT(CR)
+       'DRIVE:'300                                     ;USE UNIT NO.
+                                                                 Page 16
+
+
+       'ID:'3N99SW(CR)                                 ;ID FOR SWAPPER
+
+       '*'INIT 301 (CR)                                ;BYPASS PROMPT
+       'ID:'3N0100                                     ;3N IS SYSNO.
+
+
+                           REFRESHING A PACK
+
+       (THIS IS ONE OF THE 'HIDDEN' COMMANDS. YOU MUST
+        BE ESPECIALLY CAREFUL AND ATTENTIVE.)
+
+       '*'REFRESH(CR)
+
+       'TYPE HELP FOR A LIST OF COMMANDS'
+
+       '*'DO IT (CR)
+
+       'UNIT TO REFRESH ALTERNATE TRACKS ON:' 300
+       'UNIT 300, ALTERNATE TRACKING REFRESHED'
+                                                       ;ALL PREVIOUS
+                                                       ;DATA ON PACK HAS
+                                                       ;BEEN REMOVED.
+                                                                 Page 17
+
+
+       ((ERRORS AND RECOVERIES))
+
+
+
+            In most cases unrecoverable errors will  be  reported.   The
+       only  case in which this is not true is if the program interprets
+       the error for some other purpose.  For example, the copy  command
+       when  it  is  testing  pages marked bad to see if they are really
+       bad.
+
+            There are five places where errors may happen:  Reading  the
+       source   pack;    Writing  the  destination  pack;   Reading  the
+       destination pack;  Checking data after readback;  And writing the
+       updated HOM pages.
+
+            If any read or write errors occur, they are analized to  see
+       if  they  are  data  errors or probable hardware errors (overrun,
+       etc.) If they are hardware errors the error and a message 
+
+       PROBABLE HARDWARE ERROR ON SOURCE PACK
+       WRITE ERROR ON DESTINATION PACK
+       (PROBABLE HARDWARE ERROR)
+       READ ERROR ON DESTINATION PACK
+       (PROBABLE HARDWARE ERROR)
+       is printed and the copy is aborted.
+
+            For a read error on the source pack which is a probable data
+       error the BAT pages on the source pack are checked.  If the error
+       is in a page marked bad, the message 'ERROR IS IN A  PAGE  MARKED
+       BAD.  CONTINUING' is printed and the copy continues.
+
+            If the error is in a page not marked in the BAT  pages,  the
+       copy  will  abort after typing the error if sense switch 2 is not
+       set.  If sense switch  2  is  set,  the  error  will  be  printed
+       followed by 'CONTINUING'.  
+
+            For read or write errors on the destination pack, either the
+       copy  will abort after printing the error (sense switch 3 set) or
+       the error will be printed  and  an  attempt  made  to  assign  an
+       alternate  track.  The copy will abort only if an alternate track
+       can not be assigned.
+
+            Data compare errors always abort the copy with  the  message
+       'DATA DOES NOT COMPARE BUT NO HARDWARE DETECTED ERRORS' 
+
+            Failure to write  the  updated  HOM  pages  results  in  the
+       message  'CAN  NOT  WRITE HOM PAGES ON DESTINATION PACK AFTER ALL
+       PAGES COPIED'.  The destination pack may contain  incorrect  copy
+       date and other wrong data.
+
+            After an error during a copy you  should  recopy  the  packs
+       again possibly using different disk drives.
+
+            PAKCOP  only  prints  error  messages  for   non-recoverable
+       hardware errors.  If the unit goes off-line the message 'UNIT 363
+       HAS GONE OFF-LINE' will be printed.
+                                                                 Page 18
+
+
+            All other error mesages start with 'UNRECOVERABLE  ERROR  ON
+       UNIT 361 CYLINER 107,HEAD 2,RECORD 14'
+
+            The messages which may print from the SA-10 are 
+       SELECT ERROR
+       BUS IN PARITY ERROR
+       CONTROL ERROR
+       LENGTH ERROR
+       INTERUPT ERROR
+
+            Error output from the status byte would be:
+       ATTENTION
+       BUSY
+       UNIT EXCEPTION
+
+            And from the decoded sense bytes the following:
+       BUS OUT PARITY ERROR
+       OVERRUN
+       INVALID TRACK FORMAT
+       NO RECORD FOUND
+       PROTECTION FAILURE
+       DATA CHECK
+       COMMAND REJECT
+       UNIT IS WRITE PROTECTED
+       EQUIPMENT CHECK
+       PERMANENT EQUIPMENT CHECK
+
+            The following will be printed only if no sense can be made
+       from the sense bytes returned:
+       UNKNOWN ERROR BYTE 1 BIT 2
+       $$
+    t­

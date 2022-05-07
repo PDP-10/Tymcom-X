@@ -1,0 +1,314 @@
+SWAMP            STOPCD  
+SWAMP            STOPCD  
+SWAMP            STOPCD  
+SWAMP            STOPCD                 ;******IMPLEMENTATION ONLY ASKS MBIT.   
+SWAMP            STOPCD (SATMRK INFO,BADSAT,SATMK1,<SAT bit-count error>);;SATCH
+SWAMP            STOPCD (SLO)           ;SOMETHING ISN'T RIGHT.  
+SWAMP            STOPCD (SLO) 
+SWAMP            STOPCD (SLO) 
+ERRCON  <STOPCD (       XCT,S..IME)>;2020 does not have address break hardware  
+ACTSER  ENTRY   ACTSER)  
+S       TYPE<NONAME>    NAME,TYPOUT,TEXT),<  
+PICON   CPU     APRFAT,TYPAPR,<Fatal APR error - Hardware failure>)   
+PICON   CPU     APRHPE,,<Hard Parity Error>) 
+PICON   DEBUG   APRTIM,,<APR timer overflowed>) ;Continue   
+PICON   XCT     APRTIM) ;APR timer overflowed
+APXKON  ENTRY   APXKON)  
+PICON   CPU     AR.ARX,PRTARX,<AR/ARX parity error detected>)    
+CORE1   DISK    BACRFP,,<SAT (M) Bit already clear - File Page>);;REMV31+14
+CORE1   DISK    BACRVP,,<SAT (M) Bit already clear - Virtual Page>) ;;REMV41+3  
+CORE1   EVENT   BADPAG,PRTPG1,<Bad spot detected>);;BATUP2+3
+FILUUO  INFO    BADUFD,DSKCLN##,<Inconsistent UFD - FULL DSKCLN requested>);;UPD
+SCNSER  INFO    BASE,PRTCRS,<BASE has crashed - bad KEY620>)
+SCNSER  STOP    BASE04,PRTCRS,<Bad message type from host>) 
+SCNSER  XCT     BASEOK) ;Yes, output BASEOK message    
+SCNSER  XCT     BASEOK) ;Print "base is up" message    
+SCNSER  XCT     BASEOK) ;Print "base is up" message    
+SCNSER  EVENT   BASEOK,PRTBVR,<Base is up>)  
+BPXKON  ENTRY   BPXKON)  
+CDRSER  ENTRY   CDRSER)  
+CORE1   STOP    CHTFDP,,<CHT Failure - Insert: Duplicate page>);;INSCHT+6  
+CORE1   STOP    CHTFIU,,<CHT Failure - Remove: In use/IO in progress>);;REMCH0+3
+CORE1   STOP    CHTFLS,,<CHT Failure - Search: RBMASK bits on>);;SRCCHT+1  
+CORE1   STOP    CHTFMU,,<CHT Failure - Remove: Multiply used PGYADR>);;REMCH0+14
+CORE1   STOP    CHTFNF,,<CHT Failure - Remove: CP not found in CHT>);;REMCH0+11 
+CORE1   STOP    CHTFNJ,,<CHT Failure - Remove: No job in use list>);;REMCHR+4   
+CIOPR   ENTRY   CIOPR)   
+CLOCK1  JOB     CLKNSQ,,<Job not in SW queue>) ;;STTIOD+4   
+CLOCK1  XCT     CLKNSQ) ;Job not in SW queue  ;;SETIOD+4    
+CLOCK1  ENTRY   CLOCK1)  
+CLUBS   ENTRY   CLUBS)   
+COMCON  STOP    CMD000,,<Error detected at UMONST>) ;;UMONST+4   
+COMCON  STOP    CMDNLJ,,<Command for null job>) ;;COMDIS+5  
+COMCON  ENTRY   COMCON)  
+COMMOD  ENTRY   COMMOD)  
+COMMON  ENTRY   COMMON) ;Default for noname stopcodes  
+CORE1   ENTRY   CORE1)   
+CPXKON  ENTRY   CPXKON)  
+PICON   STOP    CRASH,PRT30,<CRASH requested - Nonzero in 30>)   
+CTYSIM  STOP    CTYBMT,PRTIRG##,<Bad message type to CTY>)  
+CTYSIM  XCT     CTYBMT) ;23 (enter transparency mode)  
+CTYSIM  XCT     CTYBMT) ;22 Hang character   
+CTYSIM  XCT     CTYBMT) ;15 Leave deferred echo mode   
+CTYSIM  XCT     CTYBMT) ;14 Enter deferred echo mode   
+CTYSIM  XCT     CTYBMT) ; 7 (aux circuit complete)
+CTYSIM  XCT     CTYBMT) ; 6 (login from network)  
+CTYSIM  XCT     CTYBMT) ; 5 (supervisor takeover) 
+CTYSIM  XCT     CTYBMT) ; 0 Illegal
+CTYSIM  XCT     CTYBMT) ;43 (clock response from supervistor)    
+CTYSIM  XCT     CTYBMT) ;40 (terminal characteristics response)  
+CTYSIM  XCT     CTYBMT) ;32 (test pattern response)    
+CTYSIM  XCT     CTYBMT) ;31 Test pattern to base  
+CTYSIM  XCT     CTYBMT) ;27 (supervisor response) 
+CTYSIM  XCT     CTYBMT) ;25 (gray ball / black ball)   
+CTYSIM  XCT     CTYBMT) ;24 (leave transparency mode)  
+CTYSIM  ENTRY   CTYSIM)  
+IOCSS   XCT     DDBCNE) ;DDB chain has no end ;;DEVLG+12    
+SCNSER  STOP    DDBCNE,,<DDB chain has no end>) ;;TTYKDB+many    
+DEBUG   ENTRY   DEBUG)   
+ERRCON  STOP    DIEBPC,,<Bad PC in DIE>)
+ERRCON  HALT    DIEMNR,,<Master PDP-11 not running>)   
+DR11C   ENTRY   DR11C)   
+DZKON   ENTRY   DZKON)   
+ERRCON  STOP    EPDLOV,,<Exec Push Down List Overflow>)
+ERRCON  ENTRY   ERRCON)  
+ERRCON  JOB     EUE,,<Exec Uuo Error>)  ;;INSSIM+2=ILLINS+2 
+DEBUG   KS      F3>),<STOPCD> 
+F3TSER  ENTRY   F3TSER)  
+FILFND  DISK    FILAMO,PRTATB,<ATB Max write count overflow>) ;;DECRMV+13  
+FILFND  XCT     FILAMO);;;%! YES, CRASH   ;;DECMXW+3   
+FILFND  DISK    FILANF,,<ATB not found in list>)      ;;FREAT1+2 
+FILFND  DISK    FILATB,,<Bad ATB pointer>) ;;CNVATP+1  
+FILFND  DISK    FILAUS,PRTATB,<ATB Unshared map count zero with SPT>);;DECUMC+10
+FILFND  DISK    FILAUU,PRTATB,<ATB Unshared map count underflow>);;DECUMC+4
+FILFND  DISK    FILBNF,,<DDB Not found in FNB device block list>);;ULKDB0+4
+FILFND  DISK    FILDMO,,<DRB Max count overflow>) ;;SRCFIL+16    
+FILFND  XCT     FILDMO)   ;;INCUMC+12   
+FILFND  XCT     FILDMU) ;% UNDEFLOW     ;;ERRTR1+5
+FILFND  XCT     FILDMU) ;%! YES, CRASH  ;;DECUM0+6
+FILFND  XCT     FILDMU) ;% UNDEFLOW     ;;ERRFBM+2
+FILFND  XCT     FILDMU)   ;;ERRFNF+3    
+FILFND  ENTRY   FILFND)  
+FILIO   ENTRY   FILIO)  ;All stopcodes in FILIO start with "SWP" 
+FILFND  DISK    FILLAS,,<LMAP slot active/super>) ;;DECRMV+2
+FILRIB  ENTRY   FILRIB)  
+FILFND  DISK    FILSEO,,<SPT Free entry count overflow>);;REMSPT+10   
+FILUUO  ENTRY   FILUUO)  
+FRMSER  ENTRY   FRMSER)  
+FTASER  INFO    FTACFC,,<FTA error - Cannot Find Command>);;SGPREV+3  
+FTASER  ENTRY   FTASER)  
+CORE1   STOP    GETFR1,,<GETFRE List was empty, but CAVPGN nonzero>)  
+PCBIO   STOP    GETTR3,,<End of list detected at GETTR1+2>) 
+SWAMP   DISK    GIVPG1,,<Error in GIVPGK - F bit is not on>);;GIVPGK+5
+PCBIO   JOB     GTDON1,,<PCB link zero at GTDONE+12 or GTDON4+4>)
+SWAMP   DISK    GTSA43,,<Error at GTSA42 - STTPTR is zero>);;GTSA42+5 
+SWAMP   STOP    GTSAP1,,<Error at GTSAP0+7>);;GTSAP0+7 
+ERRCON  STOP    IME,TYPIME,<Illegal Memory-reference from Exec>) 
+IOCSS   ENTRY   IOCSS)   
+COMCON  JOB     KILUP2,,<Funny space still in use at KILUPT>)    
+KMCSER  ENTRY   KMCSER)  
+CORE1   STOP    LAFPOR,,<LMAP Activation Failure - Page out of range>);;ACTLMA+4
+CORE1   XCT     LAFPOR) ;YES, SOMEONE MADE A MISTAKE.   ;;ACTLM5+12   
+CORE1   STOP    LAFUPS,,<LMAP Activation Failure - %UPS preserved>);;ACTLMS+4   
+CORE1   STOP    LDFPOR,,<LMAP Deactivation Failure - Page out of range>);;DEALMS
+CORE1   XCT     LDFPOR) ;NO.  
+LP2SER  DEBUG   LPTNON,,<No line printer>)   
+LP2SER  ENTRY   LPTSER)  
+LPTSER  ENTRY   LPTSER)  
+LP2SER  DEBUG   LPTTMB,,<Too many bytes>)    
+CORE1   STOP    LRFPR'MAP,,<LMAP Read Failure: Page out of range>)    
+CORE1   STOP    LSFPR'MAP,,<LMAP Store Failure - Page out of range>)  
+CORE1   STOP    LSFUF'MAP,,<LMAP Store Failure - LDC Count underflow>)
+MAGSER  ENTRY   MAGSER)  
+PCBIO   STOP    MAPAL1,,<Bad Retreival Pointer detected at MAPALL+4>) 
+SEGCON  JOB     MAPHSF,PRTT1##,<Unexpected error from CHANIO VMAP>)   
+MAPIO   ENTRY   MAPIO)   
+MONBTS  ENTRY   MONBTS)  
+MAPIO   JOB     MPFBRP,,<MAPF error - Bad Retreival Pointer>);;MAPF34+4    
+F3TSER  JOB     MTAICZ,,<I/O count zero>)    
+MAGSER  JOB     MTAICZ,,<I/O count zero>)    
+F3TSER  JOB     MTAIFC,,<Illegal Function Code>)  
+F3TSER  XCT     MTAIFC) ;OR BACK SPACE FILE  
+F3TSER  XCT     MTAIFC) ;CAN'T DO SPACE FILE 
+MAGSER  JOB     MTAIFC,,<Illegal Function Code>)  
+F3TSER  JOB     MTALNZ,,<Last word Not Zero>)
+MAGSER  JOB     MTALNZ,,<Last word Not Zero>)
+F3TSER  JOB     MTANIB,,<No IOWDS in BDIO>)  
+FTASER  JOB     MTANIB,,<No IOWDs in BDIO>)  
+MAGSER  JOB     MTANIB,,<No IOWDs in BDIO>)  
+F3TSER  JOB     MTANIS,,<No IOWD in SRFX>)   
+MAGSER  JOB     MTANIS,,<No IOWD in SRFX>)   
+MTASER  ENTRY   MTASER)  
+FTASER  JOB     MTATMW,,<Too many data words>) ;;SCMBF1+3   
+F3TSER  JOB     MTAXIP,,<Xfer already In Progress>)    
+MAGSER  JOB     MTAXIP,,<Xfer already in Progress>)    
+SCHED1  JOB     NAILI3,,<Counts and CFRLST don't agree in NAILIT>);NAILI2+3
+PICON   CPU     NJBPER,,<Parity error in Null Job>) ;;USEPER+3   
+SCNSER  EVENT   NOBASE,PRTBTM,<No response from BASE>) 
+PCBIO   STOP    NOWRIT,,<All disks are write protected>) ;;CTLFN1+7   
+SCHED1  XCT     NOWRIT) ;ITS BAD, MAY WRITE ON USER'S FILE. ;;SWPIO3+2
+SCHED1  STOP    NULARQ,,<Attempt to requeue null job>) ;;QXFER+1 
+ACTSER   DON'T DO IT FOR NOW  
+ACTSER   DON'T DO IT YET.
+FILIO   STOP    OHTENF,,<Output error Hash Table - Entry not found>);;REMOHT+1  
+FILIO   XCT     OHTENF) ;; It did!  So, CRASH   ;;REMOH1+4  
+FILIO   STOP    OHTFUL,,<Output Hash Table Full - Too many DP errors>);;INSOH3+1
+ONCDSK  ENTRY   ONCDSK) ;Default for NONAME stopcodes  
+ONCE    ENTRY   ONCE)   ;Default for NONAME stopcodes  
+ERRCON  JOB     PAGNCR,,<Page Fault, cannot create COW page>)    
+CLOCK1  JOB     PAGP3R,,<Pager - P3 and P4 in use at RSCHED>) ;;RSCHED+1   
+CLOCK1  JOB     PAGSAC,,<Pager - Cannot Stack ACs>) ;;CIP6D+6    
+ERRCON  JOB     PAGUDE,,<Page fault - Unexpected Dispatch Error>)
+ERRCON  XCT     PAGUDE) ;USER CAN'T FAULT FOR EXEC PAGE
+ERRCON  XCT     PAGUDE) ;Unexpected Dispatch Error
+ERRCON  XCT     PAGUDE) ;USER CAN'T FAULT FOR EXEC PAGE.    
+SCHED1  JOB     PAGWK2,,<Job not coming out of SW queue at PAGWK1+2>) 
+CLOCK1  STOP    PAGZER,PRTJOB##,<Pager - UPT is zero>) ;;CIP7+3  
+CORE1   JOB     PCBFL1,,<Error detected at PCBFLT>);;PCBFLT+4    
+PCBIO   ENTRY   PCBIO)   
+CORE1   CPU     PFLJB0,,<Page fault in jobs 0>) ;;PAGFLU+15 
+CORE1   STOP    PFLLDC,,<Page fault with LDC nonzero>) ;;USRFLT+3
+CORE1   STOP    PFLPR0,,<Page fault writing - Page protection 0>);;USRCWR+5
+CORE1   STOP    PGUSEA,,<Page Use Error: Slot still active>);;DECUS0+7
+CORE1   STOP    PGUSEO,,<Page Use Error: Count increment overflow>);;INCUSE+2   
+CORE1   STOP    PGUSEU,,<Page Use Error: Count decrement underflow>);;DECUSE+4  
+CORE1   STOP    PGWNME,,<Page Wait queue error: Not me>)  ;;PAGWAT+1  
+PICON   ENTRY   PICON)   
+PLTSER  ENTRY   PLTSER)  
+FRMSER   NOT SUPPOSED TO GET HERE  
+PTPSER  ENTRY   PTPSER)  
+PTRSER  ENTRY   PTRSER)  
+SCNSER  INFO    PTYSBL,,<PTY saw a Black Ball>)  ;;PGSBL+10 
+SCNSER  DEBUG   RCCBAD,RCC.T1,<Range Checked Chunk, bad U>) 
+SCNSER  INFO    RCCDBG,RCC.T1,<Range Checked Chunk, continuing>) 
+SCNSER  XCT     RCCDBG) ;Forward/back pointer is bad   
+SCNSER  STOP    RCCSTP,RCC.T1,<Range Checked Chunk - TTFREE is bad, stop>) 
+SCNSER  XCT     RCCSTP) ;Die - TTFREE is bad 
+SCNSER  XCT     RCCSTP) ;Die - TTFREE is bad (or all chunks in use)   
+FRMSER   USES WORDS BELOW
+SWAMP   INFO    REDSAT,SATMK1,<SAT read error>);;SATCHK+12  
+REFSTR  ENTRY   REFSTR)  
+CORE1   STOP    REMVPG,,<Remove virtual page - Error>)  ;;REMV16+7    
+CORE1   XCT     REMVPG);;       ;Remove virtual page - Error    ;;REMV21+12
+FILRIB  XCT     RIBBRP) ;Bad Retrieval Pointer  ;;USES55+13 
+FILRIB  XCT     RIBBRP)   ;Bad Retreival Pointer  ;;DLTSRB+6
+FILRIB  XCT     RIBBRP) ;Bad Retreival Pointer  ;;USENUL+3  
+FILRIB  XCT     RIBBRP) ;Bad Retreival Pointer  ;;DLTSRB+2  
+FILRIB  XCT     RIBBRP) ;Bad Retreival Pointer  ;;USES58+7  
+FILRIB  EVENT   RIBERR,RIBERX,<RIB error - software detected>)   
+FILRIB  XCT     RIBERR);;RIBER1+3 ;Let OPR know about it    
+FILRIB  EVENT   RIBHRE,RIBERX,<RIB error - Hard Read Error>)
+FILRIB  DISK    RIBTME,DSKDIE##,<Too Many RIB errors - disk is unsafe>);;RIBERR+
+RMXKON  ENTRY   RMXKON)  
+UUOCON  DEBUG   S..CI7,,<CALLI 70 requested DEBUG stopcode>)
+PICON   XCT     S..EUE) ;No   
+PICON   XCT     S..EUE) ;No   
+ERRCON  XCT     S..IME) ;Exec fault for context page or exec hiseg    
+ERRCON  XCT     S..IME) ;CRASH IF EXEC WRITES INTO SUPER COW.    
+ERRCON  XCT     S..IME) ;HARD PAGE FAILURE.  
+UUOCON  JOB     S..JOB,,<CALLI 67 requested JOB stopcode>)  
+SCNSER  XCT     S..KAF)         ;Keep alive failure    
+MAPIO   DEBUG   SAT2ND,,<2nd bad SAT detected>);;MAPFAL+1   
+COMMOD  INFO    SAXINX,PRTT4##,<Spurious SA-10 interrupt>) ;;SAXINT+5 
+COMMOD  INFO    SAXINY,PRTT4##,<SA-10 interrupt ignored>);;SAXIGN+0   
+COMMOD  CPU     SAXMM1,,<Spurious SA-10 memory error>) ;;SAXMEM+7
+SCHED1  ENTRY   SCHED1)  
+SCNSER  ENTRY   SCNSER)  
+SWAMP   DISK    SEAR14,,<Error at SEAR15+1 - No bits free in SAT>)    
+SEGCON  ENTRY   SEGCON)  
+SIMIO   ENTRY   SIMIO)   
+SIMIO   XCT     SIMIOX) ;VREMOV should never come here 
+SIMIO   XCT     SIMIOX) ;PREREF should never come here 
+SIMIO   XCT     SIMIOX) ;PAGSTS should never come here 
+SIMIO   JOB     SIMRM0,,<Unexpected VREMOV error at SIMRM1+1>)   
+SIMIO   JOB     SIMUUF,SIMIOY,<SIMIO UUO Failure>)      ;;FCR.E+3
+SIMIO   XCT     SIMUUF) ; 4 FALNEX - VM PG DOESNT EXIST WHICH SHOULD  
+SIMIO   XCT     SIMUUF) ; 5 FALSVR - VREPLIC. VP OUT OF RANGE    
+SIMIO   XCT     SIMUUF) ;10 FALCOR - PVYCOR LIMIT EXCEEDED  
+SIMIO   XCT     SIMUUF) ;15 FALHOL - PAGE IS A HOLE (CATCH THIS IN SIMIOM) 
+SIMIO   XCT     SIMUUF) ;16 FALNHL - FCREATE: NOT A HOLE    
+SIMIO   XCT     SIMUUF) ;21 FALSAM - SAME PG NOS. (REPLIC,FEXCH) 
+SIMIO   XCT     SIMUUF) ;22 FALSUP - MAP BUT IOSUPR ON. SHOULDNT HAPPEN    
+SIMIO   XCT     SIMUUF) ;26 FALCTL - ^C. NOT SPOSED TO GET THIS ERROR 
+SIMIO   XCT     SIMUUF) ; 0 FALCTG - CONTIG FIELD 0    
+SIMIO   XCT     SIMUUF) ; 1 FALDVR - VM PG OUT OF RANGE
+SIMIO   XCT     SIMUUF) ; 2 FALCPU - CUR PROT UNDEF    
+SIMIO   XCT     SIMUUF) ; 3 FALVEX - VM PG EXISTS WHICH SHOULDNT 
+ACTSER          STOPCD          ;(42) LOGOUT     DON'T DO IT YET.
+ACTSER          STOPCD          ;(44) TATTLE     NOT TO BE WRITTEN LIKE THIS    
+FRMSER          STOPCD                  ;(2)OTHER FRAME
+FRMSER          STOPCD                  ;(5)UNDEFINED  
+FRMSER          STOPCD                  ;(6)UNDEFINED  
+FRMSER          STOPCD                  ;(1) FAMILY    
+FRMSER          STOPCD                  ;(2) OTHER FRAME         SHOULD BE CONVE
+FRMSER          STOPCD                  ;(2) OTHER FRAME         SUPPOSED TO BE 
+FRMSER          STOPCD                  ;(4)UNDEFINED (WAS SUPPOSED TO BE CHECKE
+SWAMP   ENTRY   SWAMP)   
+FILIO   STOP    SWPNDP,,<Swapper: Not a disk page>);;SWPENQ+5    
+FILIO   STOP    SWPNIO,,<Swap done: No I/O in progress>) ;;DTASAT+3   
+FILIO   XCT     SWPOOR) ;PAGE NUMBER TOO LOW    ;;SWPFI2+2  
+FILIO   STOP    SWPOOR,,<Swapper: Out of range>)   ;;SWPENQ+2    
+FILIO   STOP    SWPUOR,PRTPGY,<Swapper: Unit out of range>) 
+FILIO   INFO    SWPZER,PRTPGY,<Swapped zero pages>) ;;SWPPLD+2 (PGEZER)    
+MAGSER  EVENT   TAPERR,,<Magnetic tape error, UBA reset>)   
+SWAMP    UNLESS THAT IS  
+UUOCON  EVENT   TIMEOK,COMGM0,<Date/time has been changed>) 
+UUOCON  XCT     TIMEOK) ;Tell OPR what the old date/time was
+TMPUUO  ENTRY   TMPUUO)  
+SCNSER  INFO    TTYBCN,,<Block I/O count negative>);;DECBC+5
+SCNSER  XCT     TTYBCN)  
+SCNSER  INFO    TTYBMT,PRTIRG,<Bad Message Type from Base>);;CNTPRT-1 
+SCNSER  XCT     TTYBMT) ;37 TERM CHRS PROBE. SHOULD NOT COME IN  
+SCNSER  XCT     TTYBMT) ;41 PORT AND SYSTEM NUMBER
+SCNSER  XCT     TTYBMT) ;42 REQUEST FOR SUPERVISOR TIME
+SCNSER  XCT     TTYBMT) ;44 INITIATE BLOCK OUTPUT 
+SCNSER  XCT     TTYBMT) ;46 INITIATE BLOCK INPUT  
+SCNSER  XCT     TTYBMT) ;52 REQUEST BLOCK INPUT TERMINATION 
+SCNSER  XCT     TTYBMT) ;54 REQUEST BLOCK OUTPUT TERMINATION.    
+SCNSER  XCT     TTYBMT) ;63 SET KEEP-ALIVE FAILURE TIMER    
+SCNSER  XCT     TTYBMT) ; 0 ILLEGAL
+SCNSER  XCT     TTYBMT) ;26 SUPERVISOR REQUEST    
+SCNSER  XCT     TTYBMT) ;30 AUX CIRCUIT CHARACTER 
+SCNSER  XCT     TTYBMT) ;56 NEGOTIATE FOR # BLOCK I/O PORTS NOT USED  
+SCNSER  XCT     TTYBMT) ;31 TEST PROBE  
+SCNSER  XCT     TTYBMT) ;33 HOST SAD    
+SCNSER  XCT     TTYBMT) ;34 ECHO ON, SHOULD NOT COME IN
+SCNSER  XCT     TTYBMT) ;35 ECHO OFF, SHOULD NOT COME IN    
+SCNSER  XCT     TTYBMT) ;36 SEND TERMINAL CHRS. SHOULD NOT COME IN    
+SCNSER  INFO    TTYBNP,,<Block mode io Not in Progress>) ;;FRCIBF+1   
+SCNSER  XCT     TTYBNP) ;Block mode io Not in Progress ;;FRCEOT+1
+SCNSER  INFO    TTYBPN,PRTIRG,<Bad Port Number from Base>);;BADPRT+3  
+SCNSER  INFO    TTYFLM,RCC.T1,<TTY Free List Messed Up>) ;;STLST+7    
+SCNSER  STOP    TTYNFB,,<No Free Buffrers>)     ;;GETBBP+1  
+SCNSER  XCT     TTYNFB)   ;No Free Buffers        ;;GETBB1+5
+SCNSER  INFO    TTYNNC,,<TTY - No Next Chunk>) ;;TTGC1+1    
+SCNSER  XCT     TTYNPB) ;No PTY Buffer for block IO  ;;PGTRI+7   
+SCNSER  JOB     TTYNPB,,<No PTY Buffer for block IO>) ;;PGBIN+6  
+SCNSER  INFO    TTYPTY,PRTUT1,<PTY bit wrong for TTY>) ;;SCOPTY+1
+SCNSER  XCT     TTYPTY) ;;SCORTY+1 
+SCNSER  DEBUG   TTYZNE,PRTIRG,<Zapper not echoed for port>) 
+FILUUO  DISK    UFDER1,,<UFD error - file disappeared>) ;;UPDUFD+16   
+UUOCON  CPU     UIL,,<Uuo at Interrupt Level>)    
+CORE1   STOP    ULKNME,,<Unlock UPx - Not mine error>) ;;UNWUPX+4
+FILIO   EVENT   UNIONL,PRTUNI,<Unit came on-line>) ;;UNIONL+0    
+PICON   STOP    UPTPER,,<Page error in UPT>) 
+FILUUO  DEBUG   USRUS1,PRTT3##,<Unexpected CHANIO error in USETI>);;USRUSI+22   
+PICON   JOB     UUOAST,,<ACs Stacked Too deep>) ;KI version of STKAC  
+PICON   JOB     UUOAST,,<ACs Stacked Too deep>) ;Non KI STKAC    
+UUOCON  JOB     UUOCNT,,<UUO from Concealed mode, No Trap>) 
+UUOCON  ENTRY   UUOCON)  
+PICON   JOB     UUOCTR,,<UUO from Concealed mode, Trap>)    
+ERRCON  STOP    UUOEIJ,,<Error with Illegal Job number>)    
+UUOCON  STOP    UUOJB0,,<UUO from Job 0>)    
+UUOCON  CPU     UUOSNT,,<UUO from Supervisor mode, No Trap>)
+PICON   CPU     UUOSTR,,<UUO from Supervisor mode, Trap>)   
+UUOCON  JOB     UUOXWL,,<UUO eXit With context Locks active>) ;;USRXIT+3   
+FILUUO  DISK    UUOXWR,,<UUO eXit with Resources still owned>);;TSTRES+10  
+FILUUO  XCT     UUOXWR) ;;TSTRES+13
+FILUUO  XCT     UUOXWR) ;;TSTRES+15
+PICON   STOP    UUOZTR,,<Zero address in TRAP uuo>)    
+SCHED1  EVENT   WRITE1,,<Writing updated file while READONLY>);;SWPIO3+6   
+FILIO   EVENT   WRTDSK,WRTST2,<Disk write error>);;SWPFNP+2 
+FILIO   INFO    WRTSAT,WRTST1,<Disk output error writing SAT>);;SWPFIN+15  
+SCNSER  INFO    ZAPBUG,,<Port not Zapped - *BUG*>)
+    

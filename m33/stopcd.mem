@@ -1,0 +1,1249 @@
+(OSP)STOPCD.MEM                                                      4-Mar-88
+
+
+
+==============================================================================
+==============================================================================
+
+
+      SSS   TTTTT   OOO   PPPP    CCC   DDDD          M   M  EEEEE  M   M
+     S   S    T    O   O  P   P  C   C  D   D         M   M  E      M   M
+     S        T    O   O  P   P  C      D   D         MM MM  E      MM MM
+      SSS     T    O   O  PPPP   C      D   D         M M M  EEE    M M M
+         S    T    O   O  P      C      D   D         M   M  E      M   M
+     S   S    T    O   O  P      C   C  D   D    ..   M   M  E      M   M
+      SSS     T     OOO   P       CCC   DDDD     ..   M   M  EEEEE  M   M
+
+
+==============================================================================
+==============================================================================
+
+
+
+      TTTTT   Y   Y   M   M    CCC     OOO    M   M           X   X
+        T     Y   Y   M   M   C   C   O   O   M   M           X   X
+        T      Y Y    MM MM   C       O   O   MM MM            X X
+        T       Y     M M M   C       O   O   M M M    ===      X
+        T       Y     M   M   C       O   O   M   M            X X
+        T       Y     M   M   C   C   O   O   M   M           X   X
+        T       Y     M   M    CCC     OOO    M   M           X   X
+
+
+            PPPP      000      333     55555       /   EEEEE
+            P   P    0   0    3   3    5          /    E
+            P   P    0  00        3    5         /     E
+            PPPP     0 0 0      33     55555     /     EEE
+            P        00  0        3         5    /     E
+            P        0   0    3   3         5   /      E
+            P         000      333      5555   /       EEEEE
+
+
+
+==============================================================================
+==============================================================================
+
+  This document applies to version P035/E of the TYMCOM-X Operating System.
+It completely supercedes any and all previous versions of the STOPCD.MEM.
+Any prior stopcode list pertaining to the P035/C or P035/D monitor is obsolete
+and should be destroyed.
+
+  This document is to be discarded when the P035/F monitor is released.
+
+==============================================================================
+==============================================================================
+STOPCD.MEM - List of stopcodes, and what they mean.
+
+In order to track down and solve crashes, a crash dump should always be taken
+after a stopcode is detected.  Crash dumps are generated automatically for most
+crashes, the only exception is when hardware is suspect, and cannot be relied
+upon to take a dump.  A dump is mandatory for certain stopcode crashes - if a
+dump cannot be created when these occur, the machine should not be reloaded
+until after Software Support has looked at the state of the system.  The
+stopcodes that must have a dump are IME, EUE, UIL, and KAF.
+
+
+
+                How to interpret stopcodes
+
+The first line of output has the type of stopcode, its name, and a timestamp.
+The second line of output is usually the system ID.  The third line, if present,
+is usually the frame ID describing which job or program caused the stopcode.
+The remainder of the stopcode output depends on the type of stopcode.
+
+
+
+                System identification
+
+The system ID describes which system got the stopcode.  It's main purpose is
+to identify the system when copies of the CTY log are mailed to TXS for
+analysis.  When sending CRASHMAIL, the only important piece of information to
+include from the system ID is the "M" number.  For example:
+
+   F26, hardware ZZ, KL-1286, base 4200, F26-P035/C, 7-13-86, M01778
+
+F26 = system name from the CONFIG file.  This is not affected by CHANGE SYSTEM.
+ZZ = hardware designation.  Please notify TXS when moving to new hardware.
+KL = CPU type, one of KI, KL, KS, or F3.
+4200 = node number of the EBUS base for this system.
+C24-P035/C = SYSNO, this is affected by the command CHANGE SYSTEM in ONCE.
+7-13-86 = build date, tells when TXS built this particular monitor.
+M01778 = the "M" number, very important for debugging crash dumps.
+
+
+
+                Frame identification
+
+The frame ID is output whenever a stopcode can blame a particular job.  It
+identifies which frame caused the stopcode, the controlling terminal name,
+the username and AUN, the GFD name and PPN (if different from AUN), and the
+name of the program the frame was running.  For example:
+
+    Frame 3  TTY16  JMS[3,431116](M33[3,42754]) at F26
+    Running (SYS)MAGNUM[1,4]
+                Types of stopcodes
+
+HALT    "BOOTS LOADED" - A crash dump will be taken and the system reloaded.
+STOP    Same as HALT.
+CPU     The CPU status block will be output on the CTY, otherwise same as HALT.
+DISK    Request a full DSKCLN, otherwise same as HALT.
+NONAME  Stopcode that has never occurred before.  Notify TXS when this happens.
+
+DEBUG   A crash dump will be made (currently, this is done by "BOOTS LOADED").
+JOB     The job causing the error is halted, but the system may continue.
+
+INFO    A message comes out on the CTY, and the system continues running.
+EVENT   A quiet message comes out on the CTY, and the system continues running.
+
+The serious stopcodes are HALT, CPU, STOP, DISK, and NONAME.  When they occur,
+the system will go to BOOTS to get a crash dump and reload the monitor.
+
+DEBUG and JOB stopcodes are semi-serious.  The system can continue running
+when they occur, but current policy is to go to BOOTS on production systems
+so that a crash dump can be taken.  This requires that the monitor be reloaded
+after every DEBUG and JOB stopcode.
+
+The quick stopcodes are INFO and EVENT.  For these stopcodes, the information is
+sent to both the CTY and the OPR terminal, and the system continues running.
+
+                -------------------------------------------
+
+%% PATCH stopcode UUOBUG at 15-Jul-1987 12:53:13
+
+                -------------------------------------------
+
+%% EVENT stopcode TIMEOK at 15-Jul-1987 12:54:22
+Time of day is being adjusted by 5 minutes.
+
+                -------------------------------------------
+
+?INFO stopcode "TTYZNE" at 15-Jul-1987 12:55:03
+F26, hardware ZZ, KL-1286, base 4200, F26-P035/C, 7-13-86, M01778
+ORPPDP: 245  IRPPDP: 53   IRING+53/ 6,14,0,0
+ORP620: 245  IRP620: 55   SAV30: 001224,,001320 = 245,55   Key: 0
+[Continuing system]
+                -------------------------------------------
+
+?JOB stopcode "UUOXWL" at 15-Jul-1987 12:55:48
+F26, hardware ZZ, KL-1286, base 4200, F26-P035/C, 7-13-86, M01778
+Frame 3  TTY16  JMS[3,431116](M33[3,42754]) at F26
+Running (SYS)DDT[1,4]
+ UUO is 047000,,000067 at user PC 002365
+BUGDMP - No crash dump for this stopcode
+[Aborting Job]                  ?Monitor Error Detected at user PC 002365
+[Continuing system]
+
+                -------------------------------------------
+
+?DEBUG stopcode "EUE" at 15-Jul-1987 12:56:54
+F26, hardware ZZ, KL-1286, base 4200, F26-P035/C, 7-13-86, M01778
+Frame 3  TTY16  JMS[3,431116](M33[3,42754]) at F26
+Running (SYS)DDT[1,4]
+File DSKB:SWITCH.INI[3,431116]
+ UUO is 043400,,045745 at exec PC 174563
+MUUO is 056000,,001234 at user PC 002365
+BUGDMP - No crash dump for this stopcode
+[Continuing system]
+
+                -------------------------------------------
+
+?CPU stopcode "APRFAT" at 15-Jul-1987 13:31:23
+F26, hardware ZZ, KL-1286, base 4200, F26-P035/C, 7-13-86, M01778
+ UUO is 000200,,123456 at exec PC 015476
+APR status: NXM=Nonexistant memory CDP=Cache Directory Parity
+      CPU Status Block
+APRID = 100327,,002406
+CONI APR, = 003460,,000031
+CONI PI, = 000000,,040377
+CONI PAG, = 000000,,620001
+DATAI PAG, = 402100,,000003
+? CPU or hardware error - Reload monitor
+
+                -------------------------------------------
+
+?HALT stopcode "IME" at 15-Jul-1987 13:37:45
+F26, hardware ZZ, KL-1286, base 4200, F26-P035/C, 7-13-86, M01778
+Frame 3  TTY16  JMS[3,431116](M33[3,42754]) at F26
+Running (M33)F01778[3,42754]
+ UUO is 047200,,777766 at user PC 004171
+Instruction is 202300,,765432 at exec PC 201565
+Virtual address 765432, physical address 000432<no access><read only>
+Reload monitor
+
+                -------------------------------------------
+
+Some stopcodes do not yet have names assigned to them.  When they do occur,
+it is very important to make note of the six digit stopcode number so that
+it can be located and given a name.  The name and the two numbers in quotes
+point to the stopcode location.
+
+?NONAME stopcode "SCNSER+13625(154711)" at 14-Jul-1987 23:15:28
+F26, hardware ZZ, KL-1286, base 4200, F26-P035/C, 7-13-86, M01778
+Reload monitor
+Name    Module  Type    Text in source code     "P035/C monitor"
+------  ------  ------  ---------------------------------------
+ACTSER  ACTSER  NONAME  Default for NONAME stopcodes
+        This stopcode does not have a name because it has not occurred before.
+        Action: The most important pieces of information are the two 6-digit
+                numbers inside the double quotes.  Be sure to include this
+                information in crashmail.
+
+APRFAT  PICON   CPU     Fatal APR error - Hardware failure
+        CPU detected hardware error.
+        Action:  Make note of the "APR status" line.  Ask FSCO if this
+        particular error needs diagnostics or can simply be recycled.
+
+APRHPE  PICON   CPU     Hard Parity Error
+        A memory parity error occurred and persisted after the memory
+        location was set to zero.
+        Action: Get the memory fixed before proceeding.
+
+APRTIM  PICON   DEBUG   APR timer overflowed
+        Something prevented the software from resetting the timer.
+
+APRWRN  PICON   DEBUG   Spurious APR error
+        A CPU hardware-problem interrupt occurred, but the error
+        registers report no problem.
+        Action: Run hardware diagnostics if this failure repeats.
+
+APXKON  APXKON  NONAME  Default for NONAME stopcodes
+        This stopcode does not have a name because it has not occurred before.
+        Action: The most important pieces of information are the two 6-digit
+                numbers inside the double quotes.  Be sure to include this
+                information in crashmail.
+
+BACRFP  CORE1   DISK    SAT (M) Bit already clear - File Page
+        An error was detected in the SAT, necessitating a full DSKCLN.
+
+BACRVP  CORE1   DISK    SAT (M) Bit already clear - Virtual Page
+        An error was detected in the SAT, necessitating a full DSKCLN.
+
+BADPAG  CORE1   EVENT   Bad spot detected
+        A disk page has gone bad, and is now marked in the BAT page.
+
+BADSAT  SWAMP   INFO    Inconsistent SAT - FULL DSKCLN requested
+        A SAT was read with no errors, but was found to be inconsistent.
+        The Monitor will attempt to keep running.
+        Action: Log the SAT failure.  If many of these occur, the system
+                should be scheduled for maintenance to check out the disk
+                subsystems, otherwise no action is required.
+
+BADUFD  FILUUO  INFO    Inconsistent UFD - FULL DSKCLN requested
+        A UFD was read with no errors, but is inconsistent.
+        Action: Schedule downtime to run a FULL DSKCLN.  Restore any damaged
+                files from TITO tapes.
+
+BASE    SCNSER  INFO    BASE has crashed - bad KEY620
+        The EBUS BASE has died.
+        Action: Reload the base.  Don't reload the PDP-10 if you can avoid it.
+
+BASE04  SCNSER  STOP    Bad message type from host
+        The BASE has detected a bad message from the PDP-10.
+        Action: Reload the PDP-10.  The base should still be running.
+
+BASEOK  SCNSER  EVENT   Base is up
+        The BASE has been initialized and is now talking to the PDP-10.
+        Action: Wait 5 minutes, reload PDP-10 if it users can't login to it.
+
+BIOZAD  SCNSER  DEBUG   Block I/O with Zero Address
+        An attempt was made to start block I/O but the buffer disappeared.
+        Not expected to happen.
+
+BPXKON  BPXKON  NONAME  Default for NONAME stopcodes
+        This stopcode does not have a name because it has not occurred before.
+        Action: The most important pieces of information are the two 6-digit
+                numbers inside the double quotes.  Be sure to include this
+                information in crashmail.
+
+CHTFDP  CORE1   STOP    CHT Failure - Insert: Duplicate page
+        The routine to change the page map used the wrong page.
+
+CHTFIU  CORE1   STOP    CHT Failure - Remove: In use/IO in progress
+        The routine to change the page map used the wrong page.
+
+CHTFLS  CORE1   STOP    CHT Failure - Search: RBMASK bits on
+        The routine that called SRCCHT gave it a RIB pointer instead of a
+        disk address.
+
+CHTFMU  CORE1   STOP    CHT Failure - Remove: Multiply used PGYADR
+        The routine to change the page map used the wrong page.
+
+CHTFNF  CORE1   STOP    CHT Failure - Remove: CP not found in CHT
+        The routine to change the page map used the wrong page.
+
+CHTFNJ  CORE1   STOP    CHT Failure - Remove: No job in use list
+        REMCHT was called to free up a core page that was in use, but no job
+        claims it.
+
+CIOPR   CIOPR   NONAME  Default for NONAME stopcodes
+        This stopcode does not have a name because it has not occurred before.
+        Action: The most important pieces of information are the two 6-digit
+                numbers inside the double quotes.  Be sure to include this
+                information in crashmail.
+
+CLKNSQ  CLOCK1  JOB     Job not in SW queue
+        The scheduler tried to run a job that was not ready to run.
+        Not expected to happen.
+
+CLOCK1  CLOCK1  NONAME  Default for NONAME stopcodes
+        This stopcode does not have a name because it has not occurred before.
+        Action: The most important pieces of information are the two 6-digit
+                numbers inside the double quotes.  Be sure to include this
+                information in crashmail.
+
+CLRCM1  FILUUO  DISK    CLRCOM decremented DRBCNT too far
+        A LOOKUP/ENTER/RENAME failure set the DRB use count negative.
+
+CLUBS   CLUBS   NONAME  Default for NONAME stopcodes
+        This stopcode does not have a name because it has not occurred before.
+        Action: The most important pieces of information are the two 6-digit
+                numbers inside the double quotes.  Be sure to include this
+                information in crashmail.
+
+CMD000  COMCON  STOP    Error detected at UMONST
+        The command decoder finished a command but can'f find the job.
+
+CMDNLJ  COMCON  STOP    Command for null job
+        The command decoder thinks that job 0 has typed a command.
+
+COMCON  COMCON  NONAME  Default for NONAME stopcodes
+        This stopcode does not have a name because it has not occurred before.
+        Action: The most important pieces of information are the two 6-digit
+                numbers inside the double quotes.  Be sure to include this
+                information in crashmail.
+
+COMMOD  COMMOD  NONAME  Default for NONAME stopcodes
+        This stopcode does not have a name because it has not occurred before.
+        Action: The most important pieces of information are the two 6-digit
+                numbers inside the double quotes.  Be sure to include this
+                information in crashmail.
+
+COMMON  COMMON  NONAME  Default for NONAME stopcodes
+        This stopcode does not have a name because it has not occurred before.
+        Action: The most important pieces of information are the two 6-digit
+                numbers inside the double quotes.  Be sure to include this
+                information in crashmail.
+
+CORE1   CORE1   NONAME  Default for NONAME stopcodes
+        This stopcode does not have a name because it has not occurred before.
+        Action: The most important pieces of information are the two 6-digit
+                numbers inside the double quotes.  Be sure to include this
+                information in crashmail.
+
+CPXKON  CPXKON  NONAME  Default for NONAME stopcodes
+        This stopcode does not have a name because it has not occurred before.
+        Action: The most important pieces of information are the two 6-digit
+                numbers inside the double quotes.  Be sure to include this
+                information in crashmail.
+
+CRASH   PICON   STOP    CRASH requested - Nonzero in 30
+        The network base, a program or operations personnel deliberately
+        deposited a nonzero value in absolute memory location 30.
+        Base or operator initiated crash.
+        Action: Record all CTY output.  If the base has crashed, reload
+                the base before bringing the system back up.
+
+CTYBMT  CTYSIM  STOP    Bad message type to CTY
+        CONSOLE mode got confused.
+
+CTYSIM  CTYSIM  NONAME  Default for NONAME stopcodes
+        This stopcode does not have a name because it has not occurred before.
+        Action: The most important pieces of information are the two 6-digit
+                numbers inside the double quotes.  Be sure to include this
+                information in crashmail.
+
+DDBCNE  SCNSER  STOP    DDB chain has no end
+        The chain of TTY Device Data Blocks is looped back on itself.
+***     Action: This is a particular bug TXS is trying to catch.  Be sure
+                to save the crash dump.
+
+DEBUG   DEBUG   NONAME  Default for NONAME stopcodes
+        This stopcode does not have a name because it has not occurred before.
+        Action: The most important pieces of information are the two 6-digit
+                numbers inside the double quotes.  Be sure to include this
+                information in crashmail.
+
+DIEBPC  ERRCON  STOP    Bad PC in DIE
+        The routine that outputs the stopcode message could not find
+        the proper name for the stopcode.
+
+DIEMNR  ERRCON  HALT    Master PDP-11 not running
+        This only occurs when the KL's PDP-11 is not running when a
+        stopcode occurs.  Since the PDP-11 is not running, nothing comes
+        out on the CTY, not even "KL10 HALTED".
+        Action: T restart the PDP-11 and tell it to CONTINUE the KL.
+
+DIEREH  ERRCON  HALT    Recursion in Error Handler
+        A second stopcode was detected while processing a stopcode.
+        Most likely the stopcode routine got an illegal memory reference.
+        Action: A dump MUST be taken.  Try to start the CPU at location 146
+                to get BOOTS LOADED.  If that fails, use the BOOTS paper
+                tape or "J BOTLOD".
+
+DR11C   DR11C   NONAME  Default for NONAME stopcodes
+        This stopcode does not have a name because it has not occurred before.
+        Action: The most important pieces of information are the two 6-digit
+                numbers inside the double quotes.  Be sure to include this
+                information in crashmail.
+
+DZKON   DZKON   NONAME  Default for NONAME stopcodes
+        This stopcode does not have a name because it has not occurred before.
+        Action: The most important pieces of information are the two 6-digit
+                numbers inside the double quotes.  Be sure to include this
+                information in crashmail.
+
+EPDLOV  ERRCON  STOP    Exec Push Down List Overflow
+        Too many nested subroutines or the stack pointer got messed up.
+        This can be caused by a hardware problem where a device generates
+        too many interrupts.
+
+ERRCON  ERRCON  NONAME  Default for NONAME stopcodes
+        This stopcode does not have a name because it has not occurred before.
+        Action: The most important pieces of information are the two 6-digit
+                numbers inside the double quotes.  Be sure to include this
+                information in crashmail.
+
+EUE     PICON   DEBUG   Exec Uuo Error
+        The Monitor tried to execute an illegal UUO.
+        This stopcode can be caused by an intermittent memory error or
+        a portion of the Monitor being overwritten by zeros (or garbage).
+        Action: If the memory is known to be bad, have maintenance check
+                the memory, otherwise a crash dump MUST be taken in order
+                for Software Support to help diagnose the cause of the
+                failure.
+
+F3TSER  F3TSER  NONAME  Default for NONAME stopcodes
+        This stopcode does not have a name because it has not occurred before.
+        Action: The most important pieces of information are the two 6-digit
+                numbers inside the double quotes.  Be sure to include this
+                information in crashmail.
+
+FILAMO  FILFND  DISK    ATB Max write count overflow
+        Too many jobs shared the same file at the same time.  Cause unknown.
+***     Action: This is a particular bug TXS is trying to catch.  Be sure
+                to save the crash dump.
+
+FILANF  FILFND  DISK    ATB not found in list
+        The disk service routine was called improperly.
+
+FILATB  FILFND  DISK    Bad ATB pointer
+        The disk service routine was called improperly.
+
+FILAUO  FILFND  DISK    ATB Unshared map count overflow
+        The disk service routine was called improperly.
+
+FILAUS  FILFND  DISK    ATB Unshared map count zero with SPT
+        Too many jobs shared the same file at the same time.  Cause unknown.
+***     Action: This is a particular bug TXS is trying to catch.  Be sure
+                to save the crash dump.
+
+FILAUU  FILFND  DISK    ATB Unshared map count underflow
+        The count of jobs sharing a file went negative.
+
+FILBNF  FILFND  DISK    DDB Not found in FNB device block list
+        DDB information was to be deleted, but the DDB could not be found.
+
+FILDMO  FILFND  DISK    DRB Max count overflow
+        The disk service routine was called improperly.
+        Not expected to happen.
+
+FILDMU  FILFND  DISK    DRB Max count underflow
+        The disk service routine was called improperly.
+        Not expected to happen.
+
+FILFND  FILFND  NONAME  Default for NONAME stopcodes
+        This stopcode does not have a name because it has not occurred before.
+        Action: The most important pieces of information are the two 6-digit
+                numbers inside the double quotes.  Be sure to include this
+                information in crashmail.
+
+FILIO   FILIO   NONAME  Default for NONAME stopcodes
+        This stopcode does not have a name because it has not occurred before.
+        Action: The most important pieces of information are the two 6-digit
+                numbers inside the double quotes.  Be sure to include this
+                information in crashmail.
+
+FILLAS  FILFND  DISK    LMAP slot active/super
+        The disk service routine was called improperly.
+
+FILRIB  FILRIB  NONAME  Default for NONAME stopcodes
+        This stopcode does not have a name because it has not occurred before.
+        Action: The most important pieces of information are the two 6-digit
+                numbers inside the double quotes.  Be sure to include this
+                information in crashmail.
+
+FILSEO  FILFND  DISK    SPT Free entry count overflow
+        The disk service routine was called improperly.
+
+FILUUO  FILUUO  NONAME  Default for NONAME stopcodes
+        This stopcode does not have a name because it has not occurred before.
+        Action: The most important pieces of information are the two 6-digit
+                numbers inside the double quotes.  Be sure to include this
+                information in crashmail.
+
+FRMSER  FRMSER  NONAME  Default for NONAME stopcodes
+        This stopcode does not have a name because it has not occurred before.
+        Action: The most important pieces of information are the two 6-digit
+                numbers inside the double quotes.  Be sure to include this
+                information in crashmail.
+
+FTACFC  FTASER  STOP    FTA error - Cannot Find Command
+        Could not find start of command list after a tape read error.
+
+FTASER  FTASER  NONAME  Default for NONAME stopcodes
+        This stopcode does not have a name because it has not occurred before.
+        Action: The most important pieces of information are the two 6-digit
+                numbers inside the double quotes.  Be sure to include this
+                information in crashmail.
+
+GETFR1  CORE1   STOP    GETFRE List was empty, but CAVPGN nonzero
+        The count of available free pages is messed up.
+
+GETTR3  PCBIO   STOP    End of list detected at GETTR1+2
+        The disk service routine was called improperly.
+
+GIVPG1  SWAMP   DISK    Error in GIVPGK - F bit is not on
+        GIVPGK was called to release a disk file page, but the page has
+        already been released.
+***     Action: This is a particular bug TXS is trying to catch.  Be sure
+                to save the crash dump.
+
+GTDON1  PCBIO   JOB     PCB link zero at GTDONE+12 or GTDON4+4
+        The disk service routine was called improperly.
+
+GTSA43  SWAMP   DISK    Error at GTSA42 - STTPTR is zero
+        The disk service routine was called improperly.
+
+GTASP1  SWAMP   STOP    Error at GTSAP0+7
+        Coult not find any primary SAT PCBs.
+
+HALT    -----   -HALT-  Unable to locate BOOTS!
+        The disk subsystem is very very sick.  Reload from tape.
+
+IME     ERRCON  STOP    Illegal Memory-reference from Exec
+        The Monitor tried to access a page is shouldn't have.
+        This stopcode can be caused by an intermittent memory error or
+        by a bad pointer in the monitor.
+        Action: Note whether any memory parity error indicators are on before
+                saving the dump.  Be sure to include the name of program that
+                was running and the reported PC and UUO in the crash mail.
+
+IOCSS   IOCSS   NONAME  Default for NONAME stopcodes
+        This stopcode does not have a name because it has not occurred before.
+        Action: The most important pieces of information are the two 6-digit
+                numbers inside the double quotes.  Be sure to include this
+                information in crashmail.
+
+KAF     COMMON  CPU     Keep Alive Failure
+        The PDP-10 is not responding to interrupts.
+        Either the hardware is causing too many interrupts for the CPU to
+        handle, or the software is not dismissing the interrupt correctly.
+        Action: A crash dump MUST be taken in order for Software Support
+                to be able to help diagnose the cause of the failure.
+                Report if any tape, disk, or other I/O device was having
+                problems just before the crash.
+
+KILUP2  COMCON  JOB     Funny space still in use at KILUPT
+        The per-process pages were not all released when it was time to
+        destroy the context pages.
+
+KMCSER  KMCSER  NONAME  Default for NONAME stopcodes
+        This stopcode does not have a name because it has not occurred before.
+        Action: The most important pieces of information are the two 6-digit
+                numbers inside the double quotes.  Be sure to include this
+                information in crashmail.
+
+LAFPOR  CORE1   STOP    LMAP Activation Failure - Page out of range
+        The routine to change the page map used the wrong page.
+
+LAFUPS  CORE1   STOP    LMAP Activation Failure - %UPS preserved
+        The routine to change the page map used the wrong page.
+
+LDFPOR  CORE1   STOP    LMAP Deactivation Failure - Page out of range
+        The routine to change the page map used the wrong page.
+
+LPTNON  LPTSER  DEBUG   No line printer
+        The printer service routine was called improperly.
+
+LPTSER  LPTSER  NONAME  Default for NONAME stopcodes
+        This stopcode does not have a name because it has not occurred before.
+        Action: The most important pieces of information are the two 6-digit
+                numbers inside the double quotes.  Be sure to include this
+                information in crashmail.
+
+LPTTMB  LPTSER  DEBUG   Too many bytes
+        The printer service routine was called improperly.
+        Not expected to happen.
+
+LRFPR*  CORE1   STOP    LMAP Read Failure: Page out of range
+        The routine to change the page map used the wrong page.
+
+LSFPR*  CORE1   STOP    LMAP Store Failure - Page out of range
+        The routine to change the page map used the wrong page.
+
+LSFUF*  CORE1   STOP    LMAP Store Failure - LDC Count underflow
+        The routine to change the page map used the wrong page.
+
+MAGSER  MAGSER  NONAME  Default for NONAME stopcodes
+        This stopcode does not have a name because it has not occurred before.
+        Action: The most important pieces of information are the two 6-digit
+                numbers inside the double quotes.  Be sure to include this
+                information in crashmail.
+
+MAPAL1  PCBIO   STOP    Bad Retreival Pointer detected at MAPALL+4
+        The routine to read in a SAT was given a bogus RIB pointer.
+        The in-core information about the SATs has been clobbered.
+
+MAPDIE  PCBIO   STOP    UPTRIB and %RIB slot disagreed
+        A RIB was read with no errors, but the data is inconsistent.
+
+MAPHSF  SEGCON  JOB     Unexpected error from CHANIO VMAP
+        An error occurred mapping a HISEG into memory.
+
+MAPIO   MAPIO   NONAME  Default for NONAME stopcodes
+        This stopcode does not have a name because it has not occurred before.
+        Action: The most important pieces of information are the two 6-digit
+                numbers inside the double quotes.  Be sure to include this
+                information in crashmail.
+
+MONBTS  MONBTS  NONAME  Default for NONAME stopcodes
+        This stopcode does not have a name because it has not occurred before.
+        Action: The most important pieces of information are the two 6-digit
+                numbers inside the double quotes.  Be sure to include this
+                information in crashmail.
+
+MPFBRP  MAPIO   JOB     MAPF error - Bad Retreival Pointer
+        A RIB was read with no errors, but the data is inconsistent.
+
+MTAICZ  FTASER  JOB     I/O count zero
+        The tape service routine was called improperly.
+
+MTAIFC  FTASER  JOB     Illegal Function Code
+        The tape service routine was called improperly.
+
+MTALNZ  FTASER  JOB     Last word Not Zero
+        The tape service routine was called improperly.
+
+MTANIB  FTASER  JOB     No IOWDs in BDIO
+        The tape service routine was called improperly.
+
+MTANIS  FTASER  JOB     No IOWD in SRFX
+        The tape service routine was called improperly.
+
+MTATMW  FTASER  JOB     Too many data words
+        The tape service routine asked to output too many data words at once.
+
+MTAXIP  FTASER  JOB     Xfer already in Progress
+        The tape service routine was called improperly.
+
+NAILI3  SCHED1  JOB     Counts and CFRLST don't agree in NAILIT
+        A reserved page was taken and not properly counted.
+
+NJBPER  PICON   STOP    Parity error in Null Job
+        Memory parity error while the null job was running.
+        Action: Check memory box for error indications.
+
+NOBASE  SCNSER  EVENT   No response from BASE
+        There has been no messages from the BASE for over 90 seconds.
+        Action: Restart the BASE.
+
+NOWRIT  PCBIO   STOP    All disks are write protected
+        A hard write error occurred on an unrecognized PCB page during ONCE.
+        At least one 3650 disk is write protected or went off-line.
+        Action: Make sure all disks are on-line and write-enabled.
+
+NULARQ  SCHED1  STOP    Attempt to requeue null job
+        Scheduler got confused.
+
+OHTENF  FILIO   STOP    Output error Hash Table - Entry not found
+        Cannot locate a page that was previously marked bad.
+
+OHTFUL  FILIO   STOP    Output Hash Table Full - Too many DP errors
+        Too many disk write errors to keep track of.
+        Action: Check disk system, may need to schedule a PAKCOPY.
+
+ONCCSH  ONCE    STOP    Bad data in ONCE:CSHCLR
+        Request to set up EPT with bad data.
+
+ONCDSK  ONCDSK  NONAME  Default for NONAME stopcodes
+        This stopcode does not have a name because it has not occurred before.
+        Action: The most important pieces of information are the two 6-digit
+                numbers inside the double quotes.  Be sure to include this
+                information in crashmail.
+
+ONCE    ONCE    NONAME  Default for NONAME stopcodes
+        This stopcode does not have a name because it has not occurred before.
+        Action: The most important pieces of information are the two 6-digit
+                numbers inside the double quotes.  Be sure to include this
+                information in crashmail.
+
+PAGNCR  ERRCON  JOB     Page Fault, cannot create COW page
+        The routine to create a private, writeable page failed.
+
+PAGP3R  CLOCK1  JOB     Pager - P3 and P4 in use at RSCHED
+        The scheduler is confused as too which page slots are in use.
+
+PAGSAC  CLOCK1  JOB     Pager - Cannot Stack ACs
+        The Monitor got into a loop handling a page fault.
+
+PAGUDE  ERRCON  JOB     Page fault - Unexpected Dispatch Error
+        An unclassifyable page fault occurred in the Monitor.
+
+PAGWK2  SCHED1  JOB     Job not coming out of SW queue at PAGWK1+2
+        Paging I/O completed for a job that was not waiting for paging I/O.
+
+PAGZER  CLOCK1  STOP    Pager - UPT is zero
+        The next job scheduled to be run has no pages assigned.
+
+PCBFL1  CORE1   JOB     Error detected at PCBFLT
+        Context page not set up properly
+
+PCBIO   PCBIO   NONAME  Default for NONAME stopcodes
+        This stopcode does not have a name because it has not occurred before.
+        Action: The most important pieces of information are the two 6-digit
+                numbers inside the double quotes.  Be sure to include this
+                information in crashmail.
+
+PFLJB0  CORE1   CPU     Page fault in job 0
+        Paging hardware failed while the null job was running.
+        Action: Treat this just like an IME stopcode.
+
+PFLLDC  CORE1   STOP    Page fault with LDC nonzero
+        A page fault occurred in user mode while the UPT was flagged as being
+        in the process of being changed.
+***     Action: This is a particular bug TXS is trying to catch.  Be sure
+                to save the crash dump.
+
+PFLPR0  CORE1   STOP    Page fault writing - Page protection 0
+        The routine to change the page map used the wrong page.
+
+PGUSEA  CORE1   STOP    Page Use Error: Slot still active
+        The routine to change the page map used the wrong page.
+
+PGUSEO  CORE1   STOP    Page Use Error: Count increment overflow
+        The routine to change the page map used the wrong page.
+
+PGUSEU  CORE1   STOP    Page Use Error: Count decrement underflow
+        The routine to change the page map used the wrong page.
+
+PGWNME  CORE1   STOP    Page Wait queue error: Not me
+        The routine to change the page map used the wrong page.
+
+PICON   PICON   NONAME  Default for NONAME stopcodes
+        This stopcode does not have a name because it has not occurred before.
+        Action: The most important pieces of information are the two 6-digit
+                numbers inside the double quotes.  Be sure to include this
+                information in crashmail.
+
+PTYSBL  SCNSER  INFO    PTY saw a Black Ball
+        Too many input characters seen on a PTY.
+
+RCCBAD  SCNSER  DEBUG   Range Checked Chunk, bad U
+        Accumulator U does not point to a valid LDB.  Often caused by base
+        sending a zapper on an unused port when the base dies.
+	Action: Press the INI button on the EBUS base node if problems persist
+                (stopcode NOBASE reported or no logins or no date/time).
+
+RCCDBG  SCNSER  INFO    Range Checked Chunk, continuing
+        A bad address was encountered while attempting to free a TTY chunk.
+
+RCCSTP  SCNSER  STOP    Range Checked Chunk - TTFREE is bad, stop
+	A bad address was encountered while attempting to get a TTY chunk.
+        This crash may occur when the EBUS base is restarted.
+
+REDSAT  SWAMP   INFO    SAT read error
+        One of the SAT pages got a hard read error
+
+REFSTR  REFSTR  NONAME  Default for NONAME stopcodes
+        This stopcode does not have a name because it has not occurred before.
+        Action: The most important pieces of information are the two 6-digit
+                numbers inside the double quotes.  Be sure to include this
+                information in crashmail.
+
+REMVPG  CORE1   STOP    Remove virtual page - Error
+        The subroutine to change the page map failed unexpectedly.
+
+RIBBRP  FILRIB  DISK    RIB error - Bad Retreival Pointer
+        A RIB was read with no errors, but the pointers are bad.
+        Action: The file must be deleted with "DELETE/BAD" and restored from
+                a backup tape.
+
+RIBERR  FILRIB  EVENT   RIB error - software detected
+        A RIB was read with no errors, but the data is inconsistent.
+        Action: The file must be deleted with "DELETE/BAD" and restored from
+                a backup tape.
+
+RIBHRE  FILRIB  EVENT   RIB error - cannot read RIB from disk
+        A hardware read error occurred while reading the RIB.
+        Action: The file must be deleted with "DELETE/BAD" and restored from
+                a backup tape.
+
+RIBTME  FILRIB  DISK    Too Many RIB errors - disk is unsafe
+        The entire disk is probably bad, no dump can be taken.
+        Action: Check for disk-head crash.  Do not not take a dump or reload
+                the monitor until the disk has been repaired.
+
+RMXKON  RMXKON  NONAME  Default for NONAME stopcodes
+        This stopcode does not have a name because it has not occurred before.
+        Action: The most important pieces of information are the two 6-digit
+                numbers inside the double quotes.  Be sure to include this
+                information in crashmail.
+
+S..CI7  UUOCON  DEBUG   CALLI 70 requested DEBUG stopcode
+        A system programmer deliberately caused a DEBUG stopcode.
+        This is done when a crash dump is needed, system stays running.
+
+S..JOB  UUOCON  JOB     CALLI 67 requested JOB stopcode
+        A system programmer was testing the stopcode routine.
+
+SAT2ND  MAPIO   DEBUG   2nd bad SAT detected
+        Monitor has found two SAT pages with hard read errors.
+        Action: Check out the disk system before running a full DSKCLN.
+
+SAXINX  COMMOD  INFO    Spurious SA-10 interrupt
+        An SA-10 interrupt occurred on a known channel, but unknown unit.
+        A disk or tape controller reported a bad device unit address.
+        If the contents of T4 = 400000,,421x43 it means that the 3674 reported
+        device address 00 instead of hex 'C0'.  A THUNG is expected.
+        Action: Make a note if THUNG immediately follows this message.
+
+SAXINY  COMMOD  INFO    SA-10 interrupt ignored
+        An SA-10 interrupt occured on an unknown channel.
+        Action: Run SA10 diagnostics.
+
+SAXMM1  COMMOD  CPU     Spurious SA-10 memory error
+        The SA-10 disk controller thought it detected a memory parity error.
+        Action: Check the memory boxes for error indications.
+
+SCHED1  SCHED1  NONAME  Default for NONAME stopcodes
+        This stopcode does not have a name because it has not occurred before.
+        Action: The most important pieces of information are the two 6-digit
+                numbers inside the double quotes.  Be sure to include this
+                information in crashmail.
+
+SCNSER  SCNSER  NONAME  Default for NONAME stopcodes
+        This stopcode does not have a name because it has not occurred before.
+        Action: The most important pieces of information are the two 6-digit
+                numbers inside the double quotes.  Be sure to include this
+                information in crashmail.
+
+SEAR14  SWAMP   DISK    Error at SEAR15+1 - No bits free in SAT
+        A SAT page which is supposed to have free bits doesn't.
+
+SIMIO   SIMIO   NONAME  Default for NONAME stopcodes
+        This stopcode does not have a name because it has not occurred before.
+        Action: The most important pieces of information are the two 6-digit
+                numbers inside the double quotes.  Be sure to include this
+                information in crashmail.
+
+SIMIOX  SIMIO   JOB     Unexpected error at SIMIOS
+        A monitor call in SIMIO failed that is not expected to fail.
+
+SIMRM0  SIMIO   JOB     Unexpected VREMOV error at SIMRM1+1
+        The paging routines were called improperly.
+
+SIMUUF  SIMIO   JOB     SIMIO UUO Failure
+        CREATE-FILE-PAGE or MAP-FILE-PAGE got an unexpected error.
+***     Action: This is a particular bug TXS is trying to catch.  Be sure
+                to save the crash dump.
+
+SWAMP   SWAMP   NONAME  Default for NONAME stopcodes
+        This stopcode does not have a name because it has not occurred before.
+        Action: The most important pieces of information are the two 6-digit
+                numbers inside the double quotes.  Be sure to include this
+                information in crashmail.
+
+SWPNDP  FILIO   STOP    Swapper: Not a disk page
+        The disk service routine was called improperly.
+
+SWPNIO  FILIO   STOP    Swapper: No I/O in progress
+        The disk said if finished Input/Output, but no I/O scheduled.
+
+SWPOOR  FILIO   STOP    Swapper: Out of range
+        The disk service routine was called improperly.
+
+SWPUOR  FILIO   STOP    Swapper: Unit out of range
+        An attempt was made to start I/O on a disk that does not exist.
+
+SWPZER  FILIO   STOP    Swapper: Page count is zero
+        The disk service routine transferred zero pages.
+
+TAPERR	MAGSER  EVENT   Magnetic tape error, UBA reset
+        The tape controller had to be forceably reset to clear an error.
+        Action: Have maintenance check for loose boards or bad cables.
+
+TIMEOK  UUOCON  EVENT   Date/time has been changed
+        The Operator or the Network Supervisor has adjusted the time-of-day.
+
+TMPUUO  TMPUUO  NONAME  Default for NONAME stopcodes
+        This stopcode does not have a name because it has not occurred before.
+        Action: The most important pieces of information are the two 6-digit
+                numbers inside the double quotes.  Be sure to include this
+                information in crashmail.
+
+TTYBCN  SCNSER  INFO    Block IO count negative
+        This stopcode may occur when the Base restarts after an Engine crash.
+        Action: None if the Base has just been restarted.
+
+TTYBMT  SCNSER  INFO    Bad Message Type from Base
+        The network base gave the PDP-10 bad data.
+        Action: INItialize or reload the Base if no-one can login.
+
+TTYBNP  SCNSER  DEBUG   Block mode IO Not in Progress
+        This stopcode may occur when the Base restarts after an Engine crash.
+        Action: None if the Base has just been restarted.
+
+TTYBPN  SCNSER  DEBUG   Bad Port Number from Base
+        The network base gave the PDP-10 bad data.
+        Action: INItialize or reload the Base if no-one can log in.
+
+TTYFLM  SCNSER  DEBUG   TTY Free List Messed Up
+        The list of available bufferlets has looped back on itself.
+
+TTYNFB  SCNSER  STOP    No Free Buffers
+        Block-mode I/O was terminated, and tried to release more buffers
+        than were originally allocated for block-mode I/O.
+
+TTYNNC  SCNSER  INFO    TTY - No Next Chunk
+        Attempt to read past terminal input buffer.  Line gets zapped.
+
+TTYNPB  SCNSER  JOB     No PTY Buffer for block IO
+        Block-mode I/O was requested for a PTY, but no buffer had been
+        allocated for it.
+
+TTYPTY  SCNSER  INFO    PTY bit wrong for TTY
+        The flag LDLPTY in LDBDCH has been clobbered.
+
+TTYZNE  SCNSER  INFO    Zapper not echoed for port
+        The network base is trying to re-use a port that is not zapped yet.
+        Can occur when certain TYMSATs are not strictly obeying protocol.
+
+UFDER1  FILUUO  DISK    UFD error return from DIRSRC
+        A UFD was read with no errors, but is inconsistent.
+        It is possible that the disk hardware is sick and overwrote some
+        or all of the user's directory.
+        Action: After reloading and DSKCLN finishes, set license and do a DIR
+                on the user's directory.  Restore the directory from a TITO
+                tape if the directory is trashed.
+
+UIL     ERRCON  CPU     Uuo at Interrupt Level
+        An interrupt service routine tried to execute an illegal UUO.
+        This stopcode can be caused by an intermittent memory error or
+        a portion of the Monitor being overwritten by zeros (or garbage).
+        Action: If the memory is known to be bad, have maintenance check
+                the memory, otherwise a crash dump MUST be taken in order
+                for Software Support to help diagnose the cause of the
+                failure.
+
+ULKNME  CORE1   STOP    Unlock UPx - Not mine error
+        The routine to change the page map used the wrong page.
+
+UNIONL  FILIO   EVENT   Unit came on-line
+        A disk drive that was off-line is now on-line.
+
+UPTPER  PICON   STOP    Page (parity) error in UPT
+        The pager can't access the UPT any more.
+        Action: Run diagnostics on the pager hardware.
+
+USRUS1  FILUUO  DEBUG   Unexpected CHANIO error in USETI
+        The disk service routine was called improperly.
+
+UUOAST  PICON   JOB     ACs Stacked Too deep
+        The Monitor got into a loop calling itself via MUUOs.
+
+UUOCNT  UUOCON  JOB     UUO from Concealed mode, No Trap
+        The PC flags were set to Concealed or Supervisor mode.
+
+UUOCON  UUOCON  NONAME  Default for NONAME stopcodes
+        This stopcode does not have a name because it has not occurred before.
+        Action: The most important pieces of information are the two 6-digit
+                numbers inside the double quotes.  Be sure to include this
+                information in crashmail.
+
+UUOCTR  PICON   JOB     UUO from Concealed mode, Trap
+        The PC flags were set to Concealed or Supervisor mode.
+
+UUOEIJ  ERRCON  STOP    Error with Illegal Job number
+        A problem that would stop one job occurred, but no job was
+        running at the time.
+
+UUOIPF  ERRCON  JOB     UUO with Illegal PC Flags
+        The PC flags were set to Concealed or Supervisor mode.
+
+UUOJB0  UUOCON  STOP    UUO from Job 0
+        A UUO was requested by the null job.
+
+UUOSNT  UUOCON  CPU     UUO from Supervisor mode, No Trap
+        The PC flags were set to Concealed or Supervisor mode.
+
+UUOSTR  PICON   CPU     UUO from Supervisor mode, Trap
+        The PC flags were set to Concealed or Supervisor mode.
+
+UUOXWL  UUOCON  JOB     UUO eXit With Locks still active
+        Certain routines were not called in the right order.
+
+UUOXWR  FILUUO  DISK    UUO eXit with Resources still owned
+        The wrong set of subroutines was called.
+
+UUOZTR  PICON   STOP    Zero address in TRAP uuo
+        The wrong value was used in the arithmetic overflow handler
+        or the stack overflow handler.
+
+WRITE1  SCHED1  EVENT   Writing updated file while READONLY
+        LOGINN wrote to the disk, updating LUD.SYS.
+
+WRTDSK  FILIO   EVENT   Disk write error
+        This stopcode will be followed by more information describing which
+        disk is having hardware write problems.
+
+WRTSAT  FILIO   INFO    Error writing SAT to disk
+        Unrecoverable error writing to the disk - at least one page
+        on the disk is bad, and it is a crucial page.  The Monitor will
+        attempt to continue running, and a full DSKCLN will occur when the
+        system is eventually reloaded.  This can sometimes be caused when
+        one of the disk units goes off-line.
+        Action: Check that all disks are on-line, prepare for the possibility
+                of rebuilding the disk.
+
+ZAPBUG  SCNSER  DEBUG   Port not Zapped bug
+        The network base is trying to re-use a port that is not zapped yet.
+        Action: INItialize or reload the Base.
+Appendix A - Fatal stopcodes - types CPU, DISK, and HALT
+
+PICON   CPU     APRFAT  <Fatal APR error - Hardware failure>
+PICON   CPU     APRHPE  <Hard Parity Error>
+COMMON  CPU     KAF     <Keep Alive Failure>
+PICON   CPU     NJBPER  <Parity error in Null Job>
+CORE1   CPU     PFLJB0  <Page fault in jobs 0>
+COMMOD  CPU     SAXMM1  <Spurious SA-10 memory error>
+ERRCON  CPU     UIL     <Uuo at Interrupt Level>
+UUOCON  CPU     UUOSNT  <UUO from Supervisor mode, No Trap>
+PICON   CPU     UUOSTR  <UUO from Supervisor mode, Trap>
+
+CORE1   DISK    BACRFP  <SAT (M) Bit already clear - File Page>
+CORE1   DISK    BACRVP  <SAT (M) Bit already clear - Virtual Page>
+FILUUO  DISK    CLRCM1  <CLRCOM decremented DRBCNT too far>
+FILFND  DISK    FILAMO  <ATB Max write count overflow>
+FILFND  DISK    FILANF  <ATB not found in list>
+FILFND  DISK    FILATB  <Bad ATB pointer>
+FILFND  DISK    FILAUO  <ATB Unshared map count overflow>
+FILFND  DISK    FILAUS  <ATB Unshared map count zero with SPT>
+FILFND  DISK    FILAUU  <ATB Unshared map count underflow>
+FILFND  DISK    FILBNF  <DDB Not found in FNB device block list>
+FILFND  DISK    FILDMO  <DRB Max count overflow>
+FILFND  DISK    FILDMU  <DRB Max count underflow>
+FILFND  DISK    FILLAS  <LMAP slot active/super>
+FILFND  DISK    FILSEO  <SPT Free entry count overflow>
+SWAMP   DISK    GIVPG1  <Error in GIVPGK - F bit is not on>
+SWAMP   DISK    GTSA43  <Error at GTSA42 - STTPTR is zero>
+FILRIB  DISK    RIBBRP  <RIB error - Bad Retreival Pointer>
+FILRIB  DISK    RIBTME  <Too Many RIB errors - disk is unsafe>
+SWAMP   DISK    SATRSV  <SAT error - reserved page gotten>
+SWAMP   DISK    SEAR14  <Error at SEAR15+1 - No bits free in SAT>
+FILUUO  DISK    UFDER1  <UFD error return from DIRSRC>
+FILUUO  DISK    UUOXWR  <UUO eXit with Resources still owned>
+Appendix A - Fatal stopcodes - types CPU, DISK, and HALT
+
+SCNSER  HALT    BASE04  <Bad message type from host>
+CORE1   HALT    CHTFDP  <CHT Failure - Insert: Duplicate page>
+CORE1   HALT    CHTFIU  <CHT Failure - Remove: In use/IO in progress>
+CORE1   HALT    CHTFLS  <CHT Failure - Search: RBMASK bits on>
+CORE1   HALT    CHTFMU  <CHT Failure - Remove: Multiply used PGYADR>
+CORE1   HALT    CHTFNF  <CHT Failure - Remove: CP not found in CHT>
+CORE1   HALT    CHTFNJ  <CHT Failure - Remove: No job in use list>
+COMCON  HALT    CMD000  <Error detected at UMONST>
+COMCON  HALT    CMDNLJ  <Command for null job>
+PICON   HALT    CRASH   <CRASH requested - Nonzero in 30>
+CTYSIM  HALT    CTYBMT  <Bad message type to CTY>
+SCNSER  HALT    DDBCNE  <DDB chain has no end>
+ERRCON  HALT    DIEBPC  <Bad PC in DIE>
+ERRCON  HALT    DIEREH  <Recursion in Error Handler>
+ERRCON  HALT    EPDLOV  <Exec Push Down List Overflow>
+CORE1   HALT    GETFR1  <GETFRE List was empty, but CAVPGN nonzero>
+PCBIO   HALT    GETTR3  <End of list detected at GETTR1+2>
+SWAMP   HALT    GTSAP1  <Error at GTSAP0+7>
+ERRCON  HALT    IME     <Illegal Memory-reference from Exec>
+CORE1   HALT    LAFPOR  <LMAP Activation Failure - Page out of range>
+CORE1   HALT    LAFUPS  <LMAP Activation Failure - %UPS preserved>
+CORE1   HALT    LDFPOR  <LMAP Deactivation Failure - Page out of range>
+CORE1   HALT    LRFPR*  <LMAP Read Failure: Page out of range>
+CORE1   HALT    LSFPR*  <LMAP Store Failure - Page out of range>
+CORE1   HALT    LSFUF*  <LMAP Store Failure - LDC Count underflow>
+PCBIO   HALT    MAPAL1  <Bad Retreival Pointer detected at MAPALL+4>
+PCBIO   HALT    MAPDIE  <UPTRIB and %RIB slot disagreed>
+PCBIO   HALT    NOWRIT  <All disks are write protected>
+SCHED1  HALT    NULARQ  <Attempt to requeue null job>
+FILIO   HALT    OHTENF  <Output error Hash Table - Entry not found>
+FILIO   HALT    OHTFUL  <Output Hash Table Full - Too many DP errors>
+ONCE    HALT    ONCCSH  <Bad data in ONCE:CSHCLR>
+CLOCK1  HALT    PAGZER  <Pager - UPT is zero>
+CORE1   HALT    PFLLDC  <Page fault with LDC nonzero>
+CORE1   HALT    PFLPR0  <Page fault writing - Page protection 0>
+CORE1   HALT    PGUSEA  <Page Use Error: Slot still active>
+CORE1   HALT    PGUSEO  <Page Use Error: Count increment overflow>
+CORE1   HALT    PGUSEU  <Page Use Error: Count decrement underflow>
+CORE1   HALT    PGWNME  <Page Wait queue error: Not me>
+SCNSER  HALT    RCCSTP  <Range Checked Chunk - TTFREE is bad, stop>
+CORE1   HALT    REMVPG  <Remove virtual page - Error>
+FILIO   HALT    SWPNDP  <Swapper: Not a disk page>
+FILIO   HALT    SWPNIO  <Swap done: No I/O in progress>
+FILIO   HALT    SWPOOR  <Swapper: Out of range>
+FILIO   HALT    SWPUOR  <Swapper: Unit out of range>
+SCNSER  HALT    TTYNFB  <No Free Buffrers>
+CORE1   HALT    ULKNME  <Unlock UPx - Not mine error>
+PICON   HALT    UPTPER  <Page error in UPT>
+ERRCON  HALT    UUOEIJ  <Error with Illegal Job number>
+UUOCON  HALT    UUOJB0  <UUO from Job 0>
+PICON   HALT    UUOZTR  <Zero address in TRAP uuo>
+Appendix B - Continuable stopcodes - types DEBUG and JOB
+
+PICON   DEBUG   APRTIM  <APR timer overflowed>
+PICON   DEBUG   APRWRN  <Spurious APR error>
+SCNSER  DEBUG   BIOZAD  <Block I/O with Zero Address>
+LP2SER  DEBUG   LPTNON  <No line printer>
+LP2SER  DEBUG   LPTTMB  <Too many bytes>
+SCNSER  DEBUG   RCCBAD  <Range Checked Chunk, bad U>)
+UUOCON  DEBUG   S..CI7  <CALLI 70 requested DEBUG stopcode>
+MAPIO   DEBUG   SAT2ND  <2nd bad SAT detected>
+FILUUO  DEBUG   USRUS1  <Unexpected CHANIO error in USETI>
+
+CLOCK1  JOB     CLKNSQ  <Job not in SW queue>
+ERRCON  JOB     EUE     <Exec Uuo Error>
+PCBIO   JOB     GTDON1  <PCB link zero at GTDONE+12 or GTDON4+4>
+COMCON  JOB     KILUP2  <Funny space still in use at KILUPT>
+SEGCON  JOB     MAPHSF  <Unexpected error from CHANIO VMAP>
+MAPIO   JOB     MPFBRP  <MAPF error - Bad Retreival Pointer>
+MAGSER  JOB     MTAICZ  <I/O count zero>
+F3TSER  JOB     MTAICZ  <I/O count zero>
+MAGSER  JOB     MTAIFC  <Illegal Function Code>
+F3TSER  JOB     MTAIFC  <Illegal Function Code>
+MAGSER  JOB     MTALNZ  <Last word Not Zero>
+F3TSER  JOB     MTALNZ  <Last word Not Zero>
+FTASER  JOB     MTANIB  <No IOWDs in BDIO>
+MAGSER  JOB     MTANIB  <No IOWDs in BDIO>
+F3TSER  JOB     MTANIB  <No IOWDS in BDIO>
+MAGSER  JOB     MTANIS  <No IOWD in SRFX>
+F3TSER  JOB     MTANIS  <No IOWD in SRFX>
+FTASER  JOB     MTATMW  <Too many data words>
+MAGSER  JOB     MTAXIP  <Xfer already in Progress>
+F3TSER  JOB     MTAXIP  <Xfer already In Progress>
+SCHED1  JOB     NAILI3  <Counts and CFRLST don't agree in NAILIT>
+ERRCON  JOB     PAGNCR  <Page Fault, cannot create COW page>
+CLOCK1  JOB     PAGP3R  <Pager - P3 and P4 in use at RSCHED>
+CLOCK1  JOB     PAGSAC  <Pager - Cannot Stack ACs>
+ERRCON  JOB     PAGUDE  <Page fault - Unexpected Dispatch Error>
+SCHED1  JOB     PAGWK2  <Job not coming out of SW queue at PAGWK1+2>
+CORE1   JOB     PCBFL1  <Error detected at PCBFLT>
+UUOCON  JOB     S..JOB  <CALLI 67 requested JOB stopcode>
+SIMIO   JOB     SIMIOX  <Unexpected UUO at SIMIOS>
+SIMIO   JOB     SIMRM0  <Unexpected VREMOV error at SIMRM1+1>
+SIMIO   JOB     SIMUUF  <SIMIO UUO Failure>
+SCNSER  JOB     TTYNPB  <No PTY Buffer for block IO>
+PICON   JOB     UUOAST  <ACs Stacked Too deep>
+UUOCON  JOB     UUOCNT  <UUO from Concealed mode, No Trap>
+PICON   JOB     UUOCTR  <UUO from Concealed mode, Trap>
+UUOCON  JOB     UUOXWL  <UUO eXit With context Locks active>
+Appendix C - Information stopcodes - types EVENT and INFO
+
+CORE1   EVENT   BADPAG  <Bad spot detected>
+SCNSER  EVENT   BASEOK  <Base is up>
+SCNSER  EVENT   NOBASE  <No response from BASE>
+FILRIB  EVENT   RIBERR  <RIB error - software detected>
+FILRIB  EVENT   RIBHRE  <RIB error - Hard Read Error>
+MAGSER  EVENT   TAPERR  <Magnetic tape error, UBA reset>
+UUOCON  EVENT   TIMEOK  <Date/time has been changed>
+SCHED1  EVENT   WRITE1  <Writing updated file while READONLY>
+FILIO   EVENT   WRTDSK  <Disk write error>
+
+SWAMP   INFO    BADSAT  <SAT bit-count error>
+FILUUO  INFO    BADUFD  <Inconsistent UFD - FULL DSKCLN requested>
+SCNSER  INFO    BASE    <BASE has crashed - bad KEY620>
+FTASER  INFO    FTACFC  <FTA error - Cannot Find Command>
+SCNSER  INFO    PTYSBL  <PTY saw a Black Ball>
+SCNSER  INFO    RCCDBG  <Range Checked Chunk, continuing>
+SWAMP   INFO    REDSAT  <SAT read error>
+COMMOD  INFO    SAXINX  <Spurious SA-10 interrupt>
+COMMOD  INFO    SAXINY  <SA-10 interrupt ignored>
+FILIO   INFO    SWPZER  <Swapped zero pages>
+SCNSER  INFO    TTYBCN  <Block IO count negative>
+SCNSER  INFO    TTYBMT  <Bad Message Type from Base>
+SCNSER  INFO    TTYBNP  <Block mode io Not in Progress>
+SCNSER  INFO    TTYBPN  <Bad Port Number from Base>
+SCNSER  INFO    TTYFLM  <TTY Free List Messed Up>
+SCNSER  INFO    TTYNNC  <TTY - No Next Chunk>
+SCNSER  INFO    TTYPTY  <PTY bit wrong for TTY>
+SCNSER  INFO    TTYZNE  <Zapper not echoed for port>
+FILIO   INFO    WRTSAT  <Disk output error writing SAT>
+SCNSER  INFO    ZAPBUG  <Port not Zapped - *BUG*>
+Appendix D - Unnamed stopcodes - types ENTRY and NONAME
+
+ACTSER  ENTRY   ACTSER  <Default for NONAME stopcodes>
+APXKON  ENTRY   APXKON  <Default for NONAME stopcodes>
+BPXKON  ENTRY   BPXKON  <Default for NONAME stopcodes>
+CIOPR   ENTRY   CIOPR   <Default for NONAME stopcodes>
+CLOCK1  ENTRY   CLOCK1  <Default for NONAME stopcodes>
+CLUBS   ENTRY   CLUBS   <Default for NONAME stopcodes>
+COMCON  ENTRY   COMCON  <Default for NONAME stopcodes>
+COMMOD  ENTRY   COMMOD  <Default for NONAME stopcodes>
+COMMON  ENTRY   COMMON  <Default for NONAME stopcodes>
+CORE1   ENTRY   CORE1   <Default for NONAME stopcodes>
+CPXKON  ENTRY   CPXKON  <Default for NONAME stopcodes>
+CTYSIM  ENTRY   CTYSIM  <Default for NONAME stopcodes>
+DEBUG   ENTRY   DEBUG   <Default for NONAME stopcodes>
+DR11C   ENTRY   DR11C   <Default for NONAME stopcodes>
+DZKON   ENTRY   DZKON   <Default for NONAME stopcodes>
+ERRCON  ENTRY   ERRCON  <Default for NONAME stopcodes>
+F3TSER  ENTRY   F3TSER  <Default for NONAME stopcodes>
+FILFND  ENTRY   FILFND  <Default for NONAME stopcodes>
+FILIO   ENTRY   FILIO   <Default for NONAME stopcodes>
+FILRIB  ENTRY   FILRIB  <Default for NONAME stopcodes>
+FILUUO  ENTRY   FILUUO  <Default for NONAME stopcodes>
+FRMSER  ENTRY   FRMSER  <Default for NONAME stopcodes>
+FTASER  ENTRY   FTASER  <Default for NONAME stopcodes>
+IOCSS   ENTRY   IOCSS   <Default for NONAME stopcodes>
+KMCSER  ENTRY   KMCSER  <Default for NONAME stopcodes>
+LP2SER  ENTRY   LPTSER  <Default for NONAME stopcodes>
+LPTSER  ENTRY   LPTSER  <Default for NONAME stopcodes>
+MAGSER  ENTRY   MAGSER  <Default for NONAME stopcodes>
+MAPIO   ENTRY   MAPIO   <Default for NONAME stopcodes>
+MONBTS  ENTRY   MONBTS  <Default for NONAME stopcodes>
+ONCDSK  ENTRY   ONCDSK  <Default for NONAME stopcodes>
+ONCE    ENTRY   ONCE    <Default for NONAME stopcodes>
+PCBIO   ENTRY   PCBIO   <Default for NONAME stopcodes>
+PICON   ENTRY   PICON   <Default for NONAME stopcodes>
+PTPSER  ENTRY   PTPSER  <Default for NONAME stopcodes>
+PTRSER  ENTRY   PTRSER  <Default for NONAME stopcodes>
+REFSTR  ENTRY   REFSTR  <Default for NONAME stopcodes>
+RMXKON  ENTRY   RMXKON  <Default for NONAME stopcodes>
+SCHED1  ENTRY   SCHED1  <Default for NONAME stopcodes>
+SCNSER  ENTRY   SCNSER  <Default for NONAME stopcodes>
+SEGCON  ENTRY   SEGCON  <Default for NONAME stopcodes>
+SIMIO   ENTRY   SIMIO   <Default for NONAME stopcodes>
+SWAMP   ENTRY   SWAMP   <Default for NONAME stopcodes>
+TMPUUO  ENTRY   TMPUUO  <Default for NONAME stopcodes>
+UUOCON  ENTRY   UUOCON  <Default for NONAME stopcodes>
+
+
+
+[End of STOPCD.MEM]
+
+  \ L€

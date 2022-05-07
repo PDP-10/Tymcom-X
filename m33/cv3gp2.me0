@@ -1,0 +1,830 @@
+procedure GEN
+%
+	this procedure will allow a check of a request for
+new configuration, and generate or correct confxx.mac, cnfnxx.mac and
+monxx.cmd files.
+
+	it also contains place to keep checksum, etc, info after monitor
+is generated with moned1
+%
+begin
+
+fields  IN.VALUE as "-5ZN",
+        NEW.VALUE same as IN.VALUE,
+        IN.DATE as date "ZM/ZD/YY",
+	LAST.DATE same as IN.DATE,
+	GEN.DATE same as IN.DATE,
+        IN.SYS as "5ZN",
+        IN.FILE as "30C",
+        IN.CKSUM as "6C",
+        IN.VER as "10C",
+        IN.SER as "6C",
+        IN.COMMAND as "10C",
+        DASH.POS as "2N",
+	OLD.PREF as 'C',
+	HISTORY as '80C',
+	CONF.FN as '15C',
+        NEED.MON.FILE as 'N',
+        NEED.CNFN.FILE as 'N',
+	OLDCNT as '2N',
+ 	FLAG as 'N',
+        YES.OR.NO as '10C'
+	
+relation CNFN.OLD is
+
+	key	CNT
+	
+	data	LINE
+
+relation CNFN.HIS is
+
+	key	CNT
+
+	data	LINE
+
+report CNFN to CONF.FN
+  page.size 0
+
+report CNFN.MOD to CONF.FN
+  page.size 0
+
+report MON.KI to CONF.FN
+  page.size 0
+
+report MON.KL to CONF.FN
+  page.size 0
+
+report MON.KS to CONF.FN
+  page.size 0
+
+report MON.F3 to CONF.FN
+  page.size 0
+
+report CONF to CONF.FN
+  page.size 0
+
+
+report.heading
+select largest HOST.CPUTYP via SYSNO then
+  conditional on CPUTYP begin
+   3 or 4: 
+  print to CONF "SUBTTL  CONFIG - CONFIGURATION DEFINITION",@cr,@cr
+1:
+  print to CONF "SUBTTL  CONFIG - CONFIGURATION DEFINITION",@cr,@cr,
+"  XP SAXC0N,2  ;2 CHANNELS",@cr,
+"    XP BP00,0  ;1 3830",@cr,
+"    XP FT00,1  ;1 3803",@cr,
+"    XP BP01,1  ;2 3830",@cr,
+"    XP FT01,0  ;2 3803",@cr
+2:
+  print to CONF "SUBTTL  CONFIG - CONFIGURATION DEFINITION",@cr,@cr,
+"  XP SAXC0N,2  ;2 CHANNELS",@cr,
+"    XP BP00,0  ;1 3830",@cr,
+"    XP FT00,1  ;1 3803",@cr,
+"    XP FT01,0  ;2 3803",@cr  
+end
+
+    
+source CNFN.INFO from CONF.FN
+
+  SEPARATOR "["
+  free form
+  input LINE
+
+
+procedure OUTSTANDING.REQUESTS
+%
+  procedure to print outstanding configuration requests and monitor
+requests
+%
+begin
+
+let FLAG = 0
+for each MONITOR where OKBY = DEFAULT   % needs confirming %
+  let FLAG = 1
+if FLAG = 1 then
+  begin
+  type 'OUTSTANDING CONFIGUATION REQUESTS',@cr,@cr,
+    '  SYSTEM    EFFECTIVE DATE',@cr,
+    '  ------    --------------',@cr  
+  for each MONITOR where OKBY = DEFAULT 
+    type SYSNO,'        ',EDATE,@cr
+  end
+
+let FLAG = 0
+for each MONITOR where GENBY = DEFAULT   % monitor needs generating %
+  if OKBY ne DEFAULT then
+    let FLAG = 1
+if FLAG = 1 then
+  begin
+  type @cr, 'NEED MONITOR GENERATED',@cr,@cr,
+    '  SYSTEM    EFFECTIVE DATE',@cr,
+    '  ------    --------------',@cr  
+  for each MONITOR where GENBY = DEFAULT 
+    if OKBY ne DEFAULT then
+    type SYSNO,'        ',EDATE,@cr
+  end
+end
+
+
+procedure CHANGE.VALUE
+%
+     list symbols with descriptions and present values for changes,
+  checking imputted values against boundary conditions
+%
+begin
+   type "Enter changed value, <cr> to retain old value, or -1 for Undefined",
+      @cr
+   for each CONFIG via SYSNO, where EDATE = IN.DATE
+     CHANGE:
+     begin
+     select SYM.DESC via key then
+       begin
+       type SYMBOL," - ",DESC,@cr," - "
+       if SYMBOL = "BPB" then
+         begin
+         type "BPA+BPAMX => "
+         Accept IN.VALUE
+         if IN.VALUE = -1 then delete from CONFIG via (SYSNO,SYMBOL,EDATE)
+         end
+       else
+         begin
+         if SYMBOL # "BPA" and VALUE > 9 then type "^D"
+         type VALUE as "5LN"," => "
+         end
+       end
+     Accept IN.VALUE
+     If IN.VALUE # default then
+      if IN.VALUE = -1 then
+        delete from CONFIG  via (SYSNO,SYMBOL,EDATE)
+      else
+        select HOST.CPUTYP via (SYSNO,EDATE) then
+          select SYM via key then
+           If IN.VALUE ge MINVAL and IN.VALUE le MAXVAL then
+             alter CONFIG using (IN.VALUE for VALUE)
+           else
+            begin
+            Type "VALUE MUST BE BETWEEN ",MINVAL," AND ",MAXVAL,@cr
+            Repeat CHANGE
+            end
+     end % CHANGE %
+    type @cr, "DO YOU WANT TO ADD ANY SYMBOLS? "
+    accept YES.OR.NO
+    if upper.case(substr(YES.OR.NO,1,1)) = 'Y' then
+        select HOST.CPUTYP via (SYSNO,EDATE) then
+          for each SYM via key 
+            select CONFIG via key then nothing
+            else 
+              ADD.CHANGE:
+              begin 
+              select SYM.DESC via key then
+	       begin
+	       type SYMBOL," - ",DESC,@cr," - "
+	       if SYMBOL = "BPB" then
+		 begin
+		 type "BPA+BPAMX => "
+		 Accept VALUE
+		 if VALUE = 0 then insert into CONFIG 
+		 end
+	       else
+		 begin
+		 type "["
+		 if SYMBOL # "BPA" and DEFVAL > 9 then type "^D"
+		 type DEFVAL as "5LN","] : "
+                 Accept VALUE
+                 If VALUE = default then let VALUE=DEFVAL
+                   else if VALUE # -1 then
+                     If IN.VALUE ge MINVAL and IN.VALUE le MAXVAL then
+                       insert into CONFIG
+                     else
+                       begin
+                       Type "VALUE MUST BE BETWEEN ",MINVAL," AND ",MAXVAL,@cr
+                       Repeat ADD.CHANGE
+                       end
+	          end % else %
+	        end % select %
+	      end % ADD.CHANGE %
+
+end
+procedure CONF.LIST
+%
+  internal procedure that lists configuration with notes of changed
+values
+%
+begin
+
+select largest MONITOR via (SYSNO, EDATE < IN.DATE) then
+  let LAST.DATE = EDATE
+else let LAST.DATE = EDATE
+for each CONFIG via SYSNO, where EDATE = IN.DATE
+  begin
+  conditional on SYMBOL
+    begin
+   'BPBMX' or 'BPAMX' or 'FTAUN' or 'FTA':
+        begin
+        type trim(SYMBOL),'=='
+        if VALUE > 7 then type "^D"
+        type VALUE  as '5LN'
+        end
+   'BPB': type 'BPB==BPA+BPAMX'
+   'BPA': type 'BPA==300'
+    end
+  else
+    begin
+    type 'XP ',trim(SYMBOL),','
+    if VALUE > 7 then type "^D"
+    type VALUE  as '5LN'
+    end
+  let NEW.VALUE=VALUE
+  select CONFIG via (SYSNO,SYMBOL,EDATE=LAST.DATE) then
+    if VALUE ne NEW.VALUE then
+      begin
+      type "**CHANGED**  OLD VALUE: "
+      if VALUE > 7 then type "^D"
+      type VALUE  as '5LN',@cr
+      end
+    else type @cr
+  else type @cr
+  end
+
+for each CONFIG via SYSNO, where EDATE = LAST.DATE
+  select CONFIG via (SYSNO,SYMBOL,EDATE=IN.DATE) then nothing else
+    begin
+    type "          **SYMBOL DELETED**  WAS "
+  conditional on SYMBOL
+    begin
+   'BPBMX' or 'BPAMX' or 'FTAUN' or 'FTA':
+        begin
+        type trim(SYMBOL),'=='
+        if VALUE > 7 then type "^D"
+        type VALUE  as '5LN',@cr
+        end
+   'BPB': type 'BPB==BPA+BPAMX'
+   'BPA': type 'BPA==300'
+    end
+  else
+    begin
+    type 'XP ',trim(SYMBOL),','
+    if VALUE > 7 then type "^D"
+    type VALUE  as '5LN',@cr
+    end
+    end
+
+end
+procedure PRINT.ORDER
+%
+  internal procedure to print order information
+%
+begin
+select ORDER via (SYSNO,EDATE=IN.DATE) then
+  begin
+  type "Monitor requested for ",SYSNO as "5LN",@cr,
+    "Date required: ",EDATE,@cr,
+    "Requested by: ",trim(REQBY),@cr,"Request Date: ",REQDATE,@cr,
+    "Telephone: ",trim(REQTEL),@cr,
+    "Monitor type: ",trim(MONTYPE),@cr,
+    "Put Monitor in ",trim(MONFILE),@cr,@cr
+  for each REMARK via (SYSNO,EDATE)
+    type trim(LINE),@cr
+  end
+
+end
+
+procedure CONFIG.FILE
+%
+  procedure to generate config file
+%
+begin
+
+	for each CONFIG via SYSNO, where EDATE = IN.DATE
+	  write report CONF
+	  conditional on SYMBOL
+	    begin
+	    'BPAMX' or 'FTAUN' or 'FTA' or 'BPBMX':
+		begin
+		print to CONF trim(SYMBOL),'=='
+		if VALUE > 7 then print to CONF "^D"
+		print to CONF VALUE as '5LN',@cr
+		end
+	   'BPB': print to CONF 'BPB==BPA+BPAMX',@cr
+	   'BPA': print to CONF 'BPA==300',@cr
+	    end  % conditional %
+	  else
+	    begin
+	    print to CONF 'XP ',trim(SYMBOL),','
+	    if VALUE > 7 then print to CONF "^D"
+	    print to CONF VALUE  as '5LN',@cr
+	    end
+type CONF.FN," written",@cr
+
+end
+procedure CNFN.FILE
+%
+  procedure to generate or correct cnfn files 
+%
+begin
+
+
+
+let CONF.FN = "(OSP)CNFN"+SYSID+".MAC"
+
+CNFN.RPT:
+begin
+if file CONF.FN exists then
+  begin
+  for each CNFN.INFO
+
+    if substr(LINE,1,1) = 'd' then
+       begin
+       if substr(LINE,11,2) = 'NA' then
+         move PREFIX to substr(LINE,30,1)
+       select largest CNFN.OLD then
+         let OLDCNT = CNT + 1
+       else let OLDCNT = 1
+       let CNT = OLDCNT 
+       insert into CNFN.OLD
+       end
+     else if substr(LINE,1,1) = ';' then
+       begin
+       select largest CNFN.HIS then
+         let OLDCNT = CNT + 1
+       else let OLDCNT = 1
+       let CNT = OLDCNT 
+       insert into CNFN.HIS
+       end
+     else if LINE ne default then
+       begin
+       type '?Format error in cnfn file',@cr
+       finish CNFN.RPT
+       end
+
+  write report CNFN.MOD
+    begin
+    for each CNFN.OLD
+      print to CNFN.MOD trim(LINE),@cr
+    print to CNFN.MOD @cr 
+    for each CNFN.HIS
+      print to CNFN.MOD trim(LINE),@cr
+    end
+
+  type CONF.FN,' modified',@cr
+  end
+
+else
+  begin
+  write report CNFN
+    print to CNFN
+      "define SYSNA1 (XLX,XRX) <XLX'",trim(PREFIX),SYSNO as '5LN',
+      "-P001/A'XRX>",@cr,
+      "define SYSDT1 (XLX,XRX) <XLX'1-1-64'XRX>",@cr,
+      "define SYSID1 (XLX,XRX) <XLX'??????'XRX>",@cr
+
+  type CONF.FN,' written',@cr
+  end
+end
+end
+procedure MON.FILE
+%
+  writes monxx.cmd files
+%
+begin
+
+select HOST.CPUTYP via (SYSNO,EDATE = IN.DATE) then
+
+conditional on CPUTYP begin
+
+% KI %
+1: write report MON.KI
+    print to MON.KI
+"S+KISYM+<;",@cr,
+"  (M33)CONF",SYSID,"+<;", @cr, 
+"    CNFN",SYSID,"+<;",@cr,
+"      COMFAK/COMPILE/NOLOA/NOLIST", @cr,
+"      %S %100B COMT",SYSID,"=COMTXT>", @cr, 
+"    COMN",SYSID,"=COMMON", @cr, 
+"    COMD",SYSID,"=COMMOD(,P)>", @cr, 
+" SETETY",@cr,
+"  FILUUO",@cr,
+"  FILIO",@cr,
+"  FRMSER",@cr,
+"  PCBIO",@cr,
+"  SWAMP",@cr,
+"  MAPIO",@cr,
+"  CLUBS",@cr,
+"  FILFND",@cr,
+"  FILRIB",@cr,
+"  BPXKON",@cr,
+"  CLOCK1",@cr,
+"  COMCON",@cr,
+"  CORE1",@cr,
+"  ERRMSG+ERRCON",@cr,
+"  MJBDAT=JOBDAT",@cr,
+"  ACTSER",@cr,
+"  CDRSER/NOLOA",@cr,
+"  FTASER",@cr,
+"  LPTSER",@cr,
+"  PICON",@cr,
+"  PLTSER/NOLOAD",@cr,
+"  PTPSER",@cr,
+"  PTRSER",@cr,
+"  RMTSER/NOLOAD",@cr,
+"  SCHED1",@cr,
+"  SCNSER",@cr,
+"  CTYSIM",@cr,
+"  SEGCON",@cr,
+"  TMPUUO",@cr,
+"  SIMIO",@cr,
+"  IOCSS",@cr,
+"  UUOCON>",@cr,
+"PATCH",@cr,
+"S+KISYM+DEBUG",@cr,
+"%W EDDT=EDDT+DDT/NOLIST/NOCOMPILE",@cr,
+"S+KISYM+<;",@cr,
+"  %S ONCE",@cr,
+"  ONCDSK",@cr,
+"  REFSTR>",@cr
+
+% KL %
+2: write report MON.KL
+    print to MON.KL
+"S+KLSYM+<;",@cr,
+"  (M33)CONF",SYSID,"+<;",@cr,
+"    CNFN",SYSID,"+<;",@cr,
+"      COMFKL=COMFAK/COMPILE/NOLOA/NOLIST",@cr,
+"       %S %100B CMT",SYSID,"L=COMTXT>",@cr,
+"    CMN",SYSID,"L=COMMON",@cr,
+"    CMD",SYSID,"L=COMMOD(,P)>",@cr,
+" SETTYL=SETETY",@cr,
+"  FILUUL=FILUUO",@cr,
+"  FILIOL=FILIO",@cr,
+"  FRMSRL=FRMSER",@cr,
+"  PCBIOL=PCBIO",@cr,
+"  SWAMPL=SWAMP",@cr,
+"  MAPIOL=MAPIO",@cr,
+"  CLUBSL=CLUBS",@cr,
+"  FILFNL=FILFND",@cr,
+"  FILRBL=FILRIB",@cr,
+"  BPXKNL=BPXKON",@cr,
+"  CLOCKL=CLOCK1",@cr,
+"  COMCNL=COMCON",@cr,
+"  CORE1L=CORE1",@cr,
+"  ERRCNL=ERRMSG+ERRCON",@cr,
+"  MJBDTL=JOBDAT",@cr,
+"  ACTSRL=ACTSER",@cr,
+"  CDRSRL=CDRSER/NOLOA",@cr,
+"  FTASRL=FTASER",@cr,
+"  LPTSRL=LPTSER",@cr,
+"  PICONL=PICON",@cr,
+"  PLTSRL=PLTSER/NOLOAD",@cr,
+"  PTPSRL=PTPSER/NOLOA",@cr,
+"  PTRSRL=PTRSER/NOLOA",@cr,
+"  RMTSRL=RMTSER/NOLOAD",@cr,
+"  SCHEDL=SCHED1",@cr,
+"  SCNSRL=SCNSER",@cr,
+"  CTYSML=CTYSIM",@cr,
+"  SEGCNL=SEGCON",@cr,
+"  TMPUUL=TMPUUO",@cr,
+"  SIMIOL=SIMIO",@cr,
+" IOCSSL=IOCSS",@cr,
+"  UUOCNL=UUOCON>",@cr,
+"PATCHL=PATCH",@cr,
+"DEBUGL=S+KLSYM+DEBUG",@cr,
+"SIMKLL=S+KLSYM+SIMKL",@cr,
+"%W EDDT=EDDT+DDT/NOLIST/NOCOMPILE",@cr,
+"S+KLSYM+<;",@cr,
+"  %S ONCEL=ONCE",@cr,
+"  ONCDSL=ONCDSK",@cr,
+"  REFSTL=REFSTR>",@cr
+
+% KS %
+
+3: write report MON.KS
+    print to MON.KS
+"S+KSSYM+<;",@cr,
+"  (M33)CONF",SYSID,"+<;",@cr,
+"    CNFN",SYSID,"+<;",@cr,
+"     COMFKS=COMFAK/COMPILE/NOLOA/NOLIST",@cr,
+"      %S %100B CMT",SYSID,"S=COMTXT>",@cr,
+"    CMN",SYSID,"S=KSIORG+COMMON",@cr,
+"    CMD",SYSID,"S=KSIORG+COMMOD(,P)",@cr,
+"    SET",SYSID,"S=SETETY>",@cr,
+" FILUUS=FILUUO",@cr,
+" FRMSRS=FRMSER",@cr,
+" FILIOS=FILIO",@cr,
+" PCBIOS=PCBIO",@cr,
+" SWAMPS=SWAMP",@cr,
+" MAPIOS=MAPIO",@cr,
+" CLUBSS=CLUBS",@cr,
+" FILFNS=FILFND",@cr,
+" FILRBS=FILRIB",@cr,
+" RMXKNS=KSIORG+RMXKON",@cr,
+" CLOCKS=CLOCK1",@cr,
+" COMCNS=COMCON",@cr,
+" CORE1S=CORE1",@cr,
+" ERRCNS=ERRMSG+ERRCON",@cr,
+" MJBDTS=JOBDAT",@cr,
+" ACTSRS=ACTSER",@cr,
+" MAGSRS=KSIORG+MAGSER",@cr,
+" LPTSRS=LPTSER",@cr,
+" PICONS=PICON",@cr,
+" SCHEDS=SCHED1",@cr,
+" SCNSRS=SCNSER",@cr,
+" CTYSMS=KSCOMM+CTYSIM",@cr,
+" DZKONS=DZKON",@cr,
+" DR11CS=DR11C",@cr,
+" KMCSRS=KSIORG+KMCSER",@cr,
+" CIOPRS=CIOPR",@cr,
+" SEGCNS=SEGCON",@cr,
+" TMPUUS=TMPUUO",@cr,
+" SIMIOS=SIMIO",@cr,
+" IOCSSS=IOCSS",@cr,
+" UUOCNS=UUOCON>",@cr,
+"PATCHS=PATCH",@cr,
+" DEBUGS=S+KSSYM+DEBUG",@cr,
+" KMCDDS=KMCDDT",@cr,
+"%W EDDT=EDDT+DDT/NOLIST/NOCOMPILE",@cr,
+"S+KSSYM+<;",@cr,
+"  %S ONCES=KSIORG+ONCE",@cr,
+" ONCDSS=ONCDSK",@cr,
+" REFSTS=REFSTR>",@cr
+
+
+% F3 %
+4: write report MON.F3
+    print to MON.F3
+"S+F3SYM+<;",@cr,
+"  (M33)CONF",SYSID,"+<;",@cr,
+"    CNFN",SYSID,"+<;",@cr,
+"      COMFKF=COMFAK/COMPILE/NOLOA/NOLIST",@cr,
+"       %S %100B CMT",SYSID,"F=COMTXT>",@cr,
+"    CMN",SYSID,"F=COMMON",@cr,
+"    CMD",SYSID,"F=COMMOD(,P)>",@cr,
+" SETTYF=SETETY",@cr,
+"  FILUUF=FILUUO",@cr,
+"  FILIOF=FILIO",@cr,
+"  FRMSRF=FRMSER",@cr,
+"  PCBIOF=PCBIO",@cr,
+"  SWAMPF=SWAMP",@cr,
+"  MAPIOF=MAPIO",@cr,
+"  CLUBSF=CLUBS",@cr,
+"  FILFNF=FILFND",@cr,
+"  FILRBF=FILRIB",@cr,
+"  APXKNF=APXKON",@cr,
+"  F3TSRF=F3TSER",@cr,
+"  CLOCKF=CLOCK1",@cr,
+"  COMCNF=COMCON",@cr,
+"  CORE1F=CORE1",@cr,
+"  ERRCNF=ERRMSG+ERRCON",@cr,
+"  MJBDTF=JOBDAT",@cr,
+"  ACTSRF=ACTSER",@cr,
+"  LPTSRF=LPTSER",@cr,
+"  PICONF=PICON",@cr,
+"  SCHEDF=SCHED1",@cr,
+"  SCNSRF=SCNSER",@cr,
+"  CIOPRF=CIOPR",@cr,
+"  CTYSMF=CTYSIM",@cr,
+"  SEGCNF=SEGCON",@cr,
+"  TMPUUF=TMPUUO",@cr,
+"  SIMIOF=SIMIO",@cr,
+"  IOCSSF=IOCSS",@cr,
+"  UUOCNF=UUOCON>",@cr,
+"PATCHF=PATCH",@cr,
+"DEBUGF=S+F3SYM+DEBUG",@cr,
+"%W EDDT=EDDT+DDT/NOLIST/NOCOMPILE",@cr,
+"S+F3SYM+<;",@cr,
+"  %S ONCEF=ONCE",@cr,
+"  ONCDSF=ONCDSK",@cr,
+"  REFSTF=REFSTR>",@cr
+
+end
+else type '?Invalid CPU type "',CPUTYP,'"',@cr
+
+type CONF.FN," written",@cr
+end
+procedure GEN.FILES
+%
+    internal procedure to generate monitor files
+%
+begin
+  type "System: "
+  accept IN.SYS
+  GEN.INFO:
+  begin
+  select largest MONITOR via SYSNO =IN.SYS then
+    begin
+    type "Request date: ",EDATE," ok? "
+    accept YES.OR.NO
+    if upper.case(substr(YES.OR.NO,1,1)) = 'Y' then
+      let IN.DATE=EDATE
+    else
+      begin
+      type "Date: "
+      accept IN.DATE
+      select MONITOR via (SYSNO,EDATE=IN.DATE) then
+        if OKBY # default then
+          begin
+          type "Monitor files already generated.  Continue? "
+          accept YES.OR.NO
+          if upper.case(substr(YES.OR.NO,1,1)) # 'Y' then finish GEN.INFO
+          end
+        else nothing
+      else
+        begin
+        type "No request in data base for ",IN.DATE,@cr
+        finish GEN.INFO
+        end
+      end
+   end
+  else
+    begin
+    type "No records for system ",IN.SYS,@cr
+    finish GEN.INFO
+    end
+  move IN.SYS to SYSNO of procedure
+  select HOST via SYSNO then
+    move SYSID to SYSID of procedure
+
+  else    % if this does not exist, we have a new system %
+
+    begin
+    type "ID for ",SYSNO as "5LN",": "
+    accept SYSID
+    let SYSID = upper.case(SYSID)
+    insert into HOST
+    end
+
+  move IN.DATE to EDATE of procedure
+  apply PRINT.ORDER
+  type @cr,"Configuration: ",@cr
+  apply CONF.LIST
+  type "All values ok? "
+  accept YES.OR.NO
+  if upper.case(substr(YES.OR.NO,1,1)) # 'Y' then
+    CHANGE.IT:
+    begin
+    apply CHANGE.VALUE
+    type "All values ok? "
+    accept YES.OR.NO
+    if upper.case(substr(YES.OR.NO,1,1)) # 'Y' then
+      repeat CHANGE.IT
+    end
+
+  let CONF.FN = "(M33)CONF"+SYSID+".MAC"
+  apply CONFIG.FILE       % needed for all monitors %
+
+  let NEED.MON.FILE = 0
+  let NEED.CNFN.FILE = 0
+
+  select HOST.CPUTYP via (SYSNO,EDATE = IN.DATE) then
+
+    % if this exists, the cpu type has changed, or this is a new system %
+
+    let NEED.MON.FILE = 1
+
+  select HOST.SITE via (SYSNO,EDATE = IN.DATE) then
+
+    % if this exists, the site has changed, or it is a new system %
+
+    begin
+    let NEED.CNFN.FILE = 1
+    select SITE via key then move PREFIX to PREFIX of procedure 
+    end
+
+    % now insert the name and date ok'ed %
+
+  if NEED.MON.FILE = 1 then 
+    begin
+    let CONF.FN = '(M33)MON'+SYSID+'.CMD'
+    apply MON.FILE
+    end
+
+  if NEED.CNFN.FILE = 1  then apply CNFN.FILE
+
+  select MONITOR via (SYSNO,EDATE=IN.DATE) then
+    alter MONITOR using (USER.NAME for OKBY, TODAY for OKDATE)
+  end
+
+end
+procedure MONITOR.PATCHES
+%
+  internal procedure to enter information on patches
+%
+begin
+    type "Patch file name: "
+    accept IN.FILE
+    while IN.FILE # default do 
+      begin
+      let IN.FILE = upper.case(IN.FILE)
+      let PATNO of procedure = default
+      for each PATCH.INFO where PATFILE=IN.FILE
+        move PATNO to PATNO of procedure
+      if PATNO = default then
+        begin
+        type "No patch file '",trim(IN.FILE),"'",@cr,"Patch files are:",@cr
+        for each PATCH.INFO type PATFILE,@cr
+        end
+      else
+        begin
+        move IN.FILE to PATFILE of procedure
+        move GEN.DATE to PATDATE of procedure
+        select PATCHES via key then nothing
+        else insert into PATCHES
+        insert into MON.PATCH
+        end
+      type "Patch file name: "
+      accept IN.FILE
+    end
+end
+
+
+procedure MONITOR.INFO
+%
+  internal procedure to enter infomration on monitor for system
+%
+begin
+    
+  type "System: "
+  accept IN.SYS
+  MON.INFO:
+  begin
+  select largest MONITOR via SYSNO=IN.SYS then
+    begin
+    type "Request date: ",EDATE," ok? "
+    accept YES.OR.NO
+    if upper.case(substr(YES.OR.NO,1,1)) = 'Y' then
+      let IN.DATE=EDATE
+    else
+      begin
+      type "Date: "
+      accept IN.DATE
+      select MONIia (SYSNO=IN.SYS,EDATE=IN.DATE) then
+        nothing
+      else
+        begin
+        type "No request in data base for ",IN.DATE,@cr
+        finish MON.INFO
+        end
+      end
+    end
+  select MONITOR via (SYSNO=IN.SYS,EDATE=IN.DATE) then
+    begin
+    if OKBY = default then
+      begin
+      type "Monitor files not generated",@cr
+      finish MON.INFO
+      end
+    else if GENBY # default then
+      begin
+      type "Information already entered",@cr
+      finish MON.INFO
+      end
+    type "File: "
+    accept IN.FILE
+    type "Checksum: "
+    accept IN.CKSUM
+    let IN.CKSUM = upper.case(IN.CKSUM)
+    select HOST via SYSNO then let CONF.FN ="(OSP)CNFN"+SYSID+".MAC"
+    for each CNFN.INFO
+      if substr(LINE,1,1)='d' then
+        if substr(LINE,11,2) = 'NA' then
+          begin
+          let DASH.POS = POSITION(LINE,"-")
+          let DASH.POS = DASH.POS + 1
+          let IN.VER = substr(LINE,DASH.POS,6)
+          end
+        else if substr(LINE,11,2) = 'ID' then
+          let IN.SER = substr(LINE,30,6)
+    type "Date (<cr> for today): "
+    accept GEN.DATE
+    if GEN.DATE = default then let GEN.DATE = TODAY
+    alter MONITOR using (USER.NAME for GENBY,GEN.DATE for GENDATE,
+          IN.FILE for MONFILE,IN.CKSUM for MON.CKSUM,IN.SER for SERNO,
+          IN.VER for MONVER)
+    apply MONITOR.PATCHES
+    end
+  end
+end
+% MAIN PROGRAM %
+apply OUTSTANDING.REQUESTS
+
+GET.COMMAND:
+  begin
+  type ">"
+  accept IN.COMMAND
+  conditional on upper.case(substr(IN.COMMAND,1,1))
+    begin
+    'C': apply MONITOR.INFO
+    'H': type 
+         " G(ENERATE) - to create and modify files for monitor",@cr,
+         " C(OMPLETE) - to add information for generated monitor",@cr,
+	 " H(ELP) - prints this list",@cr,
+	 " Q(UIT) - to quit program",@cr
+    'G': apply GEN.FILES
+    'Q': finish GET.COMMAND
+    end
+    else type "Illegal command",@cr
+  repeat GET.COMMAND
+  end
+
+end
+ @9

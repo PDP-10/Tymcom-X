@@ -1,0 +1,262 @@
+;             Table of Contents for TYMSHARE's SCNSER
+;
+;
+;			   Section			      Page
+;
+;    1. TABLE OF CONTENTS  . . . . . . . . . . . . . . . . . .   2
+;    2. TERMINAL CHARACTERISTICS DEFINITIONS . . . . . . . . .   3
+;    3. TYMNET TERMINAL CHARACTERISTICS  . . . . . . . . . . .   4
+;    4. DEFINE RECEIVED CHARACTERISTICS BYTE POINTERS  . . . .   5
+;    5. DEFINE SENT CHARACTERISTICS BYTE POINTERS  . . . . . .   6
+;    6. OUTPUT REQUEST BITS  . . . . . . . . . . . . . . . . .   7
+;    7. LINE DATA BLOCK  . . . . . . . . . . . . . . . . . . .   7
+;    8. RANDOM LDB BYTE POINTERS . . . . . . . . . . . . . . .   9
+;    9. DEVICE DATA BLOCK  . . . . . . . . . . . . . . . . . .  10
+;   10. TTY DDB. ONCE CREATES ONE OF THESE PER JOB FOR TTYTA .  11
+;   11. TTY FILE STATUS BITS . . . . . . . . . . . . . . . . .  12
+;   12. TYMNET MESSAGES  . . . . . . . . . . . . . . . . . . .  13
+;   13. HOST TO BASE AND BASE TO HOST MESSAGE TYPES  . . . . .  14
+;   14. Special KS2020 microcode for KMC . . . . . . . . . . .  15
+;   15. BUFFER RING BYTE POINTERS  . . . . . . . . . . . . . .  16
+;   16. CHARACTER TABLES . . . . . . . . . . . . . . . . . . .  17
+;   17. CONTROL CHARACTERS . . . . . . . . . . . . . . . . . .  18
+;   18. NUMBERS AND PUNCTUATION  . . . . . . . . . . . . . . .  19
+;   19. UPPER CASE . . . . . . . . . . . . . . . . . . . . . .  20
+;   20. LOWER CASE . . . . . . . . . . . . . . . . . . . . . .  21
+;   21. INPUT RING DISPATCHER  . . . . . . . . . . . . . . . .  23
+;   22. HERE TO PROCESS ALL THE MESSAGES IN THE INPUT RING,  .  24
+;   23. IRING message type dispatch table  . . . . . . . . . .  25
+;   24. NON-CHARACTER INPUT HANDLER ROUTINES . . . . . . . . .  26
+;   25. BLKIBF
+;        25.1   HERE WHEN A TYPE 47 (INPUT BUFFER FULL) IS R .  28
+;   26. BLKITM
+;        26.1   HERE WHEN AN "INPUT TERMINATED -- TIMEOUT BY .  29
+;   27. BLKIHR
+;        27.1   HERE WHEN "INPUT TERMINATED -- BY HOST REQUE .  30
+;   28. HERE WHEN A "CHARACTERS LOST" MESSAGE (BUFFER ZAP) I .  32
+;   29. HERE WHEN THE TIME AND DATE ARE RECEIVED . . . . . . .  33
+;   30. HERE WHEN A CIRCUIT ZAPPER IS RECEIVED . . . . . . . .  34
+;   31. INPUT CHARACTER HANDLER  . . . . . . . . . . . . . . .  35
+;   32. CALLED WITH CHARACTER IN T3. DISPATCH ON CHARACTER T .  36
+;   33. THIS ROUTINE IS CALLED BY ALMOST EVERYONE TO PUT A C .  37
+;   34. HERE ON A LOGIN CHARACTER (ONE OF FIRST 4 ON LINE) . .  39
+;   35. HERE ON IMAGE MODE IN DEFERRED ECHO  . . . . . . . . .  42
+;   36. NORMAL CHR DEF ECHO  . . . . . . . . . . . . . . . . .  43
+;   37. BREAK2 CHR, RMT ECHO, BREAK ON ALL, NOT BREAK2 . . . .  44
+;   38. REMOTE ECHO CODE . . . . . . . . . . . . . . . . . . .  45
+;   39. SOME ROUTINES TO HANDLE PUTTING THINGS IN THE RUBOUT .  48
+;   40. BREAK2 CHR, RMT ECHO, BREAK MODE . . . . . . . . . . .  49
+;   41. BREAK2 CHR, COMMAND MODE, DEF ECHO, NOT BREAK2 MODE  .  50
+;   42. SPECIAL ACTION CHRACTER, ALMOST ANY MODE . . . . . . .  51
+;   43. JUST SET AS A BREAK CHARACTER (MODE 2) AND GO  . . . .  52
+;   44. POSSIBLE ALTMODE (175-176) IN 940 MODE . . . . . . . .  53
+;   45. GET RID OF A LINE OF TEXT. ADJUST ALL POINTERS . . . .  54
+;   46. RUBOUT FROM PDP-10 MODE. 940 ^A JUST DOES NOT CHECK  .  55
+;   47. ESCAPE CHARACTER 940 IS ^_ OR POSSIBLY ALTMODE, PDP- .  58
+;   48. MODE CONVERSION TABLE  . . . . . . . . . . . . . . . .  59
+;   49. OUTPUT DISPATCHER  . . . . . . . . . . . . . . . . . .  60
+;   50. OUTPUT DISPATCH TABLES . . . . . . . . . . . . . . . .  64
+;   51. PTY "OUTPUT" ROUTINES  . . . . . . . . . . . . . . . .  65
+;   52. CLSPTL
+;        52.1   CALLED WITH U/ PTY LDB TO FINISH UP OUTPUT T .  66
+;   53. MSGSIM
+;        53.1   SIMULATE INPUT-MESSAGE ARRIVAL . . . . . . . .  69
+;   54. YELLOW BALL  . . . . . . . . . . . . . . . . . . . . .  70
+;   55. WHEN THE PTY OUTPUT CODE FILLS UP A BLOCK INPUT BUFF .  71
+;   56. PBTIMO
+;        56.1   CALLED BY SCNSEC WHEN A PORT DOING BLOCK INP .  72
+;   57. BLOCK OUTPUT . . . . . . . . . . . . . . . . . . . . .  73
+;   58. TERMINATE BLOCK OUTPUT . . . . . . . . . . . . . . . .  74
+;   59. CIRCUIT ZAPPER . . . . . . . . . . . . . . . . . . . .  75
+;   60. TYMNET OUTPUT ROUTINES . . . . . . . . . . . . . . . .  76
+;   61. NON-CHARACTER OUTPUT MESSAGE HANDLERS  . . . . . . . .  78
+;   62. SEND A RED BALL  . . . . . . . . . . . . . . . . . . .  79
+;   63. SEND BELL  . . . . . . . . . . . . . . . . . . . . . .  80
+;   64. SEND CIRCUIT ZAPPER  . . . . . . . . . . . . . . . . .  81
+;   65. HERE ON A DETECTED ZAPPER ANOMALY TO STORE STUFF ABO .  82
+;   66. BLOCK I/O MESSAGE ROUTINES . . . . . . . . . . . . . .  83
+;   67. GOBIO1
+;        67.1   CLOSE CHARACTER OUTPUT, THEN SKIP IF THERE A .  84
+;   68. RUBOUT STRING/OUTPUT CHARACTER HANDLERS  . . . . . . .  85
+;   69. SEND OUTPUT CHARACTERS . . . . . . . . . . . . . . . .  86
+;   70. ECHO LOGIC . . . . . . . . . . . . . . . . . . . . . .  87
+;   71. ECHO CHARACTER OUTPUT  . . . . . . . . . . . . . . . .  88
+;   72. ECHO DISPATCH TABLES . . . . . . . . . . . . . . . . .  89
+;   73. COMMAND MODE . . . . . . . . . . . . . . . . . . . . .  90
+;   74. NONBREAK: PRINT & COUNT; NORMAL OR BREAK2 MODE . . . .  91
+;   75. BREAK: PRINT & COUNT; NOT COMMAND MODE . . . . . . . .  92
+;   76. SPECIAL ACTION . . . . . . . . . . . . . . . . . . . .  93
+;   77. TREAT AS NONBREAK: PRINT & COUNT . . . . . . . . . . .  94
+;   78. HORIZONTAL TAB . . . . . . . . . . . . . . . . . . . .  95
+;   79. ECHO <CONTROL CHAR> AS ^<CONTROL CHAR + 100> . . . . .  96
+;   80. DON'T ECHO IF PORT BACKPRESSURED . . . . . . . . . . .  97
+;   81. OUTPUT FILLER LOGIC  . . . . . . . . . . . . . . . . .  98
+;   82. PRCOUT
+;        82.1   CALLED WITH T3/ THE CHARACTER TO PRINT,  . . .  99
+;   83. HERE ON SPECIAL-ACTION CHARACTERS  . . . . . . . . . . 101
+;   84. FORM FEED  . . . . . . . . . . . . . . . . . . . . . . 102
+;   85. FILLER . . . . . . . . . . . . . . . . . . . . . . . . 103
+;   86. ONCE A SECOND LOGIC  . . . . . . . . . . . . . . . . . 106
+;   87. MISC STUFF FOR INPUT AND OUTPUT  . . . . . . . . . . . 109
+;   88. SUBROUTINE TO SEE IF A CONTROL C SHOULD BE ACTED ON  . 110
+;   89. THIS ROUTINE TRACES BACKWARDS DOWN A LINKED LIST TO  . 111
+;   90. CHUNK HANDLERS . . . . . . . . . . . . . . . . . . . . 112
+;   91. SUBROUTINE TO PLACE A CHARACTER IN A BUFFER. . . . . . 113
+;   92. ROUTINE TO FREE UP A CHUNK OF THE CHARACTER LIST BY  . 114
+;   93. TSETBI
+;        93.1   CLEAR INPUT BUFFER . . . . . . . . . . . . . . 115
+;   94. BUFFERED I/O UUO-LEVEL ROUTINES  . . . . . . . . . . . 116
+;   95. INPUT UUO PROCESSOR - CALLED FROM UUOCON ON INPUT M, . 117
+;   96. OUTPUT UUO . . . . . . . . . . . . . . . . . . . . . . 119
+;   97. TYO GAVE ERROR RETURN - NO MORE ROOM IN TTY CHUNCKS  . 120
+;   98. DDT MODE CALLI'S . . . . . . . . . . . . . . . . . . . 121
+;   99. HANG UUO . . . . . . . . . . . . . . . . . . . . . . . 122
+;  100. Here from above or by PUSHJ.  At entry, F=DDB addres . 124
+;  101. HERE TO HANG A JOB . . . . . . . . . . . . . . . . . . 125
+;  102. RESET UUO  . . . . . . . . . . . . . . . . . . . . . . 126
+;  103. .STTLK SETUUO FUNCTION . . . . . . . . . . . . . . . . 127
+;  104. TTCALL UUO . . . . . . . . . . . . . . . . . . . . . . 129
+;  105. BITS FOR THE TTY UUOS  . . . . . . . . . . . . . . . . 130
+;  106. SUBROUTINES FOR TTCALL . . . . . . . . . . . . . . . . 131
+;  107. SKPINC
+;       107.1   SKIP IF INCHRW WOULDN'T WAIT (TOO LONG)  . . . 132
+;  108. OUTPTR
+;       108.1   OUTPUT FROM BYTE POINTER . . . . . . . . . . . 133
+;  109. GETLCH
+;       109.1   READ LINE CHARACTERISTICS  . . . . . . . . . . 134
+;  110. SETLCH
+;       110.1   SET LINE CHARACTERISTICS . . . . . . . . . . . 135
+;  111. CHARACTER INPUT TTCALLS  . . . . . . . . . . . . . . . 136
+;  112. READ TERMINAL CHARACTERISTICS  . . . . . . . . . . . . 139
+;  113. FIXIMI CALLED ON INPUT UUOS OTHER THAN AUXCALS 0,1,2 . 140
+;  114. SETTBK
+;       114.1   CALLED WITH  . . . . . . . . . . . . . . . . . 141
+;  115. BKTOPN
+;       115.1   CALLED WITH U/ LDB ADDR, T1/ <CHAR>  . . . . . 142
+;  116. CHRCNT
+;       116.1   CALLED WITH U/ LDB ADDR, T1/ CHAR  . . . . . . 143
+;  117. SETPTP
+;       117.1   SETS PAPER-TAPE-MODE BIT (SIMILAR CODE IN SE . 144
+;  118. PSEUDO-TTYS  . . . . . . . . . . . . . . . . . . . . . 145
+;  119. GETPP
+;       119.1   GET AN EVEN/ODD PTY PORT # PAIR  . . . . . . . 146
+;  120. PTYLDB
+;       120.1   SET UP A PTY LDB . . . . . . . . . . . . . . . 147
+;  121. PTYDDB
+;       121.1   ALLOCATE, LINK IN, ATTACH, INITIALIZE A PTY  . 148
+;  122. AUXCAL UUO . . . . . . . . . . . . . . . . . . . . . . 149
+;  123. AUXCAL dispatch table  . . . . . . . . . . . . . . . . 150
+;  124. READ/SET TERMINAL CHARACTERISTICS BY NUMBER  . . . . . 151
+;  125. SETTCN
+;       125.1   READ/SET TERMINAL CHARACTERISTICS BY NUMBER  . 152
+;  126. SETTCN ROUTINES  . . . . . . . . . . . . . . . . . . . 153
+;  127. SETTCN ROUTINES  . . . . . . . . . . . . . . . . . . . 155
+;  128. SETTCN ROUTINES  . . . . . . . . . . . . . . . . . . . 156
+;  129. NO SPECIAL TAB HANDLING  . . . . . . . . . . . . . . . 157
+;  130. OLD AUXCAL TERMINAL-CHARACTERISTICS DISPATCH . . . . . 159
+;  131. SET IMAGE BREAK CHARACTER  . . . . . . . . . . . . . . 160
+;  132. IMAGE-STATE INPUT AUXCALS  . . . . . . . . . . . . . . 161
+;  133. STUFF INPUT BUFFER . . . . . . . . . . . . . . . . . . 162
+;  134. FORCE A RESCAN LINE  . . . . . . . . . . . . . . . . . 163
+;  135. AUXILIARY CIRCUITS . . . . . . . . . . . . . . . . . . 166
+;  136. TURN THE COMMAND PORT INTO SOMETHING LIKE AN "AUX" P . 167
+;  137. HERE FROM HANG UUO WHEN HANGING AN AUX CIRCUIT . . . . 168
+;  138. ON RECEIPT OF A TAKEOVER MESSAGE, RESET AND TRY AGAI . 169
+;  139. SUPERVISOR RESPONSE RECIVED  . . . . . . . . . . . . . 170
+;  140. MESSAGE 7
+;       140.1   AN AUX CIRCUIT HAS BEEN BUILT TO <U> FOR . . . 171
+;  141. CALLED ONCE A TICK FROM SCNINT TO PROCESS AUX CIRCUI . 172
+;  142. HERE TO SEND CHARACTERS FROM THE LOGIN STRING  . . . . 173
+;  143. CODE TO HANDLE THE CREAT AUX CIR UUO . . . . . . . . . 174
+;  144. READ INFO ON PORTS IN USE  . . . . . . . . . . . . . . 178
+;  145. POLL PORTS UUO . . . . . . . . . . . . . . . . . . . . 179
+;  146. BLOCK INPUT/OUTPUT (BIO) ROUTINES  . . . . . . . . . . 180
+;  147. BLKXIO
+;       147.1   HERE FROM THE LEAVE BLOCK MODE AUXCAL  . . . . 181
+;  148. BIOZAP
+;       148.1   CALLED WHEN A CIRCUIT IN BLOCK MODE IS ZAPPE . 182
+;  149. BLKINP
+;       149.1   BLOCK INPUT-AND-WAIT AUXCAL  . . . . . . . . . 183
+;  150. BLKINS
+;       150.1   BLOCK INPUT-AND-SKIP AUXCAL  . . . . . . . . . 184
+;  151. BIOCHK
+;       151.1   COMMON SETUP CODE FOR BLOCK INPUT AUXCALS  . . 185
+;  152. REQBUF
+;       152.1   ALLOCATE A BUFFER FOR BLOCK INPUT  . . . . . . 186
+;  153. BLKOUT
+;       153.1   HERE FROM BLOCK OUTPUT AUXCAL.  SKIPS ON SUC . 187
+;  154. INCBC
+;       154.1   CALLED WHEN 1 MORE PORT IS TO BE ENABLED FOR . 189
+;  155. DECBC
+;       155.1   CALLED WHEN A PORT HAS BEEN DISABLED FOR BLO . 190
+;  156. GETBI
+;       156.1   SET UP A PORT FOR BLOCK INPUT  . . . . . . . . 191
+;  157. KEPBI
+;       157.1   SKIP-RETURNS IF IT'S OK FOR THIS PORT (U/ LD . 192
+;  158. GETBIO
+;       158.1   GET A BLOCK I/O BUFFER FOR U . . . . . . . . . 193
+;  159. GETBB
+;       159.1   GET A BLOCK I/O BUFFER AND RETURN ITS ADDRES . 194
+;  160. IQUEUE
+;       160.1   TAKES AN INPUT WAIT TRAP IF SET, OTHERWISE P . 195
+;  161. BLKXIN
+;       161.1   TERMINATE BLOCK INPUT AUXCAL . . . . . . . . . 196
+;  162. INPUT AND OUTPUT SUBROUTINES . . . . . . . . . . . . . 197
+;  163. GET RID OF COMMAND LINE  . . . . . . . . . . . . . . . 200
+;  164. MAKE SURE TTY IS ATTACHED, NO CHANCE FOR INTERRUPT . . 203
+;  165. SUBROUTINES TO SET UP LINE AND MAKE SURE ATTACHED. . . 204
+;  166. UUOLDB
+;       166.1   MAKE LDB (ADDR IN U) AGREE WITH FILE STATUS  . 205
+;  167. BACKPRESSURE ADJUSTERS . . . . . . . . . . . . . . . . 208
+;  168. COMMAND ROUTINES . . . . . . . . . . . . . . . . . . . 209
+;  169. COMMAND INPUT ROUTINE  . . . . . . . . . . . . . . . . 210
+;  170. ROUTINE TO SWITCH TTY TO USER PROGRAM LEVEL AND STAR . 212
+;  171. SUBROUTINE FOR COMMAND LEVEL OUTPUT  . . . . . . . . . 213
+;  172. READ SWITCHES. . . . . . . . . . . . . . . . . . . . . 215
+;  173. SETUUO TO SET INITIA ON LINES MARKED . . . . . . . . . 216
+;  174. SOME ROUTINES TO FIND TELETYPES FOR VARIOUS PURPOSES . 217
+;  175. SUBROUTINE TTYERP TO FIND TTY F FOR A MONITOR ERROR  . 218
+;  176. FIND A USER AND WAIT FOR ATTACH OR OUTPUT WAIT TO FI . 219
+;  177. SUBROUTINE TO FIND LDB FOR A PHYSICAL NAME, IF ITS A . 220
+;  178. SUBROUTINE TO PUT PHYSICAL NAME INTO T2 FOR LINE WHO . 221
+;  179. SETUUO OUTPUT MESSAGE TO OPR TTY & CTY *BOTH*, IF PO . 222
+;  180. SUBROUTINE FOR THE TTY COMMAND . . . . . . . . . . . . 223
+;  181. "NO" . . . . . . . . . . . . . . . . . . . . . . . . . 224
+;  182. FOR OLD TIME'S SAKE (SET FC1 AND FC2 FROM THE SAME V . 225
+;  183. CALLED FROM COMCON TO SET TO SEND SHUT OR ANSWERED M . 226
+;  184. SEND A SAD MESSGE  . . . . . . . . . . . . . . . . . . 227
+;  185. ATTACH/DETACH  . . . . . . . . . . . . . . . . . . . . 228
+;  186. TTYKDB
+;       186.1   CLEAR LDB PTR AND ASSIGNMENT & USE BITS FOR  . 229
+;  187. TDTUUO
+;       187.1   HERE FROM ATTACH UUO WHEN DETACHING THE COMM . 230
+;  188. TTYZAP
+;       188.1   ZAP A CIRCUIT (U/ LDB ADDR). . . . . . . . . . 231
+;  189. TTYATT
+;       189.1   ATTACH LDB TO JOB  . . . . . . . . . . . . . . 232
+;  190. HERE FROM THE ATTACH UUO IF IT'S ATTACHING . . . . . . 233
+;  191. COMATT
+;       191.1   PERFORMS THE FUNCTIONS COMMON TO ALL ATTACH  . 240
+;  192. ROUTINE TO FIND A FREE TTY DEVICE DATA BLOCK . . . . . 241
+;  193. TTYNFR
+;       193.1   CALLED WITH J/ FRAME # TO ALLOCATE A NEW . . . 242
+;  194. SCNNAM
+;       194.1   SET DEVNAM(F) TO "TTYNNN" WHERE NNN IS . . . . 243
+;  195. TRAP CODE  . . . . . . . . . . . . . . . . . . . . . . 244
+;  196. CALLED ON AN ESCAPE TO SEE IF WE SHOULD SET TRAP . . . 245
+;  197. ROUTINE TO TAKE A JOB OUT OF TIOW FOR A TRAP . . . . . 246
+;  198. ROUTINES TO FIND A JOB'S TTY DDBS  . . . . . . . . . . 247
+;  199. ROUTINE TO CLEAR SLEEP CONDITIONS FOR ALL TTYS . . . . 248
+;  200. ROUTINE TO CLEAR ALL TRAP CONDITIONS FOR ALL TTYS  . . 249
+;  201. THIS ROUTINE ASSIGNES TRAP CHANNELS TO TTY TRAP COND . 250
+;  202. ROUTINES TO CHECK IF TRAP CONDITION ALREADY SATISFIE . 251
+;  203. SEND A YELLOW BALL . . . . . . . . . . . . . . . . . . 252
+;  204. FNDPRT
+;       204.1   CALLED WITH J/ JOB #, F/ -1 OR PORT #  . . . . 253
+;  205. TINASS UUO
+;       205.1   ASSIGN TTY INTERRUPTS  . . . . . . . . . . . . 254
+;  206. INITIALIZE . . . . . . . . . . . . . . . . . . . . . . 255
+;  207. THE INTERNALS AND EXTERNALS FOR SCNSER . . . . . . . . 258
+;  208. FROM COMCON (TTY COMAND) . . . . . . . . . . . . . . . 259
+;  209. VARIABLES  . . . . . . . . . . . . . . . . . . . . . . 260
+  

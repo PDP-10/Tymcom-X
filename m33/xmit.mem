@@ -1,0 +1,89 @@
+
+
+
+      MONITOR TRANSMITTAL INSTRUCTIONS V3
+      --------------------------------
+
+      1.  Inform everyone in the operating systems group that you  are
+          about  to  transmit  a monitor.  Make sure everyone that has
+          made changes to the monitor gets a chance to respond one way
+          or the other.
+
+      2.  Send mail to everyone in  the  operating  systems  group  to
+          notify  them  that the sources are now frozen because of the
+          monitor transmittal.  Don't forget to tell them which  major
+          version or versions of the monitor are being transmitted.
+
+      3.  Run the moned program in the directory in which the  monitor
+          resides.   (M33) is the directory in which the current field
+          test monitor lives, and  (OSCURRENT)  is  the  directory  in
+          which the current release of the monitor lives.
+
+      4.  Type the monitor name desired after MONED gives  its  prompt
+          character (e.g.  "P033/M").  MONED will then proceed to edit
+          all the name files, load and save all the monitors.
+
+      5.  The last thing MONED (actually, MONMAK) does is to  checksum
+          all  the  monitor files.  retain this part of the output for
+          later attachment to the transmittal form.
+
+      6.  Fill out the transmittal form.  use the .MEM file to fill in
+          the  changes  section  in  the  transmittal  form.   Briefly
+          summarize  the  nature  of  each  change.   Highly  detailed
+          descriptions are not necessary.
+
+      7.  Attach the checksum output saved from the monitor  build  to
+          the  transmittal.   The  CKSUM program prints out the string
+          "%%%" next to any file that has changed.  Make sure that the
+          changed indicator does not appear next to a file that should
+          not have been changed.  (This is usually  guesswork  if  you
+          are  not  the only one who has changed the monitor since the
+          last transmittal.)
+
+      8.  Next, the montior must be  copied  into  the  archive  area.
+          (Make sure there are about 1400 pages free on the disk.) The
+          username for monitors living in (M33)  is  (QABUILD1).   The
+          username  for  monitors living in (OSCURRENT) is (QABUILD2).
+          Set WF license, and type "perform  (QABUILD?)ARCHIV",  where
+          the  ?  represents either a "1" or "2", depending on whether
+          the monitor comes from (M33) or  (OSCURRENT),  respectively.
+          If  the  perform  command  says "cannot open", it is usually
+          because the last monitor transmitted has not  been  archived
+          yet.   Contact the software distribution group in this case,
+          and they will make sure the monitor gets archived quickly.
+
+      9.  Before the transmittal form is actually submitted, the exact
+          monitor  being  transmitted should be run for one day on the
+          operating systems development system if it is the field test
+          monitor.   Testing for the current version of the montor can
+                                                                Page 2
+
+
+          be limited to making sure the  monitor  can  be  brought  up
+          once,  unless  the changes are extensive enough to warrant a
+          day's worth of testing.
+
+     10.  Submit the  completed  transmittal  form  to  the  operating
+          systems  manager  for signature, then submit the form to the
+          software disttribution group.
+
+     11.  If changes have been made to this  version  of  the  monitor
+          that  necessitate  a  memo  being  sent  out  to  area  tech
+          managers, operations, or some other  party,  make  sure  the
+          memo is written and distributed.
+
+     12.  If  any  special  instructions  need  to  be   followed   by
+          operations  before  bringing  up  the  new  version  of  the
+          monitor, or before dropping back to  the  previous  monitor,
+          prepare  a  memo  with  such  instructions.   This  includes
+          specification of any new system programs that need to be put
+          up simultaneously with the new version of the monitor.
+
+     13.  if the archive copy PERFORM command  succeeded  above,  send
+          mail  to  all members of the operating systems group stating
+          that the sources are now  unfrozen.   if  the  archive  copy
+          command  failed, wait until software distribution clears the
+          archive area of the previous monitor,  and  then  retry  the
+          "PERFORM   (QABUILD?)   ARCHIV"   command  again.   When  it
+          succeeds, send the mail about the monitor being unfrozen.
+

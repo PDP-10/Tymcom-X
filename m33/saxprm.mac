@@ -1,0 +1,438 @@
+SUBTTL	SAXPRM	Parameters for SA-10 + IBM-disk + STC-tape
+;The prefix "SAX" is "SA-10" using roman numerals.  Joe Smith, Sept-85.
+
+;The SA-10 lives on the I/O bus and emulates two IBM block multiplexor channels.
+;(Systems Concepts makes a four channel SA-10, but TYMSHARE does not use any.)
+;
+;On TYMCOM-X systems, SA0 channel 0 goes to the STC tape controller.
+;On TYMCOM-X systems, SA0 channel 1 goes the disk subsystem.
+;Both channels are on the same SA-10, device code 274.
+;TYMCOM-X does not use the SA-10 to drive a lineprinter.
+
+;SA-10 device codes
+	SA0=274		;I/O device code for first SA-10
+	SA1=400		;I/O device code for second SA-10
+
+;SAXBAS can be changed by setting the DIP switches on the SA10.
+	SAXBAS==300	;Base address for SA-10 (absolute address in low core)
+	SA0BAS==SAXBAS+00 ;4 words per channel, 4 channels on SA10 #0
+	SA1BAS==SAXBAS+20 ;4 words per channel, 4 channels on SA10 #1
+SUBTTL	CONO bits - commands to the SA-10
+
+CLERSA==1B18	;400000 (FTASER) Reset the entire SA-10
+CLRMER==1B19	;200000 (FTASER) Clear memory errors
+;	77B25	;176000 unused
+;	1B26+1B30; 1040 Set clock on, no-op if already on
+;	1B26+0B30; 1000 Stop clock, pulse it if already stopped
+;	27-29 + 30 Set/Clear flags for channel specified by bits 31&32
+;Interrupt enable flags can be set or cleared at will.
+;	7B29+1B30;  740 Enable interrupts from channel
+;	7B29+0B30;  700 Disable interrupts from channel
+;The PDP-10 should never set STATUS STORED flag, let the channel do that.
+;	6B29+1B30;  640 Set STATUS STORED for channel
+;	6B29+0B30;  600 Clear STATUS STORED and dismiss interrupt for channel
+;The PDP-10 does not need to clear the STATUS REQUEST flag, it is automatic.
+;	5B29+1B30;  540 Set STATUS REQUEST for channel
+;	5B29+0B30;  500 Clear STATUS REQUEST for channel
+;Setting the GO bit starts the channel program at 300+4*CHANNEL
+;	4B29+1B30;  440 Set GO bit for channel
+;	4B29+0B30;  400 Clear GO bit for channel
+;Reset sends a SYSTEM RESET signal to all IBM devices on one channel
+;	3B29+1B30;  340 Selective reset of channel only
+;	3B29+0B30;  300 Reset all devices on channel
+;	2B29+1B30;  240 HALT I/O on channel (SA10A feature)
+;OPCODE 1 is not used
+;	2B29+0B30;  200 not used
+;	1B29+1B30;  140 not used
+;	1B29+0B30;  100 not used
+;OPCODE 0 is used before doing a DATAI to read diagnostic data
+;	0B29	;       NOOP, set up to return one of 6 words on next DATAI
+;	   5B32	;    50     Return misc bits + memory address bits 14 and 15
+;	   4B32	;    40     Return clock-run and mem-busy and CONI bits
+;	   3B32	;    30     Return RH of memory buffer and parity bit
+;	   2B32	;    20     Return LH memory buffer in 18-35, channel in 16-17
+;	   1B32	;    10     Return 20 bits of memory address
+;	   0B32	;    00     Return CBUS data and micro-PC if clock is stopped
+;	3B32	;    30 Addresses the channel (0, 1, 2, or 3) if not NOOP
+;	7B35	;     7 PI assignment
+
+SUBTTL	CONI bits - status of SA10 as a whole
+
+;	1B18	;400000 This SA10 caused interrupt (tested in CONSO skip chain)
+MEMERR==3B20	;300000 (FTASER)
+;	1B19	;200000 PARITY error detected by channel
+;	1B20	;100000 NXM error detected by channel
+;	17B24	; 71000 Interrupt enable flags   (21=0,22=1,23=2,24=3)
+;	17B28	;  3400 GO flags                 (25=0,26=1,27=2,28=3)
+;	17B32	;   170 STATUS STORED flags      (29=0,30=1,31=2,33=3)
+;	7B35	;     7 PI assignment
+COMMENT ~	Example of a Channel Command Program
+
+   When the GO bit is set, the SA-10 fetches a word from a fixed location
+   in low core.  This CAW (Channel Address Word) points to either a CCP
+   (Channel Command Program), or to a device list for the block multiplexor.
+   The word fetched is at location SAXBAS + SAN*20 + CHN*4 where SAN is the SA
+   number (0 or 1) and CHN is the channel number (0 to 3).  Status is stored
+   in the two words after the CAW.
+
+        Selector Channel Mode:
+        Read Tape Unit 2
+
+SA-10 channel 0 starts at physical memory location 300 in TYMCOM-X version P034
+300/    200000 006000   Transfer In Channel (TIC) to 6000
+301/                    Status bits stored here
+302/                    Word count, last address stored here
+303/                    Used in block mux mode
+
+6000/   761416 020000   NMT,EX,CHAIN,TC MODE,DENS 1600,DEVICE X'82'
+6001/   320012 020000   EX,TC MODE,READ X'02',DEVICE=X'82'
+6002/   740000 005000   END
+6003/   000000 000000   HALT
+
+        Block multiplexor mode:
+        Recal disk F1, write to disk F2
+
+SA-10 channel 1 starts at physical memory location 304 in TYMCOM-X version P034
+304/    600000 001000   Set block mux mode, mux list is at 1000
+305/                    Status bits stored here
+306/                    Word count, last address stored here
+307/                    Used in block mux mode
+
+1000/   F1 D 0 004000   Pointer to device F1 command list
+1001/   F2 D 0 005000   Pointer to device F2 command list
+1003/   00 0 0 000000   End of MUX list
+
+4000/   3A 13 F1 0000   Recal device F1
+4001/   7777  0000000   1 byte of data (must be nonzero count, data ignored)
+4002/   38 1A F1 0000   Read Home Address
+4003/   7773  0012345   Store 5 bytes starting at location 12345
+4004/   400000 000000   Halt
+
+5000/   38 07 F2 0000   Seek on device F2
+5001/   7772  0012000   6 bytes of BIN,BIN,CYL,CYL,HEAD,HEAD at 12000
+5002/   39 31 F2 0000   Search for ID equal (byte offset)
+5003/   7773  0012000   5 bytes of CYL,CYL,HEAD,HEAD,REC starting at 12000
+5004/   200000 005002   Transfer In Channel back to 5002 until search suceeds
+5005/   30 05 F2 0000   Write on device F2
+5006/   3700  0014000   100 (octal) words, 14000-14077, more data to come
+5007/   7700  0015000   100 (octal) words, 15000-15077, no more data
+5010/   400000 000000   Halt
+~  ;End of COMMENT
+SUBTTL	SA-10 Channel Address Word
+
+;SA-10 Channel Address Word, fetched from location 300 for tapes, 304 for disks
+
+   TIC==200000	;Transfer In Channel - RH points to Channel Command Program
+   BMX==600000	;Block Multiplexor Mode - RH points to device list
+
+;Channel bits, stored in 1st byte of 301 for tapes, 305 for disks
+
+;     ==(0B1)	;         Initial status has been stored
+;     ==(1B1)	;         Ending status has been stored
+ASYNCH==(2B1)	;(FTASER) Asynchronous status has been stored
+;     ==(3B1)	;         Dummy status has been stored
+SELERR==(1B2)	;         Select Error, no device responded to device address
+BUSERR==(1B3)	;         Bus In Parity Error (data or sense bytes wrong)
+ BUSIN==(1B3)	;(FTASER)
+CONERR==(1B4)	;(BPXKON) Control Error, channel is confused
+CNTLER==(1B4)	;(FTASER)
+LENERR==(1B6)	;         Length Error, actual record length is different
+PIFERR==(1B7)	;(PAKCOP) Program Interrupt Flag (caused by 1B5, dummy status)
+PRGINT==(1B7)	;(FTASER)
+
+;Device status, stored in 2nd byte of 301 for tape, 305 for disk
+
+ATTEN== (1B8)	; (BOTH)  ATTENTION
+ATTN==  (1B8)	;(FTASER) ATTENTION
+STSMOD==(1B9)	; (BOTH)  STATUS MODIFIER
+STAMOD==(1B9)	;(FTASER) STATUS MODIFIER
+CUEND== (1B10)	;         CONTROL UNIT END
+BUSY==  (1B11)	;         BUSY
+CHNEND==(1B12)	;(PAKCOP) CHANNEL END
+DEVEND==(1B13)	;         DEVICE END
+UCHK==  (1B14)	; (BOTH)  UNIT CHECK
+UNITCK==(1B14)	;(FTASER) UNIT CHECK
+UXCP==  (1B15)	; (BOTH)  UNIT EXCEPTION
+UNITEX==(1B15)	;(FTASER) UNIT EXCEPTION
+
+;Device address, stored in 3rd byte of 301 for tape, 305 for disk
+;     ==377B23  ;8-bit device address
+
+;Status bits in 4th byte and 4 bits of 301 for tape, 305 for disk
+;     ==7777B35	;Bits 24-35 not used
+
+;Second status word, stored in 302 for tape, 306 for disk
+;     ==7777B11		;Residual word or byte count in failing transfer
+;     ==    77,,777777	;24-bit address of last command word executed
+;FORMAT OF SA-10 WORDS:	(FTASER)
+
+;    BMX WORDS: (Block Multiplexor mode)
+
+;	     BITS	MEAN
+;	     0-7	DEVICE ADDRESS	(FTASER)
+;	     8-11	1101-START DEVICE	(FTASER)
+;	    		1110-WAITING ON DEVICE	(FTASER)
+;	    		1111-TERMINATED DEVICE	(FTASER)
+;	    		0000-END OF LIST	(FTASER)
+;	     14-35	ADDR OF DEVICE(UNIT) CMD LST	(FTASER)
+
+;    UNIT COMMAND LIST WORDS:
+
+;    BYTE (8) SAX.MODE, CCW.OPCODE, UNIT	;Device command
+;    BYTE (12) -COUNT (24) ADDRESS.OF.BYTES	;Data word
+;    BYTE (12) 2000 (24) .-2			;Transfer In Channel (search)
+;    BYTE (8) SAX.MODE, CCW.OPCODE, UNIT	;Device command
+;    BYTE (12) -COUNT (24) ADDRESS.OF.BYTES	;Data word
+;    BYTE (8) 200				;End of command chain
+
+;        DEVICE COMMAND WORDS:  (bits 0-7 are SAX.MODE)
+
+;            BITS	MEAN
+;            0		1=NO MEMORY TRANSFER, 0=TRANSFER TO/FROM MEMORY
+;            1&4	00-WORD MODE (2 WORDS IN 9 BYTES)
+;            		01-BYTE MODE (4 BYTES PER WORD, IGNORE BITS 32-35)
+;            		10-NATURAL MODE (BIT STREAM)
+;            		11-TAPE COMPATABILITY MODE (DEC 9-TRACK 36 BITS)
+;            2		1=EXECUTE, 0=HALT
+;            3		1=CHAIN TO NEXT COMMAND, 0=DON'T CHAIN
+;            5		1=CAUSE A PROGRAM INTERRUPT (STORE DUMMY STATUS)
+;            6		1=IGNORE LENGTH ERROR, 0=ABORT IF LENGTH MISMATCH
+;            7		1=START BYTE TRANSFER WITH BITS 16-23 OF WORD
+;            8-15	DEVICE COMMAND (8 BITS)
+;            16-23	DEVICE ADDRESS (8 BITS)
+
+;        DATA WORDS:
+
+;            BITS	MEAN
+;            0		1=THIS IS THE LAST DATA WORD IN THIS GROUP, 0 IF NOT
+;            1-11	2'S COMPLEMENT OF WORD/BYTE COUNT
+;            14-35	1ST MEM ADDR, UNLESS 0 & READ TO SKIP RECORD
+
+;        TRANSFERS IN CHANNEL:
+
+;            BITS	MEAN
+;            0		0=TIC, 1=ADDR POINTS TO BLOCK MUX LIST
+;            1		MUST BE 1
+;            2-13	SHOULD BE 0
+;            14-35	ADDR OF NEXT COMMAND
+
+;SA-10 control bits  (first 8 bits of control word)
+
+NOMEMT==200	;No memory transfer (implies TRBYTE mode)
+TRBIT== 100	;Transfer bit stream (natural mode, 9 bytes per word pair)
+XCTCMD== 40	;Execute this command (Halt if this bit not set)
+CHAIN==  20	;Chain to next command without waiting for DEVICE END
+TRBYTE== 10	;Transfer byte mode (industry compatible, 32 bits per word)
+INTRPT==  4	;Interrupt PDP-10 when this command executed (dummy status)
+IGNLEN==  2	;Ignore length error
+OFFSET==  1	;Byte mode offset (so SEARCH ID= uses same data as SEEK)
+TRWORD==  0	;Transfer word mode with 5th byte split, in bits 32-35 of words
+TRTAPE==110	;Transfer tape compatibility (9-track DEC 36-bit core dump)
+
+;SAX.MODE - common control bit combinations
+
+BYTMOD==TRBYTE+CHAIN+XCTCMD	;Normal byte mode transfer (SEEK/SEARCH data)
+ NOXFR==NOMEMT+XCTCMD+IGNLEN	;For RECAL and NOOP
+WRDMOD==TRBIT+CHAIN+XCTCMD	;Normal for a word mode transfer
+SUBTTL	CCW-OP - Channel Command Word Operation codes
+
+;Commands which work on all IBM devices
+;x0 are invalid commands (except that 00 is used in TEST I/O)
+;x1,x5,x9,xD are WRITE type commands
+;x2,x6,xA,xE are READ type commands
+;x3,x7,xB,xF are CONTROL type commands, 03 is NO-OP for all devices
+;x4 are SENSE type commands
+;x8 are all TRANSFER IN CHANNEL (but not for SA-10)
+;xC are READ BACKWARD type commands (for tapes, not disk)
+
+;DISK function codes (1st byte of CCW) for 3380 + 3330-11 or 3380-2 + 3350
+;     Same codes work for Memorex devices  3672 +  3675   or  3674  + 3650
+
+  ;Control commands (x3,x7,xB,xF)
+;     ==  3	;X'03'          NO-OP
+SEEK==    7	;X'07'  (BOTH)  SEEK
+SEEKCY== 13	;X'0B' (BPXKON) SEEK CYLINDER
+;     == 17	;X'0F'          SPACE COUNT
+RECAL==  23	;X'13' (BPXKON) RECALIBRATE
+;     == 27	;X'17'          RESTORE
+;     == 33	;X'1B'          SEEK HEAD
+SETFMK== 37	;X'1F' (PAKCOP) SET FILE MASK (FOR ALTERNATE TRACKS)
+SETSEC== 43	;X'23'  (BOTH)  SET SECTOR
+
+  ;Sense commands (x4)
+SENSE==   4	;X'04'  (BOTH)  SENSE
+;     == 24	;X'14'          UNCONDITIONAL RESERVE
+;     ==224	;X'94'          DEVICE RELEASE
+RRBL==  244	;X'A4' (BPXKON) READ AND RESET BUFFERED LOG
+;     ==264	;X'B4'          DEVICE RESERVE
+;     ==344	;X'E4'          SENSE I/O TYPE
+
+  ;Write commands (x1,x5,x9,xD)
+;     ==  1	;X'01'          WRITE SPECIAL COUNT, KEY, DATA
+BPXWT==   5	;X'05' (BPXKON) WRITE DATA
+WRT33==   5	;X'05' (PAKCOP) WRITE DATA
+;     == 15	;X'0D'          WRITE KEY AND DATA
+;     == 21	;X'11'          ERASE
+WRTR0==  25	;X'15' (PAKCOP) WRITE RECORD ZERO
+WHOM==   31	;X'19' (PAKCOP) WRITE HOME ADDRESS
+WCKD==   35	;X'1D' (PAKCOP) WRITE COUNT, KEY, DATA
+
+  ;Read commands (x2,x6,xA,xE)
+;     ==  2	;X'02'          READ IPL
+BPXRD==   6	;X'06' (BPXKON) READ DATA
+RED33==   6	;X'06' (PAKCOP) READ DATA
+;     == 16	;X'0E'          READ KEY AND DATA
+RCNT==   22	;X'12' (PAKCOP) READ COUNT
+RDR0==   26	;X'16' (PAKCOP) READ RECORD ZERO
+RHOM==   32	;X'1A' (PAKCOP) READ HOME ADDRESS
+;     == 36	;X'1E'          READ COUNT, KEY, DATA
+;     ==136	;X'5E'          READ MULTIPLE COUNT, KEY, DATA (entire track)
+
+  ;Multitrack read (same as READ with X'80'=200 added)
+;     ==206	;X'86'          READ DATA MULTITRACK
+;     ==216	;X'8E'          READ KEY AND DATA MULTITRACK
+;     ==222	;X'92'          READ COUNT MULTITRACK
+;     ==226	;X'96'          READ RECORD ZERO MULTITRACK
+;     ==232	;X'9A'          READ HOME ADDRESS MULTITRACK
+;     ==236	;X'9E'          READ COUNT, KEY, DATA MULTITRACK
+
+  ;Search commands (x1,x9, multitrack when X'80' is set)
+;     == 51	;X'29'  A9      SEARCH KEY EQUAL
+SRCIDE== 61	;X'31'  B1      SEARCH ID EQUAL
+;     == 71	;X'39'  B9      SEARCH HOME ADDRESS EQUAL
+;     ==111	;X'49'  C9      SEARCH KEY HIGH
+;     ==121	;X'51'  D1      SEARCH ID HIGH
+;     ==151	;X'69'  E9      SEARCH KEY EQUAL OR HIGH
+;     ==161	;X'71'  F1      SEARCH ID EQUAL OR HIGH
+SUBTTL	Sense bits returned (as a result of CCW opcode SENSE=4)
+
+;	CMDREJ==400000	;(FTASER)
+;	INTREQ==200000	;(FTASER)
+;	BUSOUT==100000	;(FTASER)
+;	EQPCHK==40000	;(FTASER)
+;	DATCHK==20000	;(FTASER)
+;	OVERUN==10000	;(FTASER)
+;	CNVCHK==20000	;(FTASER)
+
+SCMDRJ==(1B0)	;(PAKCOP) COMMAND REJECT
+;	(1B1)	;         OFF-LINE (INTERVENTION REQUIRED)
+;	(1B2)	;         BUS OUT PARITY ERROR
+;	(1B3)	;         EQUIPMENT CHECK
+;	(1B4)	;         DATA CHECK
+;	(1B5)	;         PERMANENT OVERRUN
+;	(1B6)	;         (3640 disks only) TRACK CONDITION CHECK
+;	(1B7)	;         (3640 disks only) SEEK CHECK
+;	(1B8)	;         PERMANENT ERROR, other bits should be on
+;	(1B9)	;         INVALID TRACK FORMAT
+;	(1B10)	;         END OF CYLINDER on multrack search
+;	(1B11)	;         always zero
+SNOREC==(1B12)	;(PAKCOP) NO RECORD FOUND
+;	(1B13)	;         FILE PROTECTED
+SNOWRT==(1B14)	;(PAKCOP) WRITE INHIBITED, COMMAND REJECT is also on
+;	(1B15)	;         OPERATION INCOMPLETE, other bits should be on
+;	(1B16)	;	(3640 disks only) RPS FEATURE
+;	(1B17)	;	CORRECTABLE
+;	(1B18)	;	ALTERNATE CONTROLLER SELECTED (3353/3354 or 3355/3356)
+;	(1B19)	;	ENVIRONMENTAL DATA PRESENT
+;	(1B20)	;	EMULATION MODE (335x disks only)
+;	(1B21)	;	(3640 disks only) FIXED HEAD
+;	(1B22)	;	(3640 disks only) DATA MODULE SIZE = 70 MB
+;	(1B23)	;	(3640 disks only) DATA MODULE SIZE = 35 MB
+  ;The remaining 21 bytes (24 bytes total) have varying interpretations
+SUBTTL	Error bits returned by BPXKON for FILIO (fake a CONI)
+
+ERRCMR== 1B30	;(BPXKON) COMMAND REJECT
+ERRBOP== 1B29	;(BPXKON) BUS OUT PARITY
+ERRBIP== 1B28	;(BPXKON) BUS IN PARITY
+ERRPRT== 1B27	;(BPXKON) PROTECTION (SET FILE MASK) FAILURE
+ERRUNK== 1B26	;(BPXKON) UNKNOWN ERROR (NO BITS CHECK BUT UNIT CHECK)
+ERROVR== 1B25	;(BPXKON) OVERRUN
+ERRNXM== 1B24	;(BPXKON) NXM
+ERRPAR== 1B23	;(BPXKON) PARITY ERROR
+ERRSRC== 1B22	;(BPXKON) SEARCH ERROR (NO RECORD FOUND)
+ERRINV== 1B21	;(BPXKON) INVALID TRACK FORMAT
+ERRRCV== 1B20	;(BPXKON) RECOVERABLE DATA CHECK
+ERRDTA== 1B19	;(BPXKON) UNRECOVERABLE DATA CHECK
+ERRCNT== 1B18	;(BPXKON) COUNT ERROR (CHANNEL TERMINATION)
+ERRBSY==(1B17)	;(BPXKON) BUSY
+ERRATN==(1B16)	;(BPXKON) ATTENTION FLAG
+ERRUXC==(1B15)	;(BPXKON) UNIT EXCEPTION
+ERREQP==(1B14)	;(BPXKON) PERMANENT EQUIPMENT CHECK
+ERREQC==(1B13)	;(BPXKON) EQUIPMENT CHECK
+ERRLEN==(1B12)	;(BPXKON) LENGTH ERROR
+ERRCON==(1B11)	;(BPXKON) CONTROL ERROR
+ERRSEL==(1B10)	;(BPXKON) SELECT ERROR
+ERRWPT==(1B9)	;(BPXKON) WRITE PROTECT ERROR (COMMAND REJECT ALSO ON)
+SUBTTL	Defintions from FTASER.MAC
+
+IFDEF SA.TAPE,<
+;FLAGS:
+
+    ;FOR TRANSFERS IN CHANNEL:
+	TIC==200000	;(FTASER)
+
+
+    ;FOR DATA WORDS:
+	LASDAT==400000	;(FTASER)
+
+
+    ;FOR HALTS:
+	HALT==400000	;(FTASER)
+
+
+    ;FOR BMX WORDS:
+	STRTDV==15	;(FTASER)
+	TERMDV==17	;(FTASER)
+
+
+    ;TO SET UP BMX MODE:
+	BMX==400000	;(FTASER)
+    ;FOR UNIT CMDS:
+
+	NOMXFR==400000	;(FTASER)
+	EXECUT==100000	;(FTASER)
+	CMDCHN==40000	;(FTASER)
+	FRCINT==10000	;(FTASER)
+	IGNLEN==4000	;(FTASER)
+	OFFSET==2000	;(FTASER)
+	    CNEXNO==CMDCHN!EXECUT!NOMXFR
+
+	;DATA MODES.
+	    MODE9D==220000	;(FTASER)
+	    MODE9I==020000	;(FTASER)
+	    MODE7== 200000	;(FTASER)
+	    MODE7I==020000	;(FTASER)
+
+	;CMDS, SHIFTED FOR BITS 8-15, PLUS OTHER FLAGS.	(FTASER)
+	    MS7T2==CNEXNO!114	;(FTASER)
+	    MS7T5==CNEXNO!514	;(FTASER)
+	    MS7T8==CNEXNO!1114	;(FTASER)
+	    MS7TE2==CNEXNO!214	;(FTASER)
+	    MS7TE5==CNEXNO!614	;(FTASER)
+	    MS7TE8==CNEXNO!1214	;(FTASER)
+	    MS7TO2==CNEXNO!314	;(FTASER)
+	    MS7TO5==CNEXNO!714	;(FTASER)
+	    MS7TO8==CNEXNO!1314	;(FTASER)
+	    MS9T8==CNEXNO!1454	;(FTASER)
+	    MS9T16==CNEXNO!1414	;(FTASER)
+	    MS9T62==CNEXNO!1514	;(FTASER)
+	    SENSE==EXECUT!CMDCHN!MODE9I!20	;(FTASER)
+	    REW==CNEXNO!34	;(FTASER)
+	    REWNCH==EXECUT!NOMXFR!34	;(FTASER)
+	    WTM==CNEXNO!174	;(FTASER)
+	    SKR==CNEXNO!334	;(FTASER)
+	    BSR==CNEXNO!234	;(FTASER)
+	    REWUNL==CNEXNO!74	;(FTASER)
+	    RWUNCH==EXECUT!NOMXFR!74	;(FTASER)
+	    ERG==CNEXNO!134	;(FTASER)
+	    READFW==EXECUT!CMDCHN!10	;(FTASER)
+	    READBK==14	;(FTASER)
+	    WRITE==EXECUT!CMDCHN!IGNLEN!4	;(FTASER)
+	    TIE==EXECUT!CMDCHN!MODE9I!OFFSET!154	;(FTASER)
+
+
+>  ;End of REPEAT 0 around FTASER definitions
+
+;End of SAXPRM.MAC 
+
+  

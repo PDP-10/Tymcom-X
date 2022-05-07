@@ -1,0 +1,514 @@
+                                                                 Page 278
+
+
+   124.0  UPT -- USER PROCESS TABLE
+
+
+   Description:   Contains information about each job, and is used by the
+                  monitor to control memory mapping, scheduling, and I/O,
+                  and contains "scratch space" for  dynamically  changing
+                  variables about the job.
+
+                  The UPT is pointed to by the GETTAB table .GTUPM (100),
+                  and  has  been called the User Page Map Page (UPMP) for
+                  many years.  The UPT points to the page maps  for  each
+                  user  section  that  has  been created, but contains no
+                  page mapping information itself.
+
+   Defined in:    S.MAC
+
+   Symbol  Offset     Map
+
+                  +------------------------------------------------------+
+   JOBPDO    0    /            Push down list (156 words)                /
+                  |------------------------------------------------------|
+   JOBPRO  156    |       Protected job data area (24 words)             |
+                  |------------------------------------------------------|
+   .UPLPS  202    |    Saved pointer to current virtual page number      |
+                  |------------------------------------------------------|
+   .UPSLX  203    |                        |      SWPLST index           |
+                  |------------------------------------------------------|
+   .UPTMP  204    |    Temporary locations used for swapping (6 words)   |
+                  |------------------------------------------------------|
+   .UPUAC  212    | Block of 20 ACs used to save job's ACs               |
+                  |   while getting PFH.EXE                              |
+                  |------------------------------------------------------|
+   .UPFFT  232    |           Virtual time of first page fault           |
+                  |------------------------------------------------------|
+   .UPLFT  233    |                Virtual time of last fault            |
+                  |------------------------------------------------------|
+   .UPVCT  234    |   Real page faults     |  Faults when page is in core|
+                  |------------------------------------------------------|
+   .UPREL  235    |     Highest location gotten by CORE UUO or command   |
+                  |------------------------------------------------------|
+   .UPTMI  236    |       Interval for virtual time interrupts           |
+                  |------------------------------------------------------|
+   .UPTMC  237    |  Count-down counters for virtual timer interrupts    |
+                  |------------------------------------------------------|
+   .UPNXP  240    |        Page range as specified in PAGE. arg. list    |
+                  |------------------------------------------------------|
+   .UPJOB  241    |                    Job number                        |
+                  |------------------------------------------------------|
+   .UPMEM  242    |           Total virtual memory a job has             |
+                  |------------------------------------------------------|
+   .UPHSE  243    |  Virtual address of the end of the high segment      |
+                  |------------------------------------------------------|
+   .UPHSS  244    |  Virtual address of the start of the high segment    |
+                  |------------------------------------------------------|
+                                                                 Page 279
+
+
+   Symbol  Offset  Map
+                  |------------------------------------------------------|
+   .UPVRT  245    |Non-zero if job is virtual (LH=high seg.,RH=low seg.) |
+                  |------------------------------------------------------|
+   .UPBTS  246    |           Random collection of bits  (see below)     |
+                  |------------------------------------------------------|
+   .UPANA  247    |            Count of non-accessible pages             |
+                  |------------------------------------------------------|
+   .UPICT  250    |          Incremental count of page faults            |
+                  |------------------------------------------------------|
+   .UPPFH  251    |             Copy of .JBPFH on swap-out               |
+                  |------------------------------------------------------|
+   .UPFOP  252    |       Used by FILOP. to recover from a page fail     |
+                  |------------------------------------------------------|
+   SPYTAB  253    /            Spy pages table  (17 words)               /
+                  |------------------------------------------------------|
+   .UPHVA  272    |    Used for address checking at interrupt level      |
+                  |------------------------------------------------------|
+   .UPLST  273    |Pointer to swappable DDBs  |                          |
+                  |------------------------------------------------------|
+   .UPFCC  274    |             Header for cached free space             |
+                  |------------------------------------------------------|
+   .UPFCU  275    |            Header for uncached free space            |
+                  |------------------------------------------------------|
+   .UPFCD  276    |Core loc. of SWITCH.INI   | Header for restricted     |
+                  |                          |    free space             |
+                  |------------------------------------------------------|
+   .UPLNM  277    |Ptr. to logical name space|         T4                |
+                  |------------------------------------------------------|
+   .UPCTA  300    |                          |Extended channel table loc.|
+                  |------------------------------------------------------|
+   .UPMBF  301    |           Address of monitor buffer                  |
+                  |------------------------------------------------------|
+   .UPLBF  302    |  Flag to indicate use of extra page of directory     |
+                  |  0=don't get, -n=IOWD for it, n=can get              |
+                  |------------------------------------------------------|
+   .UPSBF  303    |         Saved .UPMBF when doing 4-block read         |
+                  |------------------------------------------------------|
+   .UPEND  304    |          Last word allocated to UPMP                 |
+                  |------------------------------------------------------|
+   .UPPFT  420    |  Addr of user page fault trap instruction            |
+                  |------------------------------------------------------|
+   .UPAOT  421    |  Addr of user arithmetic trap instruction            |
+                  |------------------------------------------------------|
+   .UPPDT  422    |  Addr of user push down list overflow instruction    |
+                  |------------------------------------------------------|
+   .UP03T  423    |          Addr of user trap 3 instruction             |
+                  |------------------------------------------------------|
+   .UPMUO  424    |      MUUO flags           |   MUUO opcode, AC        |
+                  |------------------------------------------------------|
+                                                                 Page 280
+
+
+   Symbol  Offset  Map
+                  |------------------------------------------------------|
+   .UPMUP  425    |               MUUO old PC                            |
+                  |------------------------------------------------------|
+   .UPMUE  426    |                MUUO effective address                |
+                  |------------------------------------------------------|
+|  .UPUPF  427    |        Addr of MUU Process Context word              |
+|                 |------------------------------------------------------|
+   .UPMTS  430    /            MUUO trap vector (10 words)               /
+   .UPMTE  437    /            End of trap vector                        /
+                  |------------------------------------------------------|
+   WSBTAB  440    |   Working set bit table (17 words)                   |
+                  |------------------------------------------------------|
+   AABTAB  457    |   Access allowed bit table (17 words)                |
+                  |------------------------------------------------------|
+           476    /                     Unused  (2 words)                /
+                  |------------------------------------------------------|
+   .LMPFW  500    |                 Page fail word                       |
+                  |------------------------------------------------------|
+   .LMPFP  501    |               Page fail old PC word (2 words)        |
+                  |------------------------------------------------------|
+           503    |               Page fail new PC word                  |
+                  |------------------------------------------------------|
+   .LMEBH  504    |     EBOX cycle meter count (high-order bits)         |
+                  |------------------------------------------------------|
+   .LMEBL  505    |     EBOX cycle meter count (low-order bits)          |
+                  |------------------------------------------------------|
+   .LMMBH  506    |     MBOX cycle meter count (high-order bits)         |
+                  |------------------------------------------------------|
+   .LMMBL  507    |     MBOX cycle meter count (low-order bits)          |
+                  |------------------------------------------------------|
+                  /                   Unused                             /
+                  |------------------------------------------------------|
+   SECTAB  540 -  /      Address of user's section page map pages        /
+         .  . .   /                                                      /
+           777    +------------------------------------------------------+
+                                                                 Page 281
+
+
+   Notes:
+
+        The bits defined in .UPBTS are:
+
+        Bits      Symbol    Meaning        ____      ______    _______
+|
+|       0         UP.BIG    User has created extended sections
+        1         UP.WHC    Working set has changed.
+        2         UP.MGP    Monitor got PFH
+        3         UP.GET    Running GET to get program that is to big  to
+                            fit in core
+        4         UP.SAA    Set access allowed immediately
+        5         UP.CSP    Core image may contain SPY pages
+        6         UP.MPF    Merging PFH
+        7         UP.MMO    Job  owned  and  released  MM  resource  over
+                            scheduler call
+        8         UP.PGB    Paging I/O pages have not been returned
+        9         UP.IYB    "In-your-behalf" PPN
+        10        UP.WSS    Working set is scrambled
+        11        UP.DST    Don't put TTY at monitor level
+        12        UP.CXO    Core  image  (not  just  high   segment)   is
+                            execute-only
+        13        UP.FIP    FILOP.  in progress
+        14        UP.DDW    Don't diddle working set
+        15        UP.MIP    Migrate set lock for this job
+|       16        UP.NZS    Need to swap in non-zero section, or
+|       16        UP.MAP    Current SWPLST entry has map information
+|       17        UP.CTX    Context save/restore in progress.   Used  for
+|                           RUN   error   recovery   and   high   segment
+|                           manipulation.
+|       18        UP.SWF    SET WATCH FILES has been set
+|       19        UP.JXP    MAPBAK.  Call XPANDH when done.
+                                                                 Page 282
+
+
+   125.0  USER PAGE MAP
+
+
+   Description:   The page map contains the  physical  page  number  that
+                  corresponds to each virtual page for the user.  Indexed
+                  by virtual page number, this page contains one word for
+                  each  virtual  page.   That  word contains the physical
+                  address for  that  page,  and  the  accessibility  bits
+                  associated with the page.
+
+   Each page pointer is formatted as follows:
+
+   +-------------------------------------------------------+
+   |Cd|P|W|K|C|A|SP|N|C|O|SS|     Addr                     |
+   +-------------------------------------------------------+
+
+        Bits      Symbol    Meaning        ____      ______    _______
+
+          0-2               Accessibility code:
+
+                            Code Meaning                            ____ _______
+
+                            0    No access is allowed
+                            1    Immediate page pointer
+                            2    Shared page pointer
+                            3    Indirect page pointer
+
+            3     UP.PUB    Public page
+            4     UP.WRT    Writable page
+            5     UP.KPM    "Keep Me" bit (page should not be cleared  on
+                            sweeps).
+            6     UP.CSH    Page has been cached.
+            7     UP.AAB    Access allowed (see AABTAB)
+            8     UP.SPY    Spy privileges are required  to  access  this
+                            page.
+            9     UP.NIA    No I/O allowed (usually set for high  segment
+                            pages).
+           10     UP.COR    Page is in core.
+           11     UP.OIQ    On for in-progress queues.
+           12     UP.SSP    Slow swapping space.
+        15-35     UP.ADR    Disk or memory address field.   This  address
+                            is  essentially  an  effective  address.  The
+                            accessibility code in Bits 0-2 determine  the
+                            handling of the address, whether immediate or
+                            indirect.  If indirect, the address is mapped
+                            through the SPT (Special Pages Table).
+                                                                 Page 214
+
+
+   88.0  PDB -- PROCESS DATA BLOCK
+
+
+   Description:   One PDB for each active job.  Set up by CREPDB  routine
+                  in DATMAN when the job is initialized.
+
+   Defined in:    COMMON (prototype)
+                  DATMAN (modify and find routines)
+
+   Used by:       CLOCK1, COMCON, COMMOD, COMMON, CORE1, FILFND,  IPCSER,
+                  KLSER, NETSER, QUESER, SCHED1, SEGCON, UUOCON, VMSER
+
+                                                                 Conditional
+                                                                    Assembly
+              +-----------------------------------------------+
+   .PDIPT,,   | (1) | ICPT (MCU)     |Quantum run time        |
+   .PDQNT     |     |                |                        |
+              |-----------------------------------------------|
+   .PDCNO     |User's charge number                           |      FTCNO
+              |-----------------------------------------------|
+   .PDKCT     |Kilo-core ticks for the job                    |      FTKCT
+              |-----------------------------------------------|
+   .PDNM1     |First half of user's name in SIXBIT            |      FTUNAME
+              |-----------------------------------------------|
+   .PDNM2     |Second half of user's name in SIXBIT           |      FTUNAME
+              |-----------------------------------------------|
+   .PDRTM     |Job's incremental runtime                      |      FTTIME
+              |-----------------------------------------------|
+   .PDTTM     |Job's total runtime                            |      FTTIME
+              |-----------------------------------------------|
+   .PDTT2     |Additional runtime in fractional jiffies       |      FTTIME
+              |-----------------------------------------------|
+   .PDEBT     |Total EBOX time in jiffies                     |  FTKL10,FTTIME
+              |-----------------------------------------------|
+   .PDEB2     |Remainder in EBOX counts                       |  FTKL10,FTTIME
+              |-----------------------------------------------|
+   .PDMBT     |Total MBOX time in jiffies                     |  FTKL10,FTTIME
+              |-----------------------------------------------|
+   .PDMB2     |Remainder in MBOX counts                       |  FTKL10,FTTIME
+              |-----------------------------------------------|
+   .PDPGM     |Program to run on Control-C or RUN             |      FTSET
+              |-----------------------------------------------|
+   .PDABS (2) | Addr. break settings | Break address          |
+              |-----------------------------------------------|
+   .PDCVL (3) |      CVPL            | CPPL                   |
+              |-----------------------------------------------|
+   .PDMVL     |      MVPL            | MPPL                   |
+              |-----------------------------------------------|
+                                                                 Page 215
+
+
+              |-----------------------------------------------|
+   .PDDVL (4) |Pointer to table of DDBs with log. names       |      FTHSLN
+              |-----------------------------------------------|
+   .PDIPC (5) |First packet          | Send/receive ctrs      |      FTIPCF
+              |-----------------------------------------------|
+   .PDIPA (6) |IPCF statistics                                |      FTIPCF
+              |-----------------------------------------------|
+   .PDIPQ (7) |Flags and quotas                               |      FTIPCF
+              |-----------------------------------------------|
+|  .PDIPL     |              Interlock word                   |
+|             |-----------------------------------------------|
+|  .PDPID     |       PID for PID-specific receives           |
+|             |-----------------------------------------------|
+   .PDIPI     |PID of this job's [SYSTEM]INFO                 |      FTIPCF
+              |-----------------------------------------------|
+   .PDIPN     | Last entry in IPCFQ  |                   |      FTIPCF
+              |-----------------------------------------------|
+   .PDEQJ     |             0        |Pointer to job queue    |      FTEQDQ
+|             |-----------------------------------------------|
+|  .PDQSN     |  FILDAE seq. #       |  QUEUE. UUO seq. #     |
+|             |-----------------------------------------------|
+|  .PDEPA     |         0            |Addr of packet response |
+|             |                      |to pseudo-process msg   |
+              |-----------------------------------------------|
+   .PDEQQ (8) |Flags                 |ENQ quota               |      FTEQDQ
+              |-----------------------------------------------|
+   .PDJSL (9) |Job search list                                |      FTSTR
+              |-----------------------------------------------|
+   .PDSCX     |        Job's saved context word               |
+|             |-----------------------------------------------|
+|  .PDDIA     | Location of DIAG. DDB for job                 |      FTDHIA
+|             |-----------------------------------------------|
+|  .PDSTR     |  Structure the program came from              |
+|             |-----------------------------------------------|
+|  .PDNAM     |  Name of the program                          |
+|             |-----------------------------------------------|
+|  .PDDIR     |  Directory the program came from              |
+|             |-----------------------------------------------|
+|  .PDSFD     |  Path to program                              |
+|             |-----------------------------------------------|
+|  .PDDFL (10)|  Word containing user-defined defaults        |      FTSET
+|             |-----------------------------------------------|
+|  .PDCAP (12)|  Maximum privileges allowed                   |      FTPRV
+|             |-----------------------------------------------|
+|  .PDACS     |  Account string                               |      FTACCT
+|             |  Eight words                                  |
+|             |-----------------------------------------------|
+|  .PDVKC     |  Virtual time-core interval                   |  FTKCT,FTACCT
+|             |-----------------------------------------------|
+|  .PDUUC     |  Count of UUOs done by this job               |      FTACCT
+|             |-----------------------------------------------|
+|  .PDHZF     |  HPQ fit flag                                 |      FTHPQ
+|             |-----------------------------------------------|
+                                                                 Page 216
+
+
+|             |-----------------------------------------------|
+|  .PDPST     |  Negative of swapout time                     |      FTPSCD
+|             |-----------------------------------------------|
+|  .PDOBI (11)|  Operator/batch information                   |
+|             |-----------------------------------------------|
+|  .PDSTM     |  Time of last reset                           |
+|             |-----------------------------------------------|
+|  .PDLBS     |  Default size of large disk buffer            |
+|             |  LH is set by UUO, RH is set by command       |
+|             |-----------------------------------------------|
+|  .PDOSL     |  Old-style LIB PPN                            |
+              |-----------------------------------------------|
+   .PDCMN     |  AOBJN pointer to user-defined command list   |
+              |-----------------------------------------------|
+   .PDUNQ     |  User-defined command pointers                |
+              |  LH is user UNQTAB                            |
+              |  RH is address of user command block          |
+              |-----------------------------------------------|
+|  .PDSAC (13)|     Address of first context block            |  FTCTX
+|             |-----------------------------------------------|
+|  .PDCTC (13)|    Address of current context block           |  FTCTX
+|             |-----------------------------------------------|
+|  .PDCTQ (13)|        Context quota word                     |  FTCTX
+|             |-----------------------------------------------|
+|  .PDCTO     |    JCH for job   |  JCH for job               |
+|             |    requesting    |  owning                    |
+|             |     interlock    |   interlock                |
+|             |-----------------------------------------------|
+|  .PDCTU (13)|           Context use word                    |  FTCTX
+|             |-----------------------------------------------|
+|  .PDCTX (14)|           Context flag word                   |
+|             |-----------------------------------------------|
+|  .PDTMI     |   Initial value for virtual timer traps       |
+|             |-----------------------------------------------|
+|  .PDTMC     | Countdown value for vir timer traps, or old PC|
+|             |-----------------------------------------------|
+|  .PDVRT     |     Virtual memory paging rate                |
+|             |-----------------------------------------------|
+|  .PDSCS     |   Addr. of process queue block for SCS. UUO   |  M.SCA
+|             |-----------------------------------------------|
+|  .PDEJB     |         Addr. of Ethernet job block           |  M.ENET
+|             |-----------------------------------------------|
+|  .PDCST (15)/      Reserved for customer definition         /
+|             +-----------------------------------------------+
+
+   Notes:
+
+        1.  Bit 0 of .PDIPT is the PDMSWP bit that is set to indicate the
+            expiration of the MCU (minimal care utilization).
+
+        2.  .PDABS contains address break settings:
+
+            1B0   OC.BCI   Break on instruction fetch
+            1B1   OC.BCD   Break on data fetch
+            1B2   OC.BCW   Break on write
+                                                                 Page 217
+
+
+            1B3   OC.BCM   Break on MUUO reference to
+                           address (software)
+            1B4   OC.ABE   Address break enabled
+            1B5   OC.FEP   Follow exec paging
+            1B6   OC.FUP   Follow user paging
+            1B7   OC.BSU   Break address and conditions
+                           set by UUO.
+
+        3.  .PDCVL - Bit 18 is set if the CPPL is a limit rather  than  a
+            guideline.
+
+        4.  .PDDVL - Pointer to table of pointers to DDBs owned  by  this
+            job  and having logical names, or zero if no such DDBs, or -1
+            if too many to fit in the table (4 words = 8 DDBs).
+
+        5.  .PDIPC - LH 0-17    Pointer to first packet
+                     RH 18-26   Packets sent and not received
+                     RH 27-35   Packets waiting to be received
+
+        6.  .PDIPA - LH    Count of sends since LOGIN
+                     RH    Count of receives since LOGIN
+
+        7.  .PDIPQ  1BO IP.DBS  Receiver is disabled
+                    1B1 IP.HBS  Quotas have been set
+                    1B2 IP.DPR  At least 1 PID dropped on RESET
+                    1B3 IP.DPL  At least 1 PID dropped on LOGOUT
+                    1B4 IP.LOK  Interlock bit for this job's IPCF
+                                receive queue
+                 777B17 IP.JOB  Job whose IPCF queue has been locked
+                  18-26         Send quota
+                  27-35         Receive quota
+
+        8.  .PDEQQ  1B0 EQ.HBS  The quota has been set
+
+        9.  .PDJSL - The number of words in the PDB is a function of  the
+            maximum  number  of file structures in a search list (.SLMXJ=
+            D10).  For each file structure there will  be  a  9-bit  byte
+            plus  an additional two bytes for the fence and stop markers.
+            For file structure bytes, the following definitions exist:
+
+            Value  Symbol  Use
+
+            400            Spare bit
+            200    FS.NCR  No-create
+            100    FS.WLK  Software write-lock
+             77            File structure number
+
+            System search  list  is  maintained  in  COMMOD  starting  at
+            location SYSSL and also consists of 9 bit bytes.
+
+            The fence marker will have a value 1 greater than the maximum
+            file  structure  number.  The stop marker will have a value 1
+            greater than the fence marker.
+                                                                 Page 218
+
+
+       10.  .PDDFL contains the following fields:
+
+            Bits      Description
+
+            0-8       Default file protection
+             9        Non-zero if default protection was specified
+            10        Non-zero if file daemon specified protection
+            11        Use default file specification on RUN and GET
+            12        Don't ask about detached jobs on LOGIN
+            18-26     File protection from FILDAE
+            27-35     Default number of disk buffers
+
+       11.  Bits for .PDOBI are:
+
+            Bits    Description
+
+            0-1     Write to operator values
+            2-4     Operator privilege type
+            10      Batch stream number set
+            12-17   Batch stream number
+
+       12.  For the values for .PDCAP, see JBTPRV.
+|
+|      13.  These context words are conditionally assembled depending  on
+|           the  value  of  M.CTX,  which  causes  CTXSER to be loaded if
+|           necessary.  This word is usd only by CTXSER.
+|
+|
+|      14.  This context word is always assembled, independant  of  state
+|           of  M.CTX  and  the presence of CTXSR.  .PDCTX contains flags
+|           and fields used for context creation and  by  the  scheduler.
+|           In  general,  left  half  bits  are  of  a  transient  nature
+|           affecting only the current context,  while  right  half  bits
+|           apply  to  those  operations  which are of a job-wide nature.
+|           .PDCTX is referenced by CTXSER  and  SCHED1  although  SCHED1
+|           only reads the state of the scheduler bit (CT.SCD).
+|
+|       Bits      Symbol    Meaning        ____      ______    _______
+|
+|           0     CT.SCD    Scheduler requesting context save
+|           1     CT.ATO    Auto-save in progress
+|           3     CT.TOP    Creating a new top-level context
+|           4     CT.SWT    Switch to an existing context
+|           5     CT.UUO    Context saved with CTX.  UUO
+|           6     CT.PRN    Physical device search on RUN UUO
+|          18     CT.LGO    Job is logging out
+|          19     CT.MTJ    Job is migrating
+|       27-35     CT.MFC    Migrate's first context number
+|
+|
+|                      15.  .PDCST is always at the end of the  PDB,  and
+|                           is  equivalent  to one or more words reserved
+|                           for customer definition.  The  symbol  M.PCST
+|                           is equivalent to the number of words reserved
+|                           here.
+
+      N*K}Ë

@@ -1,0 +1,233 @@
+procedure UPDATE.RPT
+% 
+  Procedure to insert non-TYMCOM-X system information concerning 
+  new systems and sites into relations SYS.REPORT AND SITE.  New 
+  TYMCOM-X systems are entered via procedure REQUEST.  Procedure
+  UPDATE.RPT, in addition, updates the data base for relation
+  SYS.REPORT.  Procedure SITE.RPT does the same for relation SITE.
+%
+
+begin
+fields
+        IN.SYSNO        same as SYSNO,  % current Tymnet host number %
+        IN.NET          same as NET,    % current network %
+        FIX.SYS         as '1C',        % type of relation update %
+        FIX.FIELD       as '1C',        % field to be modified %
+        NEW.VALUE       as '40C',       % new field value in update %
+        THIS.SITE       same as SITEID, % new site to inserted %
+        RESPONSE        as '3C',        % user input %
+        THIS.PREFIX     same as PREFIX  % prefix %
+
+
+procedure MODIFY.FIELD
+%
+  Procedure to modify data fields in relation SYS.REPORT.
+%
+begin
+select SYS.REPORT via (NET = IN.NET,SYSNO = IN.SYSNO) then
+GET.FIELD:
+  begin
+  type "Field to be modified [ H for help ] : "
+  accept FIX.FIELD
+  let FIX.FIELD = upper.case(FIX.FIELD)
+  if FIX.FIELD = default then
+    finish GET.FIELD
+  else
+    if FIX.FIELD = 'H' or = 'Q' then nothing
+    else
+      begin
+      type "New value for field? : "
+      accept NEW.VALUE
+      let NEW.VALUE = upper.case(trim(NEW.VALUE))
+      end
+  conditional on FIX.FIELD
+    begin
+    'H' : type @CR,"Field designations are : ",@CR,
+          "S ( SYSNO )",@CR,
+          "N ( NET )",@CR,
+          "O ( OS )",@CR,
+          "U ( UTILIZATION )",@CR,
+          "C ( CPU )",@CR,
+          "P ( PREFIX )",@CR,
+          "S ( SITE )",@CR,
+          "Q ( quit )",@CR
+    'S' : select SYS.REPORT via (NET=IN.NET,SYSNO=IN.SYSNO) then
+            begin
+            delete from SYS.REPORT via (NET=IN.NET,SYSNO=IN.SYSNO)
+            let IN.SYSNO = NEW.VALUE as "5ZN"
+            insert into SYS.REPORT
+              using(IN.NET for NET, IN.SYSNO for SYSNO)
+            end
+    'N' : select SYS.REPORT via (NET=IN.NET,SYSNO=IN.SYSNO) then
+            begin
+            delete from SYS.REPORT via (NET=IN.NET,SYSNO=IN.SYSNO)
+            let IN.NET = NEW.VALUE as "4C"
+            insert into SYS.REPORT
+              using(IN.NET for NET, IN.SYSNO for SYSNO)
+            end          
+    'O' : alter SYS.REPORT using (NEW.VALUE for OS)
+    'U' : alter SYS.REPORT using (NEW.VALUE for UTIL)
+    'C' : alter SYS.REPORT using (NEW.VALUE for CPUNAM)
+    'P' : alter SYS.REPORT using (NEW.VALUE for PREFIX)
+    'S' : alter SYS.REPORT using (NEW.VALUE for SITEID)
+    'Q' : finish GET.FIELD
+    end
+  else
+    begin
+    type "INVALID FIELD",@CR
+    repeat GET.FIELD
+    end
+  repeat GET.FIELD
+  end
+else nothing
+end
+
+
+
+
+
+ procedure NEW.SYS
+% A new system number-network combination was entered in the main
+  procedure.  In procedure NEW.SYS, values for non-TYM network systems
+  are entered into relation SYS.REPORT.  If this also is a new site,
+  the new prefix and site are inserted into relation SITE.
+%   
+begin
+
+type "Operating system; X(TYM), T(T20), V(VMS) ? : "
+accept OS
+let OS = upper.case(OS)
+if OS = 'X' and IN.NET = 'TYM' then
+  begin
+  type "Use Procedure 'REQUEST' to enter",@CR,
+    "this system into the data base",@CR
+  return
+  end
+else
+  GET.UTIL:
+  begin
+  type "Utilization of this system : "
+  accept UTIL
+  let UTIL = upper.case(UTIL)
+  if length (UTIL) gt 40 then
+    begin
+    type @CR,"Expression cannot exceed 40 spaces",@CR
+    repeat GET.UTIL
+    end
+  type "CPU ( KI, KL, KS, F3, VAX )? : "
+  accept CPUNAM
+  let CPUNAM = upper.case(CPUNAM)
+    SITE.NAME:
+    begin
+    type "What site? : "
+    accept THIS.SITE
+    let THIS.SITE = upper.case(THIS.SITE)
+    select SITE via SITEID = THIS.SITE then
+      let THIS.PREFIX = PREFIX
+    else 
+      begin
+      type "New site for Tymshare [no]? : "
+      accept RESPONSE
+      if upper.case(substr(RESPONSE,1,1)) = 'Y' then
+        GET.PREFIX:
+        begin
+        type "Prefix for this site : "
+        accept THIS.PREFIX
+        if THIS.PREFIX = default then
+          repeat GET.PREFIX     
+        let THIS.PREFIX = upper.case(THIS.PREFIX)
+        for each SITE 
+          if PREFIX = THIS.PREFIX then
+            begin
+            type "Reserved prefixes :",@CR
+            for each SITE sorted on PREFIX
+              if PREFIX changing then
+                type @tab 10,PREFIX,@CR
+              else nothing
+            repeat GET.PREFIX
+            end
+          else nothing
+        insert into SITE using (THIS.SITE for SITEID,
+          THIS.PREFIX for PREFIX)
+        end
+      else
+        begin
+        type @CR,"Valid sites are : ",@CR   % display valid sites %
+        for each SITE
+          type @CR,trim(SITEID),@CR
+        repeat SITE.NAME
+        end
+      end
+    end
+  insert into SYS.REPORT using( IN.SYSNO for SYSNO,
+    IN.NET for NET,THIS.SITE for SITEID, THIS.PREFIX for PREFIX )
+  end
+  end
+
+MAIN:
+% Get SYSNO, NET and insert in Procedure NEW.SYS, modify in Procedure
+  MODIFY.FIELD, and delete here.
+%
+ 
+begin
+type @CR, "System number [CR for exit] : "
+accept IN.SYSNO
+if IN.SYSNO = default then
+  finish MAIN
+else
+  begin
+  type "Network ( TYM, BUB, or other 3-letter designation ) : "
+  accept IN.NET
+  let IN.NET = upper.case(IN.NET)
+  if IN.SYSNO = default or IN.NET = default then
+    repeat MAIN
+  else
+    select SYS.REPORT via (NET = IN.NET, SYSNO = IN.SYSNO) then
+      CHANGE:
+      begin
+      type "Insert, delete, modify, or quit [H for help] : "
+      accept FIX.SYS
+      if FIX.SYS = default then
+        repeat MAIN
+      else
+        conditional on upper.case(FIX.SYS)
+          begin
+          'I' : apply NEW.SYS
+          'D' : delete from SYS.REPORT via (NET = IN.NET,SYSNO = IN.SYSNO)
+          'M' : apply MODIFY.FIELD
+          'Q' : finish MAIN
+          'H' : begin
+                type @CR, "I ( insert new system and/or new site )",@CR,
+                  "D ( delete system )",@CR,
+                  "M ( modify a field)",@CR,
+                  "Q ( quit )",@CR,
+                  "H ( help )",@CR
+                repeat CHANGE
+                end
+          end
+        else
+          begin
+          type "INVALID FIELD",@CR
+          repeat CHANGE
+          end
+      repeat MAIN
+      end
+    else
+      begin
+      type "New system [no]? : "
+      accept RESPONSE
+      if upper.case(RESPONSE) = 'Y' then
+        apply NEW.SYS
+      else
+        begin
+        type "Valid system-net combinations : ",@CR
+        for each SYS.REPORT
+        type @tab 10,SYSNO,@tab 3,NET,@CR
+        repeat MAIN
+        end            
+      end
+  end
+end
+end
+
+

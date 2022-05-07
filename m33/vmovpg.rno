@@ -1,0 +1,305 @@
+.lm 5;.rm 72;
+.HL1 History and Motivation
+The VMOVPG UUO was originally intended as an aid to cut down on
+the amount of I/O necessary to output a new page of data to a file.
+It is also useful in transferring a page from one file to another file,
+or taking the contents of a private page and cause it to be mappable
+from a file.
+.skip 1
+Without VMOVPG, it took at least 3, possibly 4, pages of I/O to
+write a new page to a file. When a new disk page is first allocated,
+that page has whatever contents the previous user of the page
+left there. Before that page is put into a file RIB, the page must
+either be zeroed, or new contents must be written onto the disk page.
+If this is not done and the system crashes after the disk page address
+is put into the RIB slot, the file's owner will see the old disk page
+user's data, which is a security violation. For this reason, FCREAT
+CHANIO zeroes the disk page and waits for the I/O to complete
+before putting the disk page's address into the RIB. This causes
+2 I/O cycles - one to read in the page (there is no mode in the
+current paging system to map in a page and not read in the contents
+when it is referenced) and one to write the zeroes out.  When the
+user of the file page maps in the page and writes his new data, there
+may be another disk read, and certainly will be another write when
+he removes the page, making 3 or 4 I/O cycles all together.
+.skip 1
+The solution of inventing a RIB pointer bit which says the page hasn't been
+written out yet (virgin file page) doesn't eliminate the I/O, since
+an extra RIB read/write would be necessary to clear the bit after
+the new disk page had its initial contents written out.
+.skip 1
+It has always been true that private pages are not read in when they
+are first created. There is a state for a private page called "virgin",
+which the system uses to recognize that the page is a freshly created
+private page which doesn't need to be read in before being written into.
+After the page is written, the physical core page becomes dirty, and is
+written out if the core page is reclaimed.
+.skip 1
+The VMOVPG UUO allows such a private page to become mappable from a file.
+This way, only 1 I/O operation is necessary to write a new page of data
+into a file. The user creates a private page and writes the data into it
+(no need to worry about RIBS yet since page is private), and does the
+VMOVPG UUO to cause the private page to turn into a page which can
+be mapped from the target file. The VMOVPG UUO must ensure that the
+new data in the page is written out to the disk before making
+the page part of the file for the security reason outlined above.
+The page can then be further referenced by the program, or VREMOVed
+if the program has no further need to reference the page.
+.hl1 VMOVPG UUO logic.
+.hl2 KMOVPG
+The kernel for the KMOVPG UUO follows the general calling
+conventions for paging UUO kernel routines (F/DDB, T1,T2/arguments)
+First, the arguments are moved into other ACs and checked.
+-1 for a file page indicates the page position right after
+the current (instantaneous) end of file.
+.skip 1
+The page slot is checked to make sure it exists and is not a super slot.
+.skip 1
+If the page is a private virgin page, it is referenced to get it out
+of that state, since a validating a virgin page will not write anything
+out to the disk.
+.skip 1
+For all pages in the specified range, if the page is private, the UUO
+routine for validate start is called for it, with a special bit that
+tells validate to write the page out even if it is private (normally
+validates of private pages are noops.) This is done so that whatever
+I/O needs to be done can be started all at once while the UUO is
+running.
+.skip 1
+The next phase sets up the file to make sure it is ready to get the
+new page or pages. The DELXCH routine is called, which locks the
+file for read and returns the current highest page written(HPW).
+SETACH is called to indicate that the file's allocation is changing,
+so that in the event of a crash before the PCBs are written out,
+DSKCLN will notice that file when running in fast mode and include
+its pages in the SATs.
+.skip 1
+If any of the pages to be inserted are past the current highest page written,
+new RIB slots must be used, which may necessitate changing from the current
+number of RIBs to a new number of RIBs. So, if the file isn't append only,
+the routine LOKHPW must be called to get the atomic file lock for write.
+LOKHPW reschedules, so it must make sure someone else didn't sneak in
+and change the HPW, or discover that the RIB was bad. It is possible
+that after getting the atomic file lock for write that the file has
+been extended by another frame so that it now includes all the file
+position slots that are needed. If this is the case, LOKHPW returns
+T1 negative, and the code that extends the file out is skipped.
+.skip 1
+If LOKHPW returns indicating that the file still needs to be extended,
+the write lock is now in possession of the frame. The append only
+check is applied, and if it passes, the file is extended with HOLES
+by the new routine SWEPRH. Since it is possible for the caller
+to indicate that the first page to insert into the file is one or more
+pages past the first non-existent file page past the end of file,
+doing VMOVPG can result in REAL HOLES showing up in the file.
+The alternative to this was to complicate the code by calling SWEPHO to
+fill in pages up to the first page to insert, and then calling SWEPRH
+to make real holes to insert the new pages. Since the TITO crock
+is a crock and will go away, it was my feeling to do this UUO and just
+let the caller beware if he doesn't want to create real holes, by calling
+it with arguments starting only on existing file pages or starting
+at the first page past the current EOF.
+.skip 1
+SWEPRH may get the rib, and we still have to validate pages and reschedule,
+so we call RELRIB to release the RIB. A tricky thing to watch when
+debugging and writing these file system UUOs is that because of the
+DDB pointers, sometimes the RIB is gotten and sometimes it is not.
+So if you forget to release it and your test case only causes pointers
+to come from or go to DDB pointer area, you may never find out until
+too late that you forgot to call RELRIB.
+.skip 1
+At KMOVNH we setup W and M again to get ready to go through the main
+loop for each page in the argument range. First, a validate/wait is
+done to make sure the page (which was started out above), if it is private,
+has now been written onto the disk.
+.skip 1
+Next, we check the quota for the file's directory to make sure
+it has not been exceeded. If GETB is on, this check is skipped.
+This is there so when SIMIO gets adapted to use VMOVPG to write
+new file pages out, it can do its own quota checking. The thing
+I wanted to avoid in SIMIO is to have 3 SIMIO output UUOs succeed,
+and then the fourth one that causes the VMOVPG to get done get
+the over quota return, in which case the 3 outputs that seemed to
+succeed never got their data into the file.
+.skip 1
+Next, we call USETST to cause DEVRET(F) to point to the DDB pointer
+area where the page whose number is in AC M can be found. Originally,
+I used a routine called DELCRE, which got the RIB even if the DDB
+pointer area had the desired page, but it turned out that this
+slowed VMOVPG down considerably. In the original version of VMOVPG
+I followed the example of FCREAT and wrote the pointer into the DDB
+and the RIB slot. This caused the RIB to get written out for each page
+added to the file. Changing the call to USETST made it so the RIB doesn't
+get updated from the DDB pointer area until it absolutely has to, which
+may be as late as when the file is closed.
+This has the disadvantage, however, of opening the window during which
+the system can crash and the pages added to the file are lost.
+Since MAGNUM does RIB validates to prevent this, I didn't consider
+this disadvantage serious.
+.skip 1
+If the file position in question is already a real page, the error return
+is given. There is no effort to undo any work done to the file for
+previous pages in this VMOVPG call.
+.skip 1
+Next, the SAT is gotten into a PCB completely locked. The complete lock
+is necessary as an interlock on the disk page, to make sure no one
+else creates or deletes a shared page table entry for it.
+If the disk address the user is trying to insert into the file has the F
+bit set (the page is already in a file) we give the error return. Note
+we can't just check to see if the page's ATB is a file rather than
+dummy (private) ATB, because the UUO allows a page which used to be
+mappable from a file and has since been deleted from the file's RIB
+to be inserted into a new file. Deleted file pages that are still mapped
+are still connected to the old file via the old file's ATB.
+.skip 1
+This brings us to label KMOV3N. We want to make sure the virtual page
+in question is not shared. If it is, since we are going to switch
+ATBs for the page, we need to know if the page is shared. We don't want
+to give an error return just because the page is shared, because someone
+might be examining the frames address space, which uses replicates and
+causes pages to be shared. It would be unfortunate for the UUO to fail
+just because someone was looking around at the frame. I also judged it
+undesirable to complicate the SPT structure by having to link old SPTs
+with new SPTs, which would have to be done if the page remained shared after
+it moved to the new file. The problem was that LMAP slots contain SPT
+addresses, and after the page was moved to the new file all LMAP slots
+for that disk page would have to have their SPT addresses updated sooner
+or later. This would require a pointer from the old SPT slot to the new
+SPT slot. Rather than do this, I decided to take the easy way out by
+remembering the old protection, changing the protectionto copy on write,
+doing a SETMM, causing the page to become private. This happens
+at KMVMKP if the page has an SPT number with a share count greater than
+1. Note all locks are released before doing this, as the SETMM could
+reschedule. Also note that routine VPADR sets up PC.UIO so that the
+SETMM will reference the proper address space.
+Note that this means all other sharers of the page will be sharing the
+page as it used to exist, and the VMOVPG caller actually gets another
+page with the same data.
+.skip 1
+After this is done, we can now the the F bit in the sat. We didn't want
+to set it until after all possible error returns were encountered, or else
+it would be possible to call the UUO in such a way as to result in a lost
+page.
+.skip 1
+We set the virtual pages disk address into the DDB area, set PTRCHG
+because we have written into the pointer area, and call ONESLT
+to find and update all other DDBs which include the pointer we are
+updating. After this, we call RELRIB in case USETST had to get a RIB.
+We update the file size and DRB with routine UPDAC0.
+.skip 1
+Now the disk data base is taken care of. We now must switch the slot
+to the new ATB. Since we still have the SAT write locked, we know
+the page can't change mapping state (e.g. no one can replicate it,
+or map it from the new file that we just put it into).
+First, we call DECUNS to disconnect this slot from its current ATB.
+The slot may or may not be in shared format, and it may be unshared format
+and have an SPT entry left somewhere. DECUNS decrements the unshared map
+count (ATBUMC), max write cound (ATBMXW), clears the max write count up
+bit (ATPMXU). If the slot is discovered to be truly shared (SPT use
+count equal to 2 or greater) the error return is given. This should
+never happen.
+.skip 1
+Now, we call the routine INCUMC (used by MAPKRN too) which is the normal
+way to inform an ATB of the presence of another page mapped from its
+file. We have to increment the max write count (if appropriate) ourselves,
+since INCUMC doesn't do it for us.
+.skip 1
+Now, all that remains is to set the new ATB address into the target VP's
+LMAP slot. This may result in the slot going from shared to unshared.
+DECUNS turned the shared bit off if it was on. Note that routine
+GETLMA was used to get the LMAP slot this time, since we are not just
+taking a peek at it but untend to change its contents)
+The ATB/SPT fields for the core page, if the slot is active, also need
+to be updated. PGYSPT is zeroed, since there are no more sharer's
+of the page. (If there was an SPT entry for the page, it has been
+deleted by DECUNS). The LMAP slot is stored, and the SAT is finally
+released. The atomic file lock is still kept, since the DDB pointers
+are still going to be read and written.
+.skip 1
+At the end of the loop, the atomic file lock is released the
+routine returns.
+.skip 1
+Note that none of the code after the SAT is obtained reschedules,
+so the SAT is kept for the minimum amount of time. Also note that
+the canonical order for interlocks is followed: Context page lock,
+atomic file lock, RIB, SAT, CB (DECUNS uses CB).
+.hl2 SWEPPG use of VMOVPG
+MAPIO has been changed to use VMOVPG instead of its normal function.
+At SWEEP2, it checks to see if the sweep routine is doing real pages
+and only 1 page. By the time we get to SWEEP2, the file has been
+extended if it needs to be, so if we're doing 1 real page, it
+will wind up at the first page past highest page written. We release
+all the locks and resources we could possibly have, and VCREAT a single
+page and insert it into the file at HPW with VMOVPG. This avoids having to call
+CREPAG, which does the page create the old way. If VMOVPG gets any errors,
+the same error code will be passed up to the caller.
+If any problems come up that you suspect are due to this change, its
+easy to make the code what it used to do by patching the test
+instruction at SWEEP2 to always go to SWEP2A. Note that if the file has
+to be extended, it is done the old way with CREPAG. It is not done with
+VMOVPG because VMOVPG leaves holes in the file between HPW and the
+page just before the one to be inserted. It would be very inefficient
+to VMOVPG one page per call to extend the file, compared to
+what SWEPPG does, and VMOVPG doesn't have more than 1 virtual page
+(%COW) to work with, so it couldn't insert many pages at once.
+.hl2 SIMIO use of VMOVPG
+I didn't get to really research what exactly needs to be done to SIMIO
+to take advantage of VMOVPG, but I have a general idea. When SIMIO gets
+the "past HPW" error return when mapping a page from the file its
+doing output to, it now FCREATes a new page, maps it in, and then
+BLTs the user's data to it. SIMIO doesn't remove the page immediately,
+since later buffers output need to BLT data to the same page.
+What would be involved to use VMOVPG would be to VCREAT a page
+instead of FCREAT and MAP. The user's data would be BLTed in as usual.
+A new flag for every virtual page SIMIO uses would be created to
+indicate that this page is private (or you could take a short cut and
+just check the LMAP slot to see if its private or not). Theoretically,
+SIMIO was supposed to be able to run as a user program, so has as few
+direct calls to monitor subroutines as possible, but practically
+speaking, UUOs were not created for all SIMIO functions that
+needed to be done and there are quite a few kludges in the file
+system torecognize that SIMIO is doing the call and the file size
+is set differently than otherwise would be. So, when SIMIO goes
+to remove the page, it sees that the page is private, and does a VMOVPG
+to insert the private page into the file at the HPW.
+.skip 1
+Some details have to be
+worked out with regard to the disk quota and what we guarantee
+will get actually get out to the disk after an OUT or OUTPUT UUO.
+With the disk quota, its not acceptable to allow the user 3 successful
+outputs and have the 4th fail because he went over quota and VMOVPG
+didn't let him actually insert the page into the file, resulting
+in the loss of the 3 previous outputs. So what needs to be done
+is for SIMIO to do its own check. VMOVPG will skip the quota check
+if the caller is exec mode, so all exec mde callers are responsible
+for quota checking.
+.skip 1
+I am a little concerned about the safety
+factor, too. Currently, the number of free pages is set to be
+lower than the actual number of free pages, so that in case
+the disk fills entirely, people can still run programs (creating
+private pages) to be able to do something about obtaining
+disk space. If SIMIO uses VMOVPG, it circumvents this mechanism.
+So even if the STRTAL word is zero, the system still allows the users
+to create private pages, which can then be inserted into files,
+circumventing the normal safety factor. A possible solution for VMOVPG
+not to allow inserting private pages into files if STRTAL is zero.
+This restriction need not apply to pages that are not private and
+no longer mappable from a file.
+.skip 1
+Currently, SIMIO guarantees that dump mode OUTPUT UUOs write their
+data onto the disk immediately by doing validates on the page.
+This is to simulate the old behavior of the system in case current
+applications were counting on this behavior. SIMIO doesn't do
+this for buffered mode, since the old system made no guarantees as to
+whether or not the data got out to disk after successful return from
+an buffered OUTPUT UUO. If SIMIO is converted to use VMOVPG,
+it looks like we will have to give this compatibility up, since
+the data being OUTPUT won't even get into the file until the next
+page is needed to be mapped from the file or the file is closed.
+Care will need to be taken that in all cases where SIMIO formerly
+removed a virtual page, the page is checked to make sure that
+if it is private a VMOVPG is done to insert it into the file.
+It looked pretty easy to do, since there is only one place where
+SIMIO removes those pages, routine SIMRMV.
+ 

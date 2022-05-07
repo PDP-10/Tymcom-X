@@ -1,0 +1,274 @@
+(M33)3650.BUG - a summary of problems with 3650 disks, CPXKON, and new SA10.
+
+Problem:   System dies with APRFAT while TITO saves files in BILLING10.
+Diagnosis: Bug in STOPCD routine.  Original cause with INFO stopcode BADSAT.
+
+Problem:   System dies with MAPAP1 after accessing files in BILLING10.
+           INFO stopcode BADSAT came out before some of the crashes.
+Diagnosis: Bug in BADSAT wipes out pointer to SAT.  The next poor loser that
+           access a page in that SAT gets MAPAP1.
+
+Problem:   While restoring from C70's ALL FILES to C24's disks, portions of
+           [1,4].UFD get wiped out, overwritten by file data.
+Diagnosis: Somehow the bit that says the UFD page was in use got set to
+           available (changed from 0 to 1).  Error occured in the SAT on page
+           10 of DSKB0.  Third attempt to restore succeeded.
+
+New Info:  BADSAT now working.  In all cases, the SAT reported is on page 10 of
+           the unit.  It reports that the number of bits read from the disk is
+           one less than the count remembered in STTFPC.  Possible causes are:
+        1) CPXKON/SA10/3650 loses bit when writing or reading (but only SATs?).
+        2) Some routine cleared a SAT bit without decrementing STTFPC.
+        3) Some routine incremented STTFPC without setting a SAT bit.
+        4) Some routine diddled STTFPC when the SAT was not in core.
+        5) Using a pointer to an STT that does not match the SAT in core.
+
+Problem:   System dies with GIVPG1 when deleting a large file.  BADSAT previous.
+Diagnosis: This is the opposite of the condition BADSAT was complaining about.
+           In an in-core SAT that was not marked bad, a SAT bit that should
+           have been off (in use by a file) was found to be on (available).
+           This is the same problem C24 had when restoring C70's files.
+           Tried making BADSAT be an INFO stopcode on C26 and F58.
+
+Problem:   System dies with SEAR14.  One or more BADSAT stopcodes previous.
+Diagnosis: STTFPC is 1, meaning SAT is supposed to have 1 available bit set.
+           Routine SEARCH in SWAMP could not find this bit.
+
+
+
+The next 4 pages are all the 3650 related entries from (M33)HOTLIN.LOG
+14-Nov-86 20:19/Joe
+Contact:  Fremont Operations, (415)498-2588, Euogia Zahary, System 58.
+
+Problem:  Stopcode SEAR10 (non bad SAT doesn't have free bit).
+          User is BILLING10
+
+          Told them to force a FAST DSKCLN and continue best they can.
+
+11-Nov-86 21:23/Joe
+Contact:  Fremont Operations, (415)498-2588, Euogia Zahary, System 58.
+
+Problem:  Stopcode GIVPG1 (BILLING10) running (SYS)DIRIT.
+          File is 61110A.DMI[21477,205635]
+
+Patch:    Made GIVPG1 be an INFO stopcode so system can continue.
+
+10-Nov-86 xx:xx/Joe
+
+More of the same for 26.
+
+
+09-Nov-86 13:08/Joe (got call at home after no response to page)
+Contact:  Cupertino Operations, (408)446-7705, Barbara, System 26.
+
+Problem:  Many "CAN NOT READ FILE" errors from TITO, "I/O error on SYSTAT.SHR",
+          could run LOGINN and LOGOUT from SYS but not much else.
+
+More Info: There were two INFO stopcodes BADSAT.
+          STT:200412  STTFPC:001544  SATCNT:001543  BPA11 page 10
+                      STTFPC:001130  SATCNT:001127  BPA4 page 10
+          This is the first time the STOPCD has printed out completely, note
+          that the current count of bits is one less that what the monitor
+          expected.  A full DSKCLN was requested.
+
+02-Nov-86 17:30/Osman
+Contact:  Cupertino Operation, (408)446-7705, David J., System C70.
+Problem:  System crashed twice during ALL-FILES.
+Solution: Found reason of crashes to be the bad file in user name
+          (NETDATA)MCRF.OCT, just like system C26 was when it was
+          running with 2meg of memory. But system C70 is running
+          with 1meg of memory now. Hmmmmmm????
+
+01-Nov-86 11:00/Osman
+Contact:  Fremont Operartion, (415)498-2588, Brad Dong, System F58.
+Problem:  One of the disk had a head crash. Operation asked if system
+          could be re-build using 3650 insted of 3675 and assist them.
+Solution: Went to data center and help them re-build F58 on 3650 disks.
+          03-Nov-86 12:00 Rebuilt compleated.
+
+3-Oct-86 02:06/Joe
+Contact:  Cupertino Operations, (408)446-7705, L.T. Smith, System C24 alias C70
+Problem:  BADSAT, [1,1].UFD messed up, etc. when doing RESTORE of C70's files.
+          One of the disks had gone off-line, reports of BADSAT on other disks.
+Diagnosis: Ran TSTSUP, word 25 of page 1 pointed to [1,1].UFD RIB at page 20712.
+          Word 51 of that page pointed to UFD data page for hash 0, it was
+          200006,,000012 - the first non HOM page on DSKB3.  That particular
+          page was full of ASCII text, TYMSAT engine code in particular.
+          Something crumped on the SAT for DSKB3 again allowing the Monitor
+          to write over (UFD) again.
+Fix:      Turned off RBREAL in RIB pointer (making it 6,,12).  Told operations
+          to run another FULL DSKCLN, restore the UFD section of the tape again,
+          and resume restoring from where they left off.
+Followup: As of noon Friday, TITO was in the middle of restoring (MOORING).
+          System uptime 9:35.  PSP reports 952145 pages free, no errors.
+
+2-Oct-86 04:06/Joe
+Contact:  Cupertino Operations, (408)446-7705, L.T. Smith, System C24
+Problem:  He refreshed the disks on 24, and started restoring all files from
+          C70's backup tapes.  TITO restored all UFDs, all of SYS, then died
+          with stopcode IME in the middle of directory BAILEY on the first tape.
+Diagnosis: This happens on all systems - after REFRESH, there is a limited
+          number of SATs that can be kept in core and none are written out.
+          When the last in-core SAT is filled up, the system dies with IME,
+          and you have to run a FULL DSKCLN.  Then the operator has to get
+          ALL license (without using REFLAG!) and resume restoring.
+
+Fix:      I ran TSTSUP (it and DECDDT are on SYS on all systems as of 25-Sep)
+          and found that page 0 of [1,1].UFD had been overwritten with garbage.
+          Probably when the monitor stepped all over itself when the SATs
+          filled up.  Told LT to do the following:
+          1. Get a directory of the all-files tape to find where SYS ends
+          2. Refresh DSKB again
+          3. Restore from tape positions 1-<end of SYS>
+          4. Run BOOTS to write BOOT.KI to home pages
+          5. Take the system down
+          6. Bring up the system and run a FULL DSKCLN
+          7. Find someone who has an OPER name with all license
+          8. Finish restoring rest of all-files
+
+29-Sep-86 18:20/Joe
+Contact:  Cupertino Operations, (408)446-7705, Dave Jorgenson, System C26
+Problem:  New users could not login, "LOGINN.SAV NOT FOUND".  No OPER,
+          TELECOPY reports "SYSTEM ERROR".  At least 1 hard device error
+          was noticed before the problem occurred.
+Fix:      Told them to try a FAST DSKCLN to see if (SYS).UFD is wiped out.
+          They ran TAKEIT with no problems, system came up OK.
+          The in-core database must have gotten corrupted.
+
+
+16-Sep-86 10:00/Joe
+Contact:  Cupertino Operations called the beeper number, South Bay Answering
+          service called the beeper number, no answer.  My beeper received the
+          page, but made no noise.  At 22:30 on 15-Sep they called Craig's home
+          phone, he was out of town.  I received the message when I came to work
+Problem:  System 26 went down several times with MAPAL1, some proceeded by work.
+          INFO stopcode BADSAT.
+Cure:     Changed BADSAT+7 to use HRRZ T3 instead of HRRZ T2.
+
+05-Sep-86 05:30/Osman/Joe
+Contact:  Cupertino Operation, (408)446-7705, Tom Turner, System C26
+Problem:  Disk errors HDEV on many different disks.
+Fixed:    Hardware and "inconsistant pack set ID"
+New problem:  (SYS).UFD wiped out.  Other UFDs OK.
+Second alarm:  At 08:00 called Joe Smith to see if it was possible to
+          salvage the disk without doing a full rebuild.
+
+Problem:  When logged in REFLAG, could not access files on SYS, but
+          could RUN TSTSUP[3,213211].  The HOME page were OK, but the
+          RIB to [1,4].UFD was not.  Word 23 of page 1 pointed to page 1023.
+          That page was a RIB, but instead of saying [1,4].UFD it said
+          090586.SAT[6,270]. The self-pointer (word 777 of the RIB) was for
+          200010,,14573. The Monitor wrote good data to the wrong spot on
+          the disk.
+
+Cure:     Using the RIB to SYS on C34 as a guide, I rebuilt the RIB by hand
+          in page 1023.  Only 4 of the 14 data pages of [1,4].UFD could be
+          located.  Pages 1017, 1020, 1021, and 1022, which contained entries
+          for SAT.SYS, HOME.SYS, SWAP.SYS, and CRASH.SYS respectively.  After
+          verifying the RIBs for those files, I zeroed the last word on the 4
+          UFD data pages, and put dummy entries for the missing 3 UFD RIB
+          pointers.  I also had to update the copy of this disk page that the
+          Monitor had mapped in core (luckily it was within the first 256K
+          where FILDDT could find it).  At this point, 4/14 of the SYS
+          directory was accessable, including DSKCLN but not INITIA or LOGINN.
+          Running DSKCLN in CHECK mode verified that the disk was good with
+          many thousand lost pages (from the unaccessable files that were
+          on SYS). I poked on 1,,600000 in the STATES word so that DSKCLN would
+          fix the UFDs and SATs.  Ran TITO to restore (SYS)*.* with
+          MODE SYS NEWEST.  System up to users at 17:29.
+
+06-Jul-86 09:30/Osman
+Contact:  Cupertino Operation, (408)446-7705, Vijay, System C26.
+
+Problem:  System crshing with APRFAT while running TITO.
+
+Solution: Found a bad file in (BILLING10)070186.SAT causing the crash.
+          System would crash with FILAUS before but now it is crashing
+          with APRFAT. APRSTS shows NXM and MB parity error. We need to
+          look into these crashes little closer.
+
+          I could not delete the bad file (BILLING10)070186.SAT. I asked
+          the operator to continiue TITO after user name BILLING10
+          untill I found a way to delete the bad file.
+
+14-Jun-86 18:00/Osman
+Contact:  CUPC Operations, Vijay X, (408)446-7705, System C26.
+
+Problem:  System would not stay up. Crashing with APRFAT.
+
+Solution: Suggested to the Maintenance to deselect memory and let
+          him know that system will run with as little as 512K.
+          System up with memory deselected OK.
+
+02-Jun-86 3:55 /Carl
+Contact:  Cupertino Ops, Tom, (408)446-7705, System 26
+
+Problem:  Two recent crashes @19:11 CRA016 and @21:44 CRA017 showing a
+          STOPCD APRFAT, NoMemory MemBusParity... but in CRA017 registers
+          at .CPCAC+15,16 contained ONTR03.R00, from directory BETATEST.
+          A CHKSUM of the file resulted in a crash.  Told OPS to send mail
+          to the user and to have maintenance check out the APRFAT/CPU
+          angle with a quick once-over.  File renamed to directory CRASH
+          setting NFD.
+
+Solution: Not really solved.. this problem has been cropping up more and
+          more lately.
+
+
+1-Jun-86 18:00/Joe
+Contact:  Cupertino Ops, David Jorgensen, (408)446-7705, System 26.
+3 crashes in the last shift.  1 with no indication, 2 with stopcode FILAUS.
+(FILAUS is in FILFND at DECUMC+10)  Checked JOB and $Q+JBTPRG in all crashes.
+If the job was running TITO, then the file name and extension can be found in
+.CPCAC+15 and .CPCAC+16 (contents of ACs 15 and 16 in AC block 0 on the KL).
+Found references to the following files in (BILLING10): 052786.SAT, 052086.SAT,
+050286.SAT.  All three files now have the NFS bit set so TITO will not touch
+them.
+**** not resolved yet ***
+
+25-May-86 03:15/Osman
+Contact:  Cupertino Ops, Dave X, (408)446-7705, System C26
+
+Symptom:  During ALL-FILES system crashes storing (BILLING10)
+
+Solution: Found a bad file 052086.SAT which was crashing system.
+          Deleted file and oper restored a good copy of it from backup.
+          Operation ran FULL DSKCLN ok. System up ok and continuining
+          ALL-FILES without any problem.
+
+Note:     This is the third accorance of this same problem. Something
+          strange happinning, we should look into it.
+
+26-Apr-86 11:46 and 12:15/Carl
+Contact:  CUPC Operations, Steve Carrothers, (408)446-7705, System C26
+
+Symptom:  System crashes attempting all-files with TITO.  Last user done
+	  was (BETATESTINT).  Assumption was that a file in BETATESTINT
+	  was bad.  Checked with Osman since similar problem occurred on
+	  13-Apr-86, system 26.
+
+Problem:  File 041486.SAT in (BILLING10) was bad.  File could be looked
+	  at, but not read completely.  CKSUM and copy failed & crashed
+	  the system.
+
+	  Examined file with TSTSUP.  File has a hole in it an otherwise
+	  appears to be normal.  These files should not have holes in them!
+	  Apparently something is deleting a page without updating all the
+	  proper file-system tables and thus a hole in this file seems to
+	  be causing a crash.
+
+Solution: The file was marked bad by hand using TSTSUP and this prevents
+	  TITO from attempting to put it on tape.  The file was renamed to
+	  (CRASH:26) for further examination.
+
+12-Apr-86 06:00/Osman
+Contact:  Cupertino Ops, Fred Lloyd, (408)446-7705, System C26
+
+Symptom:  During ALL-FILES system crashes storing (BILLING10)
+
+Solution: Found a bad file 040286.SAT which was crashing system.
+          Deleted file and oper restored a good copy of it from backup.
+          Operation ran FULL DSKCLN ok. System up ok and continuining
+          ALL-FILES without any problem.
+
+     

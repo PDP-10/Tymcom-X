@@ -1,0 +1,15 @@
+define	FRMOP = '044000000000;	! FRMOP uuo;
+simple integer procedure FRMOPR (
+	integer FD; 
+	reference integer ARG;
+	integer FUN );
+start!code
+    SETOM !SKIP!;
+    MOVE 1,FD;
+    HRL 1,FUN;
+    FRMOP 1,ARG;
+      SETZM !SKIP!;
+end;
+simple integer procedure FRMOPV (
+	integer FD,ARG,FUN );
+frmopr (FD,ARG,FUN);

@@ -1,0 +1,412 @@
+begin	"MONED"
+
+require "(SAILIB)SAIL.DEF" source!file;
+require "(SAILIB)TYMINT.DEF" source!file;
+!get!module(EXTEND);
+!get!definitions(ASSERT);
+require "(MPL)UUOSYM.SAI" source!file;
+require "(WRS)FRMSUB.SAI" source!file;
+require 4 version;
+
+comment
+
+This program will generate a current major monitor release 
+(see MONED1.SAI) for all systems ## for which CNFN##.MAC exist.
+It will also create the file MONXMT.LST which is a transmittal
+form for transmitting the monitor.
+The program will record the output of this process in MONED.LOG
+and optionally at the user's terminal.
+
+Replaces the MACRO KLUDGE MONED which stuffed buffers and ran editors
+and such gross messy things.
+;
+
+integer ErrCnt;
+
+string simple procedure checkName( integer x );
+! returns a 6-character representation of the checksum number
+  provided (of the form: BACDEF where the consonants and vowels may
+  be any consonant or vowel in that position.  This is supposed to
+  be easier to remember and/or speak than simple numeric digits
+  would be.  Obviously, this does not fully encode the word (so
+  what, it is a checksum after all).
+;
+begin "checkName"
+
+simple integer procedure remndr( reference integer val; integer dvsr );
+! does the "obvious": returns remainder and reduces base by dividing.
+  This is the kind of function you really want for producing digits
+  in a base N number (gives them backwards).
+;
+    start!code
+	move	0,val;	! get the number;
+	idiv	0,dvsr;	! put val div dvsr in ac0, val mod dvsr in ac1;
+	movem	0,val;	! store reduced base (ac1 is SAIL's return ac);
+    end;
+
+preload!with "A"+0,"E"+0,"I"+0,"O"+0,"U"+0;
+ own safe integer array vowel[0:4];
+
+simple integer procedure consonant( reference integer x );
+! get the "next" character as a consonant and reduce the base.
+  the consonant is: 0:24 map to obvious character, if vowel,
+  then change: A=>V, E=>W, I=>X, O=>Y, U=>Z
+;
+      begin	integer ch,i;
+	ch_ "A" + remndr(x,26-5);
+	for i_ 4 step -1 until 0
+	   do if ch=vowel[i] then return("Z"-4+i);
+	return(ch);
+      end;
+
+x_x land (-1 lsh -1);
+	! clear sign bit (divide won't be nice otherwise);
+return( consonant(x) & vowel[remndr(x,5)] & consonant(x)
+	& consonant(x) & vowel[remndr(x,5)] & consonant(x) );
+end "checkName";
+
+integer procedure binarySum( integer channel; reference integer eof );
+begin
+	integer checksum;
+
+checksum_ -1;
+while not eof
+   do checksum_ (((checksum+1) rot 7) xor wordin(channel))
+		min (-1 lsh -1 - 1);
+return(checksum rot -7);
+end;
+
+simple string procedure CKSUM(string file);
+begin
+    integer C,E; string S;
+    open(C_getchan,"DSK",'14,4,0, 0,0,E);
+    lookup(C,file,E);
+    if E then begin 
+	print("?file not found: ",file,crlf); 
+	ErrCnt _ ErrCnt +1 end;
+    S_checkName(binarySum(C,E));
+    release(C);
+    return(S);
+end;
+
+simple string procedure MyName;
+! returns current user name as a string;
+return(cv6str(calli(!xwd(-1,!GTUNM),calli!GETTAB))&cv6str(calli(!xwd(-1,!GTUN1),calli!GETTAB)));
+
+boolean	HaltFlag;
+define HHchan = 10;
+simple procedure HH;
+    HaltFlag _ true;
+simple procedure HHini;
+begin
+    INTMAP(INTASS(!IAFEX,HHchan),HH,0);
+    ENABLE(NEWENB(HHchan));
+end;
+require HHini initialization;
+
+integer PORT;
+
+integer procedure CREFRM;
+start!code
+	MOVSI	1,!FOCFM;
+	FRMOP	1,[0];		! all defaults;
+	 JRST	4,;
+	uuo!SETOTF 1,;		! make it other frame;
+	 JRST	4,;
+	uuo!CREPTY 1,;		! 1/ PTY1,,PTY2;
+	 JRST	4,;
+	MOVEI	2,3;
+	HRROI	3,FD!OTF;	! from me to him;
+	HRR	4,1;		! port to move;
+	HRLI	4,'300000;	! attach in user mode;
+	uuo!RETACH 2,;
+	 JRST	4,;
+	HRRI	1,!AXCFS;	! change file status;
+	AUXCAL	1,'214;		! set image no echo;
+	 SKIP;
+	HLRZS	1;		! return the port we kept;
+end;
+boolean IllMemRefOkay;
+
+string MonName;
+string MonVer;
+
+simple procedure SyncIni;
+! called by SYNC whenever a new process is invoked;
+begin
+    MonName _ null;
+    MonVer _ null;
+end;
+
+simple procedure SyncLine(string L);
+! called by SYNC whenever a line is scanned from the PTY;
+begin
+    if L="?" then ErrCnt _ ErrCnt + (cvd(L[2 to inf]) max 1);
+    if equ(L[inf-16 for 17],"UNDEFINED GLOBALS") 
+	then ErrCnt _ ErrCnt + cvd(L);
+    if equ(L[1 for 23],"MULTIPLY DEFINED GLOBAL")
+	then ErrCnt _ ErrCnt +1;
+    if equ(L[inf-4 for 5],"SAVED") then MonName _ L[1 to inf-6];
+    if equ(L[1 for 9],"Version [") then begin
+	integer C;
+	MonVer _ L;
+	do C_lop(MonVer) until C="=";
+	C_lop(MonVer);
+	MonVer_scanc(MonVer," "&#ht,null,"SINK");
+    end;
+end;
+
+boolean procedure SYNC(integer Port);
+while true do begin
+    own integer HC;
+    string Line;
+    integer array HSB[0:7];
+    SyncIni;
+    do begin
+	calli(Port*!bit(8)+!hl('111)+10,calli!HIBER);
+    	assert(!SKIP!,HIBER failed);
+    	do begin
+	    string CH;
+	    CH_auxclv(Port,0,!AXI8S);
+	    if !SKIP! 
+	    	then begin
+		    if CH=#cr 
+			then begin SyncLine(Line); Line_null end
+			else if CH>'37 then Line_Line&CH;
+		    print(CH);
+		end
+	    	else done;
+	end until false;	! until not !SKIP!;
+    end until HaltFlag;
+    HSB[0] _ arrinfo(HSB,2);
+    frmopr(FD!OTF,HSB[0],!FOHST);
+    assert(!SKIP!,cant read halt status);
+    if IllMemRefOkay and HSB[1]=!xwd(HC!MEM,HT!IMU) 
+	then HSB[1]_!xwd(HC!EXI,HT!FCL);
+    HaltFlag _ false;
+    HC swap HSB[2];
+    if HC neq HSB[2]
+    	then if !lh(HSB[1])=HC!EXI 
+	    then return(true)
+	    else begin "error"
+		print("?error in frame: ",
+		    cvos(!lh(HSB[1])),",",cvos(!rh(HSB[1])),crlf);
+		ErrCnt _ ErrCnt +1;
+		return(false);
+	    end "error";
+end;
+
+simple procedure PortOut(integer P;string S);
+start!code
+	HRL	1,P;
+	HRRI	1,!AXOPC;
+	MOVEI	2,S;
+	SETOM	!SKIP!;
+	AUXCAL	1,-1(2);
+	 SETZM	!SKIP!;
+end;
+
+!	RunProg(F,"program",code,[start-inc])
+
+code ::= !FOGET  |  !FORUN  |  !FOSAV  |  !FOSSA
+;
+procedure RunProg (
+	integer	J; 
+	string 	prog;
+	integer	code;
+	integer inc(0) );
+begin
+    integer array X[0:5];	! place to store data for frmop;
+    frmopv(J,0,!FOCLR);		! clear frame;
+    IllMemRefOkay _ true; ! GROSS ;
+    Sync(port);		       	! wait for clear;
+    IllMemRefOkay _ false;
+    arrclr(X);
+    X[0] _ !xwd(inc,4);	      	! start inc,,block size;
+    X[1] _ cvsix("DSK");	! default the device;
+    X[3] _ cvfil(prog, X[4],X[2]);
+    frmopr (J,X[0],code);	! perform required function;
+    assert(!SKIP!,RunProg: cant do GET/RUN/SAVE on frame);
+end;
+
+integer XMT,FIL;
+simple procedure FilesIni;
+begin
+    own boolean E;
+    open(XMT_getchan,"DSK",1,0,4, 0,0,E);
+    open(FIL_getchan,"DSK",1,0,4, 0,0,E);
+    enter(XMT,"MONED.XMT",E);
+    assert(not E,cant enter MONED.XMT);
+    enter(FIL,"MONED.FIL",E);
+    assert(not E,cant enter MONED.FIL);
+end;
+require FilesIni initialization;
+
+simple procedure CKSUM!(string F,C(null));
+begin
+    string S;
+    S _ CKSUM(F);
+    cprint(XMT, S,"   ",F,C,crlf);
+    cprint(FIL, F,crlf);
+    print( S,"  ",F,crlf);
+end;
+
+procedure DoCheckSums(string Sys);
+begin
+    cprint(XMT,crlf);
+    if length(MonName) then cprint(XMT,
+	"; to generate system ",sys,
+	", use LOAD /SAVE:",MonName," @MON",sys,crlf);
+    CKSUM!("(M33)MON"&sys&".CMD");
+    CKSUM!("(M33)CONF"&sys&".MAC");
+    CKSUM!("CNFN"&sys&".MAC");
+    if length(MonName) 
+	then CKSUM!(MonName&".SAV","   ; install on system "&sys);
+end;
+
+begin	"MAIN"
+
+integer	SpecCnt,I;
+integer UFDCHAN,EOF;
+record!class Spec (
+	integer File;
+	r!p(a!c)Link );
+record!pointer (spec) SpecHdr;	! Pointer to top of file specs;
+record!pointer (spec) SpecPtr;	! Pointer to a file spec record;
+r!p(a!c) UFR;
+integer array UfdData[0:6];
+preload!with cvsix("M33"); own integer array M33[0:1];
+
+ErrCnt _ 0;
+
+open (UfdChan_getchan,"DSK",0,0,0, 0,0,EOF);
+lookup (UfdChan,"(UFD)'"&cvos(location(M33[0]))&".UFD",EOF);
+assert(not EOF,cant lookup (UFD)[M33].UFD);
+UFR _ iniufr("CNFN##","MAC",UFDCHAN);
+while nxtufr (UfdData, UFR) do begin "NextFile"
+    SpecPtr _ new!record(Spec);
+    spec:File[SpecPtr] _ UfdData[0];
+    spec:Link[SpecPtr] _ SpecHdr;
+    SpecHdr _ SpecPtr;
+    SpecCnt _ SpecCnt +1;
+end "NextFile";
+SpecPtr _ new!record(spec);
+spec:Link[SpecPtr] _ SpecHdr;
+SpecHdr _ SpecPtr;
+
+begin 	"Bluble Sort"
+    integer I,J;
+    record!pointer(spec)array Ptrs[0:SpecCnt];
+    SpecPtr _ SpecHdr;
+    Ptrs[0] _ SpecHdr;
+    for I_1 upto SpecCnt do
+    	Ptrs[i] _ SpecPtr _ spec:Link[SpecPtr];
+    do begin
+    	J _ 0;
+	for i _ 2 upto SpecCnt do 
+	    if spec:File[Ptrs[i-1]] > spec:File[Ptrs[i]] then begin
+	    	Ptrs[i-1] swap Ptrs[i];
+		J _ J + 1;
+	    end
+    end until J=0;
+    for i_0 upto SpecCnt-1 do
+    	spec:Link[Ptrs[i]] _ Ptrs[i+1];
+    spec:Link[Ptrs[SpecCnt]] _ null!record;
+end 	"Bluble Sort";
+
+SpecPtr _ SpecHdr;
+print("Generate monitors for:",crlf);
+while SpecPtr_Spec:link[specPtr] do begin "generate systems"
+    I _ I+1;
+    print(cv6str(Spec:file[specPtr] lsh (4*6)));
+    if Spec:link[specPtr] then print(", ");
+    if I mod 8 =0 then print(crlf);
+end;
+if I mod 8 then print(crlf); 
+print(crlf);
+
+port _ CREFRM;
+ttyup(true);
+print("Detach? ");
+setprint("MONED.LOG","B");	! does AUXCAL's so won't go into TO;
+if inchwl="Y" then calli(0,calli!ATTACH);
+
+cprint(XMT,
+    "Files involved:"&crlf,
+    "; install only files indicated, archive all files."&crlf );
+
+SpecPtr _ SpecHdr;
+while SpecPtr_Spec:link[specPtr] do begin "generate systems"
+    string SysName;
+    SysName _ cv6str(Spec:file[specPtr] lsh (4*6));
+    RunProg( FD!OTF,"(M33)MONED1",!FORUN,1 );
+    PortOut( port,SysName&#cr& #esc );
+    Sync(port);
+    DoCheckSums(SysName);
+    print(crlf);
+end;
+
+begin	"module checksums"
+    integer T,C,B,E;
+    setbreak(T_getbreak,#lf,#cr,"SINK");
+    open(C_getchan,"DSK",1,4,0, 256,B,E);
+    lookup(C,"MONED.DIR",E);
+    if E then begin print("?cant lookup MONED.DIR",crlf); 
+	ErrCnt_ErrCnt+1 end;
+    cprint(XMT,crlf,
+	"; the following files are common modules",crlf);
+    while not E do begin 
+	string F;
+	F _ input(C,T);
+	if length(F) then CKSUM!(F);
+    end;
+end;
+
+begin 	".MEM entries"
+    string M,S; integer T,C,B,E;
+    M _ MonVer[1 to 4] & ".MEM";
+    setbreak(T_getbreak,#lf&#ff,#cr,"FINS");
+    open(C_getchan,"DSK",1,4,0, 256,B,E);
+    lookup(C,M,E);
+    if E then begin print("?cant lookup ",M,crlf); ErrCnt_ErrCnt+1 end;
+    while not E do begin "search"
+	S _ input(C,T);
+	if equ(S,MonVer) then done;
+    end;
+    if E then begin print("?cant find ",MonVer," in ",M,crlf); 
+	ErrCnt_ErrCnt+1 end;
+    if not E then cprint(XMT,#ff&crlf,
+	"Modification history:",crlf,crlf);
+    while not E do begin "copy"
+	cprint(XMT,S,crlf);
+	S _ input(C,T);
+	if B=#ff then done;
+    end;
+    release(C);
+end;
+
+begin	"send mail"
+    string M;
+    M _ "MONED for "&MonVer&" completed; "& (if ErrCnt 
+	    then cvs(ErrCnt)&" errors detected."
+	    else "no errors detected." );
+    if 0=!lh(calli(!xwd(-1,!GTLIN),calli!GETTAB)) then begin "detached"
+	RunProg( FD!OTF,"(SYS)RPG",!FORUN,0 );
+	PortOut(port,"SEND "&myname&#cr);
+	PortOut(port,M&#cr);
+	PortOut(port,"Log in MONED.LOG, transmittal data MONED.XMT."&#cr);
+	PortOut(port,#eot);
+	Sync(port);
+    end else print(crlf,
+	M,crlf,
+	"Log in MONED.LOG, transmittal data MONED.XMT.");
+end;
+
+RunProg( FD!OTF,"(SYS)LOGOUT",!FORUN,1 );
+release(XMT); release(FIL); 
+setprint(null,"T");
+if 0=!lh(calli(!xwd(-1,!GTLIN),calli!GETTAB)) ! if detached...;
+    then calli(0,calli!LOGOFF);
+end	"MAIN"
+end	$
+    

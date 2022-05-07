@@ -1,0 +1,232 @@
+
+
+		    M  E  M  O  R  A  N  D  U  M
+
+
+To:	Tymshare Operations
+	Distributed Systems
+
+From:	TYMCOM-X/XX Technical Support Unit
+
+Re:	Release of TYMCOM-X/XX Operating system P034/K
+	Changes visible to Operations personnel
+
+------------------------------------------------------------------------
+
+	The P034/K release of the TYMCOM-X/XX monitor will provide
+    a more reliable operating system.  This release includes many bug
+    fixes, performance improvements to device service routines, and
+    a few new user features.  
+
+  I. ONCE:
+
+	The command scanner in ONCE has been overhauled and partially
+    rewritten to provide the following features:
+
+    A.  The ONCE and FILES prompts have been changed to:
+	    ONCE>	[instead of ">"]
+	    FILES*	[instead of "*"]
+
+    B.  The FULL command has been added to allow a FULL DSKCLN to be
+	specified.  It is no longer necessary to enter the FILES system
+	to set the DSKCLN mode.  (If the operating system has defaulted
+	the DSKCLN type to FULL it should never be changed to FAST.)
+
+    C.  All commands which are potentially hazardous to the integrity
+	of the system may not be abbreviated and require verification.
+
+    D.  HELP messages have been rewritten and expanded.
+
+    E.  The CONSOLE command has been added to allow single user access
+	to a system using the CTY terminal.
+
+    F.  The CRASH command has been renamed to BOOTS.
+
+    G.  On 2020s, the MANUAL command now prints a message that the
+	KMC-11 is not reloaded and that network communications will
+	not be established.
+
+    A sample copy of the HELP documentation available while in ONCE
+    and FILES (ONCDSK) is provided at the end of this memo.
+
+
+
+ II. EUTHAN:
+
+	The project to remove the SPARE-LDB has been completed and
+    thus, the EUTHAN program is now obsolete.  (EUTHAN's job was to
+    kill off jobs "stuck" on the SPARE-LDB).  
+
+III. TAKEIT:
+
+	The TAKEIT program has been updated to reflect the removal of
+	the SPARE-LDB from the monitor.  Please use version 47.
+
+ IV. DSKCLN:
+
+	During system initialization, the DSKCLN program will always
+    be able to print messages on the system console.  Thus, DSKCLN can
+    now report problems such as insufficient license.  (Previously,
+    the system would appear to hang and nothing would be printed on
+    the console.
+
+  V. BOOTS LOADED:
+
+	During system shutdown, the date and time now print the time
+    zone as GMT following the time.  This will help to avoid possible
+    confusion in determining the exact time the system was taken down.
+
+
+** Addendum **  ONCE and FILES (ONCDSK) internal HELP messages		Page 1
+
+ONCE> HELP
+
+TYPE     Report information about the system.
+         TYPE CORE   - the default minimum core available to users.
+         TYPE SYSTEM - reports the system number.
+CHANGE   Change information about the system.
+         CHANGE CORE   - changes the default minimum user core.
+         CHANGE SYSTEM - changes the system number.
+FULL     Bring up the system with a FULL DSKCLN.
+GO       Bring up the system with the default settings.
+FILES    Enter the ONCDSK file dialogue.  This is a subsystem of ONCE
+         which is normally used ONLY for restructuring or repairing
+         the disk file system.  The commands in this subsystem could
+         damage the file system if they are used incorrectly.  If you
+         are NOT sure of what you are doing, DO NOT enter this section.
+READONLY Bring up the system SUPER SHUT for emergency examination.
+         Writing on the disk is prevented until a FULL DSKCLN has
+         been run.  Also, you may not UNSHUT the system until the
+         DSKCLN program has been run.
+CONSOLE  Bring the system up STAND-ALONE on the CTY.
+         This results in very limited use of the system and the
+         system MUST be reloaded before it can be brought up on
+         the network.  Usually ONLY used to load a network node.
+DDT      Enter executive DDT.  To be used ONLY by software wizards
+         for emergency patching and examination of the monitor.
+         UNDER NO CIRCUMSTANCES SHOULD YOU NORMALLY USE THIS COMMAND!
+MANUAL   Bring up the system MANUALLY for DEBUGGING ONLY!
+BOOTS    Crash the system with "BOOTS LOADED" immediately.
+KMC      Bring the system up loading the KMC-11 but without the
+         rest of the automatic restart procedure.  This must NEVER
+         be used for a restart after a system CRASH.  ONLY to be
+         used when the system has been taken down gracefully and
+         DSKCLN has already been run.
+HELP     Type out this message.
+
+
+ONCE> FILES
+
+FILES    Enter the ONCDSK file dialogue.  This is a subsystem of ONCE
+         which is normally used ONLY for restructuring or repairing
+         the disk file system.  The commands in this subsystem could
+         damage the file system if they are used incorrectly.  If you
+         are NOT sure of what you are doing, DO NOT enter this section.
+
+Are you SURE you want to do this? YES
+
+Entering (ONCDSK) FILES dialogue...
+
+    < messages appear here for protected or off-line disk drives>
+
+  Type "GO" to return to ONCE.
+  Type "HELP" for a list of options.
+
+FILES* 
+
+** Addendum **  ONCE and FILES (ONCDSK) internal HELP messages		Page 2
+
+
+FILES* HELP
+
+DSKCLN  Query or Select DSKCLN mode.
+        List the current mode and allow the operator to change it.
+TYPE    List information about the structure.
+        Type "TYPE HELP" for a list of options.
+CHANGE  Change information about the structure.
+        Type "CHANGE HELP" for a list of options.
+ADD     Add a unit to the structure.
+        Reconfigure the disk structure and add another pack.
+DISOLVE Disolve the structure.
+        Remove all units from the system structure.
+DEFINE  Define a NEW structure.
+        Create a completely new system structure.
+REFRESH Refresh the structure.
+        Erase the current file system and start over
+        with a "FRESH" disk.
+GO      Terminate the ONCDSK dialogue.
+        Return to the ONCE dialogue.
+HELP    Type this message.
+
+
+FILES* REFRESH
+
+REFRESH Refresh the structure.
+        Erase the current file system and start over
+        with a "FRESH" disk.
+
+Are you SURE you want to do this? NO
+
+  Type "HELP" for a list of options.
+
+FILES* 
+
+** Addendum **  ONCE and FILES (ONCDSK) internal HELP messages		Page 3
+
+
+FILES* TYPE HELP
+
+STR     Name of the STRUCTURE and UNITS on it.
+UNITS   Names of all units NOT in a file structure.
+SWAP    Names of all units in the Active Swapping list.
+BAT     Number of BAD pages and regions for a unit.
+SATPCBS Number of SAT PCBs.
+RIBPCBS Number of RIB PCBs.
+ALL     All of the above.
+str-name  Type information about the structure.
+unit-name Type information about the unit.
+HELP    Type this message.
+
+
+FILES* CHANGE HELP
+
+SWAP      Change the active swapping list.
+SATPCBS   Change the number of SAT PCBs.
+RIBPCBS   Change the number of RIB PCBs.
+BAT       Refresh the BAT pages for a UNIT.
+str-name  Change parameters for the structure
+unit-name Change parameters for a unit.
+HELP    Type this message.
+
+
+FILES* TYPE unit-name HELP
+
+... ID    Unit ID.
+... SWAP  Pages for swapping.
+... ALL   All of the ABOVE.
+          The Unit-ID, Pages for Swapping.
+... HELP  Type this message.
+
+
+FILES* TYPE str-name HELP
+
+... OVERDRAW  The number of pages for overdraw.
+... CRASH     The number of pages for CRASH.SAV.
+... ALL       All of the ABOVE.
+              The number of pages for Overdraw, for CRASH.SAV.
+... HELP      Type this message.
+
+FILES* GO
+
+Leaving (ONCDSK) FILES dialogue...
+ONCE> FULL
+
+512K OF MEMORY ONLINE.
+
+     D-S-K-C-L-N
+
+C930-P034/K
+DSKB.  MODE: FULL.    ANALYSIS BEGUN AT  <date printed here>
+
+    <remainder of system initialization printed here>.
+

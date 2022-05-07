@@ -1,0 +1,240 @@
+P035/E
+------
+
+Start of development on the P035/E monitor.
+
+/D01
+----
+
+REFSTR:	TSTSUP error messages were not getting dumped to CTY.  /JMS 2-19-88
+
+ERRCON,UUOCON:	Put test for UIL before stacking ACs.  /JMS 2-19-88
+
+ONCDSK:	Don't ask if controller BPC is off-line.  /JMS 2-19-88
+
+SWAMP:	Use OPROUT instead of DBLMSG for "? BAD SAT ON" disk message.
+
+S:	Define EXT macro to define symbol as external if not defined local.
+ACTSER,CLOCK1,CLUBS,COMCON,CORE1,DEBUG,ERRCON,FILFND,FILIO,FILRIB,
+FILUUO,FRMSER,IOCSS,MAPIO,ONCE,PICON,SCHED1,SEGCON,SIMIO,UUOCON:
+	Change "EXTERN %UPT,%UPT.N,..." to "EXT(<%UPT,%UPT.N,...>)" so that
+	%UPT,%UPS,%UPX,%COW and %UPT.N,%UPS.N,%UPX.N,%COW.N can be defined
+	locally (in S) or externally (in COMMON).  /JMS 2-26-88
+
+ACTSER:	Make TRNTAR,ROYTAR,TCCTAR be defined locally.
+COMMON:	Make BPRVAC global for ERRCON, monitor version 'P',^D035.
+CORE1:	Move %UPX out of literal at CLXMWS.
+ERRCON:	Use PXCT 1,BPRVAC## instead of XCTFU <BLT 17,PREVAC+17>.
+FILRIB:	Change [XWD -PTRLEN] to [EXP -PTRLEN] near PTRIN4.
+FILUUO:	Define %COW.N==:371 (so it's local instead of external).
+FRMSER:	Make dispatch to FRMVCL and FRMVRM be local.
+IOCSS:	Change label IN to UIN and RELEAS to RELEAX.
+KCMSER:	Simplify calculation for UBA mapping of ORING.
+MAPIO:	Define %COW.N==:371 (so it's local instead of external).
+SCNSER:	Simplify calculation for UBA mapping of block I/O buffers.
+SEGCON:	Move definition of XGADEV closer to beginning of file.
+SWAMP:	Move references to EPTPTR(%SWP.N) out of literal.
+	With these changes, LINK produces the same executable core image as
+	LOADER.  LINK leaves more room before the symbol table, therefore
+	JOBSYM, the LH of JOBSA, the RH of JOBFF, and JOBREL are different.
+	With these changes, MACRO-53 produces the same code as MACRO-46,
+	the only difference is the how the symbol table is sorted.
+WARNING: The modules ONCE, ONCDSK, and REFSTR still have to be assembled
+	with MACRO-46 because of chained global fixups in PHASEd code.
+	All other modules can be assembled by new MACRO.  /JMS 2-26-88
+
+/D02
+----
+
+UUOCON:	Remove CSHCLR from ONCE and put it in UUOCON, modified so that
+	virtual pages above 400 can be uncached.  /JMS 2-29-88
+ONCE:	Put JFCL CSHCLR in at FREALC+%O.  If this is patched to PUSHJ P,FREALC
+	then all of free core will be uncached.  /JMS 2-29-88
+
+
+/D03
+----
+
+PICON:	Watch out for page fault caused by AR/ARX parity error when reporting
+	a memory parity error.  This was causing STOPPC=DIE+1.  /JMS 3-15-88
+	Make sure ERA gets typed out on KL parity error.   /JMS 3-16-88
+COMMON:	Put SAVAPR, SAVERA, SAVSB0 back in PICON.  /JMS 3-16-88
+
+SCNSER,MONBTS,COMMON:	Change JSP T1,CTYTYP to PUSHJ P,CTYTYP.  /JMS 3-16-88
+
+/D04
+----
+
+UUOCON:	Fix bug in PEEK uuo that was causing PCBFL1 stopcodes when TAKEIT
+	tried to look at memory on a system with 4 MEG and 2 physical
+	strings of 3652 disks.  /JMS 3-18-88
+
+IOCSS,UUOCON,FRMSER:	Convert halfword dispatch tables to full word tables.
+	The LH of each entry is a count of how many times each UUO, CALLI,
+	and FRMOP was executed.  /JMS 3-24-88
+
+/D05
+----
+
+UUOCON:	Watch out for years in which April has 5 Sundays in the Daylight
+	Savings Time table.  /JMS 4-3-88
+
+ONCDSK:	Output CRLF before "BPC is off-line".  /JMS 4-14-88
+
+IOCSS:	Keep count of MUUOs (opcodes 040-077) in table MUUCNT.
+	Keep count of CHANIOs executed in table CHNCNT.
+UUOCON:	Keep count of negative CALLIs in table NCALLI, keep count of positive
+	CALLIs in table CALCNT.
+SCNSER:	Keep count of TTCALLs in table TTCCNT, AUXCALs in table AXCCNT.
+FRMSER:	Keep count of FRMOPs in table FRMCNT.
+	The above tables can be read by supplying the table name (in SIXBIT)
+	to SYSDVF function 6.  /JMS 4-14-88
+
+SCNSER:	Merge in Carl's ring log using SOUPR(COMPAR,MERGE,UPDATE). /JMS 4-15-88
+SCNSER:	Fix bug in HSA and TELECO input on KLs by calling CSHCLR to uncache
+	block-I/O buffers when they are allocated.
+	Fix bug that caused TTYZNE stopcodes as a result of waiting for an
+	orange ball when zapping an inactive port.  /JMS 4-25-88
+
+/D06
+----
+
+ONCE:	Clear out EPT entry for %ERR so that when garbage in an index
+	register tries to access location 777xxx, it will be reported as
+	IME instead of NXM.  (SCNSER does this.)   /JMS 4-29-88
+
+FILUUO:	Fix bug that caused UFDER1 stopcode when MAILER tried to set the
+	"dumped" bit on a delete file.  /JMS 5-16-88
+
+COMMON:	Insert plus sign in formula for GMTUDT.  /JMS 5-20-88
+
+PCBIO:	Change MOVE at GETER1+2 to SWAPIN to make it obvious where the
+	page fault for %SAT and %RIB occur.  /JMS 5-20-88
+
+/D07
+----
+
+SCNSER,COMMOD:	Moved SCNBUF from SCNSER to COMMOD so it can share with SAXBUF.
+CPXKON,COMMOD:	Moved STPBUF from CPKXON to COMMOD so it can be less than 1000.
+COMMOD:	Made SAXBUF, STPBUF, and SCNBUF variable size.  By defining SAXMSK and
+	STPMSK = 7 and allowing SCNBUF to use up the rest of the page, 33XD07
+	will fit in the 112K core limit. /JMS 6-14-88
+
+SCNSER:	74XD06's crashes were caused by the AUXCAL dispatch table being trashed
+	by counting negative TTCALL functions.  The TTCCNT table has been
+	expanded in the negative direction.  /JMS 6-24-88
+
+SCNSER:	Define additional bits for LH of AC in CREAUX uuo.
+	Old: 1B17 set means do no zap this circuit on a RESET uuo.
+	KS only: The field 3B2 is number of DR for building circuit.
+	New: Bits 1 thru 16 are additional data for building circuit.
+	Bit 0 is currently unused.  /JMS 6-24-88
+
+/D08
+----
+
+PICON:	Fix bug where AR/ARX parity errors were reported as spurious APRFAT.
+	Include message for APRPAR for stopcode APRFAT.  This is so
+	reasonable text is output if the OPER says to CONTINUE after
+	the CPU has halted due to a parity error.  /JMS 7-11-88
+
+ONCE:	Fix bug that would crash in EVACLR if free-core happened to end
+	on a page boundary.  /JMS 7-11-88
+
+SCNSER:	Fix bug that caused IME stopcode when all TTYs zapped when base dies.
+	Watch out for stale back link pointers in TTY chunk free list.
+	Add two new stopcodes - RCCDBG when attempting to free up a
+	chunk with a bad address, RCCSTP when the free list has a bad
+	address (or all chunks are in use already).  /JMS 7-13-88
+	 STOPCD (RCC.T3,INFO,RCCDBG,,<Range Checked Chunk, continuing>)
+	 STOPCD (.,STOP,RCCSTP,,<Range Checked Chunk - TTFREE is bad, stop>)
+
+S	Defined DISKCD macro to got with STOPCD's that need to print:
+	Disk problem: "some text" on DSKB## page ####### (BPA##:cyl/hd/s)
+/JMS 8-9-88     ** MORE WORK NEEDED HERE! **
+
+/D09
+----
+
+PICON:	Remove references to CRSCNT so that deposit nonzero in 30 will
+	crash KS2020 immediately.  Waiting for the KMC to recover doesn't
+	work and causes KS10>SHUT to be ignored.  /JMS 10-10-88
+
+COMMON:	Don't try to save AC blocks 3, 4, 5.  It sometimes causes KS to die
+	with ?PAR ERR 373 001 300 when SVSETS is called.  This was causing
+	the 2020 hang during INFO and other stopcodes.  /JMS 10-10-88
+
+UUOCON:	Don't allow dates past November 2008.  (TRW's monitor running on X17
+	has this problem.)  /JMS 11-16-88
+
+SCNSER:	Output contents of T1 and T2 and TTY name on RCCDBG stopcodes.  This
+	stopcode may be related to EXECX's lost ports.  /JMS 11-16-88
+SCNSER:	Add STOPCD(,DEBUG,RCCBAD,,<RCC - Bad value in U>) because of one
+	instance of RCCDBG where accumulator U was zero.  /JMS 11-21-88
+SCNSER:	Use RPORTN instead of PORTN when deciding to ignore "down" messages
+	from nonexistant DR11C's on the 2020.  /JMS 11-21-88
+
+ERRCON:	Add NDIEPC and NDIEAC to hold PC and ACs during INFO and EVENT
+	stopcodes.  This is so that problems like IME during stopcode output
+	can be debugged.  /JMS 11-21-88
+
+REFSTR:	Make sure the prime RIB to SPAGES.SYS is in core when updating
+	RIBALP and RIBSIZ during an add-pack operation.  /JMS 11-28-88
+
+/D10
+----
+
+SCHED1:	Changed the noname stopcodes at SWPIO3+3 to XCT NOWRIT.  AT SWPIO3+6
+	add STOPCD(,INFO,WRITE1,,<Writing updated file while READONLY>).
+	/JMS 12-29-88
+
+MAGSER:	Save more of the RH11 registers on interrupt.  Reset the Unibus if
+	necessary to clear some nasty error bits.  Added stopcode
+	 STOPCD (CPOPJ,EVENT,TAPERR,,<Magnetic tape error, UBA reset>)
+	/JMS 1-4-89
+
+COMCON: Add command "SET LICENSE" which is legal only when CONSOLE mode is
+	selected in ONCE dialog.  It sets all license bits, so that NODLOD
+	can be run on KS-2020.   /JMS 1-4-89
+
+ONCE:	Correct faulty logic on routine to read from CTY on KS.  Problem
+	still exists; X14 gets IME when the second "D" is typed at ONCE>DDT.
+	May be a problem due to X14 not having 512K of memory.  /JMS 1-10-89
+
+/D11
+----
+
+SWAMP:	Put in a sanity check in GETPAG to try to fix TRW's MAPAL1 stopcode.
+	(it was returning a value past the end of DSKB)  /JMS 1-19-89
+
+COMMON:	Locations RSVDPG+0 and RSVDPG+1 have the page numbers of the 2 highest
+	pages of physical memory.  (ONCE updates these when it sizes core.)
+S:	Define %MS0 and %MS1 as 774000 and 775000 for exec virtual address
+	of MSGBUF, which get mapped to the 2 highest pages of physical memory.
+ONCE:	Set up EPT mapping for MSGBUF.  Add call to MSGLOG.  /JMS 2-3-89
+
+SCNSER:	Add routine MSGLOG to log CTY output in a message buffer that is in
+	the last 2 pages of physical memory.  This buffer is not cleared when
+	the monitor is reloaded; it has the log from the previous load,
+	including the stopcode typeout.  Buffered output from INFO and EVENT
+	stopcodes get stored in MSGBUF as they go into the CTY's TTY chunks,
+	as opposed to CTYLOG which puts output in CTYBUF only when it is
+	pulled out of the TTY chunks.  This means that if the system dies
+	with a serious stopcode right after an INFO or EVENT stopcode, the
+	output from both stopcodes will be in MSGBUF and in the right order.
+	See (MPL)MSGLOG.MAC for an example of reading MSGBUF.  /JMS 2-3-89
+
+UUOCON:	Add SETUUO function 16 to store new value in MSGLGO.  Used by programs
+	that read MSGBUF and want to checkpoint their progress.  /JMS 2-3-89
+
+ERRCON:	Replace call to GETOPR with call to OPROUT so that "problem on device"
+	and "hung device" messages get to the CTY and MSGLOG.  /JMS 2-3-89
+
+FILIO:	Replace call to GETOPR with call to OPROUT so that disk "unit offline"
+	and disk "unit hung" messages get to the CTY and MSGLOG.  /JMS 2-3-89
+
+/D12
+----
+
+P035/E telecopied to all systems on 2-Mar-89
+   

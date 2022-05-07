@@ -1,0 +1,360 @@
+COMTXT - Generates PRINTX statements and global symbols for COMMON	MACRO 12.5-46.0 09:32  6-NOV-89 PAGE 1
+XP.MAC	 2-JAN-86 17:46		CONFIG - CONFIGURATION DEFINITION - KS
+
+     1				DEFINE ND(SYM,VAL),< IF2,<IFDEF SYM,<SYM==SYM>> IFNDEF SYM,<SYM==<VAL>> >
+     2				DEFINE XP(A,B),<A==:B>
+     3				SUBTTL	CONFIG - CONFIGURATION DEFINITION - KS
+     4				XP SYSNO,'X118'		;KS2020 test system
+     5				XP APRSN,<'KS',,^D4097>	;CPU type and serial number
+     6				XP APRNAM,<'*C*',,7777>	;Hardware and base number
+     7				XP TIMZON,^D<-8>	;Pacific Standard Time
+     8
+     9				XP DISKS,^D8		;Number of disks (max number of RP06 or RP03)
+    10				XP TAPES,^D1		;Number of tape drives
+    11				XP JOBS, ^D32		;Number of jobs (including null job)
+    12				XP PORTS,^D32		;TYMNET ports 0-31
+    13
+    14				XP PRINTS,1		;LP20 printer controller must be plugged in to UNIBUS
+    15				XP DEFDEB,0		;Don't reload on JOB or DEBUG stopcodes
+    16				;; TAPES,^D<4+1>	;MTA0-3 on 1st TM03, MTA4 on 2nd TM03
+    17
+    18				define SYSNA1 (XLX,XRX) <XLX'X118-P035/E'XRX>
+    19				define SYSDT1 (XLX,XRX) <XLX'3-2-89'XRX>
+    20				define SYSID1 (XLX,XRX) <XLX'M02608'XRX>
+    21
+    22				; P035/E	3-2-89    M02608   OSMAN
+    23				; P035/D	1-12-88   M02494   JMS
+    24				; P035/C01	9-22-87   M02320   JMS
+    25				; P035/C	7-19-87   M02308   JMS
+    26				; P035/B05	5-26-87   M02141   JMS
+    27				; P035/B05	5-20-87   M02139   JMS
+    28				; P035/B04	5-15-87   M02137   JMS
+    29				; P035/B04	5-14-87   M02136   JMS
+    30				; P035/A03	11-19-86  M01891   JMS
+    31				; P035/A02	11-11-86  M01886   JMS
+    32				; P035		10-29-86  M01819   JMS
+    33				; P034/P30	6-28-86   M01692   JMS
+    34			002423	A00EDT==:^D001299	;Edit number, incremented each time MONDOC is run
+    35
+    36				TITLE COMTXT - Generates PRINTX statements and global symbols for COMMON
+    37
+    38				DEFINE PRINT (A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z),<
+    39				PRINTX A B C D E F G H I J K L M N O P Q R S T U V W X Y Z
+    40				>
+    41
+    42				DEFINE FOO  (A,B),< IFDEF A,< PRINT (\A,B) > >
+    43
+    44				DEFINE FOO1 (A,B),< IFDEF A,<	IFN <A-1>,<PRINT (\A,B's)>
+    45								IFE <A-1>,<PRINT (\A,B)> > >
+    46
+    47				DEFINE FOO2 (A,B,C),< IFDEF A,<
+    48				IFE <<A>-<B>>,< PRINTX C > > >
+    49
+    50				IF2,<	LALL	;Output to listing file and TTY on pass 2
+    51				SYSNA1(<PRINTX >)^PRINTX X118-P035/E^
+COMTXT - Generates PRINTX statements and global symbols for COMMON	MACRO 12.5-46.0 09:32  6-NOV-89 PAGE 1
+COMTXT.MAC	17-JAN-89 11:07		CONFIG - CONFIGURATION DEFINITION - KS
+
+    52				SYSDT1(<PRINTX >)^PRINTX 3-2-89^
+    53				SYSID1(<PRINTX >,< (id)>)^PRINTX M02608 (id)^
+    54					RADIX 5+5		;Decimal numbers
+    55				FOO  (A00EDT,= Monitor edit number)^ IFDEF A00EDT,< PRINT (\A00EDT,= Monitor edit number)^
+    56				PRINTX 1299 = Monitor edit number                        
+    57				^ > ^
+    58					RADIX 8			;Octal numbers
+    59			007777	IFDEF APRNAM,<TEMP==APRNAM&^O777777>
+    60				FOO  (TEMP,= base node number)^ IFDEF TEMP,< PRINT (\TEMP,= base node number)^
+    61				PRINTX 7777 = base node number                        
+    62				^ > ^
+    63					RADIX 5+5		;Decimal numbers
+    64			010001	IFDEF APRSN,<TEMP==APRSN&^O777777>
+    65				FOO  (TEMP,= CPU serial number)^ IFDEF TEMP,< PRINT (\TEMP,= CPU serial number)^
+    66				PRINTX 4097 = CPU serial number                        
+    67				^ > ^
+    68				FOO2 (TIMZON,-11,Bering Standard Time)^ IFDEF TIMZON,<
+    69				IFE <<TIMZON>-<-11>>,< PRINTX Bering Standard Time > > ^
+    70				FOO2 (TIMZON,-10,Hawaii/Alaska Standard Time)^ IFDEF TIMZON,<
+    71				IFE <<TIMZON>-<-10>>,< PRINTX Hawaii/Alaska Standard Time > > ^
+    72				FOO2 (TIMZON, -9,Yukon Standard Time)^ IFDEF TIMZON,<
+    73				IFE <<TIMZON>-< -9>>,< PRINTX Yukon Standard Time > > ^
+    74				FOO2 (TIMZON, -8,Pacific Standard Time)^ IFDEF TIMZON,<
+    75				IFE <<TIMZON>-< -8>>,< PRINTX Pacific Standard Time > > ^
+    76				FOO2 (TIMZON, -7,Mountain Standard Time)^ IFDEF TIMZON,<
+    77				IFE <<TIMZON>-< -7>>,< PRINTX Mountain Standard Time > > ^
+    78				FOO2 (TIMZON, -6,Central Standard Time)^ IFDEF TIMZON,<
+    79				IFE <<TIMZON>-< -6>>,< PRINTX Central Standard Time > > ^
+    80				FOO2 (TIMZON, -5,Eastern Standard Time)^ IFDEF TIMZON,<
+    81				IFE <<TIMZON>-< -5>>,< PRINTX Eastern Standard Time > > ^
+    82				FOO2 (TIMZON, -4,Atlantic Standard Time)^ IFDEF TIMZON,<
+    83				IFE <<TIMZON>-< -4>>,< PRINTX Atlantic Standard Time > > ^
+    84				FOO2 (TIMZON,  0,Greenwich Mean Time / Western European)^ IFDEF TIMZON,<
+    85				IFE <<TIMZON>-<  0>>,< PRINTX Greenwich Mean Time / Western European > > ^
+    86				FOO2 (TIMZON, +1,Central European Time)^ IFDEF TIMZON,<
+    87				IFE <<TIMZON>-< +1>>,< PRINTX Central European Time > > ^
+    88				FOO2 (TIMZON, +2,Eastern European Time)^ IFDEF TIMZON,<
+    89				IFE <<TIMZON>-< +2>>,< PRINTX Eastern European Time > > ^
+    90				FOO2 (TIMZON, +9,Tokyo)^ IFDEF TIMZON,<
+    91				IFE <<TIMZON>-< +9>>,< PRINTX Tokyo > > ^
+    92				FOO2 (TIMZON,+10,Brisbane)^ IFDEF TIMZON,<
+    93				IFE <<TIMZON>-<+10>>,< PRINTX Brisbane > > ^
+    94
+    95				FOO1 (JOBS,frame)^ IFDEF JOBS,<	IFN <JOBS-1>,<PRINT (\JOBS,frames)>^
+    96				PRINTX 32 frames                        
+    97				^
+    98								IFE <JOBS-1>,<PRINT (\JOBS,frame)> > ^
+COMTXT - Generates PRINTX statements and global symbols for COMMON	MACRO 12.5-46.0 09:32  6-NOV-89 PAGE 1-2
+COMTXT.MAC	17-JAN-89 11:07		CONFIG - CONFIGURATION DEFINITION - KS
+
+    99				FOO1 (PORTS,network port)^ IFDEF PORTS,<	IFN <PORTS-1>,<PRINT (\PORTS,network ports)>^
+   100				PRINTX 32 network ports                        
+   101				^
+   102								IFE <PORTS-1>,<PRINT (\PORTS,network port)> > ^
+   103				FOO1 (PTYS,pairs of PTY)^ IFDEF PTYS,<	IFN <PTYS-1>,<PRINT (\PTYS,pairs of PTYs)>
+   104								IFE <PTYS-1>,<PRINT (\PTYS,pairs of PTY)> > ^
+   105				FOO1 (DISKS,disk drive)^ IFDEF DISKS,<	IFN <DISKS-1>,<PRINT (\DISKS,disk drives)>^
+   106				PRINTX 8 disk drives                        
+   107				^
+   108								IFE <DISKS-1>,<PRINT (\DISKS,disk drive)> > ^
+   109				FOO1 (TAPES,tape drive)^ IFDEF TAPES,<	IFN <TAPES-1>,<PRINT (\TAPES,tape drives)>
+   110								IFE <TAPES-1>,<PRINT (\TAPES,tape drive)>^
+   111				PRINTX 1 tape drive                        
+   112				^ > ^
+   113				FOO1 (PRINTS,printer)^ IFDEF PRINTS,<	IFN <PRINTS-1>,<PRINT (\PRINTS,printers)>
+   114								IFE <PRINTS-1>,<PRINT (\PRINTS,printer)>^
+   115				PRINTX 1 printer                        
+   116				^ > ^
+   117
+   118				FOO2 (DSKTYP,'3675B',3675 disks in blocks)^ IFDEF DSKTYP,<
+   119				IFE <<DSKTYP>-<'3675B'>>,< PRINTX 3675 disks in blocks > > ^
+   120				FOO2 (DSKTYP,'3675P',3675 disks in pages)^ IFDEF DSKTYP,<
+   121				IFE <<DSKTYP>-<'3675P'>>,< PRINTX 3675 disks in pages > > ^
+   122				FOO2 (DSKTYP,'3650B',3650 disks in blocks)^ IFDEF DSKTYP,<
+   123				IFE <<DSKTYP>-<'3650B'>>,< PRINTX 3650 disks in blocks > > ^
+   124				FOO2 (DSKTYP,'3650P',3650 disks in pages)^ IFDEF DSKTYP,<
+   125				IFE <<DSKTYP>-<'3650P'>>,< PRINTX 3650 disks in pages > > ^
+   126				FOO2 (DSKTYP,'3652B',3652 disks in blocks)^ IFDEF DSKTYP,<
+   127				IFE <<DSKTYP>-<'3652B'>>,< PRINTX 3652 disks in blocks > > ^
+   128				FOO2 (DSKTYP,'3652P',3652 disks in pages)^ IFDEF DSKTYP,<
+   129				IFE <<DSKTYP>-<'3652P'>>,< PRINTX 3652 disks in pages > > ^
+   130
+   131				IFG <JOBS*82>+<DISKS*263>-18100,<;Numbers valid for P035/D10
+   132				;/D10 = 4 strings & 118 jobs (with SAXMSK=177) on F33.
+   133				;/D02 = 4 strings & 124 jobs, 6 strings & 67 jobs, 8 strings & 24 jobs
+   134				IF2,<	PRINTX ? Exceeding the 224 pages of core limitation.
+   135					PRINTX ? Can't have that many jobs and disks together. >
+   136				  ERROR=TOOBIG##;Make a reference to an undefined global symbol so LOADER fails.
+   137				>  ;End IFG
+   138
+   139					RADIX	8
+   140				>	;End of COMFAK section
+COMTXT - Generates PRINTX statements and global symbols for COMMON	MACRO 12.5-46.0 09:32  6-NOV-89 PAGE 2
+COMTXT.MAC	17-JAN-89 11:07		COMTXT - generate global symbols for CONFIG name and date
+
+   141				SUBTTL	COMTXT - generate global symbols for CONFIG name and date
+   142				XALL	;Start of COMTXT section
+   143
+   144					DEFINE MAKEM (STRT,STOP,MACRO,TAG)
+   145				<ZZK3==STRT
+   146				ZZK4==0
+   147				REPEAT STOP-STRT+1,<MAKEM2 (\ZZK3,\ZZK4,MACRO,TAG)
+   148					ZZK3==ZZK3+1
+   149					ZZK4==ZZK4+5>>
+   150
+   151					DEFINE MAKEM2 (VNM,POS,MACRO,TAG)
+   152				<MACRO (<MKTXT SYSX'VNM,POS,>,TAG)>
+   153
+   154					DEFINE MKTXT (VAR,CNT,STR)
+   155				<ZZK1==0
+   156				ZZK2==0
+   157				IRPC STR,<
+   158					IFGE ZZK2-CNT,<ZZK1==ZZK1_7+"STR">
+   159					ZZK2==ZZK2+1
+   160					IFGE ZZK2-CNT-5,<STOPI>>
+   161				ZZK1==ZZK1_<<CNT+5-ZZK2>*7+1>
+   162				VAR'R== ZZK1&000000777777
+   163				VAR'L==(ZZK1&777777000000)
+   164				INTERNAL VAR'R,VAR'L>
+   165
+   166				;The file CNFN##.MAC defines the following:
+   167				; define SYSNA1 (XLX,XRX) <XLX'X32-P035/B06'XRX>
+   168				; define SYSDT1 (XLX,XRX) <XLX'6-3-87'XRX>
+   169				; define SYSID1 (XLX,XRX) <XLX'M02146'XRX>
+   170
+   171			000000		MAKEM 0,4,SYSNA1,,^ZZK3==0
+   172				REPEAT 0,<;Added in P035/C, removed for P035/D
+   173				IFDEF DSKTYP,<IFE DSKTYP-'3675B',<MAKEM 0,4,SYSNA1,. 3675B>>
+   174				IFDEF DSKTYP,<IFE DSKTYP-'3675P',<MAKEM 0,4,SYSNA1,. 3675P>>
+   175				IFDEF DSKTYP,<IFE DSKTYP-'3650B',<MAKEM 0,4,SYSNA1,. 3650B>>
+   176				IFDEF DSKTYP,<IFE DSKTYP-'3650P',<MAKEM 0,4,SYSNA1,. 3650P>>
+   177				IFDEF DSKTYP,<IFE DSKTYP-'3652B',<MAKEM 0,4,SYSNA1,. 3652B>>
+   178				IFDEF DSKTYP,<IFE DSKTYP-'3652P',<MAKEM 0,4,SYSNA1,. 3652P>>
+   179				>  ;End REPEAT 0
+   180			000000		SYSX4R==SYSX4R&777400		;Last byte of name must be null (ASCIZ)
+   181			000005		MAKEM 5,6,SYSDT1,,^ZZK3==5
+   182			000000		SYSX6R==SYSX6R&777400		;Last byte of date must be null (ASCIZ)
+   183
+   184		552022	262030		SYSID1(<SYSID=:'>,<'>)^SYSID=:'M02608'^		;Full word symbol just for DDT/
+
+   185				CRSHID
+   186			552022		SYSID1(<SYSIDL=:'>,<'_<-^D18>>)^SYSIDL=:'M02608'_<-^D18>^	;Half word symbols for 
+
+   187				CNFTBL
+   188			262030		SYSID1(<SYSIDR=:'>,<'&777777>)^SYSIDR=:'M02608'&777777^	; to get around MACRO/L
+
+   189				OADER bug
+COMTXT - Generates PRINTX statements and global symbols for COMMON	MACRO 12.5-46.0 09:32  6-NOV-89 PAGE 3
+COMTXT.MAC	17-JAN-89 11:07		Format of monitor version number
+
+   190				SUBTTL	Format of monitor version number
+   191				;VERMAJ is a single letter.       Currently "P"=^O20
+   192				;VERMIN is 3 decimal digits.      Currently "035"=^O43
+   193				;VERSUB (if present) is a slash followed by 1 or 2 letters /A-/Z, /AA-/AZ, etc.
+   194				;VERDEV is not present in released monitor, "01"-"99" for development.
+   195				;VERPAT (if present) is a hyphen followed by digits or letters.
+   196				;       Digits indicate DDT patch to SYSTEM.SAV, letters indicate source patch.
+   197
+   198				DEFINE	MAKVER(STR),<MODE=<VERMAJ=<VERMIN=<VERSUB=<VERDEV=<VERPAT=0>>>>>
+   199				  IRPC STR,<
+   200				IFE "STR"-" ",<MODE=-1>;;Stop at first space
+   201				IFGE MODE-5,<	IFL "STR"-"0",<MODE=6>;;Switch at non digit
+   202						IFG "STR"-"9",<MODE=6>
+   203						IFE MODE-5,<VERPAT=VERPAT*^D10+STR>
+   204						IFE MODE-6,<VERPAT=VERPAT*^D27+"STR"-"@">
+   205							IFG VERPAT-32,<VERPAT=VERPAT-1>>
+   206				IFE MODE-4,<	IFL "STR"-"0",<MODE=5>;;Stop at non digit
+   207						IFG "STR"-"9",<MODE=5>;;(development # is 00 to 99)
+   208						IFE MODE-4,<VERDEV=VERDEV*^D10+STR>>
+   209				IFE MODE-3,<	IFL "STR"-"A",<MODE=4>;;Stop at non-alpha
+   210						IFG "STR"-"Z",<MODE=4>;;A=1, Z=32, AA=33, BK=77
+   211						IFE MODE-3,<VERSUB=VERSUB*^D27+"STR"-"@">
+   212						IFG VERSUB-32,<VERSUB=VERSUB-1>>;Because it's "AA", not "A@"
+   213				IFE MODE-2,<	IFL "STR"-"0",<MODE=3>;;Stop at slash
+   214						IFG "STR"-"9",<MODE=3>;; or any other nondigit
+   215						IFE "STR"-"-",<MODE=5>;;Watch for "P036-1"
+   216						IFE MODE-2,<VERMIN=VERMIN*^D10+STR>>
+   217				IFE MODE-1,<	VERMAJ="STR"-"@";;Pick up single letter
+   218						MODE=2>
+   219				IFE MODE-0,<	IFE "STR"-"-",<MODE=1>>;;Skip up to hyphen
+   220				>  ;End of IRPC
+   221					IFE MODE-6,<VERPAT=VERPAT!400>;;Flag source-level patch
+   222					A00CVN=:BYTE(6)VERMAJ(9)VERMIN(6)VERSUB(6)VERDEV(9)VERPAT
+   223				IF2,<PRINT(A00CVN=,\A00CVN,MAJ=,\VERMAJ,MIN=,\VERMIN,SUB=,\VERSUB,DEV=,\VERDEV,PAT=,\VERPAT)>
+   224					PURGE VERMAJ,VERMIN,VERSUB,VERDEV,VERPAT,MODE
+   225				>  ;End of DEFINE MAKVER
+   226
+   227
+   228					SYSNA1(<MAKVER(>,<)>)^MAKVER(X118-P035/E)^MODE=<VERMAJ=<VERMIN=<VERSUB=<VERDEV=<VERPA
+   229			000000	T=0>>>>>
+   230			200430		SYSX7L==:A00CVN_-^D18		;LH of customer version number
+   231			500000		SYSX7R==:A00CVN&777777		;RH of customer version number
+   232
+   233					END			;$END is not applicable for 0-length modules
+   234
+NO ERRORS DETECTED
+PROGRAM BREAK IS 000000
+3K CORE USED
+COMTXT - Generates PRINTX statements and global symbols for COMMON	MACRO 12.5-46.0 09:32  6-NOV-89 PAGE 4
+COMTXT.MAC	17-JAN-89 11:07		SYMBOL TABLE
+
+A00CVN	200430	500000	INT	
+A00EDT		002423	SIN	
+APRNAM	124312	007777	SIN	
+APRSN	005363	010001	SIN	
+DEFDEB		000000	SIN	
+DISKS		000010	SIN	
+JOBS		000040	SIN	
+PORTS		000040	SIN	
+PRINTS		000001	SIN	
+SYSID	552022	262030	INT	
+SYSIDL		552022	INT	
+SYSIDR		262030	INT	
+SYSNO	000070	212130	SIN	
+SYSX0L		541426	SIN	
+SYSX0R		134132	SIN	
+SYSX1L		501406	SIN	
+SYSX1R		332536	SIN	
+SYSX2L		424000	SIN	
+SYSX2R		000000	SIN	
+SYSX3L		000000	SIN	
+SYSX3R		000000	SIN	
+SYSX4L		000000	SIN	
+SYSX4R		000000	SIN	
+SYSX5L		315326	SIN	
+SYSX5R		226560	SIN	
+SYSX6L		344000	SIN	
+SYSX6R		000000	SIN	
+SYSX7L		200430	SIN	
+SYSX7R		500000	SIN	
+TAPES		000001	SIN	
+TEMP		010001	SPD	
+TIMZON	777777	777770	SIN	
+ZZK1	344000	000000	SPD	
+ZZK2		000006	SPD	
+ZZK3		000007	SPD	
+ZZK4		000012	SPD	
+
+COMTXT - Generates PRINTX statements and global symbols for COMMON	MACRO 12.5-46.0 09:32  6-NOV-89
+COMTXT.MAC	17-JAN-89 11:07		Symbol cross reference
+
+A00CVN	   230#	   230	   231
+A00EDT	    34#	    55
+APRNAM	     7#	    59
+APRSN	     6#	    64
+DEFDEB	    16#
+DISKS	    10#	   105	   108	   131
+DSKTYP	   118	   120	   122	   124	   126	   128
+JOBS	    12#	    95	    98	   131
+MODE	   229#	   230	   230#
+PORTS	    13#	    99	   102
+PRINTS	    15#	   113	   114
+PTYS	   103
+SYSID	   184#
+SYSIDL	   186#
+SYSIDR	   188#
+SYSNO	     5#
+SYSX0L	   172#	   172
+SYSX0R	   172#	   172
+SYSX1L	   172#	   172
+SYSX1R	   172#	   172
+SYSX2L	   172#	   172
+SYSX2R	   172#	   172
+SYSX3L	   172#	   172
+SYSX3R	   172#	   172
+SYSX4L	   172#	   172
+SYSX4R	   172#	   172	   180	   180#
+SYSX5L	   182#	   182
+SYSX5R	   182#	   182
+SYSX6L	   182#	   182
+SYSX6R	   182#	   182
+SYSX7L	   230#
+SYSX7R	   231#
+TAPES	    11#	   109	   110
+TEMP	    59#	    60	    64#	    65
+TIMZON	     8#	    68	    69	    70	    71	    72	    73	    74	    75	    76	    77	    78	    79	    80
+	    81	    82	    83	    84	    85	    86	    87	    88	    89	    90	    91	    92	    93
+VERDEV	   229#	   230
+VERMAJ	   229#	   230#	   230
+VERMIN	   229#	   230	   230#
+VERPAT	   229#	   230
+VERSUB	   229#	   230	   230#
+ZZK1	   172#	   172	   182#	   182
+ZZK2	   172#	   172	   182#	   182
+ZZK3	   171#	   172	   172#	   181#	   182	   182#
+ZZK4	   172#	   172	   182#	   182
+COMTXT - Generates PRINTX statements and global symbols for COMMON	MACRO 12.5-46.0 09:32  6-NOV-89
+COMTXT.MAC	17-JAN-89 11:07		Macro/Opdef cross reference
+
+FOO	    42#	    55	    60	    65
+FOO1	    44#	    95	    99	   103	   105	   109	   113
+FOO2	    47#	    68	    70	    72	    74	    76	    78	    80	    82	    84	    86	    88	    90	    92
+	   118	   120	   122	   124	   126	   128
+MAKEM	   145#	   171	   181
+MAKEM2	   152#	   172	   182
+MAKVER	   198#	   228
+MKTXT	   155#	   172	   182
+ND	     1#
+PRINT	    38#	    55	    60	    65	    95	    99	   105	   110	   114	   230
+SYSDT1	    19#	    52	   182
+SYSID1	    20#	    53	   184	   186	   188
+SYSNA1	    18#	    51	   172	   228
+XP	     2#	     4	     5	     6	     7	     9	    10	    11	    12	    14	    15

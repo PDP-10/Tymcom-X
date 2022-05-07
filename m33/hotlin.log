@@ -1,0 +1,2236 @@
+Hotline Information log for TYMCOM-X   (stored in reverse chronological order)
+======== (M33)HOTLIN.LOG on systems F33 and X32 ==============================
+
+28-Jul-89 00:15 /Joe  The pager numbers are not working!  (408)977-7962
+Contact:   Dallas Operations, (214)637-7435, D37
+Problem:   System low on disk space, directory (MAIL) over quota, many
+	   messages on the CTY from log failures.
+Fix:       Deleted 20000 pages worth of *.FEM files for HSBNET and WLARGE.
+FSR:	   246-1490-63 = Phone fix, remote troubleshoot.
+
+28-Jun-89 18:05 /Jms
+Contact:   Dallas Operations, (214)637-7435, D23
+Problem:   Logins fail with "frame capacity exceeced" for the last hour.
+Diagnosis: DBTTMS had told SUBMIT to "run" (NETDB)CAN1.CTL every 15 minutes.
+           Doing a FRMRUN on a CTL created detached jobs.
+Fix:       "CANCEL (DBTTMS)* *" and sent mail.  Ex employee problems.
+
+
+27-Jun-89 17:30 /Carl
+Contact:  Carl was on-site at Fremont when problem occured.
+Problem:  System 38 could not find the boot blocks or the home pages.
+          Loaded system from tape; all disks were OK except for DSKB0.
+          Attempted to re-create the home pages by copying a good set
+          off of DSKB1.
+Fix:      Problem was a read/write board in the disk drive.  Ran DSKCLN
+          in check mode - no real errors.
+
+25-Jun-89 03:15 /Joe
+Contact:  Fremont Operations, (415)498-2588, Cindy, F74
+Problem:  System 74 crashed after several RIB errors, BAD-SATs, other problems.
+ ?DISK stopcode "FILATB" at 24-Jun-1989 23:15:02
+ %% EVENT stopcode RIBERR at 25-Jun-1989 01:09:29 (ONTYMESS)SS0404.288
+ %% EVENT stopcode RIBERR at 25-Jun-1989 01:10:15 (ONTYMESS)SS0304.152
+ ?INFO stopcode "BADSAT" at 25-Jun-1989 01:10:15 (ONTYMESS)SS0304.150
+ %% EVENT stopcode RIBERR at 25-Jun-1989 01:10:16 (ONTYMESS)SS0304.261
+ %% EVENT stopcode RIBERR at 25-Jun-1989 01:10:16 (ONTYMESS)SS0304.260
+ ?INFO stopcode "BADSAT" at 25-Jun-1989 01:10:28 (ONTYMESS)SS0430.257
+ ?DEBUG stopcode "SAT2ND" at 25-Jun-1989 01:10:28
+ Frame 9  TTY175  OPER[1,21] at F74 Running (SYS)TITO[1,4]
+ File DSK:()SS0430.257[11011,742205]
+ ?DISK stopcode "FILAUS" at 25-Jun-1989 02:45:53
+ Frame 3  TTY176  OPER[1,21] at F74 Running (SYS)TITO[1,4]
+ ATB: DSK:()SS0308.256[11011,742205]Reload monitor
+Fix:	  Had them bring up the system in MANUAL mode so that I could
+	  run ERRCHK.  Disk BPB4 had 20 soft errors since 1-June.
+	  Told them to copy out that pack.
+
+ 9-Jun-89 16:25 /Joe
+Contact:  Fremont Operations, (415)498-2588, L Smith, F38
+Problem:  System 38 crashed after getting more bad spots, this time on DSKB0.
+          They had tried copying out the pack, but PAKCOP got too many errors.
+Paged at 18:30 Fri - This call was to let me know that they were trying to use
+          ASP to copy the one pack to tape and restore to a second pack.
+Paged at 06:25 Sat - After the one-pack restore from tape, too many user
+          directories had been wiped out.  Rick Daniels started a complete
+          system rebuild, but it said "Reserved page already allocated" due
+          to a bad spot in the middle of SPAGE.SYS.  Told him to use the
+          command "TYPE BAT DSKB0" to located the bad spot and "CHANGE BAT"
+          to clear it.
+Paged at 13:05 Sat - Several read errors on tape 13.  They tried the rebuild
+          but got read errors on tape 2 this time.  Wanted to know if there
+          was anything else to try.  Told them to get FSCO to check out the
+          tape drive.  Or try previous week's tapes.
+Paged at 13:25 - No message for Joe Smith, but call still open?
+Paged at 13:45 - No message for Joe Smith, but call still open?
+Paged at 18:25 - The call I answered at 13:05 was aparently listed as open
+          for Hardware Support.  Bill Wu finally answered, and referred the
+	  call back to Software Support.
+Paged at 03:05 Sun - System F38 died with a RIBERR while restoring from TITO
+          tapes.  Told them to try again, and call back if it died again.
+Paged at 04:02 Sun - F38 died with WRTSAT and BADSAT stopcodes.
+          Went on site.  Disk unit BPB3 had 3 soft errors, no had errors.
+Paged at 05:55 Sun - Central Dispatch had been trying to get a hold of me
+          since 03:05.  While one the phone they tried calling (415)498-3841
+          but it did not go through.  Told them to add (408)977-7962 as
+          my secondary pager number.  Ross Zoerhoff informed.
+07:07 Sun - Several reports of BADSAT all on disk unit BPB3.  This time it
+          received 28 hard errors.  That pack is unusable and has been the
+          cause of all problems in the last 10 hours.  Told them to call in
+          the FE or Rick Daniels to deterine which of the remaining 3 packs
+          to use.  The rebuild process will have to be done over again.
+FSR code: 246-1490-88	Restore Software
+
+22-May-89 02:56 /Joe, incident #3
+Contact:  Dallas Operations, (214)637-7435, Sherry, D25
+Problem:  Stopcode RCCBAD, 3rd time in 2 days.
+Fix:	  Found INFO stopcode BASE, KEY=11 in the crash dump.
+          This is an indication that the BASE detected a parity error.
+FSR code: 246-1490-63     Phone fix - Remote Troubleshoot
+
+21-May-89 19:57 /Joe
+Contact:  Fremont Operations, (415)498-2588, Mike, F74
+Problem:  3 hard errors on unit BPB2, HRE on a (CUD10)TUSRDB.DMS
+	  When file was restored from tape, it landed on a bad spot on BPB2
+	  (DSKB16) as well.  Also got RIBHRE on [20467,166153].UFD(REFBRLIB).
+Fix:	  Copied out pack.  Only 5 files and 1 UFD damaged.
+
+20-May-89 09:25 /Joe
+Contact:  Fremont Operations, (415)498-2588, Eulogia, F38
+Problem:  Many hard read errors on SYS:LUD.SYS and (PJ)LTCURT.DAT.
+	  Maintenance found problems in a read/write safety board.  Pack did
+	  not need to be copied out.  Went in to Data Center at 13:32 (got
+	  paged on my way to Fry's).  (CUD10)USERS reported no problems.
+
+13-May-89 10:45 /Joe
+Contact:  Dallas Operations, (214)637-7435, Curt, D37
+Problem:  Stopcode WRTSAT, BADSAT, cannot LOGIN.
+Fix:      Reset disk controller, run a full DSKCLN.
+Note:     Pager went off 4 times but had no number.  Autopager problems.
+
+4-Apr-89 10:15 /Joe
+Contact:  TRW Operations, (714)385-5646, Tina Ngo
+Problem:  Stopcode BADSAT, cannot read DIRIT.INI, cannot run (MPL)FNDBAD.
+          Cannot find (SYS)LOGINN.  Time for a full DSKCLN.
+
+18-Feb-89 05:57 /Joe (800)678-3399 incident #16
+Contact:  Fremont Operations (415)498-2588, Rick Daniels
+Problem:  After an Add-Pack operation, DSKCLN dies with Illegal Memory
+          Reference for location 016332, at user PC 003613.
+Diagnosis: 26 units of 3652 disk with 13 SATs per disk times 3 tables
+          is more than 256K.  Removed DSKB31 so DSKCLN could run.
+FSR: 246-1490-57     Phone fix - Console dial-in
+
+
+27-Nov-88 18:01 /Joe  (800)678-3399 incident #37
+Contact:  Fremont Operations (415)498-2588, Mike Silva
+Problem:  One of the disks went off-line.  B39 got about 7 disk-related
+          error messages (continuable stopcodes) pointing to several files.
+Fix:      Told them to login MANUAL and try to do a DIR on each file that
+          had been having problems.  If no BADSAT or BADUFD problems, just
+          do a FULL DSKCLN.  No further problems were reported.
+FSR: 246-1490-44     No fault found (problem went away)
+
+25-Nov-88 06:18 /Joe
+Contact:  Dallas Operations (214)637-7435, Stan Harris
+Problem:  After adding BPA6 to DSKB, DSKCLN complained about the following:
+      Reconfigure the disk structure and add another pack.
+      Are you SURE you want to do this? Y
+      Enter unit name to add: BPA6
+      UNITS NOT IN A FILE STRUCTURE: BPC6(SCT346)
+      Checking all units on disk controller - reading UNIT ID from HOME pages.
+       BPA0:250000=B0    BPA1:250001=B1    BPA2:250002=B2    BPA3:250003=B3
+       BPA4:250004=B4    BPA5:250005=B5    BPA6:250012=B14   BPC0:250006=B6
+       BPC1:250007=B7    BPC2:250008=B10   BPC3:250009=B11   BPC4:250010=B12
+       BPC5:250011=B13   BPC6:SCT346
+           D-S-K-C-L-N   version 37(110)
+      ? FILE ALLOCATION ERROR - A disk page is in use by more than one file.
+      Starting pass 2 to locate all other files using this page.
+      HD2601.N00[11020,460527] unit 11 page 15667  Hole punched in rib
+      Unit DSKB11 page 15667 index 154, value 200024,1762  reason  FMUP
+      SPAGES.SYS[1,4] unit 0 page 13  Hole punched in rib
+      Unit DSKB13 page 11 index 10, value 200024,645070  reason  FPOB
+      SPAGES.SYS[1,4] unit 0 page 13  Hole punched in rib
+      Unit DSKB13 page 11 index 36, value 200024,1762  reason  FMUP
+      The following files have lost data:
+         MUP  (APLAB)HD2601.N00[11020,460527]
+         POB  (SYS)SPAGES.SYS[1,4]
+         MUP  (SYS)SPAGES.SYS[1,4]
+Diagnosis: Before the ADD-PACK, the EOF to SPAGES.SYS was in a spare RIB.
+        After adding the entries for 2 new cylinders, the EOF was back in
+        the prime RIB.  REFSTR updated the words-allocated (index 10) and
+        pages-allocated (index 36) in the RIB that used to be EOF.
+Fix:    Changed DSKB13 page 11 index 10 from 200024,645070 to 200024,1070.
+        Changed DSKB13 page 11 index 36 from 200024,1762 back to 200024,1116.
+        In RIB set D+10/12524000=15*210.*2*1000, D+36/12537=12524+12+1.
+        Unpunched (APLIB)HD2601.N00 by setting DSKB11 page 15667 back to
+        200024,1762.  (The file had not been damaged - the data was still
+        there).
+FSR: 246-1490-78     Repair by MDFSCO
+
+24-Nov-88 20:04 /Joe, Incident #881124-36
+Contact:  Fremont Operations (415)498-2588, Bonnie
+Problem:  Messages came out on the CTY every few minutes after 4pm.
+          00:17:45 GMT  P No access: (SUBMIT)881125.JQL
+Diagnosis: Directory SUBMIT was using 10018 pages, quota of 10000.
+Fix:      Deleted 4500 pages of 86####.JQL and 87####.JQL log files.
+FSR: 246-1490-78     Repair by MDFSCO
+13-Nov-88 15:49 /Joe
+Contact:  Dallas Operations (214)637-7435
+Problem:  NETCON and DBCSERV had problems with MAGNUM on D23 and D56.
+Fix: ?    XEXEC was not running on D23.  It was killed at 12:40 CST 12-Nov.
+
+12-Nov-88 13:40 /Joe
+Contact:  Dallas Operations (214)637-7435
+Problem:  MAGNUM reports errors in the KEEP.OPEN file when users logged in
+          as NETCON and DBCSERV try to use NETDB.
+Fix:      Restarted XEXEC and forced it to run (NETDB)DCOMUP.  When MAGNUM
+          starts in directory NETDB:23, it says:  "To report system problems,
+          please contact: Mike Agne at (602)893-2963"  On D56, it still says
+          "contact Roy Roskilly at (408)922-7439."
+
+
+12-Nov-88 05:11 (800)854-6000  no answer (old number - wrong page)
+12-Nov-88 05:20 (800)678-3399 incident #10 FSR code 64/246
+Contact:  Fremont Operations (415)498-2588, Rick Daniels, System 29
+Problem:  Protection failure while attempting to restore (SYS)SPAGES.SYS
+	  from TITO all files tape.
+Fix:	  The file on tape is in error, the one on disk is correct.
+	  Error message about "could not enter file" can be ignored.
+
+
+10-Nov-88 15:30 (800)678-3399  /Joe
+Contact:  Fremont Operations (415)2588, Debbie Hightower, System 33
+Problem:  Users complaining about problems with LOADII.
+Fix:	  Had them restore old version (2.16) from tape, new version (3.00)
+	  created today by SSINSTALL has problems.
+
+24-Oct-88 18:40 (800)678-3388  (is this the new Dispatch number?)
+                (800)678-3399  (is the number I was paged for!)
+
+24-Oct-88 21:00 ish /Carl
+Contact:  Fremont Operations (415)498-2588, Mike Silva, System 33
+Problem:  Look at CRA011 (AR.ARX) to determine what bit caused the crash.
+          Examined crash:  Was User mode AR parity error, instruction in
+          crash was the same as in the user's program [LOADII?], however
+          since it was an AR error, there was no way to determine if the
+          data matched without a dump of the user's core.
+Close:    Called Mike and gave him the information to pass on to Bill R.
+
+
+24-Oct-88 18:40 ish /Carl
+Contact:  Fremont Operations (415)498-2588, Mike Silva, System 26
+Problem:  Look at CRA010 and CRA011 (both AR.ARX) to determine what bit is
+          causing the crashes (XXX hardware).
+Consulted: Joe to interpret (M33)IME.CMD on these and Joe looked at BACKUP.SHR
+          which was running in both crashes and determined it was bit 31 that
+          was dropped in each crash dump.
+Close:    Called Bill Richardson back and relayed the information.  He will
+          swap out the appropriate boards as soon as he is able.
+
+
+24-Oct-88 0800 ish /Carl
+Contact:  Dallas Operations, (214)637-7435, System 25
+Problem:  SPOOL FDF file out of Synch.  Instructed Operator that this type
+          of call should be handled by calling 408-922-6224 and that we
+          would call him back.
+Solution: Ran (SPPOPER)SPFIX and the FIXFDF command which fixes it.
+
+
+19-Oct-88 08:32/Osman
+Contact:  TRW Operations (714)385-5522, Steve Ellerbush (714)863-9350
+Problem:  Consistency error on DSKB1 and DSKB2 after ASP restore.
+Diagnosis: ASP save was done with P035/D, restore down with P034/P.
+Fix       Create a new boot tape and use the right monitor.
+
+
+27-Sep-88 06:35/Joe
+Contact:  TRW Operations (714)385-5522, Tina Ngo (714)385-5431 (Robert=7479)
+          The KS and/or its micronode keeps crashing.
+Fix:      Upgraded to S33-P035/D-8 (was running S33-P034/P-10).
+          They should try using an LSI-11/73 (in place of the 11/23) so that
+          the micronode can handle 2 sync lines at 9600 baud.
+
+24-Sep-88 20:15/Joe
+Contact:  TRW Operations, Tina Ngo, (714)786-3145(home) (714)385-5522
+Problem:  TRW had a head crash on DSKB0 and DSKB1 at 5:14pm Friday the 23rd.
+          After aligning new heads and formatting new packs, "the FE was
+          unable to IPL the system".  This call was a warning from Tina
+          that she might need assistance in rebuilding the system.
+          I.e. this is not yet a hotline call, but may turn into one.
+26-Aug-88 19:20/Joe             (Dispatch beeped at 19:22)
+Contact:  Fremont Operations, Mike Silva, System 33, (415)498-2588
+Problem:  System when down with RIBBRP on (EBUS)[3,317016].UFD and Mike wanted
+          to know how serious it was.  System 54 was scheduled to be down
+          for the conversion to pages at 20:00 and System 33 was supposed to
+          be up all weekend.  He was worried about bad RIB in UFD.
+Action:   Had them bring the system up MANUAL so I could check the UFD.
+          No RIB errors were found.  Considerring that I had 5 jobs GFD'd
+          to EBUS when it went down, it might have been a bad RIB pointer
+          in a DDB, meaning everything on disk was good.  Told them to force
+          a FAST DSKCLN so that it would finish before D54 was scheduled down.
+
+
+13-Aug-88 09:11/Joe
+Contact:  Fremont Operations, Debbie Hightower, System XJJJ0029 , (415)498-2588
+Problem:  Bad file (SYS)HOME.SYS on DSKB5(BPA16) page 4.
+Fix:      This page is part of BOOTS.  As long as DSKB5 does not get moved
+          to BPA0 or BPA10, this will not cause any problems.
+          The bad page has been reassigned to the file DSKB5.BAD and
+          marked NFS so that TITO will ignore it.
+
+ 9-Aug-88 22:14:00 800-654-6000 and 22:14:10 415-498-2588
+Contact:  "Fountana" Data Center, Mike Silva, System 26, no incident number.
+Problem:  PAKCOP hung after copying cylinder 504 on BPA2.
+          Select light off, no action in memory lights, no response to the
+          attention button.  They wanted to know if it was OK to do an ASP
+          save on the 3652.  BPC2 copied out OK.
+Fix:      I suggested they try the OLDC command.  It got an unrcoverable
+          error on cylinder 473.  Told them to do the ASP one-disk save.
+          This worked, but BPC2 had a "missing or inconsistent pack set id",
+          which was to be expected.  After putting a JFCL at STRFIX, the
+          system came up running a full DSKCLN.
+
+24-Jul-88 13:00/Joe
+Contact:  Fremont Operations, L T Smith, (415)498-2588, System 32
+Dispatch: Called me at home, said they paged me twice with no response,
+          however L T's page came thru (I was outdoors in Fremont at the time).
+Problem:  X32 had  3 crashes after Lenny replaced some boards, an IME, a UIL,
+          and PAGP3R.  System ran DSKCLN with no problems, died only while
+          running diags (such as MEMEXR or XCORE).  Lenny wanted to know
+          if this IME is the same as the previous ones.
+Diagnosis:  IME caused when PC was set to the middle of CTYLOG.  There were
+          no tracks as to how it got there.  The IME is not related to the
+          SKIPLE J,.CPJOB problem this CPU was having earlier.
+
+23-Jul-88 09:00/Joe
+Contact:  Fremont Operations, Debbie Hightower, (415)498-2588, System 32
+Problem:  Lenny was running diagnostics, trying to reproduce the problem on
+          CPU 1336 (B39).  The two-pack test system would fail, but diags
+          wouldn't.  Between the time I was paged and when I answered,
+          DDQCB failed on bit 27.  All he needed at this point is verification
+          that it was the same bit that was set in the IME dumps.
+
+
+21-Jul-88 09:00/Joe (call from Karin, paged by Karin)
+Contact:  Fremont Operations, Brad Dong, (415)498-2588, System 74
+Problem:  F74 has bad home page on BPA12 - hard read error on 1st + 2nd HOM
+          PAKCOP can's see unit 312.  Asked them to call back after the
+          disk has been fixed.
+
+20-Jul-88 22:08/Joe
+Incident: none, just message to call Mike Silva at Fremont Data Center
+Problem:  B39 crashed with IME again, 6th time today.
+          It passed diags, including 'B' string, but died even on the two-pack
+          test system.
+Status:   I was unable to login with the system up MANUAL because username
+          JMS does not have shut-override on BUBBNET.  (Neither does OPER!)
+          System would not stay up long enough to run fast DSKCLN using
+          NOINITIA.  I had Mike bring B39 up in CONSOLE mode to copy all
+          the crash dumps to tape so they could be restored to X32.
+Analysis: All crash dumps are very consistent.  Page fault at USRCLK+4.
+          The only way to get there is via:
+		CIP5:	SKIPLE	J,JOB##
+			 PUSHJ	P,USRCLK	;See if user wants a clock trap
+          Location JOB is zero but PREVAC+J is 400.  That is, 7 is set
+          in ac 2 of AC block 1.  Looks like a problem with SKIPLE or FM.
+Signed off at 21-Jul at 02:30.
+
+
+
+
+17-Jul-88 10:50/Carl  Paged by Dispatch (only)
+Incident: #49, closed by Bill Richardson on Monday.
+Contact:  Fremont Operations, LT Smith, (415)-498-2588, System 58.
+Symptom:  RIBHRE and SAT2ND stopcodes on console.  System will not come up.
+Problem:  An entire string of disk drives apparently lost power.  FSC paged
+          to look at the string and determine the extent of the damage.  I
+          checked in later and FSC was swapping out the string controller.
+          Rick Daniels was there and was going to make sure DSKCLN finished
+          properly after the system was brought up again.
+
+13-Jul-88 13:30/Carl  Took call for Osman at the office, dispatch not called.
+Contact:  Dallas Operations, Dan & Joe, (214)637-7434, System 31.
+Symptom:  System up, BADPAG 20631 and many many RIBHREs for LOGOUT on console.
+          LOGINN not found.
+Problem:  Page 20631 was the RIB for [1,4] UFD and subsequent RIBHREs were on
+          the UFD rib page as well as one which may have been LOGOUT.SHR, but
+          the monitor may have failed the lookup on this file because it was
+          unable to update the access date in the UFD ([speculation]).
+Fix:      Had operations poke REFLAG so I could login and look around.  None
+          of SYS was available as expected.  Remainder of UFDs were intact.
+          Got TSTSUP from tape and found RIB for SYSUFD was page 20631.  Made
+          a duplicate of the RIB using system 55 as a model with adjustments
+	  for missing pages.  [This did not seem to work.  Made exact copy of
+          RIB from 55 with holes for missing pages and only those pages setup
+          by the REFRESH in the reconstructed RIB].  Restored as much of (SYS)
+          as was possible before running out of disk space.  Pared things a
+          little and restored remainder of critical files: LOGINN, LOGOUT and
+          (after trying to run DSKCLN) INITIA.  System up SHUT and remainder
+          of all-files and backups of (SYS) restored after FULL DSKCLN.  Set
+          SCHEDULE 0 and started XEXEC.   Done!   Time: 18:30 !
+
+
+
+22-Apr-88 00:54/Joe
+Contact:  Fremont Operations, Mike Silva, (415)498-2588, System 30
+Problem:  System 30 is moving to the drives system 32 has been running on.
+          X32's monitor sees BPA0-7, BPA10-17, BPB0-7 as being present,
+          BPB10-17 as unit error, BPC off-line.  That matches the hardware.
+          F30's monitor sees BPA0-17 then hangs.  B39's monitor does the same.
+Fix:      12:54/Joe Created KONEND.PAT and applied it to (SYS:30)NEWMON.SAV.
+
+15-Apr-88 22:45/Osman
+Contact:  By Craig for Fremont Operation, Mike, (415)498-2588, System 26
+Problem:  System crashes while running TITO in username BETATEST doing
+	  the daily BACKUP.
+Action:   (1) Brought system up manually.  Gfd to BETATEST and back would
+              crash the system.
+	  (2) Ran FULL DSKCLN.  DSKCLN found 15-20 bad files in BETATEST.
+	      File names were all garbled-up.  Asked oper to put a access.msg
+	      in BETATEST about the bad files.
+	  (3) Ran CKSUM of all of the files in BETATEST OK.  System up OK.
+
+
+04-Apr-88 14:31/Joe
+Contact:  Dallas Operations, Dennis,(214)637-7434, System 55
+Problem in accounting, the person who usually take care of fixing accounting
+problems was not available.  He asked if I knew of anyone else that could
+handle accounting problems.  I recommended he call the Fremon Data Center,
+since they have a list of alternate contacts.
+
+31-Mar-88 16:15/Joe
+Contact:  Fremont Operations, Rick Daniels, (415)498-2588, system B39
+Problem:  LOGICAL UNIT 0 MISSING FROM DSKB and HOM PAGE CONSISTENCY ERRORs.
+Diagnosis: Pages 2 thru 10 on DSKB0 got overwritten by ASCII text.
+	It was a log file from someone generating node code from T12014.TYM.
+	Page 1 had SIXBIT/*PEAK*/ in the first word, most likely it was
+	(DGRAHAM)046PEA.001[11334,427741] (since fast DSKCLN complained that
+	that file was not marked in the SATs).
+Fix:	Pages 1 and 6 re-created using DSKB1:'s HOM pages as a template.
+	Pages 2 and 7 reset to be empty BAT pages.  Pages 3,4,5 rewritten by
+	running BOOTS, page 10 rebuild using F29's RIB to SAT.SYS as a guide.
+	Running fast DSKLN in check mode reported only the 046PEA.001 file.
+	B39 answered at 18:53.
+
+
+12-Mar-88 05:02/Joe (Pager said 817-637-7435, they didn't call Central Dispatch)
+Contact:  Dallas Operations, Allen Smith, (214)637-7435
+Problem:  System 55 lost an HDA on a 3652 disk.  After redefining the structure,
+          ASP said "bad structure size", even though the new DSKB had the same
+          number of units as the old DSKB.  7 spindles of 3652 = 14 units.
+Diagnosis: Dallas is still running ASP version 6.  That version cannot restore
+          from an tapes written from a system using 14 units of 3652 disks.
+Solution: They started a rebuild from TITO all-files tapes.  After they had
+          restored SYS, I copied ASP version 7 from OSU to SYS on D55 and all
+          other systems in Dallas.
+
+11-Mar-88 00:23/Joe
+Contact:  Fremont Operations, David Jorgenson, (415)498-2588, System 32.
+Problem:  When bringing up the system READONLY to run ASP as part of operator
+          training, it died with a NONAME stopcode in SCHED1.
+Diagnosis: LOGINN was trying to update the LUD to turn off the 6 letter bits
+          to indicated that OPER had seen the "system is going down" message.
+          During READONLY, updating ENTERs are allowed.  However, when the
+          program issues an OUT uuo or VALPAG chanio, the system crashes.
+Solution: Told them to come up MANUAL this time to do the ASP.  Later analysis
+          showed that they could have come up MANUAL, run TAKEIT to HANG the
+          system, and then come up READONLY.
+Note:     Looking at the monitor source code implies that this bug existed
+          prior to P034/N.  One way around it is to come up using "NOINITIA"
+          and "FULL", then login as OPER (which clears the bits in the LUD)
+          to run TAKEIT and "HANG" the system.  That leaves the files is the
+          proper state to bring up "CONSOLE" and "READONLY" so the OPER can
+          login and run ASP.  This will be fixed in next release of the monitor.
+
+10-Mar-88 17:12/Joe
+Contact:  Fremont Operations, Bonnie, (415)498-2588, System 30.
+Problem:  One user had 30 jobs logged in, all detached, all running MAGNUM
+          programs.  The jobs would not go away immediately - LOGOUT and TAKEIT
+          only evicted them.  System was heavily loaded.
+Solution: None.  By the time I logged in, all these jobs had logged out.
+          MAGNUM enables notice-to-quit (NTQ) so that it can clean up after
+          itself and leave the database in a consistent state.  Until the clean
+          up is done, the job can be evicted but not killed.
+
+
+19-Feb-88 23:40/Joe and 21-Feb-88 18:00/Joe
+Contact:  Fremont Operations, Bonnie, (415)498-2588, System F74.
+Problems: Japanese users got "FATAL ERROR A16.xxx".
+Diagnosis: While restoring some missing files to directory UAS, the protection
+          of (UAS)RTYACT.CTL got set to ALL RD NO.  This meant that no-one
+          could run MAGNUM without setting RF license.  RDIST reported that
+          all other systems had it as ALL RD RD.
+
+20-Feb-88 02:10/Joe
+Contact:  Fremont Operations, Rick Daniels, (415)498-2588, System F26.
+Problem:  He was attempting to add BPA10 and BPC10 to DSKB:.  After enterring
+          the name, the system did nothing.
+Diagnosis: The routine to refresh a single pack (PAKREF) can handle the case
+          where SPAGES.SYS never existed, but cannot handle the case where
+          SPAGES.SYS got deleted.  There was a nonzero pointer in word 21 of
+          the HOME page pointing to page 13 of DSKB0:.  What it pointed to,
+          however, was not a RIB.  Had to manually bypass that part of PAKREF.
+Cure:     A dummy SPAGES.SYS has been created.  DSKCLN needs to treat SPAGES
+          as a critical file if its pointer exists, ignore if not present.
+          The monitor needs a new routine to verify the RIB, designed to be
+          called from REFSTR and ONCDSK as well as FILRIB.
+
+
+4-Dec-87 00:54/Joe
+Contact:  Fremont Operations, Bonnie, (415)498-2588, System F29.
+Problem:  TITO all-files aborted on tape 13 while saving USEVAL.  Tape 14 was
+          started with USEVAL, completed USEVAL and 400 more files, then aborted
+          9 files into VBURKE.
+Diagnosis: TITO has a limit of 43777 tape positions (18431 files) per tape.
+          Directory USEVAL has 18075 files.  Tape 14 couldn't hold any more.
+Solution: Simply go to tape 15 with "STORE ALL STARTING WITH (VBURKE)".
+
+8-Nov-87 20:13/Joe
+Contact:  Dallas Operations, Dennis Smith, (214)637-7435, System D56
+Problem:  Crashed with SAT2ND at after a REDSAT problem on BPA13 page 66000.
+          Started a full DSKCLN, but it aborted when it could not read the SAT.
+          Also, BPA6 2nd SAT page consistancy error.
+Fix:      Brought system up in MANUAL mode, fixed hard read error by writing
+          to the page.  Full DSKCLN ran to completion, answered at 20:58.
+
+6-Oct-87 18:45/Osman
+Contact:  Fremont Operations, Tim, (415)498-2588, System 33
+Problem:  DSKCLN got hard read error on [1,1].UFD and aborted.
+Fix:      Joe wrote page back out to disk with TSTSUP.
+          (more to be added here)
+
+
+
+16-Sep-87 10:40/Joe
+Contact:  Fremont Operations, System 26
+Problem:  Disk BPA3/BPC3 had a bad HDA.  PAKCOP was unable to copy out some
+          pages, one of them was a UFD data page for [1,4].  DSKCLN aborted
+          because the garbage there on the new pack had wrong hash code.
+Fix:      This particular UFD page did not have any *.SYS files, therefore it
+          could be replaced by a hole.  It was the first page in the UFD, and
+          used to have the first 102 files on the TITO save.  Said files were
+          restored from tape with no problems.
+
+
+28-Sep-87 19:41/Joe
+Contact:  Fremont Operations, System 38
+Problem:  DSKCLN complained about "critical file damaged", LOGINN not found.
+          BADSAT, BADUFD, REDSAT, and HUNG occurred just before crash.
+Diagnosis: The self pointer to [1,4].UFD was corrupted - file marked bad.
+Fix:      Found TSTSUP in another directory, corrected the bad pointer and
+          cleared the RIB status bit.
+(415)794-2567 is picked up after hours by South Bay Exchange (415)475-2900 #525
+
+1-Aug-87 20:50/Osman
+Contact:  Dallas Operations, Gary, (214)637-7435, System D37
+Problem:  Before ASP running DSKCLN in checking mode in CONSOLE mode
+          give them the erroneous message "Don't bring the system up
+          may cause system crashes etc.."  Advise him that the message
+          is erroneous and will be fix in next version of DSKCLN. Told
+          him to continue what he was doing.  Also asked him to run a
+          real DSKCLN before bringing the system up for timesharing.
+
+4-Jul-87 22:45/Joe
+Contact:  Fremont Operations, Tim, (415)498-2588, System F30.
+Problem:  While doing a PAKCOPY, accidently initialized the source pack.
+Fix:      Created 30XX02 on (M33:33) because it has TSTSUP in it.
+	  Put BPA13CB at UNTTBL+12, rewrote HOM page on DSKB12 using DSKB22
+	  as a template.  FULL DSKCLN ran, answered at 00:24
+
+14-Jun-87 23:56/Joe
+Contact:  Fremont Operations, Rick, (415)498-2558, System F33.
+Problem:  One of the new 3650 disks has hardware problems - kept going offline,
+          now gets unit check one a particular cyl/surf/head.  PAKCOPY gets
+          stuck there, even with sense switch two set.  Rick wanted to know
+          if he should go ahead with ASSIGN and DEASSIGN to reformat that one
+          track.  25 blocks will be lost, but the rest of the pack can then be
+          copied.
+
+15-Jun-87 02:18/Joe and /Carl
+          More cylinders have errors, all on head 21 record 20.
+
+25-May-87 14:30/Joe
+Contact:  Fremont Operations, Debbie, (415)498-2558, System F33.
+Problem:  Several BADSAT, RIBERR stopcodes, one REDSAT, scattered across units.
+Reply:    Try one more full DSKCLN, then call in maintenance to look at disk
+          system, I suspect the 3676 disk controller.
+
+
+23-May-87 09:00/Joe
+Contact:  Dallas Operations, (214)637-7436, System D55.
+Problem:  While restoring files for the rebuild, TITO said some files were not
+          getting XC license.
+Solution: Poked the job running TITO, told them to continue and re-restore all
+          the problem files (including, of course, XEXEC.SAV).
+
+
+20-May-87 00:27/Joe
+Contact:  Fremont Operations, Bonnie, (415)498-2558, System F33.
+Problem:  Front-end 11 died, tried to run TAKEIT to bring system down, but
+          CHKPNT was stuck with JACCT on (it was waiting for the SETUUO to
+          finish typing on the CTY which was not responding).
+Solution: Logged in, tried to set license to use MDDT, but got stuck in ML
+          because CHKPNT was stuck.  Told them to get FSC to try to clear the
+          PDP11 that KLDCP could deposit nonzero in 30.  Else power off KL.
+
+
+18-May-87 23:38/Joe
+Contact:  Fremont Operations, Bonnie, (415)498-2558, System F33.
+Problem:  As per procedure, they needed one of us to give license to XEXEC.SAV
+
+
+
+12-May-87 03:30/Osman
+Contact:  Fremont operation, Jim Wallace, (415)498-2588, System F22.
+
+Problem:  After a series of disk STOPCD's(BADSAT, NOWRIT) system
+          would not come up. "Serious or Inconsistane pack set id".
+
+Action:   Patched around the check, system up OK.
+
+
+ 6-May-87 06:22/Joe
+Contact:  System F26, Fremont (415)498-2588, Tim Witherspoon.
+
+Problem:  OPER says "NO PASSWORD FILE".  WC was missing.
+
+Action:   Set WC on password file.  Creation date was 5-May at 13:21.
+          Unknown as to why WC was missing.
+20-Apr-87 23:15/Carl (beeper went off once)
+               /Osman answered also as his went off twice.
+Contact:  System F70, Fremont (415)498-2588, Mike or Rick Daniels.
+
+Problem:  Many read errors on BPA4, could not access LUD, could not login.
+          Brought system up Manual/Reflag and ran DSKCLN in checking mode.
+          It found many problems on logical unit 2 (BPA4:DSKB2) including
+          bad SATs and bad RIBs.  It was also getting hard device errors.
+
+Action:   Had Rick attempt a PAKCOP operation and have FSC look at the drive.
+          At 2:15 am called back and found that PAKCOP was having problems
+          and FSC was looking at the drive again.  Found bad board in HDA
+          and were trying diags and PAKCOP again...  Rick will call me if
+          they still have problems... although if they cannot do a successful
+          PAKCOP the only real choice is to do a rebuild from ALL-FILES.
+          Note: OSMAN, why can't they run ASP on 365x's at this point?
+
+
+17-Apr-87 19:00/Carl
+Contact:  System F26, Fremont (415)498-2588, Bonnie, Mike.
+Symptom:  Two DSKB0, DSKB1 units.  Two last units in structure.
+Problem:  Drive BPA7/CPA7 was supposed to be in CE mode, but apparently came
+          on-line (probably someone hit the attention button while the system
+          was up previously).  BPA7/CPA7 has a 2-pack structure on it.
+
+Solution: Put BPA7/CPA7 off-line (CE mode or power it off) and reboot the
+          system from tape or disk (after getting a fresh copy of boots).
+          This took 3 1/2 hours because nobody at the center understood what
+          the state of the drive was and Memorex maintains it.
+
+16-Apr-87 23:40/Carl and 23:59/Joe
+Contact: System D25, Dallas (214)637-7435, Greg
+Problem: System was taken down to run DSKCLN just before running ASP.  D25 was
+         brought up on SYSTEM.SAV (the /B-1 monitor for 3675 disks) instead of
+         NEWMON.SAV (/B01 for 3652 blocks).  Monitor went to the wrong spot on
+         the second track looking for 2nd HOM and BAT blocks.  It asked "do you
+         want to initialize the BAT page?"  The operators responded "yes" which
+         wiped out the RIB to SAT.SYS.  Loading the correct monitor produced
+         a noname stopcode when the SATs could not be found.
+
+DSKB0  | 2nd BOOT  | 3rd BOOT  |  2nd HOM  |  2nd BAT  |RIB for SAT| 1st SAT   |
+DSKB1  | 2nd BOOT  | 3rd BOOT  |  2nd HOM  |  2nd BAT  | 1st SAT   |RIB SPAGES |
+page   |   04(04)  |   05(05)  |   06(06)  |  07(07)   |   08(10)  |   09(11)  |
+LBN    |16 17 18 19|20 21 22 23|24 25 26 27|28 29 30 31|32 33 34 35|36 37 38 39|
+3675B   17 18*01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18*01 02 03 04
+3650B   17 18 19 20 21 22 23 24 25*01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
+3675P    record 05 * record 01   record 02   record 03   record 04   record 05 *
+3650P    record 05   record 06   record 07 * record 01   record 02   record 03
+  * = end of track, switch to next head
+
+When pages 6 and 7 (2nd HOM and 2nd BAT) were rewritten, BPXKON went to records
+07 thru 14 on the 2nd track.  For a 3650/52 in blocks, these records belong to
+the last 1/4 of page 7 (2nd BAT), all of page 10 (RIB to SAT.SYS), and the
+first 3/4 of page 11.  Page 11 of DSKB0 is a SAT page.  On all but three of the
+other disks, page 11 is a spare RIB for SPAGES.SYS.
+
+  The damage to page 7 is fixed by rewriting the BAT pages correctly and the
+SAT pages are rebuilt by a full DSKCLN, but the RIB in page 10 had to be
+rebuilt by hand twice.  Once so that ONCDSK could build the table which points
+to the SATs to come up in MANUAL mode, the second time using TSTSUP to write
+the corrected data to the disk.  (We had problems trying to convince ONCDSK to
+write the corrected page out.)  All the spare RIBs to SPAGES.SYS got punched
+because they had zero instead of valid back-pointers.
+
+11-Apr-87 19:20/Joe
+Contact: System F29, Fremont (415)498-2588, Bonnie
+Problem: After move to Fremont, unable to get directory of new ALL FILES tape.
+         TITO reports 131072 BPI, 39352 tracks.  Drives work on 26 but not 29.
+Fix:     Sounds like problem lies after SA10 and before tape drive.  Suggested
+         that FSC check tape controller.
+Call-back at 23:55 from Ali.  SPAR could not find problem.  Will try swapping
+         cables from SA10 to controllers to see if 26 gets problem.
+
+
+4-Mar-87 21:09/Joe
+Contact: System F39, Fremont (415)498-2588, Bonnie
+Problem: After doing ASP, full DSKCLN did not come back for 1.5 hours
+Fix:     Installed DSKCLN version 36J(103).
+
+ 1 Mar 87 8:31/Carl
+Contact: System F74, Fremont
+Symptom: DSKCLN gave error "Bad rib detected in critical file"
+         It listed (SYS)1022F.SHR and (SYS)DIRIT.SHR wtih WHC which means
+         the entries had the wrong hash code.
+
+Rerun of DSKCLN in checking  mode found additional files also bad...
+so I looked at the UFD and found page 4 had what looked like blocks
+2,3 and 4 copied to blocks 1,2 and 3.  All the rest of the pages looked
+OK.  I BLTed the data to the right phase and erased the duplicate data.
+Ran full dskcln in checking mode and intend to turn the system over
+to operations to come up with REFLAG set and restore all of SYS from the
+previous all-files/backup tapes using MODE SYS NEWEST after first doing
+a full dskcln.
+
+Tuesday,
+  4 or 5 calls - all related to system 35's problems.
+  Problem eventually solved as per my previous messages.
+
+Thursday,
+  2 calls (so far) - system F74, Bonnie
+
+  Problem.  System had one or more SAT failure messages on OPR or CTY
+after which some files became inaccessible (SYSTAT for one) and they
+reloaded.  Accounting under username APACCT complained of RIB errors
+both before and after the reload.
+
+  One file in their directory had a bad rib.  2 in TAPELIB.  I ran FNDBAD
+and it generated a list of files with HRE and the three files mentioned
+above without saying what was wrong with the three files.  It turned out
+these are bad ribs.  (Joe, FNDBAD ought to say what is wrong!)
+
+  2nd call was from Tim in Fremont because he couldn't restore the
+files which had RIB errors.  Even with license he couldn't delete them.
+I told him about the DELETE FILE.EXT/BAD command/switch and the files
+were deleted ok.
+
+/Carl
+22-Feb-87 19:37/Joe
+Contact: System TRW's 2020, Anaheim, 800-345-6090, Chuck from NSSC
+Problem: While running TITO, the command "COF DAY22.DIR" failed.
+Fix:     Disk was full - files deleted.
+
+22-Feb-87 17:36/Joe
+Contact: System 35, Dallas, (214)637-7435, Tyrone
+Problem: Could not GFD, could not LOGIN, then crashed with and APRFAT stopcode,
+         "CDP" Cache Directory Parity Error.
+Fix:     Told him to call maintenance to run diagnostics.  I don't expect any
+         thing to be found - CDP is usually cleared by reloading the system.
+
+21-Feb-87 15:25/Joe
+Contact: System 37, Dallas, (214)637-7435, Paul
+Problem: PAKCPX saw only units 300-307 on the string of 3652 disks.
+Fix:     Told them to try PAKCP5.  If that does not work, have the 3674
+         wired for bits 2,3,4 all don't care to make all 8 strings show up.
+18-Feb-87 05:20/Joe
+Contact: System 37, Dallas, (214)637-7435, Allen
+Problem: SPLFIX "repair" could not find FDF records, files not printed.
+Fix:     Told them to use "R SENDMAIL" to "DENCOFF" for these problems.
+         Problem not critical enough to fix in the middle of the night.
+	 Dennis ran (SPPOPER)SPFIX, command FIXFDM.
+8-Feb-87 08:11/Joe
+Contact: System 39, Cupertino, Abdul
+         Abdul did not call the beeper number, did not let Carl's phone ring
+         long enough to be answered, then called Joe at home.
+Symptom: System dies with FILAUU while doing TITO all-files with P035/B.
+
+Problem: DECUMC called with P2 pointing to a job's dummy ATB instead of a real
+         ATB.  FILAUU complains when it decrements some random JBT table to -1.
+
+Solution: Ran DSKCLN 36J(103) in check mode - no problems reported.
+         Gave them B39-P035/B01 since it has the FILAMO bug fix and it types
+         out the ATB on FILAUU/FILAMO/FILAUS and related stopcodes.
+
+
+System D31, 5:00pm-6:20pm, Dallas OPS, Lois @ 214-637-7435
+
+Symptom: Files and UFDs disappeared or became unaccessable without any
+         apparent reason.  Lois was running a MAGNUM procedure under
+         (BILLING10) and got a fatal magnum error and couldn't proceed.
+
+Problem: One of the disks had a SAT Failure just prior to the problems
+         which occurred.
+
+Solution: As per procedure setup by Tom Marconi, I told them to take the
+          system down and run a full DSKCLN and call me back when it was
+          complete.  DSKCLN went as expected, no failures were found and
+          the system was back up an answered prior to 6:20pm when Lois
+          called back.
+
+
+
+31-Jan-87 23:30/Osman
+Contact:  Fremont D.C., (415)498-2588, Aloja, System D58.
+Problem:  Many HDEVs on BPA2 and BPA3 and THUNGs on all drives.
+          Can't run programs from (SYS).
+Action:   Operation took system down to run FULL DSKCLN, disk clean
+          found about 40 bad files, still many errors on BPA2/3 and THUNGs.
+          Tried to copy out the pack but couldn't. Head 28 was failing
+          all the different cyclenders. FSC looked at the disk and
+          had solid failure on head 28 also, looks like bad HDA.
+          Started to rebuild system from ALL-FILES which was started
+          Friday and finished couple of hours before system was gone
+          down for the disk problem.
+
+
+15-Jan-87 08:00/Joe
+Contact:  (408)446-6172 Mike Moore with L A Green called on 9-Jan-87.
+Problem:     (this is an MDC number in Cupertino, he's not in right now)
+
+
+
+13-Jan-87 08:30/Joe
+Contact:  Dallas Operations, (214)637-7435, Don,  System D37.
+Problem:  When certain users try to COMPILE, they get "?XXXXX not found".
+Diagnosis: Directories (FTSYS) and (FTMAGNUM) had been deleted.
+
+
+02-Jan-87 14:00/Osman
+Contact:  Cupertino Operation, (408)446-7705, Barbara, System B36.
+Problem:  Operation tried to recycle the system because of earlier complaints
+          from users "NO LUD" message.  Could not run DSKCLN until LUD was
+          restored, but LUD.SYS may get clobbered by DSKCLN if the SATs are
+          not right.
+07-Dec-86 22:45/Joe
+Contact:  Fremont Operations, (415)498-2588, Kevin, System 58.
+Problem:  Sunday night operator unfamiliar with the side-effects of BADSAT,
+          was confused when TITO could store a file once, but could not
+          lookup files the next time.  Told Keven about forcing fast DSKCLN.
+
+07-Dec-86 9:30/Joe
+Contact:  Fremont Operations, (415)498-2588, Tim Dickenson, System 58.
+Problem:  Dies with FILAUS when TITO is saving NETSTAT.
+
+02-Dec-86 21:35/Joe
+Contact:  Fremont Operations (415)498-2588, Eulogia, System 58.
+Problem:  BADSAT, 19:37 with FILAUS, 21:19 with FILAUS running TITO.
+          No solution yet, just reload the system.
+
+01-Dec-86 06:59/Joe
+Contact:  Cupertino Operation (408)446-7705, L.T. Smith, System 39.
+Problem:  CPU stopcode APRFAT when NEWMON loaded.  CDP=Cache Parity error.
+Fix:      Reloaded NEWMON.  B39-P035 up at 07:04.
+
+
+01-Dec-86 06:59/Joe
+Contact:  Fremont Operation (415)498-2588, Mary Larios, System 58.
+Problem:  System crashed with many BADSAT, GIVPG1, FILAUS.
+Fix:      Ran DSKCLN, system now up.
+22-Nov-86 17:44/Joe (Carl did not answer 3 beeps)
+Contact:  Cupertino Operation (408)446-7705, David Jorgenson, System 26.
+Problem:  Same as 9-Nov - System gets BADSAT when TITO all-files gets to
+          directories starting with "O".  Sometime later it gets error reading
+          RPG.SHR, then dies with something like USRUS1 stopcode.
+Workaround: Whenever system gets BADSAT while TITO is doing the all files,
+          let system stay up until either TITO gets error reading files or
+          users get error reading files from SYS, then force a fast DSKCLN
+          and tell TITO to resume starting after last complete directory saved.
+
+
+19-Nov-86 09:08/Joe (Craig called me, no answer from Carl)
+Contact:  Dallas Operations (214)637-7435, Louis, System 54.
+Problem:  When operator runs RCHARG against spool requests, his terminal
+          hangs up. RCHARG is in an infinite loop, no files open, Control-C
+          trapped, no messages.  (Host out of ports, FREE not running.)
+
+Fix:      RCHARG.SHR had wrong checksum.  Restored from backup.
+16-Nov-86 18:15/Joe
+Contact:  Cupertino Operations, (408)446-7705, Vijay, System 22.
+Problem:  Could not set license after restoring from 14th's incremental.
+Diagnosis: TITO complained about two files:
+          (SYS)DRWSPR.EPO not given license WC
+          (BOFANET)ONTYME.SAV not given license AC (SY,HF,RF,WF)
+Fix:      Ran SETE then SETLIC on those two files.  System now up.
+Note:     Carl and I have been discussing ways of giving license to TITO
+          instead of to the operators.  We need to do something about it.
+
+16-Nov-86 04:45/Joe
+Contact:  Cupertino Operations, (408)446-7705, L.T. Smith, System 22.
+Problem:  When rebuilding the system, do all the packs have to be the same?
+Answer:   ASP dumps DSKB0, then DSKB1, etc.  It does not matter if DSKB0 has
+          moved from BPA1 to BPA7.  If the system had 14 packs when ASP was
+          run, then it must have 14 packs when restoring.  The physical
+          location of the packs is irrelevant.
+
+15-Nov-86 11:35/Joe
+Contact:  Cupertino Operations, (408)446-7705, Fred, System 22.
+
+Problem:  Initialization failure - bad UFD.  DSKCLN not running.
+
+          Logged in over shut, found OPER.UFD unreadable, as well as M33.UFD
+          and others.  Ran TSTSUP, it reported DEVICE error while trying to
+          read page 4 of [1,1].UFD data.  PSP reported:
+
+BPA12(DSKB:220006):  SDATI(CTRL:2 DRV:H Data field ECC uncorrectable) SCONI(
+ Unrecoverable data check Count error) SLBN(CYL:102 HEAD:17 RECORD:8) SDAT:5
+ HDATAI(CTRL:2 DRV:H Data field ECC uncorrectable) HCONI( Unrecoverable data
+ check Count error) HLBN(CYL:102 HEAD:17 RECORD:8) HDEV:44
+
+Fix:      Told them to reformat BPA12 and rebuild system from ASP tapes.
+14-Nov-86 20:19/Joe
+Contact:  Fremont Operations, (415)498-2588, Euogia Zahary, System 58.
+
+Problem:  Stopcode SEAR10 (non bad SAT doesn't have free bit).
+          User is BILLING10
+
+          Told them to force a FAST DSKCLN and continue best they can.
+
+11-Nov-86 21:23/Joe
+Contact:  Fremont Operations, (415)498-2588, Euogia Zahary, System 58.
+
+Problem:  Stopcode GIVPG1 (BILLING10) running (SYS)DIRIT.
+          File is 61110A.DMI[21477,205635]
+
+Patch:    Made GIVPG1 be an INFO stopcode so system can continue.
+
+10-Nov-86 xx:xx/Joe
+
+More of the same for 26.
+
+
+09-Nov-86 13:08/Joe (got call at home after no response to page)
+Contact:  Cupertino Operations, (408)446-7705, Barbara, System 26.
+
+Problem:  Many "CAN NOT READ FILE" errors from TITO, "I/O error on SYSTAT.SHR",
+          could run LOGINN and LOGOUT from SYS but not much else.
+
+More Info: There were two INFO stopcodes BADSAT.
+          STT:200412  STTFPC:001544  SATCNT:001543  BPA11 page 10
+                      STTFPC:001130  SATCNT:001127  BPA4 page 10
+          This is the first time the STOPCD has printed out completely, note
+          that the current count of bits is one less that what the monitor
+          expected.  A full DSKCLN was requested.
+08-Nov-86 02:10/Carl
+Contact:  Dallas Operations, (214)637-7445, Greg, System 25.
+
+Problem:  System 25 had been down the previous evening with disk or
+          controller problems.  Joe was expecting to use the system for
+          testing but was unable to have access until after 10 PM.  They
+          has some minor problems which Joe talked them through when the
+          system was brought up.  This call was to find out how to delete
+          some files DSKCLN had marked as bad.  The file names were all
+          jumbled punctuation characters with a few letters thrown in.
+
+Solution: I checked the ribs and the UFD data pages for errors and found
+          everything intact.  Then I renamed all the files except the bad
+          ones into OSNF and deleted *.* to remove the weird file names.
+          I restored the files to BASELINE and told operations to restore
+          from the all-files and incrementals anything that was lost.
+
+
+07-Nov-86 18:00/Carl
+Contact:  Fremont Operations, (415)498-2588, System 74.
+
+Problem:  System crashed with no CTY output during the ASP restore.
+
+Solution: Initially told operations that there should be no reason that
+          they could NOT continue the restore at the beginning of the
+          current tape.  Talked to Osman and found that the reason for
+          the rebuild was that they were having problems since the head
+          crash earlier this week.  I called operations back and told
+          them that it would be better to restart the restore from tape
+          one, to insure that everything was in order.
+
+
+02-Nov-86 17:30/Osman
+Contact:  Cupertino Operation, (408)446-7705, David J., System C70.
+Problem:  System crashed twice during ALL-FILES.
+Solution: Found reason of crashes to be the bad file in user name
+          (NETDATA)MCRF.OCT, just like system C26 was when it was
+          running with 2meg of memory. But system C70 is running
+          with 1meg of memory now. Hmmmmmm????
+
+
+01-Nov-86 11:00/Osman
+Contact:  Fremont Operartion, (415)498-2588, Brad Dong, System F58.
+Problem:  One of the disk had a head crash. Operation asked if system
+          could be re-build using 3650 insted of 3675 and assist them.
+Solution: Went to data center and help them re-build F58 on 3650 disks.
+          03-Nov-86 12:00 Rebuilt compleated.
+
+
+27-Oct-86 18:30/Osman
+Contact:  Cupertino Operation, (408)446-7705, David J., System B39.
+Problem:  After a disk drive problem, "Missing or inconsistand pack set ID"
+Solution: Fixed the "Inconsistand pack set ID" problem and ran full DSKCLN
+          system up OK.
+23-Oct-86 22:30/Joe
+Contact:  Fremont Operations, (415)498-2589, Mike, System F28
+Problem:  Incrementing hard read errors, on one particular cylinder.  FSC
+          checked the drive, OK, problem moved when pack was moved.
+          They already copied out this pack once today, this new duplicate
+          has its own set of bad spots.  Note: They were unable to copy the
+          pack on F28, and did it on F40 (an IBM system) instead.
+          FNDBAD reported 3 files with HRE.
+Solution: Told them to rename the files to *.BAD and restore good copies from
+          tape.  The files are now (NETSTAT)61014A.BAD, (SRA)PSPDAT.BAD, and
+          (MSNTRACK)DUNS.BAD.  The file in NETSTAT is 10978 pages long.
+Remark:   I will write a program tomorrow to free up all except the bad pages.
+19-Oct-86 11:00/Osman
+Contact:  Cupertino Operation, (408)446-7705, Barbara, System B39
+Problem:  Person running the accounting programs was having problem
+          with MAGNUM. Could not find anything wrong with any of
+          the magnum files.
+Solution: Customer found his own problem. His data base was bad.
+
+19-Oct-86 19:45/Osman
+Contact:  Cupertino Operation, (408)446-7705, Keith, System B36.
+Problem:  After T/M fixed the Disk Controller and SA10, operation
+          still could not bring system up.
+Solution: Suggested to the T/M, to check all the drives. They found
+          a bad drive, fixed the drive, system up OK.
+
+17-Oct-86 01:00/Osman
+Contact:  Dallas Operation, (214)637-7435, Grag M., System D54.
+Problem:  Bad drive causing WRTSAT, than Missing or Inconsisting
+          Pack set ID.
+Solution: Pack moved to a good drive and fixed the Inconsisting
+          ID problem.
+
+12-Oct-86 22:00/Osman/Carl
+Contact:  Fremont Operation, (415)794-2588, Rick D., System F28.
+Problem:  Many WRTSAT and BADSAT, coused by fleaky memory and
+          eventually clobbered  SYS's UFD RIB.
+Solution: We tried to fix the RIB manually w/o success and system had to
+          be rebuilt.
+ 5-Oct-86 11:42/Joe
+Contact:  Cupertino Operations, (408)446-7705, Barbara, System C70
+Problem:  The COPY command was not working, PIP not found.
+Diagnosis: DSKCLN had marked PIP as being bad, PIP.LOW was restored from tape,
+          but not PIP.SHR
+Fix:      Told OPER to use MODE SYS DISC and restore all of SYS to be save.
+
+ 5-Oct-86 08:58/Joe
+Contact:  Dallas Operations, (214)637-7435, xx, D34
+          System dies repeatedly with "Exec Parity Error".
+          Hotline called before Maintenance looked at memory.
+
+ 5-Oct-86 00:06/Joe
+Contact:  Dallas Operations, (214)637-7435, Greg Moran, D34
+Problem:  PAM not running, (UTIL)GOPJ would not start it.
+Diagnosis: Tried "TAUX PJ:34" from system 34, got "?access barred".
+          This means that D34's base (node 6703) is not in the list of
+          TYMSHARE nodes.  The supervisor says 6703 is not in the class list
+          valid for PJ.
+Fix:      Logged into D23, set AC license, "R (SPL)TAUX" and "PJ:34".
+          This is a temporary hack until Validations adds node 6703 to list.
+
+3-Oct-86 02:06/Joe
+Contact:  Cupertino Operations, (408)446-7705, L.T. Smith, System C24 alias C70
+Problem:  BADSAT, [1,1].UFD messed up, etc. when doing RESTORE of C70's files.
+          One of the disks had gone off-line, reports of BADSAT on other disks.
+Diagnosis: Ran TSTSUP, word 25 of page 1 pointed to [1,1].UFD RIB at page 20712.
+          Word 51 of that page pointed to UFD data page for hash 0, it was
+          200006,,000012 - the first non HOM page on DSKB3.  That particular
+          page was full of ASCII text, TYMSAT engine code in particular.
+          Something crumped on the SAT for DSKB3 again allowing the Monitor
+          to write over (UFD) again.
+Fix:      Turned off RBREAL in RIB pointer (making it 6,,12).  Told operations
+          to run another FULL DSKCLN, restore the UFD section of the tape again,
+          and resume restoring from where they left off.
+Followup: As of noon Friday, TITO was in the middle of restoring (MOORING).
+          System uptime 9:35.  PSP reports 952145 pages free, no errors.
+2-Oct-86 04:06/Joe
+Contact:  Cupertino Operations, (408)446-7705, L.T. Smith, System C24
+Problem:  He refreshed the disks on 24, and started restoring all files from
+          C70's backup tapes.  TITO restored all UFDs, all of SYS, then died
+          with stopcode IME in the middle of directory BAILEY on the first tape.
+Diagnosis: This happens on all systems - after REFRESH, there is a limited
+          number of SATs that can be kept in core and none are written out.
+          When the last in-core SAT is filled up, the system dies with IME,
+          and you have to run a FULL DSKCLN.  Then the operator has to get
+          ALL license (without using REFLAG!) and resume restoring.
+
+Fix:      I ran TSTSUP (it and DECDDT are on SYS on all systems as of 25-Sep)
+          and found that page 0 of [1,1].UFD had been overwritten with garbage.
+          Probably when the monitor stepped all over itself when the SATs
+          filled up.  Told LT to do the following:
+          1. Get a directory of the all-files tape to find where SYS ends
+          2. Refresh DSKB again
+          3. Restore from tape positions 1-<end of SYS>
+          4. Run BOOTS to write BOOT.KI to home pages
+          5. Take the system down
+          6. Bring up the system and run a FULL DSKCLN
+          7. Find someone who has an OPER name with all license
+          8. Finish restoring rest of all-files
+29-Sep-86 18:20/Joe
+Contact:  Cupertino Operations, (408)446-7705, Dave Jorgenson, System C26
+Problem:  New users could not login, "LOGINN.SAV NOT FOUND".  No OPER,
+          TELECOPY reports "SYSTEM ERROR".  At least 1 hard device error
+          was noticed before the problem occurred.
+Fix:      Told them to try a FAST DSKCLN to see if (SYS).UFD is wiped out.
+          They ran TAKEIT with no problems, system came up OK.
+          The in-core database must have gotten corrupted.
+18-Sep-86 06:47/Joe
+Contact:  Cupertino Operations, (408)446-7705, LT Smith, System C70
+Problem:  Went down with IME, got HOME PAGE WRITE ERROR.  Tried again without
+          checking out the disk drive, but this caused NOWRIT stopcode and
+          INCONSISTANT PACK-SET ID.  LT called (415)495-3891 - got "number has
+          been disconnected".  Called (415)794-2567 - no answer after 6 rings.
+          Then he called my home phone number I had given Tuesday when my
+          beeper was not working.
+Fix:      Told operator how to JFCL out OLDST5-2 in ONCDSK.
+          Told them the TXS beeper is (415)495-3841 (not 91) and that the
+          Hotline often takes more than 10 rings after hours.
+
+16-Sep-86 10:00/Joe
+Contact:  Cupertino Operations called the beeper number, South Bay Answering
+          service called the beeper number, no answer.  My beeper received the
+          page, but made no noise.  At 22:30 on 15-Sep they called Craig's home
+          phone, he was out of town.  I received the message when I came to work
+Problem:  System 26 went down several times with MAPAL1, some proceeded by work.
+          INFO stopcode BADSAT.
+Cure:     Changed BADSAT+7 to use HRRZ T3 instead of HRRZ T2.
+05-Sep-86 05:30/Osman/Joe
+Contact:  Cupertino Operation, (408)446-7705, Tom Turner, System C26
+Problem:  Disk errors HDEV on many different disks.
+Fixed:    Hardware and "inconsistant pack set ID"
+New problem:  (SYS).UFD wiped out.  Other UFDs OK.
+Second alarm:  At 08:00 called Joe Smith to see if it was possible to
+          salvage the disk without doing a full rebuild.
+
+Problem:  When logged in REFLAG, could not access files on SYS, but
+          could RUN TSTSUP[3,213211].  The HOME page were OK, but the
+          RIB to [1,4].UFD was not.  Word 23 of page 1 pointed to page 1023.
+          That page was a RIB, but instead of saying [1,4].UFD it said
+          090586.SAT[6,270]. The self-pointer (word 777 of the RIB) was for
+          200010,,14573. The Monitor wrote good data to the wrong spot on
+          the disk.
+
+Cure:     Using the RIB to SYS on C34 as a guide, I rebuilt the RIB by hand
+          in page 1023.  Only 4 of the 14 data pages of [1,4].UFD could be
+          located.  Pages 1017, 1020, 1021, and 1022, which contained entries
+          for SAT.SYS, HOME.SYS, SWAP.SYS, and CRASH.SYS respectively.  After
+          verifying the RIBs for those files, I zeroed the last word on the 4
+          UFD data pages, and put dummy entries for the missing 3 UFD RIB
+          pointers.  I also had to update the copy of this disk page that the
+          Monitor had mapped in core (luckily it was within the first 256K
+          where FILDDT could find it).  At this point, 4/14 of the SYS
+          directory was accessable, including DSKCLN but not INITIA or LOGINN.
+          Running DSKCLN in CHECK mode verified that the disk was good with
+          many thousand lost pages (from the unaccessable files that were
+          on SYS). I poked on 1,,600000 in the STATES word so that DSKCLN would
+          fix the UFDs and SATs.  Ran TITO to restore (SYS)*.* with
+          MODE SYS NEWEST.  System up to users at 17:29.
+
+04-Sep-86 22:30/Osman
+Contact:  (Craig F.)Fremont D.C., (415)498-2588, Bonnie, System D74.
+
+Problem:  Many HDEV's on drive, Operation took system down to run
+          full DSKCLN. After dskcln finished, dskcln could not write
+          SAT table to disk.
+
+Solution: Copied out the pack which was getting HDEV errors. System
+          still wouldn,t come up, fails with same message as above.
+          Asked T/M to check the drives. T/M found the bad drive and
+          system up with full dskcln. Had many bad files.
+
+
+13-Aug-86 19:45/Osman
+Contact:  Dallas Operations, (214)637-7436, Jim English, System D65.
+
+Problem:  System crashed with WRTSAT. When the system was brought back
+          up, it would complain "BPA3 SECOND HOME/BAT PAGES READ ERROR"
+          and all the units after that "MISSING OR INCONSISTAND PACK
+          SET ID" BPA4, BPA5, BPA6, BPA7.
+
+Solution: Called in to KLINIK line and try to bring the system up
+          manualy through tymnet and consule w/o succes. Asked operator
+          to copy out the pack BPA3. Could not copy out the pack. Then
+          wanted to make sure that drive was OK and I was getting ready
+          to run SA10 diagnostic on it but operator could not get the
+          drive to come ready with a scratch pack on, turned system
+          over to meintenance.
+          Continue..
+          Maintenance found a bad R/W head (#1) and replaced it. Afte
+          that all it needed to be fix was "MISSING OR INCONSISTAND
+          PACK SET ID". It is fix and system started to run full
+          DSKCLN OK.
+
+02-Aug-86 15:30/Joe
+Contact:  Fremont Operation, (415)498-2588, Brad, System F58.
+
+Problem:  Stopcode CRASH with nonzero in LH of 30, no other indications.
+          When attempting to boot SYSTEM from disk, KL hangs, no activity
+          visible at memory box.  BOOTS cannot find NEWMON, OLDMON, or BACKUP.
+          When F58-P034/P-12 is loaded from tape, TYPE ALL shows that it can
+          read the HOM pages of all disks, but system hangs or gets stopcode.
+          Rick Daniels notified, interpreted TYPE ALL as meaning CPU, memory,
+          and disk controller OK, and called Software Support instead of
+          Maintenance (Ruben was working on F30 from 11:30 to 6:00).
+
+Action:   Since one of the stopcodes was MAPAL1, I the operator set DDT
+          breakpoint with "1 Control-B".  It stopcoded at CHTFNU+7 instead of
+          MAPAL1.  Went to Solar Way, could not get it to stop at MAPAL1.
+          The stopcode at CHTFNU (in routine REMCHT) implied that bits and
+          pieces of the PGY table were getting zeroed.  DDT could not open
+          symbol table for CORE1, COMMON, and others.  At one breakpoint, DDT
+          looped trying to type out symbolic address.  Spent a couple hours
+          chasing red herrings, but learned interesting things about PGYTAB.
+
+          Called in Maintenance.  Diagnostics called out port contention
+          problems with memory, DTE byte transfer failure, and page failure
+          in PXCT 4,[DBP AC,XXX].  Left Solar way at 20:05.
+
+ 3-Aug-86 01:41/Joe
+          Lenny reported CPU problem fixed.  DSKCLN ran to completion, but PSP
+          reports 457511 pages free (should have been 75,000).  A few files are
+          missing in many directories, in particular, (SYS)DRWSPR.EPO,
+          (SPL)TURNUP, (MPL)TYPER, (XEXEC)MEXEC.
+2-Aug-86 05:15/Joe
+Contact:  Fremont Operation, (415)498-2588, Merina, System F30.
+
+Problem:  UIL stopcode with memory errors.  Deselected sector of memory, then
+          got "Inconsistant Hash Constant" and "Too many last logical units"
+          and "Logical unit NN missing from DSKB" where NN went from 1 to 89.
+
+Solution: Went on-site set breakpoints and check the home pages.  DSKB11(300209)
+          messed up.  Of the 24 data words in the HOM page, all but 5 were
+          zero.  The check for missing logical units gets into an infinite loop
+          if HOMLUN does not match HOMLOG.  Patched the HOM page on BPA13.
+          Came up in CONSOL mode, ran DSKCLN in CHECK mode.  It complained that
+          unit 9 was missing RIB pointers.  Put them in using (SPL)FILDDT.
+          DSKCLN ran on in check mode, recycled and ran FULL DSKCLN at 8:30.
+          Elapsed time 3 hours to avoid doing a system rebuild.
+01-Aug-86 20:30/Osman
+Contact:  Cupertino Operation, (408)446-7705, Debby H, System C26
+
+Problem:  This is a "MEMOREX 3650 DISK SYSTEM".
+          Operation was doing a scheduled "PACK ADD" and couldn't
+          format the pack which they were trying to add.
+
+Solution: The drive they were trying to format was not in NATIVE
+          mode. After putting it in native mode, still couldn.'t
+          formatted. This drive should have been OK, becouse I had
+          a one pack test system on it. But maintenance was using
+          it as a scratch pack to check the new SA-10 in last couple
+          of weeks. I don't know what realy happend but looks like
+          this is the case where pack needs to be formated with SA10
+          diagnostic first before PAKCP5 will format it. Since this is
+          a KL10 system and don't have SA10 diagnostic running on it
+          yet give the operation one other one pack test system drive.
+          Help operation to do add pack.
+
+31-Jul-86 17:29/Joe
+Contact:  Cupertino Operation, (408)446-7705, Vijay, System C26.
+          Regular crash, Vijay called because note saying to call the hotline
+          for any crash in 26 was not removed.  Had them reload from SYSTEM.SAV,
+          this portion of testing 26XP33 is over.
+
+30-Jul-86 05:14/Joe
+Contact:  Cupertino Operation, (408)446-7705, Tom, System C26.
+
+Reason:   The plans were to leave 26 running P034/P33 monitor with instructions
+          to call the hotline if the machine crashed (to get a dump if the
+          "hang" problem occurred).  The hang has been fixed, but the notice to
+          call the hotline was not cancelled.  26XP33 crashed with SIMUUF
+          stopcode.  COPYCRASH appears to not have saved the dump, but the
+          CTY output for this crash is identical to the SIMUUF that happened at
+          09:55 on 29-Jul from P034/P19-4.
+06-Jul-86 09:30/Osman
+Contact:  Cupertino Operation, (408)446-7705, Vijay, System C26.
+
+Problem:  System crshing with APRFAT while running TITO.
+
+Solution: Found a bad file in (BILLING10)070186.SAT causing the crash.
+          System would crash with FILAUS before but now it is crashing
+          with APRFAT. APRSTS shows NXM and MB parity error. We need to
+          look into these crashes little closer.
+
+          I could not delete the bad file (BILLING10)070186.SAT. I asked
+          the operator to continiue TITO after user name BILLING10
+          untill I found a way to delete the bad file.
+
+03-Jul-86 03:15/Osman
+Contact:  Dallas Operation, (214)637-7436, Sherry Arnold, System D23.
+
+Problem:  User (DTE:23) having problem running PERP job.
+
+Solution: Problem might be related to ROYALTY DATABASE not being
+          the right one (had different checksum). Updated the
+          (UAS)RTYACT.CTL and asked user the try it again and let
+          me know the result.
+
+          Had similar call on system C26, some users were not able
+          to run LOADII, and problem was ROYALTY DATABASE file.
+
+
+30-Jun-86 01:15/Osman
+Contact:  Cupertino Operation, (408)446-7705, Tom Turner, System B39.
+
+Problem:  Can't start PJ to run. UFD Interlock not released.
+
+Solution: Recycle the system.
+
+30-Jun-86 08:23 /Joe (I'm not on call but I answered the beep)
+Contact:  Rick Daniels, Fremont
+Problem:  F38 keeps getting SIMUUO and/or KILUP2 stopcodes.
+Solution: Installed JOB to INFO patch in SYSTEM.SAV
+
+30-Jun-86 00:40 /Carl/Osman
+Contact:  CUPC Operations, (408) 446-7705, system 39.
+Problem:  System 39 kept coming up thinking it was 12-May-1986.
+Solution: Told them to just follow their procedure for setting the date.
+          The date & time is gotten from the network, and BUBBNET was
+          most probably at fault.
+
+
+27-Jun-86 19:25 /Carl
+Contact:  Fremont Operations, Bonnie, (415) 498-2588, system F38
+Problem:  F38 continues to get SIMUUF stopcodes.  Twice it has been 4 times
+          in a row, followed by a COMCON:KILUP1.  It isn't apparent what is
+          causing the problem, but it is reasonable to believe that KILUP1+3
+          is caused by the SIMUUF problem.
+
+Solution: None.  Told operations to reload and come up normally.  That there
+          wasnt much that we could do about the problem without a lot of
+          research into SIMUUF.  We need to spend some time on this.
+
+
+22-Jun-86 03:36 /Joe
+Contact:  Cupertino Operations, Vijay, (408)446-7705, C36
+
+Problem:  Head crash.  They were unable to copy-out the old pack and did not
+          have enough disks to build a new DSKB on a new set of packs.  They
+          wanted permission from Software Support to copy over the existing
+          set.  This will destroy any further chances of salvaging data if
+          the ASP rebuild fails, but they just do not have any more 3330
+          disks.
+
+Solution: Permission granted.  It's nice to see that they asked.
+
+Callback: 05:40 Vijay wanted to know if it was OK to use the P-5 monitor to
+          rebuild the system since they did not have C36-P034/P-10 on any
+          of the bootable monitor tapes.
+19-Jun-86 04:42 /Joe
+Contact:  Fremont, Operations, Jim Wallace, (415)498-2588, F38
+
+Problem:  Incrementing hard device errors on one pack.  Could not copy pack
+          with PAKCOP - too many data check errors on many different spots.
+          (Problem appears to have been caused by yesterday's power failure.)
+          Copied pack on an IBM 370, the copy causes "device check for job 1"
+          when system is brought up.  System runs with old pack, although
+          users complain about damaged files.
+
+Solution: Agreed to Jim's suggestion that he come up with old pack until they
+          could schedule a system rebuild.
+
+07:42     Rick Daniels called me at home, to verify that a system rebuild was
+          necessary (he expected it was).
+18-Jun-86 05:23 /Joe
+Contact:  Fremont, Operations, Jim Wallace, (415)498-2588, F58
+
+Problem:  File damage after power outage.  [1,1].UFD read error for RIB.
+          Got STOPCD SCHED1(132217) attempting to LOGIN while READONLY.
+
+Solution: Told them to let maintenence check the disk drives and try to come
+          up again.  If DSKCLN still has problems, then they will have to
+          rebuild from the ASP tapes.
+14-Jun-86 18:00/Osman
+Contact:  CUPC Operations, Vijay X, (408)446-7705, System C26.
+
+Problem:  System would not stay up. Crashing with APRFAT.
+
+Solution: Suggested to the Maintenance to deselect memory and let
+          him know that system will run with as little as 512K.
+          System up with memory deselected OK.
+
+
+02-Jun-86 3:55 /Carl
+Contact:  Cupertino Ops, Tom, (408)446-7705, System 26
+
+Problem:  Two recent crashes @19:11 CRA016 and @21:44 CRA017 showing a
+          STOPCD APRFAT, NoMemory MemBusParity... but in CRA017 registers
+          at .CPCAC+15,16 contained ONTR03.R00, from directory BETATEST.
+          A CHKSUM of the file resulted in a crash.  Told OPS to send mail
+          to the user and to have maintenance check out the APRFAT/CPU
+          angle with a quick once-over.  File renamed to directory CRASH
+          setting NFD.
+
+Solution: Not really solved.. this problem has been cropping up more and
+          more lately.
+
+
+
+1-Jun-86 18:00/Joe
+Contact:  Cupertino Ops, David Jorgensen, (408)446-7705, System 26.
+3 crashes in the last shift.  1 with no indication, 2 with stopcode FILAUS.
+(FILAUS is in FILFND at DECUMC+10)  Checked JOB and $Q+JBTPRG in all crashes.
+If the job was running TITO, then the file name and extension can be found in
+.CPCAC+15 and .CPCAC+16 (contents of ACs 15 and 16 in AC block 0 on the KL).
+Found references to the following files in (BILLING10): 052786.SAT, 052086.SAT,
+050286.SAT.  All three files now have the NFS bit set so TITO will not touch
+them.
+**** not resolved yet ***
+
+
+1-Jun-86 16:20/Joe
+Contact:  Cupertino Ops, David Jorgensen, (408)446-7705, System 36.
+Symptom:  Many stopcodes, DSKCLN says problesm in [1,4].UFD.
+Resolution: Ran DSKCLN in check mode, 1/4 of all directories hosed.  Called
+        in Hardware Maintenance.  The found a bad memory box.  Replaced with
+        memory from C24.  DSKCLN ran normal.
+Note:     Somebody deleted (MPL) and (XEXEC) again!
+
+
+1-Jun-86 13:14/Joe  (came in to check on 62)
+Symptom:  NONAME stopcode PCBIO+xxxx(xxxx).
+        Reloaded from tape - APA0 HOM pages messed up.  X62 still down.
+28-May-86 04:45/Osman
+Contact:  CUPC Operations, David J., (408)446-7705, System C36.
+
+Symptom:  Operations restored directory of PJ which had PAM.* with
+          no license and PJ would not run again.
+
+Diagnosis: PAM.LOW and PAM.SHR had no license.
+
+Cure:     Set WC,OP,SY,ST,JL,AC,WF.
+
+26-May-86 16:30/Joe, rebuild on 27-May and 28-May
+Contact:  TXS, Carl Baltrunas, (408)945-4314, System 930
+
+Symptom:  "LOGINN.SAV not found".
+          One of the disks had gone off-line, many WRTSAT stopcodes on the
+          console.  Could not run INITIA (file name exists, RIB bad).  Ran
+          DSKCLN from tape, it found 5 of the 14 pages in [1,4].UFD multiply
+          used, including a cross-link to (UN1)[6,270].
+
+Solution: Last ALL FILES was 2-Apr-86, stored all but (SYS) and (UN1) by using
+          "STORE ALL CREATED SINCE 00:00 1-APR-86 STARTING WITH (*1BATCH)".
+          Refreshed 930's disk and rebuilt from the two sets of tapes.
+
+
+26-May-86 03:33/Joe
+Contact:  Cupertino Ops, L.T. Smith, (408)446-7705, System 36
+
+Symptom:  PJ not running.
+          Tried "TAUX PJ:36", but job logged out.
+
+Solution: Ran PAM under (JMS).  Could not MASQUE as PJ because both (XEXEC)
+          and (MPL) were wiped out.
+
+26-May-86 08:45/Joe
+Symptom:  Operations restored directories MPL and XEXEC and reloaded C36.
+          PJ not running again.
+
+Diagnosis: PAM.LOW and PAM.SHR had no license.
+
+Cure:     Set WC,OP,SY,ST,JL,AC,WF.
+25-May-86 03:15/Osman
+Contact:  Cupertino Ops, Dave X, (408)446-7705, System C26
+
+Symptom:  During ALL-FILES system crashes storing (BILLING10)
+
+Solution: Found a bad file 052086.SAT which was crashing system.
+          Deleted file and oper restored a good copy of it from backup.
+          Operation ran FULL DSKCLN ok. System up ok and continuining
+          ALL-FILES without any problem.
+
+Note:     This is the third accorance of this same problem. Something
+          strange happinning, we should look into it.
+
+02-May-86 23:45/Osman
+Contact:  Fremont, Operations, Sharon Marcatt, (415)498-2588, F58
+
+Problem:  Operation couldn't change the oper password.
+
+Solution: When I tried to change it by login into C34 and running
+          passwo it worked for me. So don't know why it didn't work
+          for operation.
+
+02-May-86 21:45/Osman
+Contect:  Fremont, Operations, Sharon Marcatt, (415)498-2588, F58
+
+Problem:  Spool doesn"t run. Tried to fixit with "SPLFIX" and
+          by other means without any success. Sent mail to Dennis
+          to look at it monday since he is been looking at
+          spool problems.
+
+
+26-Apr-86 19:00/Osman
+Contect:  CUPC Operation, Larry X, (408)446-7705, System C57
+
+Sysmptom:  During a scheduled ASP rebuild, ops were running into numerous
+           problems. Like Missing or Inconsistante pack set id. How to
+           restart the ASP restore if system taken down or crashes in the
+           middle etc. I was on the phone all afternoon and evenning off
+           and on helping them continue with ASP restore.
+
+26-Apr-86 11:46 and 12:15/Carl
+Contact:  CUPC Operations, Steve Carrothers, (408)446-7705, System C26
+
+Symptom:  System crashes attempting all-files with TITO.  Last user done
+	  was (BETATESTINT).  Assumption was that a file in BETATESTINT
+	  was bad.  Checked with Osman since similar problem occurred on
+	  13-Apr-86, system 26.
+
+Problem:  File 041486.SAT in (BILLING10) was bad.  File could be looked
+	  at, but not read completely.  CKSUM and copy failed & crashed
+	  the system.
+
+	  Examined file with TSTSUP.  File has a hole in it an otherwise
+	  appears to be normal.  These files should not have holes in them!
+	  Apparently something is deleting a page without updating all the
+	  proper file-system tables and thus a hole in this file seems to
+	  be causing a crash.
+
+Solution: The file was marked bad by hand using TSTSUP and this prevents
+	  TITO from attempting to put it on tape.  The file was renamed to
+	  (CRASH:26) for further examination.
+
+
+12-Apr-86 11:00/Osman
+Contact:  Cupertino Ops, Fred Lloyd, (408)446-7705, System C36
+
+Symptom:  Many disk errors..RIBs, HDEVs. System had a bad disk drive.
+
+Solution: Operation wanted to make sure the file system was OK before
+          running FULL DSKCLN. Ran DSKCLN in checking mode ok.
+
+12-Apr-86 06:00/Osman
+Contact:  Cupertino Ops, Fred Lloyd, (408)446-7705, System C26
+
+Symptom:  During ALL-FILES system crashes storing (BILLING10)
+
+Solution: Found a bad file 040286.SAT which was crashing system.
+          Deleted file and oper restored a good copy of it from backup.
+          Operation ran FULL DSKCLN ok. System up ok and continuining
+          ALL-FILES without any problem.
+
+11-Apr-86 20:00/Osman
+Contact:  Cupertino Ops, Carlos X, (408)446-6301, System D56
+
+Symptom:  SPOOL, Printing job for user (NET3) log the oper job running it.
+
+Problem:  By the time I check the file it was gone. Don't know what
+          happened to the file.
+
+30-Mar-86 10:18/JMS
+Contact:  Fremont Ops, Elisha Padilla, (415)498-2588, System 28.
+
+Symptom:  SPOOL not running, SPLFIX gets a fatal error on file SPOOL.GBK
+        Renaming files, wait...
+        LOOKUP failed for (SPOOL)SPOOL.GBK.
+        Fatal error.
+        Enabling SPOOL . . . Enabled.
+         Can not continue !
+        Please call the TYMCOM-X Support Line : (408) 446-6709
+
+Diagnosis: SPLFIX had created SPOOL.GNW, SPOOL.FNW, and SPOOL.MNW.  The files
+        SPOOL.MBK and SPOOL.FBK were dated 28-Feb-86 but SPOOL.GBK did not
+        exist (maybe DSKCLN deleted it).  SPLFIX thought it needed to find
+        this BAK file just so it could delete it.
+
+Cure:   "COPY SPOOL.GDF,SPOOL.GBK", "RUN (UTIL)SPLFIX".  Done.
+
+Note:   Carl and I both agree that this is not really a hotline problem.
+        Maybe we need another policy for this kind of support on weekends.
+        Anyway, SPLFIX needs to be changed so that it does not use the old phone
+        number.
+24-Mar-85 23:41/JMS
+Contact:  Cupertino BLDG C, OPS, Karen, (408)446-7705, Systems 22,23,29,35,36,70
+
+Symptom:  DSKCLN interlock failed when system reloaded.
+
+Diagnosis: INITIA version 22 TELECOPYd to SYS, did not have enough license.
+
+Cure:     Brought up C35 MANUAL, put OP,SY,ST,JL on INITIA.SAV, told Karen and
+          Osman to do the same to the others when they are ready.
+14-Feb-85 18:30/JMS
+Contact:  Cupertino BLDG C, OPS, Debbie Hitower, (408)446-7705, System C36
+
+Symptom:  DSKCLN stopcode FILUUO(042522) at FUNM+6 reading LUD.SYS[1,4]
+          Ran FULL DSKCLN, it reported "FILE 1,1.UFD[1,1] BAD DATA IN RIB"
+
+Action:   Brought up system MANUAL, ran DSKCLN in check mode, no errors.
+          Brought up system to run FULL DSKCLN, got BAD DATA again.
+          Brought up system READONLY, ran TSTSUP, RIB looks fine.
+          Set 1B17 in STATES, tried running DSKCLN, system answered.
+
+          May be an intermittant disk read problem, system is now up.
+
+22-Jan-85 00:49/JMS
+Contact:  Fremont, Jim Wallace, (415)498-2588, System F58
+
+Symptom:  SIMUUF on 60116B.DMT[21477,205635] UUOID=1,,3 WD=200,,213127
+
+Problem:  ?
+
+Solution: Renamed to 60116B.BAD and restored good file from tape.
+
+21-Jan-85 23:01/JMS
+Contact:  Cupertino BLDG C, OPS, Debbie, (408)446-7705, System C35
+
+Symptom:  "TUMS error", Job stopcode UUOXWL "UUO exit with locks outstanding"
+          during RELEAS uuo when user MAIL ran LOGOUT.  Four times since 9pm.
+          Stopcode CRASH (177777 in 30) as a side effect.
+
+Problem:  In all cases the job running was logged in as MAIL.
+          (MAIL)MAILER.SAV was created at 17:30 today, just before crashes start
+
+Solution: Renamed (MAIL)*.SAV to *.SV until Bill Soley looks at the error log.
+
+08-Dec-85 14:00/Osman
+Contact:  Cupertino BLDG C, OPS, Steve, (408)446-7705, System C35
+
+Symptom:  System would not stay up.
+
+Problem:  New Base.
+
+Solution: Maintenance found bad terminator on new base.
+
+02-Dec-85 06:40/Osman
+Contact:  Fremont D.C. OPS, Wallace, (415)498-2588, System F58/F74
+
+Symptom:  F58 Dies right before DSKCLN starts to run.
+          F74 New Base would not get date and time from SUP.
+
+Problem:  F58 Reloaded base...Base code has problems & people aware of it.
+          F74 Found a bad disk, moved pack, system up ok.
+
+17-Nov-85 17:34/JMS
+Contact:  Cupertino BLDG C, OPS, Karen, (408)446-7705, System C57
+
+Symptom:  System dies in ONCE complaining about unit 15 off-line due to hardware
+          errors, logical unit 5 missing from DSKB.  Operations called for
+          software support in case problem was the same as "inconsistent pack
+          set id".
+
+Problem:  Advised them that problem sounded like hardware, and to try to the
+          disk on a different drive.  Hardware called in.
+
+Solution: Drive had a bad plug.  System answered at 18:49.
+24-Aug-85 10:15/Osman
+Contact:  Fremont Liberty, OPS, Coleman, (415)794-2583, System X930
+
+Symptom:  While running TITO tape drive got HUNG, couldn,t assign
+          tape drive again to continue the job.
+
+Problem:  I am not sure why this happens.
+
+Solution: Takeit would hang trying to kill the job which was running
+          the TITO. Helped oper to reload the system manualy to clear
+          the problem.
+
+17-Aug-85 11:00/Osman
+Contact:  Cupertino BLDG C, OPS, Steve C., (408)446-7705, System C29
+
+Symptom:  (SYS)DUL.SYS bad, can't do SYS, DIR etc.
+
+Problem:  System was having Disk problem(many HDEV errors) when system
+          was taken down to fix the disk and ran FULL DSKCLN
+          (SYS)DUL.SYS was marked bad, helped oper to fix the file.
+
+Solution: Maintenance fixed the disk drive.
+
+
+17-Jul-85 00:30/Osman and 02:30/Osman
+Contact:  Cupertino BLDG A OPS, Cindy, (408)446-6301, System C22
+
+Symptom:  [1,1]UFD RIB DATA ERROR, Can't bring system up.
+          Also CHKPNT fails to run.
+
+Problem:  Determined that a bad memory sector was cousing the
+          UFD RIB ERROR. Helped on site FE to isolate the problem.
+
+Solution: Deselected the bad memory sector and for the CHKPNT,
+          (UN1)071785.SAT had rib error, deleted the file.
+
+
+}i0-Jun-85 18:30/Osman
+Contact:  Cupertino BLDG A OPS, Keith, (408)446-6301, System C897
+
+Symptom:  CHKPNT Keeps dying.
+
+Problem:  User (UN1) Disk Quota exceted, couldn't write accounting
+          file.
+
+Solution: Deleted couple of old files so that CHKPNT could be run.
+          Suggested operation to store all the files under (UN1)
+          and delete all the files except last months accouting files.
+30-Jun-85 18:00/Osman&Carl
+Contact:  Cupertino BLDG C OPS, Jaennine, (408)446-7705, System C33.
+
+Symptom:  You can't login to the system. You get "Host out of port"
+          message. Same thing is happenning on F30 also.
+
+Problem:  Suspect Base.
+
+Solution: Interm solution has been to retake the node or reload it.
+
+28-Jun-85 19:15/Osman&Carl
+Contact:  Fremont D. C. OPS, Karen W., (415)498-2588, System F30
+
+Symptom:  You can't login to the system. You get "Host out of port"
+          message.
+
+Problem:  Suspect Base hardware, suggested running base memory diag
+          and reloding the base code.
+
+Solution: Reloaded base code and problem appears to be gone.
+
+23-Jun-85 17:10/Osman
+Contact:  Cupertino BLDG C OPS, Jeannine, (408)446-7705, System 55
+
+Symptom:  BPA4 Hang during All-Files storing (FTMAGNUM)MGRG.HGH.
+          Even moving pack from one drive to another didn't resolved
+          the problem. Couldn't copy the file, hangs the drive.
+
+Problem:  File (FTMAGNUM)MGRG.HGH was marked bad (HRE). Problem is
+          either a bad spot on pack and/or a bad file.
+
+Solution: Renamed file (FTMAGNUM)MGRG.HGH to (FTMAGNUM)MGRG.BAD
+          and asked operator to restore the file from All-Files,
+          since the creation date on the file was Aug 31,83.
+27-May-85 05:25/Carl (via Craig)
+Contact:  Cupertino BLDG C OPS, Tom, (408)446-7705, System 36
+
+Symptom:  In trying to rebuild system 36's disk, the FILES command:
+          "CHANGE SWAP" was unrecognized by the monitor.
+
+Problem:  None.  All references to "SWAPPING" have been removed from
+          the operating system as of the P034/L release.  Apparently the
+          current mini-manuals still reflect the commands as of P034/K.
+          The current rebuild was being done by P034/N10.
+
+Solution: None required.  Tom had continued the restore while awaiting
+          an answer from software support.  I called Tom and explained
+          that the SWAPPING commands were gone and no longer needed and
+          that everything was proceeding correctly.  He plans to check
+          the software release memos and let me know if this tidbit of
+          information just slipped through the cracks.
+
+15-May-85 20:15/Osman
+Contact:  Cupertino BLDG A OPS, Mike Silva, (408)446-6301, System C22
+
+Symptom:  TITO can't do "look ups", System prints ppn insted of username.
+
+Problem:  System had RIB and HDEV error. File DUL.SYS had bad rib
+          pointers.
+
+Solution: Restored latest copy of DUL.SYS from all-files tape.
+
+
+12-May-85 16:20/Carl
+Contact:  Cupertino OPS, Mike (408)446-7705, System C36
+
+Symptom:  DSKCLN would not run, --NO LUD--, many rib errors were
+          reported on BPA3: (E1), pack moved to (C2) but system
+          would not come up, DSKCLN et al.
+
+Problem:  Initial drive (E1) suspect.  System scheduled for TM this
+          midnight for checkout of all drives involved.  Rib errors
+          caused (SYS)LUD.SYS to be clobbered.
+
+Solution: Brought system up MANUAL with REFLAG/-1 and DSKCLN ran ok
+          in checking mode, reported LUD bad and MFD page use count
+          incorrect.  Restored (SYS)LUD.SYS and brought system up.
+          Returned system to CUPC OPS and haven't heard further of
+          any other major errors.
+06-May-85 01:00/Osman & Carl
+Contact:  Cupertino BLDG A Operation, (408)446-6301, System C22
+
+Symptom:  System crashes with EXCMPE every couple of hours and
+          TELECOPY wouldn't work.
+
+Problem:  Problem is not solved yet but identified after spending
+          many hours to isolate it. Problem appears to be a system
+          configuration mis-match like FCWDS, RPORTN etc. numbers
+          not beeing correct. System would crash with /N10 cut for
+          C22 and old V22 /K-13 monitor.
+
+Solution: System running OK with C34's /K-15 monitor untill we cut
+          a /N10 monitor with the correct configuration.
+
+04-May-85 11:00/Osman
+Contact:  Cupertino OPS, Sue Pal (408)446-7705, System C29
+
+Symptom:  SYSTAT, RPG etc. doesn't work and/or gets ILLINS.
+          Prior to the failure job 1 got error and stop running
+          which was PJ.
+
+Problem:  Could not do much to check the system, suggested
+          recycling the system.
+
+Solution: After recycling the system it was OK.
+
+
+02-May-85 18:00 and 20:15/Osman
+Contact:  Cupertino OPS, Mike Stubb (408)446-7705, System C33
+
+Symptom:  Most everything comes out of ttys had garbage.
+
+Problem:  System was seeing two BPA0 ID plug, should have been
+          BPA0 & BPA3. After fixing BPA problem system was still
+          out putting garbage. Tried recycling the system but it
+          would die with "Boots loaded" right after start running
+          DSKCLN, suspected hardware problem. Turned over to
+          Maintenance to check the hardware.
+
+Solution: Maintenance found a bad CPU module and drive. System
+          up without any problem.
+
+
+17-Mar-85 01:30/Osman
+Contact:  Cupertino OPS, L.T. Smith (408)446-7705, System C26
+
+Symptom:  BAD SAT After running FULL DSKCLN.
+
+Problem:  Earlier BPA10 was hung, OPS tried to pop the ID plug
+          to get the system going, but wasn't successful. So took
+          system down to run FULL DSKCLN and got the message
+          BAD SAT don't bring system up for users.
+
+Solution: Ran DSKCLN in checking mode was OK, then ran DSKCLN in
+          Fixing mode was OK also. What ever the problem with the
+          Disk drive (BPA10) is gone.
+
+09-Mar-85 23:15/Carl
+Contact:  Cupertino OPS, Mike (408)446-7705, System C35
+
+Symptom:  LOGINN.SHR file found bad by DSKCLN, can't login.
+
+Problem:  File (SYS)LOGINN.SHR was bad by DSKCLN.  Needs to be
+          restored from the last all files tape via TITO.
+
+Solution: Bring system up setting REFLAG and coming up MANUAL.
+          This give the first job to login all the license, then
+          the file can be restored by TITO.
+
+
+16-Feb-85 01:30/Osman
+Contact:  Cupertino OPS, Steve C. (408)446-7705, System C34
+
+Symptom:  Can't set oper status.
+
+Problem:  File (SYS)DRWSPR.EPO didn't have WC license.
+          Every time (SSPAMBIN)PSWUPD ran to update the DRWSPR.EPO
+          file it would take the WC license from it.
+
+Solution: Gave WC license to (SSPAMBIN)PSWUPD, it only had WF before.
+
+
+11-Feb-85 22:30/Carl (Paged at 22:00)
+Contact:  Dallas OPS, Tyrone Hill, (214)637-7435, System 54.
+
+Symptom:  Could not LOGIN.   (LOGINN.SAV not found).
+
+Problem:  Received some SAT and RIB failure messages on the CTY and
+          started having problems.  Had TCM Dallas look at the hardware
+          and found a bad controller.  Fixed problem and system could
+          not run DSKCLN, could not LOGIN in MANUAL mode.
+          Apparently, the disk structure was destroyed somehow, SYS
+          and other directories, probably even the MFD were clobbered.
+          The system appeared as if a REFRESH was done.
+
+Solution: Had OPS rebuild the system from the last night's ASP tapes and
+          that day's incremental backup tapes.
+13-Jan-85 14:00/Osman
+Contact:  TCM Fremont, Dale, (415)498-2588, System F74
+
+Symptom:  System wouldn't stay up more then 10 to 45 mins.
+
+Problem:  Suspect MEMORY.
+
+Solution: Suggested running system W/O interleaving and S3 deselected.
+          System stayed up running with the above configuration.
+
+16-Dec-84 23:50/Osman
+Contect:  Cupc Operation, L.T. Smith, (408)446-7705, System C34.
+
+Symptom:  User complain about Magnum programs getting errors.
+
+Problem:  Bad file in (MAGNUM)MAGNSR.SHR
+
+Solution: Copied the file & custumer said everything ok after that.
+10-Dec-84 06:00/Osman
+Contact:  Cupc Operation, L.T. Smith, (408)446-7705, System C39.
+
+Symptom:  Logical unit 7 missing from structure.
+
+Problem:  A faulty disk drive not recognizing the pack.
+
+Solution: Move the pack to spare drive. System came up ok.
+20-Oct-84 09:30/Osman
+Contact:  Cupc Operation,L.T. Smith,(408)446-7705,System C34.
+
+Symptom:  During a rebuild, can't get TITO from tape.
+
+Problem:  Bad or wrong density TITO tape.
+
+Solution: Go over with OPER the procedure of brining the system
+          up to where start restoring The All FIles with TITO.
+
+16-Oct-84 23:00/Osman
+Contact:  Valley Forge Operation,??????,(215)666-9663,System V22.
+
+Symptom:  After an error from source pack, Pakcopy will hang.
+
+Problem:  Scratch on pack such that Pakcopy can't read to continue.
+          This is just a guest.
+
+Solution: Suggested to do an ASP dump first and then swap the bad pack
+          and rebuild system from ASP.
+13-Oct-84 22:50 /Carl
+Contact:  Dallas OPS, Lynda Burke, (214)637-7435, System 65.
+
+Symptom:  Job (PJ)PAM would not run.  It was started again and again
+          throughout the entire last shift.  Every time, it would log
+          itself out after about 5 minutes with no apparent reason.
+
+Problem:  File (PJ)JOB001.HGH had a RIB error.  PAM could not run the
+          job and thus logged itself out without any proper notification
+          of any problem.  (This ought to be fixed!!!)
+
+Solution: Tried running (UTIL)GOPJ which is the same procedure followed
+          by operations.  Same result.  Logged in as PJ and immediately
+          found a RIB error on file (PJ)JOB001.HGH which is one of the
+          numerous "jobs" that PAM periodically runs.  Deleted the file
+          with DIRIT ["Delete (PJ)JOB001.HGH/BAD"] and called operations
+          to have them restore the file from the last all-files tape.
+
+13-Oct-84 19:55 /Carl
+Contact:  Dallas OPS, Doug Corrales, (214)637-7435, System 56.
+
+Symptom:  System hung.  98% Frecor shown as used, kept getting the
+          message "?TTYnnn not available" when attempting to LOGIN.
+
+Problem:  Ran out of free core on the system.  System HUNG as above.
+
+Solution: Called Dallas OPS and specified directly that a core dump
+          was to be taken when the system reload was attempted.  (Was
+          informed later that no dump was taken!)  They brought the
+          system up on /K and sent mail saying that the system would
+          be brought up on /N after sunday morning's ASP dump.
+
+13-Oct-84 9:11 /Carl (was paged at 11:00)
+Contact:  CUPC OPS, LT Smith, (408)446-7705, System 57.
+
+Symptom:  System file was garbled after completion of ASP restore.
+          The file was marked with a HRE and needed to be restored
+          from tape.  However, the file bad file didn't go away.
+
+Problem:  File FORDDT.HLP somehow got garbled and was restored from
+          tape.  The old file named FORD$T.??? still exists and cannot
+          be deleted by OPER.  Needs attention.
+
+Solution: Logged in and cleaned up the file and the directory.  Sent
+          mail to OPER describing what was done.
+
+13-Oct-84 8:40 /Carl (was paged at 11:00)
+Contact:  Fremont OPS, Bonnie, (415)498-2588, Batch System errors.
+
+Symptom:  Error messages printed out on batch terminal during the past
+          two shifts.  Cannot get any batch request information.
+
+Problem:  probably a 940 batch system problem with SLVSUP or something
+          else.  Not a PDP-10 operating system problem.
+
+Solution: I told Bonnie to call BLDG A and ask the 940 operators to
+          check things out.  This is not a PDP-10 problem and I should
+          not have been called in the first place.
+
+13-Oct-84 4:30 /Carl
+Contact:  Dallas OPS, Roy, (214)637-7435, System 56.
+
+Symptom:  System down unexpectedly.
+
+Problem:  System had crashed.  The wrong monitor was loaded by the
+          operator, so they took the system back down to reload the
+          correct monitor.
+
+Solution: Operator Error, nothing to do.  System back up running the
+          current monitor, P034/N until further notice.
+
+01-Oct-84 8:15 /Carl
+Contact:  Dallas OPS, Tom Marconi (214)637-7435, System 56.
+
+Symptom:  Cannot log in.  JOB CAPACITY EXCEEDED message from the
+          monitor with less than 17 jobs on the system.  In fact,
+	  logging a job out does not allow another to log in.
+
+Problem:  Monitor was patched incorrectly to restrict the number
+          of logins.  The patch was intended to replace the
+	  AOBJN pointer [-jobs,,1] with [-70,,1] and was installed
+	  incorectly as [70,,1] ... OOPS.
+
+Solution: Tom Marconi was directed as to how to patch the running
+          monitor correctly.  Using OSMAN's OPER password, MARCONIT
+	  patched the correct location to [-70,,1].  The system was
+          then back to normal.
+
+24-Sep-84 8:15 /Osman, 9:15 /Carl
+Contact:  Operations CUPA, (408)446-6301, System C897.
+
+Symptom:  Cannot bring system up.  DSKCLN reports bad HOM page in
+          the file HOME.SYS on unit 1.  Same message occurrs when
+          running DSKCLN in checking mode.
+
+Problem:  Actual problem may have been a bad copy of DSKCLN.  When
+          a fresh copy of DSKCLN was tried, the problem disappeared.
+          Trying the (SYS) copy again produced the problem.
+
+Solution: [Referred problem to Carl, to check HOME.SYS with TSTSUP].
+          Replaced the (SYS) copy with the new copy and reloaded the
+          system from tape.  [BOOTS from disk still not working!]
+          Had operations run a FULL DSKCLN, no other reported errors.
+
+23-Sep-84 14:00 /Osman, 17:10 /Carl
+Contact:  Operations CUPA, Ruth (408)446-6301, System C897.
+
+Symptom:  System crashed with APA2 Hang massege, tried to
+	  bring the system up 2 or 3 times got the same
+	  massege.
+
+Problem:  TCM found drive 2 to be bad and had to replace the
+	  unit. Of course  replacing the unit required rebuilding
+	  the system from All Files tapes.
+
+Solution: Replaced disk drive unit 2 and formated the pack.
+	  Rebuild system from all file tapes.
+22-Sep-84 11:40 /Carl
+Contact:  Bonnie (415)498-2588, System F74.
+          Dennis Moulton (408)730-0282.
+
+Symptom:  Directory, Rename and Delete commands for username (COLNET)
+          produce an INSUFFICIENT CORE message.
+
+Problem:  DIRIT runs out of low-seg memory while building the internal
+          tables necessary for doing directory/file functions.  The real
+          problem is that the use has too many file in his directory for
+          DIRIT to handle.  Fix is to re-link DIRIT as lowseg only using
+          DEC's LINK program and the /SEG:LOW switch (or :.low. ???).
+
+Solution: First performed an UNDELETE/PURGE command to see if there
+          were any .TMP files "soft-deleted" by DIRIT.  This got rid
+          of 30,000+ pages and lots of files.  DIRIT now worked on
+	  this user's directory and I logged off.  LOGOUT took 2 1/2
+	  hours to delete almost 8,000 .TMP files which hadn't been
+          deleted previously.  UNDELETE took 1/2 hour to purge the
+	  first set, so a total of 2 hours spend deleting files has
+	  solved this problem.
+
+16-Sep-84 12:15 /Carl
+Contact:  Mike Suds (408)446-7705, System 33.
+
+Symptom:  Could not change "network password" for username OPER.
+          PASSWORD version 40 kept returning with a timeout while
+          waiting for response from the CUD.
+
+Problem:  This is really a network problem, not a TYMCOM-X problem.
+          The CUD is on system 1, and either something is wrong with
+          the MUD/CUD interface or the system (1) is just running
+          too slow.  Anyway, there's nothing we can do to solve the
+          problem.
+
+Solution: Have them call BLDG A and check on any problems with system 1,
+          and/or call their manager, Gary Perez, to decide what to do.
+
+01-Sep-84 09:00 /Osman
+Contact:  Bill Wood(314)895-2503, Mallinckrodt, System 169.
+
+Symptom:  Failure running Magnum job.
+
+Solution: Looked for disk errors and bad files etc. Couldn't find
+	  anything wrong but magnum still failed. Suggested
+	  recycling the system with FULL DSKCLN. After DSKCLN
+	  ran everything is OK.
+
+
+21-Aug-84 04:25 /Carl
+Contact: Fred Llyod, CUPC, System 36 (408) 446-7705
+
+Symptom:  Operations brought the system up forcing a FAST DSKCLN
+          and received the error message from DSKCLN:
+
+            File 1,1.UFD[1,1] read error for RIB
+            Critical file damage, etc.
+
+          I ran DSKCLN in checking mode and it reported problems
+              on drives 0 and 3 - RIB ERROR
+              on drive 0 - BAD RETRIEVAL POINTER
+
+Problem:  Memory was cousing the problem.
+
+Solution: After memory was fixed, Ran full DSKCLN, got bunch of bad
+          files deleted and restored files, all OK after that.
+
+12-Aug-84 17:00 /Osman
+Contact:  Paul Miller (Dallas), System 25 (214) 637-7435
+
+Symptom:  System keeps crashing during the rebuild from ALL FILES.
+
+Problem:  Possable memory problem and/or procedurel problem.
+	
+Solution: While talking with operator to isolate the problem, T/M
+          decited to reconfigure memory and restart rebuild from
+          start. Everything was OK after that.
+
+12-Aug-84 13:40 /Carl (responded to 12:30ish call)
+Contact:  L.T. (CUPC), System 29 x7705
+
+Symptom:  ASP gives "DSKCLR ERROR" message and will not permit an ASP
+          dump to be taken.
+
+Problem:  ASP / Monitor was changed sometime during /L development to
+          disallow a simple DSKCLR and then an ASP dump in order to make
+          sure the file structure, et al is intact.  This forces a reload
+          before an ASP dump can be performed.
+
+Solution: Have operations change their procedures.  Reload and come up
+          under MANUAL before starting the ASP dump.
+
+
+06-Jul-84 14:00 /Osman
+Contact:  Mike Stubb (CUPC), System 26 x7705
+
+Symptom:  System hung in accounting wait due to CHKPNT failure.
+
+Problem:  CHKPNT failure, accounting shutting down due to running out
+          of disk space.  CHKPNT never restarts accounting once it stops.
+
+Solution: Recycle the system.  (Restarted CHKPNT)
+
+Status:   Completed by Osman.
+
+
+03-jul-84 9:00 /Osman
+Contact:  Jeannine (CUPC) x7705, ref system 33
+
+Symptom:  Can't run DSKCLN, Can't login.
+          ?Initialization failure job DSKCLN NO LUD
+          ?LOGINN not found.
+	  ?SYSTAT not found.
+
+Problem:  (SYS)LUD.SYS had been clobbered and needed to be restored.
+	  Due to air-conditioning problems, some disk problems seem
+	  to have caused "device errors" on a few files. (DISK went
+	  off-line, etc.)  SYSTAT.SHR, RPG.SHR, LOGINN.SHR seemed
+	  bad, but after a full DSKCLN, only LUD.SYS and SYSTAT had
+	  to be replaced.
+
+Solution: Restore LUD.SYS and telecopy SYSTAT.SHR from another system.
+
+Status:   Completed by Osman. (Telephone help from Carl).
+
+
+03-July-84 8:48 /Wilkes
+Contact:  Jeannine Reid, CUPC Operations, system 33
+
+Symptom:   Disk BPA4 off line.  brought system down and moved pack
+	   to another drive.  Tried to bring system up and run full
+	   dskcln.  loses.  gives error message: initialization failure
+	   job dskcln no lud.  brought system up manual, could not login
+	   due to no lud.
+
+Solution:  ??????????
+
+Status:	   hardware folks have machine to run diagnostics as of
+	   9:00 Tues 3-july-84   i will try to find Osman or Carl.
+
+14-Jun-84 21:30 /Lois
+Contact:  Debbie Hightower, CUPC Operations, ref system 24
+
+Symptom:  No one can log into 24, get "frame capacity exceeded" even
+          though only OPER is logged in
+
+Solution: (temporary) had them "fall back" to the K-10 in backup.sav
+          which, of course, fixed the immediate problem.  This needs
+          further investigation as to possible L relation
+
+Status:   Fixed by operations reloading as advised.
+
+
+11-Jun-84 12:00 /Lois (passed to Carl)
+Contact:  Ken Brinton (St. Louis), system 169 "MA" /L21
+
+Problem:  System times out after approx 1-2 minutes and falls through
+          the PICON timeout check which Dave Sutton added.  When this
+          code is patched out with DDT, the system hangs instead.
+
+Symptom:  The system will not stay up long enough to do anything, and
+          due to a head crash which started this whole ordeal, there
+          isn't even a file system to blame.  All indicators point to
+          the hardware, but DEC affirms that they cannot find anything
+          wrong.
+
+Status:   Two new tapes /K with/without a printer have been  shipped to
+          the site.  More later.
+
+11-Jun-84 10:00 /Lois
+Contact:  Brad; Fremont Operations, ref system 30
+
+Symptom:  SYSTAT commands give ?TRANSMISSION ERROR
+
+Solution: Copied (sys)systat.shr and (sys)systat.low to same file names
+          (after setting license).  (This shouldn't have been a hot line
+          call!)
+
+Status:   Fixed by Lois, mail to OPER
+
+
+10-Jun-84 21:16 /wilkes
+contact:  Cindy @dallas operations 214/637-7433  system 23
+
+symptom:  ?loginn not found
+
+problem:  system 23 apparently had disk prblems earlier, hardware - lost
+	  a pack, or something.  At any rate, there is no file system
+	  out there.  Operator is trying to bring system up to do an ASP
+	  restore  (bringing up "reflag"), but is unable to do so.
+
+solution: Operator claims to have followed procedure for starting a
+	  restore, and that it loses.  Hardware fault or operator
+	  error suspected.
+
+status:	  Hardware maintenance personnel on premises. 11-Jun-84 20:32
+
+follow-up: all-files restore done sunday night (10-jun).   as of 8:36
+	   11-Jun-84 (monday) the system was up and running.  I called
+	   Dallas at 8:00 monday morning (11-jun) and was informed that
+	   the problem was that the operator did not know the procedure
+	   for an ASP restore.  THIS SHOULD NOT HAVE BEEN A HOT-LINE
+	   CALL!  /wilkes
+
+05-Jun-84 14:00 /Carl
+Contact:  Gary Perez; Debbie @ Operati x7705, ref system 897
+
+Symptom:  The LIST command in SETOP reports 3-5 entries then gives
+          a complaint about an inconsistancy in the password file
+          and exits to EXEC level.  LIST command from top level in
+          SETOP (OPER name <CR>) shows all of the people managed
+          by PEREZG (CUPA,CUPC et al) without any problems.
+
+Solution: Since there was a question of the integrity of the file
+          (SYS)DRWSPR.EPO, I had them restore another copy of the
+          file from system 33.
+
+Status:   Completed by operations between 4:30 & 5:30pm.
+
+
+02-Jun-84 22:40 /Carl
+Contact:  Mike Silva, x6301,  ref system 897
+
+Symptom:  System 897, initialization failure with INITIA.
+
+Problem:  ?Initialization failure job DSKCLN NO LUD
+
+          (SYS)LUD.SYS had the wrong protection and thus could not be
+          read by INITIA at system startup.
+
+Solution: File should be protected ALL RD RD.
+
+Status:   Fixed by WRS 04-Jun-84.
+
+
+[End of (M33)HOTLINE.LOG]
+  .|@¬

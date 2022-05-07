@@ -1,0 +1,3 @@
+DR11C:  Fixed bug which caused block mode output header message to be dropped
+when block mode output requests were adjacent and interrupt activity was high.
+Also added comments to most of the code. JRG/18-oct-79

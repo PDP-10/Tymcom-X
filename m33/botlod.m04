@@ -1,0 +1,461 @@
+TITLE	BOTLOD for both KI and KL, absolute location 334000 (112K-2K)
+SUBTTL	Program to load BOOTS from IBM disks on an SA10 channel
+IF2,<PRINTX BOTLOD for KI (paper tape) and KL (DECtape)>
+
+COMMENT ~	Revision history for BOTLOD.
+
+V20  ??-???-??	Loads from KI paper tape, relocates itself into physical
+		addresses 774000-777777 on KI's with at least 256K of core.
+		BOOTS is 6 blocks long, starting at record 13 of track 0 cyl 0,
+		going to record 18 of track 0 cylinder 0.
+
+V20  24-JUN-76	BOOTS is now 7 blocks long, the 7th block is on record 0 of
+		track 1 cylinder 0 (an imbedded SEEK and SEARCH ID= was added).
+
+V20   2-JUN-78	No change in KI version, the KL version is loaded by KLCDP into
+		locations 334000-337000 (last 2K of unmapped core).
+
+xxx  10-DEC-85	Converted BOTLOD.M02 to use IFCPU macros.
+BOTLOD.M03	(Just to get a CREF listing.)
+
+V21  20-JAN-86	Rewrote BOTLOD for the 3650 project (7 pages per track).
+		Make KI and KL versions exactly the same, load into page 334.
+		Read all 3 pages (12 blocks) reserved for BOOTS into pages
+		335-337.  Use "READ MULTITRACK" so that then number of blocks
+		per track is irrelevant (controller will switch to next head
+		automatically).  Use two command lists: the first one tries
+		to read 3 pages, the second tries to read 12 blocks.
+
+~  ;End of COMMENT
+
+	T5=1+<T4=1+<T3=1+<T2=1+<T1=1>>>>;ACs 1-5
+	P= 17	;PDL
+	SA=16	;SA-10 number, 0 or 1
+	CH=15	;Channel address, 300-334 in multiples of 4
+	DU=14	;Disk unit, X'C0' to X'FF'
+	CL=13	;Pointer to command list
+	CM=12	;Command for disk
+
+	LOC	137
+JOBVER::EXP	<VERSIO=21>		;Version number of BOTLOD
+	RELOC
+
+	APR== 000	;CPU Arithmetic processor
+	PI==  004	;Priority interrupt system
+	SAX1==274	;First SA10 device code
+	SAX2==400	;Second SA10 device code
+	SABASE=300	;Base of block in absolute low core for SA10
+			;SABASE is set by DIP switches on the SA10
+
+;*;	BTSLEN=7*200	;BOOTS is 7 blocks long (= 1K - 128 words)
+
+;This entire program is read in READ-IN MODE on the KI, it is loaded from
+;a SAV format file by KLDCP on the KL.
+
+BTS000:	IOWD	BOTLEN,BOOTFI		;1st word of SAV file and paper tape
+
+	PHASE	340000-4000		;Put this in top 2K of unmapped core
+BOOTFI:	CONO	APR,200000		;BOOTS First Instruction = Reset I/O bus
+	CONO	PI,10400+1177		;Clear PI, off PI, off selected PI
+	MOVE	P,[IOWD PDLLEN,PDL]	;Set up stack
+	HRLZI	T1,SABASE		;SA-10 uses locations 300-337
+	HLRZM	T1,BASEA		;Reset base address
+	HRRI	T1,SASAVE		;Build BLT pointer
+	BLT	T1,SASAVE+37		;Copy current contents of 300-337
+;*;	MOVE	T1,[SASAVE,,BOOTS+1700]	;Old BOOTS wants it in these locations
+;*;	BLT	T1,BOOTS+1737		;These numbers are hardcoded in BOOTS
+
+;Try both SA10 device codes
+
+	MOVEI	SA,0			;Start with 1st SA10
+SALOOP:	XCT	BPCNI1(SA)		;Do CONI into T1
+	SKIPE	T1			;If nonzero,
+	 PUSHJ	P,SAFND			;Go check out this I/O device
+	MOVEI	T1,20			;SAX0 uses 300-317, SAX1 uses 320-337
+	ADDM	T1,BASEA		;Set base address for next SA10
+	SKIPN	SA			;Been here once already?
+	 AOJA	SA,SALOOP		;No, go try SAX1
+NOSA10:	HALT	.			;Could not find working SA10
+SUBTTL	Found an SA10, try all 4 channels on it
+
+;CONO commands to SA10
+	SET==  40	;Set a flag
+	GO==  400+SET	;Set GO flag for channel
+	SREQ==500+SET	;Request status for channel
+	CSTS==600	;Clear STATUS STORED bit for channel
+	SSTS==600+SET	;Set STATUS STORED bit for channel
+	CHN0== 00	;This command is for channel 0 (tape on TYMCOM-X)
+	CHN1== 10	;This command is for channel 1 (disk on TYMCOM-X)
+	CHN2== 20	;This command is for channel 2 (not used by TYMCOM-X)
+	CHN3== 30	;This command is for channel 3 (not used by TYMCOM-X)
+	PIA==   7	;Set PI Assignment
+
+;CONI bits from SA10
+	IE.0==40000	;Interrupt enabled for channel 0        (IE.3=4000)
+	GO.0== 2000	;GO is set for channel 0                (GO.3= 200)
+	SS.0==  100	;Status has been stored for channel 0   (SS.3=  10)
+	PIA==     7	;PI assignment in bits 33-35
+
+BPCNI1:	CONI	SAX1,T1		;Check if device responds
+	CONI	SAX2,T1
+BPCNO3:	CONO	SAX1,(T3)	;Set GO, STATUS, etc
+	CONO	SAX2,(T3)
+BPCNZ2:	CONSZ	SAX1,(T2)	;Check for status stored
+	CONSZ	SAX2,(T2)
+BPCNO2:	CONSO	SAX1,(T2)	;Check for status stored
+	CONSO	SAX2,(T2)
+RSET:	CONO	SAX1,400000	;Reset SA-10
+	CONO	SAX2,400000
+CHGO:	CONO	SAX1,440	;Set the GO flag for channel 0
+	CONO	SAX2,440
+CHCLR:	CONO	SAX1,600	;Clear channel 0
+	CONO	SAX2,600
+
+   DEFINE XOR(A,B),<<A!B>-<A&B>>
+
+;Found an SA10, SA has SAX number, 0 or 1
+
+SAFND:	MOVEI	T3,GO			;CONO bits for channel 0 GO
+	MOVEI	T2,SS.0			;CONI bit for STATUS STORED channel 0
+	MOVEI	CH,0			;Start with channel 0
+SAFND1:	HRRM	T3,CHGO(SA)		;Remember the GO command for this chan
+	TRC	T3,<XOR(GO,CSTS)>	;Change GO to CLEAR STATUS
+	HRRM	T3,CHCLR(SA)		;Remember the CLEAR STATUS command
+	TRC	T3,<XOR(CSTS,SREQ)>	;Change to REQUEST STATUS
+	MOVEI	T1,^D100000		;Loop counter
+	XCT	BPCNO3(SA)		;CONO SAXn,(T3) to request status
+	XCT	BPCNO2(SA)		;CONSZ SAXn,(T2) to check STATUS STORED
+	 SOJG	T1,.-1			;Not yet, wait a while
+	SKIPL	T1			;If we did not time out,
+	 PUSHJ	P,CHFND			;Go investigate this channel
+	ADDI	T3,CHN1-CHN0		;Increment channel number 0-3
+	LSH	T2,-1			;Shift CONI bit for next channel
+	CAIGE	CH,4			;Done all 4 channels?
+	 AOJA	CH,SAFND1		;No, try this new channel
+	POPJ	P,			;Yes, try next SA10
+SUBTTL	Found a working SA10 channel, CH has channel #, 0 to 3
+
+CHFND:	LSH	CH,2			;Get channel # * 4
+	ADD	CH,BASEA		;Get base address for this channel
+	MOVEM	T2,CHBIT		;Remember which bit to test for channel
+
+	MOVE	CM,[TIC,,NOPCMD]	;Transfer to no-op command
+	MOVEM	T1,(CH)			;Set CCW for this channel
+	MOVE	DU,NOOPD0		;NO-OP to first disk on this channel
+CHFN1:	MOVEM	DU,NOPCMD		;Store command
+	PUSHJ	P,STRTIT		;Start device
+	  JRST	CHFN2			;Device not responding
+	PUSHJ	P,UTFND			;Found working unit
+CHFN2:	CAMN	DU,MAXDEV		;Last device?
+	 POPJ	P,			;Yes, give up on this channel
+	ADDI	DU,<BYTE(8)0,0,1>	;No, increment unit number in 3rd byte
+	JRST	CHFN1			;Try next disk unit
+
+;Found a working disk unit.  Third byte of DU has unit number
+;SA=SAX#, CH=Channel base, CL=command list, CM=command
+
+UTFND:	LDB	T1,[POINT 8,DU,23]	;Get device address
+	MOVEI	CL,LIST1		;Start of command lists
+
+;Modify all 6+15 occurrances of FDISKA to be current device address
+
+UTFND0:	HLRZ	CM,(CL)			;Get LH of command
+	CAIN	CM,TIC			;Transfer in channel?
+	 ADDI	CL,1			;Yes, skip over it
+	DPB	T1,[POINT 8,0(CL),23]	;No, store new device address
+	ADDI	CL,2			;Point to next pair
+	CAIG	CL,NOPCM2		;Hit end of second list?
+	 JRST	UTFND0			;No, do more commands
+
+	MOVE	CL,[TIC,,LIST1]		;Set CL to point to start of list
+UTFND1:	MOVEM	CL,(CH)			;Tell channel where to go
+	PUSHJ	P,STRTIT		;Start channel and device
+	  JRST	UTFND2			;Some sort of error
+	MOVE	T1,BOOTS		;Check first word
+	CAMN	T1,BOOTFI		;Is it CONO APR,200000
+	 JRST	BOOTS			;All good.  Got start it
+UTFND2:	MOVE	CL,(CH)			;Get the initial Channel Command Word
+	CAME	CL,[TIC,,LIST1]		;First list?
+	 POPJ	P,			;No, second try failed also
+	HRRI	CL,LIST2		;Try second command list
+	JRST	UTFND1
+SUBTTL	Routine to start I/O on the channel and device
+
+;Bits returned from channel in SABASE+1
+	SELERR==(1B2)		;Select error - no control unit at this address
+	BSY==(BYTE (8)0,020)	;Control unit is busy
+	CUE==(BYTE (8)0,040)	;Control unit end
+	SM== (BYTE (8)0,100)	;Status modifier
+
+;Here to start I/O on an IBM disk
+
+STRTIT:	HRRZ	T3,CHCLR(SA)		;Get the CLEAR STATUS command
+	TRO	T3,SET			;Make it a SET STATUS command
+	XCT	BPCNO3(SA)		;CONO (T3) so CLR can follow GO
+	XCT	CHGO(SA)		;CONO to set the GO flag
+	MOVEI	CM,0			;No error bits seen yet
+STRT2:	XCT	CHCLR(SA)		;CLEAR STATUS
+	MOVEI	T3,^D100000		;Time out loop
+	MOVE	T2,CHBIT		;Get the bit to test
+	XCT	BPCNO2(SA)		;Wait for STATUS STORED bit
+	 SOJG	T3,.-1			; ...
+	JUMPE	T3,STRT4		;Timed out
+	CAIE	CM,0			;Previous BUSY status?
+	 HRLZI	CM,BSY			;Yes, make this one BUSY + new status
+	IOR	CM,1(CH)		;Get status word
+	TLNN	CM,BSY			;BUSY?
+	 JRST	STRT3			;No
+	TLNE	CM,SM			;BUSY and STATUS MODIFIER?
+	 JRST	STRT2			;Yes, wait for CONTROL UNIT END
+	TLNE	CM,CUE			;BUSY and CONTROL UNIT END?
+	 JRST	STRTIT			;Yes, restart
+STRT3:	TLNN	CM,175114		;Any errors?
+	 JRST	CPOPJ1			;No, give skip return
+	TLNE	CM,SELERR		;If it was a SELECT ERROR
+	 TRO	DU,<BYTE (8)0,0,7>	;Yes, skip rest of disk string
+STRT4:	XCT	RSET(SA)		;Reset the SA-10.
+	SKIPN	T3			;Timed out?
+	 MOVE	DU,MAXDEV		;Go to new channel
+	POPJ	P,			;Give error return from STRTIT
+CPOPJ1:	AOS	(P)			;And skip return for failure
+CPOPJ:	POPJ	P,
+SUBTTL	Command list for IBM 3330-II disks
+
+;Disk Page Number 1 is Head 0 Records 5-8 on 3330, Head 0 Record 2 on 3650
+;
+;DPN    3330      3650    Use
+;00   H0R01-R04   H0R1    IPL     IBM Initial Program Load
+;01   H0R05-R08   H0R2    HOM1    Primary HOM page
+;02   H0R09-R12   H0R3    BAT1    Primary BAT page
+;03   H0R13-R18   H0R4    BOOT1   First 4 blocks of BOOTS
+;04  H0R17/H1R2   H0R5    BOOT2   Two blocks on 1st track, two on 2nd track
+;05   H1R03-R06   H0R6    BOOT3   Last 4 blocks of BOOTS
+;06   H1R07-R10   H0R7    HOM2    Secondary HOM page
+;07   H1R11-R14   H1R1    BAT2    Secondary BAT page
+;10   H1R15-R18   H1R2    FEFS    Front-end file system on 2020
+;11   H2R01-R04   H1R3    BOOTKS  BOOTS on a 2020 here instead of DPN's 3-5
+
+  ;1st byte = mode for channel
+BYTMOD=72	;Send bytes to controller, ignore length error, CMD chain
+OFSMOD=BYTMOD+1	;Offset byte mode for SEARCH ID=
+WRDMOD=160	;Read words in natural mode, CMD chain
+NOXFER=240	;Don't transfer bytes to/from memory
+DHALT=200	;Halt device
+TIC=200000	;Tranfer In Channel = GOTO word
+
+  ;2nd byte = command to disk
+NOOP=3		;No operation (to test for SELECT ERROR)
+READ=6		;Read one record
+SEEK=7		;Position to cylinder, select head
+READMT=READ+200	;Continue on next track for next record
+SEARCH=61	;Search for ID=
+
+  ;3rd byte = device address
+FDISKA=300	;First TYMCOM-X disk address is X'C0'
+LDISKA=377	;Last  TYMCOM-X disk address is X'FF'
+
+NOOPD0:	BYTE	(8)NOXFER,NOOP,FDISKA	;NOOP for first disk address X'C0'=300
+MAXDEV:	BYTE	(8)NOXFER,NOOP,LDISKA	;NOOP for last disk address  X'FF'=377
+
+;Command list for disks formatted in pages (512 words = 2304 bytes)
+
+LIST1:	BYTE	(8)BYTMOD,SEEK,FDISKA	;SEEK
+	BYTE	(12)-6(24)H0R4		; to BIN 0, CYL 0, HEAD 0
+	BYTE	(8)OFSMOD,SEARCH,FDISKA	;SEARCH ID=
+	BYTE	(12)-5(24)H0R4		; for CYL 0, HEAD 0, REC 4 (DPN=3)
+	  XWD	TIC,.-2			;TIC if search fails
+	 BYTE	(8)WRDMOD,READMT,FDISKA	;READ
+	 BYTE	(12)-1000(24)BOOTS+0000	;1st page
+	 BYTE	(8)WRDMOD,READMT,FDISKA	;READ
+	 BYTE	(12)-1000(24)BOOTS+1000	;2nd page
+	 BYTE	(8)WRDMOD,READMT,FDISKA	;READ
+	 BYTE	(12)-1000(24)BOOTS+2000	;3rd page
+NOPCMD:	BYTE	(8)NOXFER,NOOP,FDISKA	;NO OP
+	BYTE	(8)DHALT		;End of command list
+
+;Command list for disks formatted in blocks (128 words = 576 bytes)
+
+LIST2:	BYTE	(8)BYTMOD,SEEK,FDISKA	;SEEK
+	BYTE	(12)-6(24)H0R13		; to BIN 0, CYL 0, HEAD 0
+	BYTE	(8)OFSMOD,SEARCH,FDISKA	;SEARCH ID=
+	BYTE	(12)-5(24)H0R13		; for CYL 0, HEAD 0, REC 13 (DPN=3)
+	  XWD	TIC,.-2			;TIC if search fails
+	 BYTE	(8)WRDMOD,READMT,FDISKA	;READ
+	 BYTE	(12)-200(24)BOOTS+0000	;1st block
+	 BYTE	(8)WRDMOD,READMT,FDISKA	;READ
+	 BYTE	(12)-200(24)BOOTS+0200	;2nd block
+	 BYTE	(8)WRDMOD,READMT,FDISKA	;READ
+	 BYTE	(12)-200(24)BOOTS+0400	;3rd block
+	 BYTE	(8)WRDMOD,READMT,FDISKA	;READ
+	 BYTE	(12)-200(24)BOOTS+0600	;4th block
+	 BYTE	(8)WRDMOD,READMT,FDISKA	;READ
+	 BYTE	(12)-200(24)BOOTS+1000	;5th block
+	 BYTE	(8)WRDMOD,READMT,FDISKA	;READ
+	 BYTE	(12)-200(24)BOOTS+1200	;6th block
+	 BYTE	(8)WRDMOD,READMT,FDISKA	;READ
+	 BYTE	(12)-200(24)BOOTS+1400	;7th block
+	 BYTE	(8)WRDMOD,READMT,FDISKA	;READ
+	 BYTE	(12)-200(24)BOOTS+1600	;8th block
+	 BYTE	(8)WRDMOD,READMT,FDISKA	;READ
+	 BYTE	(12)-200(24)BOOTS+2000	;9th block
+	 BYTE	(8)WRDMOD,READMT,FDISKA	;READ
+	 BYTE	(12)-200(24)BOOTS+2200	;10th block
+	 BYTE	(8)WRDMOD,READMT,FDISKA	;READ
+	 BYTE	(12)-200(24)BOOTS+2400	;11th block
+	 BYTE	(8)WRDMOD,READMT,FDISKA	;READ
+	 BYTE	(12)-200(24)BOOTS+2600	;12th block
+NOPCM2:	BYTE	(8)NOXFER,NOOP,FDISKA	;NO OP
+	BYTE	(8)DHALT		;End of command list
+
+H0R13: 	BYTE	(16)0,0,0(8)^D13	;BIN 0, CYL 0, HEAD 0, REC 13
+H0R4:	BYTE	(16)0,0,0(8)^D4		;BIN 0, CYL 0, HEAD 0, REC  4
+
+CHBIT:	EXP	SS.0		;Bit for STATUS STORED for channel 0
+BASEA:	EXP	SABASE		;Gets set to SABASE=300 or SABASE+20=320
+
+LITS:	LIT
+BOTLEN=.-BOOTFI			;Length of Exec mode BOTLOD
+BTSDAT:	DEPHASE			;End of BOTLOD
+BTS999:	JRST	BOOTFI		;Tell KLDCP to jump to first instruction
+
+	PDLLEN==20
+PDL=:BTSDAT			;Stack
+BTSEND=:PDL+PDLLEN		;End of BOTLOD data area
+	UNUSED==BOOTS-BTSEND	;Block of unused words on page 334
+
+BOOTS=:340000-3000		;BOOTS in unmapped pages 335, 336, 337
+SASAVE=:BOOTS-40		;Contents of 300-337 before BOTLOD started
+
+DEFINE PR(A,B),<IF2,<PRINTX [A B]>>
+	LALL
+	PR(Length of BOTLOD =,\BOTLEN)
+	PR(\UNUSED,words unused in page 334)
+SUBTTL	PROGRAM TO GIVE END OF TAPE MESSAGE
+
+BEL000:	IOWD	ENDSZ,PRLP
+	PHASE	1
+PRLP:	MOVEI	0,STR
+	HRLI	0,(POINT 7,0)
+PRLP1:	ILDB	17,0
+	JUMPE	17,PRLP		;AND OF STRING
+	CONSZ	TTY,20		;WAIT FOR NOT BUSY
+	  JRST	.-1
+	DATAO	TTY,17
+	JRST	PRLP1
+STR:	BYTE	(7) "G"-100,177,177,177,177
+	ASCII	/RELOAD TAPE..../
+	BYTE	(7) "G"-100,177,177,177,177,177,15,12,177,177,177,177,177,0
+	JRST	PRLP
+ENDSZ==.-PRLP
+	DEPHASE
+BEL999:	JRST	PRLP		;LAST WORD ON READ-IN-MODE TAPE
+SUBTTL	USER MODE PROGRAM TO PUNCH BOOT PAPER TAPE FOR KI-10
+
+PT==1	;PAPER TAPE PUNCH CHANNEL
+
+KL.SAV:	IOWD	BTS999-BTS000+1,BTS000	;Write it in SAV file format
+	0				;With JRST BOOTFI as jump word
+
+BOTLOD:	RESET				;START OF KI BOTLOD, PUNCH PAPER TAPE
+	MOVE	P,[IOWD PDLLEN,PDLX]
+	OUTSTR	[ASCIZ	/
+This version of BOTLOD works on IBM disks formatted in blocks or pages.
+
+For the F3 - There is no BOTLOD, use microcode loader.
+For the KS - Assemble KSDLOD and run KSFEFS to write BOTLOD in 8080 file.
+For the KL - BOTLOD.KL has been written to disk, it needs to go on a DECtape.
+For the KI - This program will punch a paper tape if the PTP is available.
+/]
+	OPEN	PT,[17
+		SIXBIT	/DSK/
+		XWD	0,0]
+	  JRST	NODSK
+	MOVE	T1,[SIXBIT /BOTLOD/]
+	MOVE	T2,[SIXBIT /KL/]
+	SETZB	T3,T4
+	ENTER	PT,T1			;Create DSK:BOTLOD.KL
+	  JRST	NODSK
+	OUT	PT,KL.SAV		;Output it in SAV file format
+	 SKIPA				;No errors
+NODSK:	  OUTSTR [ASCIZ /?Error writing DSK:BOTLOD.KL  /]
+	CLOSE	PT,
+	RELEAS	PT,
+
+	OPEN	PT,[10
+		SIXBIT	/PTP/
+		XWD	OBUF,0]
+	  JRST	NOPTP			;CAN NOT GET PTP
+	MOVE	T1,[SIXBIT /BOTLOD/]
+	MOVE	T2,[SIXBIT /KI/]
+	SETZB	T3,T4
+	ENTER	PT,T1			;IN CASE OF "ASSIGN DSK PTP"
+	  JRST	NOPTP
+	OUTPUT	PT,
+	OUTSTR	[ASCIZ /
+Number of copies to punch: /]
+NUMRD1:	MOVEI	T1,0
+NUMRD:	INCHWL	T4
+	CAIG	T4,"9"
+	CAIGE	T4,"0"
+	  JRST	WTLF			;FINISHED WITH NUMBER
+	IMULI	T1,^D10
+	ADDI	T1,-"0"(T4)
+	JRST	NUMRD
+
+	INCHWL	T4
+WTLF:	CAIE	T4,12
+	  JRST	.-2			;WAIT FOR END OF LINE
+	CAILE	T1,0
+	CAILE	T1,^D12			;SET SOME LIMITS ON TAPE SIZE
+	  JRST	BADNUM
+COPLP:	PUSHJ	P,FEED			;BLANK TAPE
+	MOVE	T2,[BTS000-BTS999-1,,BTS000]
+	PUSHJ	P,DUMPIT
+	SOJG	T1,COPLP
+	PUSHJ	P,FEED			;NOW SOME BLANK TAPE
+	MOVE	T2,[BEL000-BEL999-1,,BEL000]
+	PUSHJ	P,DUMPIT
+	PUSHJ	P,FEED
+	CLOSE	PT,0
+	STATZ	PT,760000
+	  JRST	PTPERR			;GOT AN OUTPUT ERROR
+	EXIT				;FINISHED
+
+NOPTP:	OUTSTR	[ASCIZ /
+?Device PTP is not available.  Run this program on a KI with paper tape punch./]
+	EXIT
+
+BADNUM:	OUTSTR	[ASCIZ /
+Number out of range, try again: /]
+	JRST	NUMRD1
+;BOTLOD BUFFERED OUTPUT ROUTINES
+FEED:	MOVEI	T3,0
+	MOVEI	T4,200			;SOME BLANK TAPE
+	PUSHJ	P,PTOUT
+	SOJG	T4,.-1
+	POPJ	P,
+PTPERR:	OUTSTR	[ASCIZ /
+PUNCH ERROR/]
+	EXIT
+
+PTOUT:	IDPB	T3,OBUF+1
+	SOSG	OBUF+2
+	OUT	PT,
+	  POPJ	P,			;ALL OK
+	JRST	PTPERR
+
+DUMPIT:	MOVE	T4,(T2)			;T2 HAS AOBJN POINTER
+	MOVEI	T5,6
+DUMPT1:	MOVEI	T3,0
+	LSHC	T3,6
+	TRO	T3,200
+	PUSHJ	P,PTOUT
+	SOJG	T5,DUMPT1
+	AOBJN	T2,DUMPIT
+	POPJ	P,
+
+PDLX:	BLOCK	PDLLEN
+OBUF:	BLOCK	3
+
+	END	BOTLOD	;KI-BOTLOD RUNS IN USER MODE TO PUNCH PAPER TAPE
+      

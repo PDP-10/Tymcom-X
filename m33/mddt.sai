@@ -1,0 +1,96 @@
+begin	"MDDT"
+
+require "(SAILIB)SAIL.DEF" source!file;
+require "(MPL)UUOSYM.SAI" source!file;
+require "(SAILIB)FRMRUN.REQ" source!file;
+
+redefine !CNSID = '43;
+
+string procedure GetSymbols( integer SYSID );
+!	find a monitor file with the specified symbols in it;
+begin	"GetSymbols"
+    integer Chan, Brk, Eof, FC,
+	Word, WordAdr, WordCnt, I, ConfigAdr;
+    boolean FoundIt;
+    string SOURCE;
+    open (Chan:=getchan,"DSK",'14,2,0, 0,0,Eof);
+    FC := 0;
+    FoundIt := false;
+    do begin "NextFile"
+	FC := FC +1;
+	case FC of begin	! try a bunch of places;
+	    [1] SOURCE := "(SYS)"&cv6str(SYSID)&".SAV";
+	    [2] SOURCE := "(M33)"&cv6str(SYSID)&".SAV";
+	    [3] SOURCE := "(SYS)SYSTEM.SAV";
+	    [4] SOURCE := "(SYS)NEWMON.SAV";
+	    [5] SOURCE := "(SYS)BACKUP.SAV";
+	    [6] SOURCE := "(SYS)OLDMON.SAV";
+	    else done "NextFile"
+	end;
+	lookup (Chan, SOURCE, Eof);
+	if Eof then continue "NextFile";! not there - skip it;
+	ConfigAdr := 0;
+	WordCnt := WordAdr := -1;
+	while not Eof do 
+	begin "NextBlock"	! read next IOWD block from .SAV file;
+	    Word := wordin (Chan);
+	    WordAdr := WordAdr + 1;! virtual address of block;
+	    WordCnt := WordCnt + 1;! words left in block;
+	    if WordCnt		
+	      then begin "DataWord"
+		if WordAdr = '137
+		    then ConfigAdr := !rh(Word);
+		if ConfigAdr then
+		    if ConfigAdr+!CNSID = WordAdr then begin
+			FoundIt := SYSID = Word;
+			continue "NextFile";
+		    end;
+	      end "DataWord"
+	      else begin "IOWord"
+		WordAdr := !rh(Word);
+		WordCnt := (Word ash -18)-1;
+	      end "IOWord";
+	end "NextBlock";
+	close (Chan);
+    end "NextFile" until FoundIt;
+    release (chan);
+    return( if FoundIt then SOURCE else null );
+end	"GetSymbols";
+
+simple procedure Run (string File; integer Start(0));
+begin
+    own integer array RNB[0:5];
+    RNB[0] := cvsix("DSK");
+    RNB[1] := cvfil( File, RNB[2], RNB[4] );
+    RNB[3] := RNB[5] := 0;
+    calli (!xwd( Start, location(RNB[0]) ), calli!RUN );
+end;
+
+begin	"MAIN"
+    integer	SID;		! system identifier (serial number);
+    integer	FERR;		! frame error code;
+    integer	PERR;		! program error code;
+    string	FILDDT;		! filename of FILDDT;
+    string	MONITR;		! filename of monitor;
+    string	CMDS;		! commands for FILDDT;
+    integer	I;
+    SID := calli(!xwd(!CNSID,!GTCNF),calli!GETTAB);
+	! get running monitor serial number;
+    FILDDT := "(M33)F"&cv6str(SID lsh 6);
+    print( "Running ",FILDDT," for " );
+    for I := !CNFG0 upto !CNFG0+4 do
+	print( cvstr(calli(!xwd(I,!GTCNF),calli!GETTAB)) );
+    print( crlf );
+    Run( FILDDT );
+    print( "[creating new FILDDT - please wait]"&crlf );
+    MONITR := GetSymbols( SID )[1 to inf-4];
+    CMDS := MONITR& "/S"& crlf& "/X";
+    if length(MONITR)=0 then usererr( 0,0,
+	"?unable to locate symbols for monitor "&cv6str(SID),"X" );
+    FERR := FrmRun( "(SYS)FILDDT",F.CCL+F.SAVE,PERR,"DDT",CMDS,FILDDT );
+    if FERR then usererr( FERR,2,"?FrmRun error ","X" );
+    print( "[FILDDT created - proceeding]"&crlf );
+    Run( FILDDT );
+    print( "Oh drat! It still didn't work! I suggest you do it by hand." );
+end	"MAIN";
+end	$

@@ -1,0 +1,387 @@
+--------========-------- S.MAC
+;	STOPCD	(CONT,TYPE,NAME,TYPOUT,<Description>)
+--------========-------- CONFKI.MAC
+--------========-------- CONFKL.MAC
+--------========-------- CONFKS.MAC
+--------========-------- CONFF3.MAC
+--------========-------- KISYM.MAC
+--------========-------- KLSYM.MAC
+--------========-------- KSSYM.MAC
+--------========-------- F3SYM.MAC
+--------========-------- ACTSER.MAC
+--------========-------- APXKON.MAC
+--------========-------- BOTLOD.MAC
+--------========-------- BPXKON.MAC
+--------========-------- CDRSER.MAC
+--------========-------- CIOPR.MAC
+--------========-------- CLOCK1.MAC
+	 STOPCD (.,JOB,PAGP3R,,<Pager - P3 and P4 in use at RSCHED>) ;;RSCHED+1
+	 STOPCD (.,STOP,PAGZER,PRTJOB##,<Pager - UPT is zero>) ;;CIP7+3
+	 STOPCD (.,JOB,PAGSAC,,<Pager - Cannot Stack ACs>) ;;CIP6D+6
+CLKNSQ:: STOPCD (.,JOB,CLKNSQ,,<Job not in SW queue>) ;;STTIOD+4
+	 STOPCD (,XCT,CLKNSQ)	;Job not in SW queue  ;;SETIOD+4
+--------========-------- CLUBS.MAC
+--------========-------- COMCON.MAC
+	 STOPCD (.,STOP,CMDNLJ,,<Command for null job>) ;;COMDIS+5
+	 STOPCD (.,JOB,KILUP2,,<Funny space still in use at KILUPT>)
+	 STOPCD (.,STOP,CMD000,,<Error detected at UMONST>) ;;UMONST+4
+--------========-------- COMMOD.MAC
+	 STOPCD (.+1,INFO,SAXINX,PRTT4##,<Spurious SA-10 interrupt>) ;;SAXINT+5
+	 STOPCD (.+1,INFO,SAXINY,PRTT4##,<SA-10 interrupt ignored>);;SAXIGN+0
+	 STOPCD (.,CPU,SAXMM1,,<Spurious SA-10 memory error>) ;;SAXMEM+7
+--------========-------- COMMON.MAC
+S..KAF:: STOPCD (.,CPU,KAF,KAFPRT,<Keep Alive Failure>)
+--------========-------- COMTXT.MAC
+--------========-------- CORE1.MAC
+	 STOPCD (.,STOP,REMVPG,,<Remove virtual page - Error>)  ;;REMV16+7
+	 STOPCD (,XCT,REMVPG);;	;Remove virtual page - Error    ;;REMV21+12
+	 STOPCD (.,DISK,BACRFP,,<SAT (M) Bit already clear - File Page>);;REMV31+14
+	 STOPCD (.,DISK,BACRVP,,<SAT (M) Bit already clear - Virtual Page>) ;;REMV41+3
+BADPAG:: STOPCD	(.+1,EVENT,BADPAG,PRTPG1,<Bad spot detected>);;BATUP2+3
+	 STOPCD (.,STOP,ULKNME,,<Unlock UPx - Not mine error>) ;;UNWUPX+4
+	 STOPCD (.,CPU,PFLJB0,,<Page fault in jobs 0>) ;;PAGFLU+15
+	 STOPCD (.,STOP,PFLLDC,,<Page fault with LDC nonzero>) ;;USRFLT+3
+	 STOPCD (.,STOP,PFLPR0,,<Page fault writing - Page protection 0>);;USRCWR+5
+	 STOPCD	(.,JOB,PCBFL1,,<Error detected at PCBFLT>);;PCBFLT+4
+	 STOPCD (.,STOP,LAFUPS,,<LMAP Activation Failure - %UPS preserved>);;ACTLMS+4
+	 STOPCD (.,STOP,LAFPOR,,<LMAP Activation Failure - Page out of range>);;ACTLMA+4
+	 STOPCD (,XCT,LAFPOR)	;YES, SOMEONE MADE A MISTAKE.   ;;ACTLM5+12
+	 STOPCD (.,STOP,LDFPOR,,<LMAP Deactivation Failure - Page out of range>);;DEALMS+2
+	 STOPCD (,XCT,LDFPOR)	;NO.
+	 STOPCD (.,STOP,CHTFLS,,<CHT Failure - Search: RBMASK bits on>);;SRCCHT+1
+	 STOPCD (.,STOP,CHTFNJ,,<CHT Failure - Remove: No job in use list>);;REMCHR+4
+	 STOPCD (.,STOP,CHTFIU,,<CHT Failure - Remove: In use/IO in progress>);;REMCH0+3
+	 STOPCD (.,STOP,CHTFNF,,<CHT Failure - Remove: CP not found in CHT>);;REMCH0+11
+	 STOPCD (.,STOP,CHTFMU,,<CHT Failure - Remove: Multiply used PGYADR>);;REMCH0+14
+	 STOPCD (.,STOP,CHTFDP,,<CHT Failure - Insert: Duplicate page>);;INSCHT+6
+	 STOPCD (.,STOP,LRFPR'MAP,,<LMAP Read Failure: Page out of range>)
+	 STOPCD (.,STOP,LSFUF'MAP,,<LMAP Store Failure - LDC Count underflow>)
+	 STOPCD (.,STOP,LSFPR'MAP,,<LMAP Store Failure - Page out of range>)
+	 STOPCD (.,STOP,GETFR1,,<GETFRE List was empty, but CAVPGN nonzero>)
+	 STOPCD (.,STOP,PGUSEO,,<Page Use Error: Count increment overflow>);;INCUSE+2
+	 STOPCD (.,STOP,PGUSEU,,<Page Use Error: Count decrement underflow>);;DECUSE+4
+	 STOPCD (.,STOP,PGUSEA,,<Page Use Error: Slot still active>);;DECUS0+7
+	 STOPCD (.,STOP,PGWNME,,<Page Wait queue error: Not me>)  ;;PAGWAT+1
+--------========-------- CPXKON.MAC
+--------========-------- CTYSIM.MAC
+CTYBMT:: STOPCD (.,STOP,CTYBMT,PRTIRG##,<Bad message type to CTY>)
+CTOSPC:  STOPCD (,XCT,CTYBMT)	; 0 Illegal
+	 STOPCD (,XCT,CTYBMT)	; 5 (supervisor takeover)
+	 STOPCD (,XCT,CTYBMT)	; 6 (login from network)
+	 STOPCD (,XCT,CTYBMT)	; 7 (aux circuit complete)
+	 STOPCD (,XCT,CTYBMT)	;14 Enter deferred echo mode
+	 STOPCD (,XCT,CTYBMT)	;15 Leave deferred echo mode
+	 STOPCD (,XCT,CTYBMT)	;22 Hang character
+	 STOPCD (,XCT,CTYBMT)	;23 (enter transparency mode)
+	 STOPCD (,XCT,CTYBMT)	;24 (leave transparency mode)
+	 STOPCD (,XCT,CTYBMT)	;25 (gray ball / black ball)
+	 STOPCD (,XCT,CTYBMT)	;27 (supervisor response)
+	 STOPCD (,XCT,CTYBMT)	;31 Test pattern to base
+	 STOPCD (,XCT,CTYBMT)	;32 (test pattern response)
+	 STOPCD (,XCT,CTYBMT)	;40 (terminal characteristics response)
+	 STOPCD (,XCT,CTYBMT)	;43 (clock response from supervistor)
+--------========-------- DDT.MAC
+--------========-------- DEBUG.MAC
+--------========-------- DR11C.MAC
+--------========-------- DZKON.MAC
+--------========-------- EDDT.MAC
+--------========-------- ERRCON.MAC
+PAGUDE:: STOPCD (.,JOB,PAGUDE,,<Page fault - Unexpected Dispatch Error>)
+UPFTBT:	 STOPCD (.,XCT,PAGUDE)	;USER CAN'T FAULT FOR EXEC PAGE
+	 STOPCD (,XCT,PAGUDE)	;Unexpected Dispatch Error
+UPFTAB:	 STOPCD (,XCT,PAGUDE)	;USER CAN'T FAULT FOR EXEC PAGE.
+S..IME:: STOPCD (.,STOP,IME,TYPIME,<Illegal Memory-reference from Exec>)
+EPFTAB:: STOPCD (,XCT,S..IME)	;Exec fault for context page or exec hiseg
+	 STOPCD (,XCT,S..IME)	;CRASH IF EXEC WRITES INTO SUPER COW.
+IFCPU (KS),<STOPCD (,XCT,S..IME)>;2020 does not have address break hardware
+	 STOPCD (,XCT,S..IME)	;HARD PAGE FAILURE.
+	 STOPCD (.,STOP,EPDLOV,,<Exec Push Down List Overflow>)
+	 STOPCD (.,JOB,PAGNCR,,<Page Fault, cannot create COW page>)
+S..EUE:: STOPCD (.,JOB,EUE,,<Exec Uuo Error>)	;;INSSIM+2=ILLINS+2
+	 STOPCD (.,STOP,UUOEIJ,,<Error with Illegal Job number>)
+	 STOPCD (.,HALT,DIEMNR,,<Master PDP-11 not running>)
+DIEBPC:: STOPCD (.,STOP,DIEBPC,,<Bad PC in DIE>)
+--------========-------- F3TSER.MAC
+	 STOPCD (.,JOB,MTANIB,,<No IOWDS in BDIO>)
+	 STOPCD (.,JOB,MTAICZ,,<I/O count zero>)
+	 STOPCD (.,JOB,MTANIS,,<No IOWD in SRFX>)
+	 STOPCD (.,JOB,MTALNZ,,<Last word Not Zero>)
+	 STOPCD (.,JOB,MTAXIP,,<Xfer already In Progress>)
+MTAIFC:: STOPCD (.,JOB,MTAIFC,,<Illegal Function Code>)
+	 STOPCD (,XCT,MTAIFC)	;CAN'T DO SPACE FILE
+	 STOPCD (,XCT,MTAIFC)	;OR BACK SPACE FILE
+--------========-------- FILFND.MAC
+FILDMO:: STOPCD (.,DISK,FILDMO,,<DRB Max count overflow>) ;;SRCFIL+16
+	 STOPCD (SLO)]	;%+ ERROR IF OUT ;;CREFM0+5
+FILDMU:: STOPCD (.,DISK,FILDMU,,<DRB Max count underflow>)    ;;ERRNC1+3
+	 STOPCD (,XCT,FILDMU)	;% UNDEFLOW     ;;ERRTR1+5
+	 STOPCD (,XCT,FILDMU)	;% UNDEFLOW     ;;ERRFBM+2
+	 STOPCD (,XCT,FILDMU)   ;;ERRFNF+3
+	 STOPCD (SLO)           ;;INSNAM+3
+	 STOPCD (SLO)		;THERE WAS ONE FREE (@FNDFRE+2) ;;FNDFR1+4
+	 STOPCD (.,DISK,FILANF,,<ATB not found in list>)      ;;FREAT1+2
+	 STOPCD (.,DISK,FILBNF,,<DDB Not found in FNB device block list>);;ULKDB0+4
+	 STOPCD (SLO)           ;;LKDATB+1
+	 STOPCD (SLO)		;YES WE DO      ;;GETCBR+3
+	 STOPCD (SLO)           ;;GIVCBR+3
+	 STOPCD (SLO)		;END AND NOT FOUND, SOMETHING IS WRONG;;CORGB5+4
+	 STOPCD (.,DISK,FILATB,,<Bad ATB pointer>) ;;CNVATP+1
+	 STOPCD (.,DISK,FILLAS,,<LMAP slot active/super>) ;;DECRMV+2
+FILAMO:: STOPCD (.,DISK,FILAMO,PRTATB,<ATB Max write count overflow>) ;;DECRMV+13
+	 STOPCD (SLO)		;NO     ;;INSSPT+1
+	 STOPCD (SLO)		;% BUT THE COUNT SAID THERE WAS A FREE ONE!
+	 STOPCD (.,DISK,FILSEO,,<SPT Free entry count overflow>);;REMSPT+10
+	 STOPCD (SLO)		;NO     ;;SRCSPT+1
+	 STOPCD (.,DISK,FILAUO,PRTATB,<ATB Unshared map count overflow>) ;;INCUMC+3
+	 STOPCD (,XCT,FILDMO)   ;;INCUMC+12
+	 STOPCD (.,DISK,FILAUU,PRTATB,<ATB Unshared map count underflow>);;DECUMC+4
+	 STOPCD (.,DISK,FILAUS,PRTATB,<ATB Unshared map count zero with SPT>);;DECUMC+10
+	 STOPCD (,XCT,FILDMU)	;%! YES, CRASH  ;;DECUM0+6
+	 STOPCD (,XCT,FILAMO);;;%! YES, CRASH   ;;DECMXW+3
+--------========-------- FILIO.MAC
+UNIONL:	 STOPCD (.+1,EVENT,UNIONL,PRTUNI,<Unit came on-line>) ;;UNIONL+0
+	 STOPCD (.,STOP,SWPNIO,,<Swap done: No I/O in progress>) ;;DTASAT+3
+	 STOPCD (.+1,INFO,WRTSAT,WRTST1,<Disk output error writing SAT>);;SWPFIN+15
+	 STOPCD (NOSWPR,EVENT,WRTDSK,WRTST2,<Disk write error>);;SWPFNP+2
+	 STOPCD (.,INFO,SWPZER,PRTPGY,<Swapped zero pages>) ;;SWPPLD+2 (PGEZER)
+	 STOPCD (,XCT,SWPOOR)	;PAGE NUMBER TOO LOW    ;;SWPFI2+2
+SWPOOR:: STOPCD (.,STOP,SWPOOR,,<Swapper: Out of range>)   ;;SWPENQ+2
+	 STOPCD (.,STOP,SWPNDP,,<Swapper: Not a disk page>);;SWPENQ+5
+SWPUOR:: STOPCD (.,STOP,SWPUOR,PRTPGY,<Swapper: Unit out of range>)
+	 STOPCD (.,STOP,OHTFUL,,<Output Hash Table Full - Too many DP errors>);;INSOH3+1
+OHTENF:: STOPCD (.,STOP,OHTENF,,<Output error Hash Table - Entry not found>);;REMOHT+1
+	 STOPCD (,XCT,OHTENF)	;; It did!  So, CRASH   ;;REMOH1+4
+--------========-------- FILRIB.MAC
+	 STOPCD (SLO)           ;;NXTPT0+1
+	 STOPCD (SLO)           ;;NXTP15+2
+	 STOPCD (SLO)           ;;PTROU2+5
+RIBBRP:: STOPCD (.,DISK,RIBBRP,RIBERX,<RIB error - Bad Retreival Pointer>);;USEOUT+3
+	 STOPCD (,XCT,RIBBRP)	;Bad Retrieval Pointer  ;;USES55+13
+	 STOPCD (,XCT,RIBBRP)	;Bad Retreival Pointer  ;;USES58+7
+	 STOPCD (,XCT,RIBBRP)	;Bad Retreival Pointer  ;;USENUL+3
+RIBERR:: STOPCD (.,EVENT,RIBERR,RIBERX,<RIB error - software detected>)
+	 STOPCD (.,DISK,RIBTME,DSKDIE##,<Too Many RIB errors - disk is unsafe>);;RIBERR+6
+RIBHRE:: STOPCD (.,EVENT,RIBHRE,RIBERX,<RIB error - Hard Read Error>)
+	 STOPCD (,XCT,RIBERR);;RIBER1+3 ;Let OPR know about it
+	 STOPCD (,XCT,RIBBRP)	;Bad Retreival Pointer  ;;DLTSRB+2
+	 STOPCD (,XCT,RIBBRP)   ;Bad Retreival Pointer  ;;DLTSRB+6
+	 STOPCD (SLO)           ;;FREUP+6
+	 STOPCD (SLO)		;;DLTTR0+13
+	 STOPCD (SLO)           ;;DELTR7+26
+	 STOPCD (SLO)           ;;GETPRM+6
+	 STOPCD (SLO)           ;;GETPRM+11
+	 STOPCD (SLO)           ;;GETPRM+14
+	 STOPCD (SLO)           ;;GETPRM+17
+--------========-------- FILUUO.MAC
+DECSTP:! STOPCD (SLO)	;IN THE MIDDLE OF A UUO
+	 STOPCD (SLO)           ;;SWPUPD+4
+	 STOPCD (SLO)           ;;SWPLK1+2
+	 STOPCD (SLO)		;;CLRDD1+3
+	 STOPCD (SLO)           ;;CLOSIN+14
+	 STOPCD (SLO)		;;CLSN3B+5
+	 STOPCD (SLO)           ;;CLSXT2+2
+	 STOPCD (SLO)           ;;CLOSOU+11
+	 STOPCD (SLO)		;;CLORS3+2
+	 STOPCD (SLO)		;;CLOSU3+20
+	 STOPCD (SLO)		;;CLOSU1+2
+	 STOPCD (SLO)		;;CLOCOM+15
+	 STOPCD (SLO)           ;;CLOCM1+5
+	 STOPCD (SLO)		;;UFDATB+1
+	 STOPCD (.,DISK,UFDER1,,<UFD error - file disappeared>) ;;UPDUFD+16
+	 STOPCD (.+1,INFO,BADUFD,DSKCLN##,<Inconsistent UFD - FULL DSKCLN requested>);;UPDNU1+3
+UUOXWR:: STOPCD (.,DISK,UUOXWR,,<UUO eXit with Resources still owned>);;TSTRES+10
+	 STOPCD (,XCT,UUOXWR)	;;TSTRES+13
+	 STOPCD (,XCT,UUOXWR)	;;TSTRES+15
+	 STOPCD (SLO)           	;;WRTOK2+5
+	 STOPCD (SLO)	        	;;WRTOK2+10
+	 STOPCD (LUDER1,DEBUG,USRUS1,PRTT3##,<Unexpected CHANIO error in USETI>);;USRUSI+22
+	 STOPCD (SLO)		;;USRUS2+2
+	 STOPCD (SLO)           ;;SRUSR+14
+	 STOPCD (SLO)           ;;BLKLNK+2
+	 STOPCD (SLO)           ;;FUNM+6
+	 STOPCD (SLO)			;;RENAM3+13
+	 STOPCD (SLO)			;;RENM4A+1  ;% ALREADY KNOW NAME NON-ZERO
+	 STOPCD (SLO)			;;RENAM7+11
+	 STOPCD (SLO)			;;RENAM7+15
+	 STOPCD (SLO)			;;RNM7A+2
+	 STOPCD (SLO)			;;RNM7B+2
+	 STOPCD (SLO)           ;;RENAM9+12
+	 STOPCD (,XCT,UFDER1)		;UFD error return from DIRSRC ;;RENSTS+16
+	 STOPCD (SLO)			;;RENECM+2
+	 STOPCD (,XCT,UFDER1)		;UFD error return from DIRSRC ;;RENNMC+24
+	 STOPCD (SLO)			;;RENFL2+12
+	 STOPCD (.,DISK,CLRCM1,,<CLRCOM decremented DRBCNT too far>);;CLRCOM+5
+	 STOPCD (SLO)			;;RENRCM+4
+	 STOPCD (SLO)			;;RENCLR+8
+	 STOPCD (SLO)           ;;CMPLOG+13
+--------========-------- FRMSER.MAC
+--------========-------- FTASER.MAC
+	 STOPCD (.,JOB,MTANIB,,<No IOWDs in BDIO>)
+	 STOPCD (.,JOB,MTATMW,,<Too many data words>) ;;SCMBF1+3
+	 STOPCD	(SGPRV4,INFO,FTACFC,,<FTA error - Cannot Find Command>);;SGPREV+3
+--------========-------- IOCSS.MAC
+	 STOPCD	(,XCT,DDBCNE)	;DDB chain has no end ;;DEVLG+12
+--------========-------- JOBDAT.MAC
+--------========-------- KMCDDT.MAC
+--------========-------- KMCSER.MAC
+--------========-------- KSCOMM.MAC
+--------========-------- KSIORG.MAC
+--------========-------- LP2SER.MAC
+	 STOPCD (CPOPJ,DEBUG,LPTTMB,,<Too many bytes>)
+LPRINT::STOPCD (CPOPJ,DEBUG,LPTNON,,<No line printer>)
+--------========-------- LPTSER.MAC
+--------========-------- MAGSER.MAC
+	 STOPCD (.,JOB,MTANIB,,<No IOWDs in BDIO>)
+	 STOPCD (.,JOB,MTAICZ,,<I/O count zero>)
+	 STOPCD (CPOPJ,EVENT,TAPERR,,<Magnetic tape error, UBA reset>)
+MTAIFC:: STOPCD (.,JOB,MTAIFC,,<Illegal Function Code>)
+	 STOPCD (.,JOB,MTANIS,,<No IOWD in SRFX>)
+	 STOPCD (.,JOB,MTALNZ,,<Last word Not Zero>)
+	 STOPCD (.,JOB,MTAXIP,,<Xfer already in Progress>)
+--------========-------- MAPIO.MAC
+	 STOPCD (.,JOB,MPFBRP,,<MAPF error - Bad Retreival Pointer>);;MAPF34+4
+		 STOPCD (SLO)]	;;KMOVPH+23
+	 STOPCD (SLO)           ;;KMOV2N+21
+	 STOPCD (.+1,DEBUG,SAT2ND,,<2nd bad SAT detected>);;MAPFAL+1
+--------========-------- MONBTS.MAC
+--------========-------- MTASER.MAC
+--------========-------- ONCDSK.MAC
+--------========-------- ONCE.MAC
+--------========-------- PATCH.MAC
+--------========-------- PCBIO.MAC
+	 STOPCD (.,STOP,MAPAL1,,<Bad Retreival Pointer detected at MAPALL+4>)
+MAPDIE:	 STOPCD (.,STOP,MAPDIE,,<UPTRIB and %RIB slot disagreed>)
+GTDON1:: STOPCD (.,JOB,GTDON1,,<PCB link zero at GTDONE+12 or GTDON4+4>)
+	 STOPCD (.,STOP,GETTR3,,<End of list detected at GETTR1+2>)
+	 STOPCD (.,STOP,NOWRIT,,<All disks are write protected>) ;;CTLFN1+7
+--------========-------- PICON.MAC
+UUOCTR:: STOPCD (.,JOB,UUOCTR,,<UUO from Concealed mode, Trap>)
+	 STOPCD (.,STOP,UUOZTR,,<Zero address in TRAP uuo>)
+UUOSTR:: STOPCD (.,CPU,UUOSTR,,<UUO from Supervisor mode, Trap>)
+	 STOPCD	(,XCT,S..EUE)	;No
+	 STOPCD (.,JOB,UUOAST,,<ACs Stacked Too deep>)	;KI version of STKAC
+	 STOPCD	(,XCT,S..EUE)	;No
+	 STOPCD (.,JOB,UUOAST,,<ACs Stacked Too deep>)	;Non KI STKAC
+APRFAT:: STOPCD (.,CPU,APRFAT,TYPAPR,<Fatal APR error - Hardware failure>)
+	 STOPCD (.+1,DEBUG,APRTIM,,<APR timer overflowed>) ;Continue
+CRASH::  STOPCD (.,STOP,CRASH,PRT30,<CRASH requested - Nonzero in 30>)
+	 STOPCD (.,CPU,AR.ARX,PRTARX,<AR/ARX parity error detected>)
+	 STOPCD (.,CPU,NJBPER,,<Parity error in Null Job>) ;;USEPER+3
+	 STOPCD (.,STOP,UPTPER,,<Page error in UPT>)
+	 STOPCD (.,CPU,APRHPE,,<Hard Parity Error>)
+	 STOPCD (,XCT,APRTIM)	;APR timer overflowed
+--------========-------- PLTSER.MAC
+--------========-------- PTPSER.MAC
+--------========-------- PTRSER.MAC
+--------========-------- REFSTR.MAC
+	STOPCD ()]>
+	STOPCD ()]>
+--------========-------- RMXKON.MAC
+--------========-------- SCHED1.MAC
+	 STOPCD (.,STOP,NULARQ,,<Attempt to requeue null job>) ;;QXFER+1
+	 STOPCD (.,JOB,PAGWK2,,<Job not coming out of SW queue at PAGWK1+2>)
+	 STOPCD (.,JOB,NAILI3,,<Counts and CFRLST don't agree in NAILIT>);NAILI2+3
+	 STOPCD (,XCT,NOWRIT)	;ITS BAD, MAY WRITE ON USER'S FILE. ;;SWPIO3+2
+	 STOPCD (,EVENT,WRITE1,,<Writing updated file while READONLY>);;SWPIO3+6
+--------========-------- SCNSER.MAC
+KAF1::	 STOPCD (,XCT,S..KAF)		;Keep alive failure
+	 STOPCD (.,STOP,BASE04,PRTCRS,<Bad message type from host>)
+	 STOPCD (.+1,INFO,BASE,PRTCRS,<BASE has crashed - bad KEY620>)
+	 STOPCD (,XCT,BASEOK)	;Yes, output BASEOK message
+TTYBMT:: STOPCD (SCNIN2,INFO,TTYBMT,PRTIRG,<Bad Message Type from Base>);;CNTPRT-1
+	STOPCD (BADPR1,INFO,TTYBPN,PRTIRG,<Bad Port Number from Base>);;BADPRT+3
+TYP.00:	 STOPCD (,XCT,TTYBMT)	; 0 ILLEGAL
+TYPSUP:	 STOPCD (,XCT,TTYBMT)	;26 SUPERVISOR REQUEST
+TYPAXC:	 STOPCD (,XCT,TTYBMT)	;30 AUX CIRCUIT CHARACTER
+TYPTSP:	 STOPCD (,XCT,TTYBMT)	;31 TEST PROBE
+TYPSAD:	 STOPCD (,XCT,TTYBMT)	;33 HOST SAD
+TYPECN:	 STOPCD (,XCT,TTYBMT)	;34 ECHO ON, SHOULD NOT COME IN
+TYPECF:	 STOPCD (,XCT,TTYBMT)	;35 ECHO OFF, SHOULD NOT COME IN
+TYPTCS:	 STOPCD (,XCT,TTYBMT)	;36 SEND TERMINAL CHRS. SHOULD NOT COME IN
+TYPTCP:	 STOPCD (,XCT,TTYBMT)	;37 TERM CHRS PROBE. SHOULD NOT COME IN
+TYPHSI:	 STOPCD (,XCT,TTYBMT)	;41 PORT AND SYSTEM NUMBER
+TYPCLP:	 STOPCD (,XCT,TTYBMT)	;42 REQUEST FOR SUPERVISOR TIME
+TYPBKO:	 STOPCD (,XCT,TTYBMT)	;44 INITIATE BLOCK OUTPUT
+TYPBIN:	 STOPCD (,XCT,TTYBMT)	;46 INITIATE BLOCK INPUT
+TYPIRQ:	 STOPCD (,XCT,TTYBMT)	;52 REQUEST BLOCK INPUT TERMINATION
+TYPORQ:	 STOPCD (,XCT,TTYBMT)	;54 REQUEST BLOCK OUTPUT TERMINATION.
+TYPKAF:	 STOPCD (,XCT,TTYBMT)	;63 SET KEEP-ALIVE FAILURE TIMER
+	 STOPCD (.+1,DEBUG,TTYZNE,PRTIRG,<Zapper not echoed for port>)
+TTYBNP:: STOPCD (FRCZAP,INFO,TTYBNP,,<Block mode io Not in Progress>) ;;FRCIBF+1
+	 STOPCD (,XCT,TTYBNP)	;Block mode io Not in Progress ;;FRCEOT+1
+BLKNEG:	 STOPCD (,XCT,TTYBMT)	;56 NEGOTIATE FOR # BLOCK I/O PORTS NOT USED
+	 STOPCD (.+1,INFO,TTYPTY,PRTUT1,<PTY bit wrong for TTY>) ;;SCOPTY+1
+	 STOPCD (,XCT,TTYPTY) ;;SCORTY+1
+	 STOPCD (,XCT,TTYNPB)	;No PTY Buffer for block IO  ;;PGTRI+7
+TTYNPB:: STOPCD (.,JOB,TTYNPB,,<No PTY Buffer for block IO>) ;;PGBIN+6
+	 STOPCD	(.+1,INFO,PTYSBL,,<PTY saw a Black Ball>)  ;;PGSBL+10
+ZAPBUG:	 STOPCD (.+1,INFO,ZAPBUG,,<Port not Zapped - *BUG*>)
+	 STOPCD (.+1,INFO,BIOZAD,,<Block I/O with Zero Address>);GOBOT+3
+	 STOPCD (.+1,EVENT,NOBASE,PRTBTM,<No response from BASE>)
+	 STOPCD (RCC.T3,INFO,RCCDBG,RCC.T1,<Range Checked Chunk, continuing>)
+	 STOPCD (RCC.T3,INFO,TTYFLM,RCC.T1,<TTY Free List Messed Up>) ;;STLST+7
+	 STOPCD (RCC.T3,DEBUG,RCCBAD,RCC.T1,<Range Checked Chunk, bad U>)
+	 STOPCD (,XCT,RCCDBG)	;Forward/back pointer is bad
+	 STOPCD (TSETBI,INFO,TTYNNC,,<TTY - No Next Chunk>) ;;TTGC1+1
+	 STOPCD (.,STOP,RCCSTP,RCC.T1,<Range Checked Chunk - TTFREE is bad, stop>)
+	 STOPCD (,XCT,RCCSTP)	;Die - TTFREE is bad
+	 STOPCD (,XCT,RCCSTP)	;Die - TTFREE is bad (or all chunks in use)
+	 STOPCD (CPOPJ,INFO,TTYBCN,,<Block I/O count negative>);;DECBC+5
+	 STOPCD (,XCT,TTYBCN)
+TTYNFB:: STOPCD (.,STOP,TTYNFB,,<No Free Buffrers>)     ;;GETBBP+1
+	 STOPCD (,XCT,TTYNFB)   ;No Free Buffers        ;;GETBB1+5
+BASEOK:: STOPCD (.+1,EVENT,BASEOK,PRTBVR,<Base is up>)
+	 STOPCD	(,XCT,BASEOK)	;Print "base is up" message
+	 STOPCD	(,XCT,BASEOK)	;Print "base is up" message
+DDBCNE:: STOPCD (.,STOP,DDBCNE,,<DDB chain has no end>) ;;TTYKDB+many
+--------========-------- SEGCON.MAC
+MAPHSF:	 STOPCD (.,JOB,MAPHSF,PRTT1##,<Unexpected error from CHANIO VMAP>)
+--------========-------- SETEKS.MAC
+--------========-------- SETETY.MAC
+--------========-------- SIMIO.MAC
+	 STOPCD (.,JOB,SIMRM0,,<Unexpected VREMOV error at SIMRM1+1>)
+SIMIOX:: STOPCD (.,JOB,SIMIOX,SIMIOY,<ected UUO at SIMIOS>) ;;SIMIOS+6
+	 STOPCD (,XCT,SIMIOX)	;VREMOV should never come here
+	 STOPCD (,XCT,SIMIOX)	;PREREF should never come here
+	 STOPCD (,XCT,SIMIOX)	;PAGSTS should never come here
+SIMUUF:: STOPCD (.,JOB,SIMUUF,SIMIOY,<SIMIO UUO Failure>)	;;FCR.E+3
+	XCT	%%UUET(T1)	;Set S or else STOPCD (,XCT,SIMUUF) ;;FCR.E+4
+%%UUET:	 STOPCD (,XCT,SIMUUF)	; 0 FALCTG - CONTIG FIELD 0
+	 STOPCD (,XCT,SIMUUF)	; 1 FALDVR - VM PG OUT OF RANGE
+	 STOPCD (,XCT,SIMUUF)	; 2 FALCPU - CUR PROT UNDEF
+	 STOPCD (,XCT,SIMUUF)	; 3 FALVEX - VM PG EXISTS WHICH SHOULDNT
+	 STOPCD (,XCT,SIMUUF)	; 4 FALNEX - VM PG DOESNT EXIST WHICH SHOULD
+	 STOPCD (,XCT,SIMUUF)	; 5 FALSVR - VREPLIC. VP OUT OF RANGE
+	 STOPCD (,XCT,SIMUUF)	;10 FALCOR - PVYCOR LIMIT EXCEEDED
+	 STOPCD (,XCT,SIMUUF)	;15 FALHOL - PAGE IS A HOLE (CATCH THIS IN SIMIOM)
+	 STOPCD (,XCT,SIMUUF)	;16 FALNHL - FCREATE: NOT A HOLE
+	 STOPCD (,XCT,SIMUUF)	;21 FALSAM - SAME PG NOS. (REPLIC,FEXCH)
+	 STOPCD (,XCT,SIMUUF)	;22 FALSUP - MAP BUT IOSUPR ON. SHOULDNT HAPPEN
+	 STOPCD (,XCT,SIMUUF)	;26 FALCTL - ^C. NOT SPOSED TO GET THIS ERROR
+--------========-------- SWAMP.MAC
+	 STOPCD (.,DISK,SEAR14,,<Error at SEAR15+1 - No bits free in SAT>)
+	 STOPCD (SLO)
+	 STOPCD	(.,DISK,SATRSV,,<SAT error - reserved page gotten>)
+	 STOPCD	(.,STOP,GTSAP1,,<Error at GTSAP0+7>);;GTSAP0+7
+	 STOPCD (.,DISK,GTSA43,,<Error at GTSA42 - STTPTR is zero>);;GTSA42+5
+	 STOPCD (SLO)		;BEGINNING, UNLESS THAT IS
+	 STOPCD (SLO)
+	 STOPCD (SLO)
+	 STOPCD (SLO)		;SOMETHING ISN'T RIGHT.
+	 STOPCD (SATMRK,INFO,BADSAT,SATMK1,<SAT bit-count error>);;SATCHK+many
+	 STOPCD (SATMRK,INFO,REDSAT,SATMK1,<SAT read error>);;SATCHK+12
+	 STOPCD (.,DISK,GIVPG1,,<Error in GIVPGK - F bit is not on>);;GIVPGK+5
+	 STOPCD (SLO)		;CALLER MUST HAVE GIVEN WRONG PAGE
+	 STOPCD (SLO)		;WAS OFF ALREADY, FOO.
+--------========-------- TMPUUO.MAC
+--------========-------- UUOCON.MAC
+	 STOPCD (.,STOP,UUOJB0,,<UUO from Job 0>)
+UUOCNT:: STOPCD (.,JOB,UUOCNT,,<UUO from Concealed mode, No Trap>)
+S..UIL:: STOPCD (.,CPU,UIL,,<Uuo at Interrupt Level>)
+UUOSNT:: STOPCD (.,CPU,UUOSNT,,<UUO from Supervisor mode, No Trap>)
+UUOXWL:: STOPCD (.,JOB,UUOXWL,,<UUO eXit With context Locks active>) ;;USRXIT+3
+TIMEOK:	 STOPCD (.,EVENT,TIMEOK,COMGM0,<Date/time has been changed>)
+	 STOPCD (,XCT,TIMEOK)	;Tell OPR what the old date/time was
+	 STOPCD (.,JOB,S..JOB,,<CALLI 67 requested JOB stopcode>)
+	 STOPCD (CPOPJ,DEBUG,S..CI7,,<CALLI 70 requested DEBUG stopcode>)
+--------========-------- <C—

@@ -1,0 +1,301 @@
+Things to be added to the P035/E monitor.
+
+Make sure messages get sent to the OPR terminal, the CTY, and the CTYLOG
+even when the OPR terminal is backpressured or the PDP-11 is halted.
+At least 1 character per second output in these cases.
+
+Put a second CTY log in the highest physical core page where it won't get
+zeroed out when the monitor is reloaded.  Buffered output goes here when
+characters are placed in the CTY's LDB chunks, not when they come out.
+INFO and EVENT stopcode typeout gets logged here, even if a HALT stopcode
+prevents it from showing up on the CTY.  SYSDAT will log this to a file.
+
+New CHANIO functions:
+  .CHCFP - Create zeroed page (don't read from disk when doing output)
+  .CHGRT - Get Retreival Pointer given a file page (0=RIB)
+  .CHSMP - Allow Retreival pointer when super-mapping page
+
+-------------------------------------------------------------------------
+
+P035E.TXT - list of features to be added to create P035/E from P035/D01 etc.
+
+
+	Bug fixes - known deficiencies with known solutions:
+QUICK	Force CTY output (even when console is in KLDCP mode).
+QUICK	Dump buffered CTY output before crashing (serious stopcode after a minor one)
+QUICK	Put write-enable test back into CPXKON (instead of using NOWRIT).
+
+	Known problems - solution not known:
+DEFER	Fix possible bug in ECC error recovery on 3652 disks.
+DEFER	Fix CPXKON to work with 3675 in blocks (eliminate BPXKON).
+DEFER	Better use of UBGOOD routine on Unibus controllers (KS2020).
+DEFER	Make PCBIO handle I/O errors right during ONCE time.
+
+	Operator and CTY message enhancements:
+QUICK	Replace GETOPR/GETCTY/DBLMSG typeout to always go to OPR and CTY.
+TIME?	Able to login on CTY (as TTY0).
+2DAYS	For RIBERRs, tell what is wrong with the RIB.
+
+	Maintainability of source code:
+2WEEKS	Modify ONCE,ONCDSK,REFSTR to compile with MACRO 53 and load with LINK.
+2WEEKS	Re-arrange code so changes to CONFIG don't run into the 112K problem.
+DEFER	Split SCNSER into SCNSER (UUO interface) and TYMSER (base interface).
+
+	Crash dump analysis and statistics:
+DEFER	Copy all of core into CRASH.SAV (CRASH.EXE).
+
+	New features - startup
+1WEEK	Test and use .DSKCLN (without INITIA).
+1WEEK	Add ONCE command to verify disks (in monitor and in DSKCLN).
+2DAYS	Run KMCLOD automatically if KMC is not running (during DSKCLN).
+
+	New features - XEXEC/EXECX/SUBMIT
+2DAYS	Add JOBSTS uuo for EXECX (and eliminate 24-second lost yellow ball delay).
+DEFER	Put batch bit in accounting records.
+QUICK	Make "OPER" command illegal for batch jobs.
+1WEEK	Rewrite COMCON to make certain commands illegal for batch jobs.
+
+	New features - disk performance performance:
+2DAYS	Make contiguous files split on cylinder boundaries.
+--	Cache retreival pointers to UFD data in the DRB.
+1WEEK	Put universal date/time in RIB (maybe in place of PCB counter).
+2WEEKS	Map virgin page - don't read a page that will be completely overwritten.
+BIG	Close without wait, validate RIB without wait.
+BIG	Shared supermapped pages (read from PCBs if already in core).
+BIG	PCBIO timer not working as expected.
+DEFER	Change UFD hash constants on a per-UFD basis.
+
+	New features - misc.
+1DAY	Finish up SYSDVF to return an entire GETTAB table at a time.
+2WEEKS	Modify SETE command so that it doesn't need to run any program.
+DEFER	Non 400000 high segments to handle larger low segments.
+DEFER	EXE files and SWR files.
+DEFER	More than 127 frames.
+DEFER	More than 255 ports.
+DEFER	Ersatz devices (HLP:, DOC:, etc).
+DEFER	Library PPNs and /NEW (PATH. uuo).
+Details for P035/E
+
+The following messages need to use OPROUT:
+    ERRCON/GETOPR:  ASCIZ /^G^Gproblem on device /
+    ERRCON/GETOPR:  ASCIZ  "?context page I/O error"
+    SCNSER/GETOPR:  If error in detached job
+    FILIO/GETOPR:   Disk unit off-line
+    FILIO/GETOPR:   Disk unit hung
+    PICON/GETCTY:   Parity error
+    ACTSER/DBLMSG:  ASCIZ /*** ACCOUNTING DEVICE RELEASED ***/
+
+
+	*   Close without wait, Validate RIB without wait (TITO speedup)
+
+	    This change is intended for increased speed for programs that
+	    perform mass copying from one area to another and restart at
+	    a known reference point when a failure occurs.  System backup
+	    and recovery procedures should benefit.
+
+	    Details of implementation include permitting RIB validation in
+	    the PCBIO section of the monitor to proceed without waiting for
+	    completion such as file page validation is permitted in normal
+	    paging I/O.  The CLOSE UUO would use common code with the
+	    validate RIB function after I/O has been completed to disk.
+
+	*   SYSDVF function to read additional monitor tables
+
+	    This is intended as an improvement for performance monitoring
+	    tools in order to read an entire table of information in a single
+	    read function instead of one word at a time incurring very costly
+	    system overhead in order to monitor machine usage.
+
+	*   Contiguious file page creation, split on cylinder boundries.
+
+	    The current hack switches to the unit with the most space whenever
+	    the previous page was on a multiple of 512.  Need to define a
+	    a routine to try to get any page on this cylinder.
+
+	*   Virgin page bit for .CHMFP/.CHSMP chanio calls (ASP speedup)
+
+	    This feature will prevent the monitor from reading a page from
+	    disk just to zero it out when mapping it to user space.  The user
+	    will still receive a zeroed out page, but no disk read will be
+	    necessary.  No security is lost, because at present the data in
+	    specified page would have been readable (had the user not just
+	    wanted a page to scribble in).
+
+	*   Implementation of .DSKCLN and INITIA at startup
+
+	    This means starting DSKCLN directly instead of running INITIA
+	    and having it run DSKCLN.  Need to verify that DSKCLN will work
+	    properly while not logged in.
+
+	*   SETE command in the monitor (see ENABLE/DISABLE)
+
+	    This will allow systems wizards to obtain license in the cases
+	    where [1,4].UFD and/or files in (SYS) are corrupted.  The previous
+	    kludge of reloading the system and setting REFLAG no longer works.
+
+
+	*   Batch job indicator, deferred charges
+
+	    Changes should be made to the LOGINN and LOGOUT records written
+	    to the accounting stream to indicate that a job is a batch job
+	    as designated by the batch bit in JBTST2.  This may not matter to
+	    the monitor an may be a change to the LOGINN and LOGOUT cusps.
+
+	    The CHKPNT program should also be modified at the same time to
+	    indicate batch jobs in the check-point records it generates.
+	    This will allow stream reading programs and accounting programs
+	    to detect batch jobs which span multiple accounting files.
+
+	*   Eliminate crashes when Base is reset
+
+	    Make the base re-synch code smarter so that it may skip over
+	    words with bad message types and messages with bad port number.
+
+	*   Eliminate crashes as seen on system B39
+
+	    The symptoms on system 39 require more research and probably a
+	    grip on generating our own base code.  (If system 39 is really
+	    going away at the end of 4Q '87 then this may be a waste of our
+	    resources.)
+
+	*   Non 400000 high segments, via segment start address table
+
+	    Introduce JBTSEG which contains segment specific information
+	    including the start address of the high segment if any.
+
+	*   EXE files for full mapping capability
+
+	    Teach SEGCON how to setup JBTSEG and an initial UPT based on
+	    the contents of the EXE file directory for .EXE files.  It may
+	    fall out that an in-core page map could be constructed which
+	    may then be used to remember frequently used programs or high
+	    segments.  Using this technique the following capabilities
+	    could decrease the I/O incurred by repetedly reading the RIB
+	    of a file when loading or executing programs from disk.
+
+	    a.  SAV files expanded to C-O-W pages
+		Pages never referenced need not occupy physical memory.
+
+	    b.  SHR files marked R-O or C-O-W if SETUWP enabled
+		Pages would be shared automatically and private copies would
+		be made whenever a user needed to "write" on pure shared code.
+		(This happens now, but the mechanism may change somewhat.)
+
+	    c.  SWR files marked R-W for all pages
+		(See b above.  Listed separately so that we do not FORGET the
+		 distinction between .SHR and .SWR files.)
+
+	    d.  Monitor able to produce R-W or C-O-W/private pages
+		(Again, this happens now, but EXE files require these to be
+		 created and shared for ranges of zero-compressed pages).
+
+	*   WSAVE command to create .SWR and .LOW (until full EXE)
+
+	    In order to implement .SWR fully, the monitor needs to create
+	    .SWR files just as it creates .SHR and .HGH files.
+
+	*   Fixup the LOAD PREBOOT areas for SMFILE and SMMON
+
+	    Create page 0 on each unit with the proper information to point
+	    to SMFILE and SMMON (for diagnostic booting) so that diagnostics
+	    may be stored on a TYMCOM-X system pack without interfering with
+	    the system.  This is all documented in the 2020 reference manual.
+	    TYMCOM-X currently supports only the system PREBOOT area.
+
+	    No change to the monitor is required, but KSFEFS needs to be
+	    completely rewritten.
+
+	*   Fix page fail for unibus timeout (UBGOOD) for KMC,LPT
+
+	    Use UBGOOD routine which traps unibus timeout errors and causes
+	    an error return rather than a page fail STOPCD for missing KMC-11
+	    or LPT (and any other devices on the unibus).  This will allow
+	    the monitor to run in CONSOLE mode even without a working KMC-11
+	    and allow an LPT to be defined when one does not exist.
+
+	    UBGOOD currently exists, but is not fully utilized.
+
+	*   Automatically reload the KMC if it is required.
+
+	    Add a timer to watch for the KMC.  If no response, force a
+	    .KMCLOD command to reload it.  Note: this can be done while
+	    DSKCLN is running, if it delays a bit so that DSKCLN does not
+	    see any other job logged in when DSKCLN starts.
+
+	*   More than 127 frames
+
+	    Increase the size of the frame field in the DDB.  There are two
+	    major approaches to this.  a) increase to 8 or 9 bits remaining
+	    in the same general location of the DDB.  b) Move this field to
+	    a new location (possibly invalidating many programs which think
+	    they know where to find this information in the DDB).  In either
+	    case, some programs may need to be modified to run under the new
+	    monitor.  This will need to be examined in more detail.
+
+	*   More than 255 ports
+
+	    Change the TTY DDB configuration macros to permit a larger number
+	    of ports.  The actual maximum is 256 per base and not 256 total.
+	    This permits 256 on the network base, 256 PTYs and 256 hard-wire
+	    terminals if we wish to implement this third category.  This new
+	    "category" would permit the CTY to be a port on the internal base
+	    and allow ports on the DZ-11s on 2020s at the same time.  It is
+	    also the start of segmenting SCNSER so that TYMNET support could
+	    be extracted and inserted as a driver for TOPS-10 or TOPS-20.
+
+    *   Rewrite COMCON command scanner to check batch bit
+
+	This is part of a rewrite of the command scanner to remove the current
+	confusing set of ranges for various types of commands to determine the
+	validitiy based on command mode (i.e. PDP10, XEXEC, XEXECJ, SUDS).
+
+    *   Variable UFD hash constants for each UFD
+
+	A default hash size would exist per structure and individual UFDs
+	would contain the proper hash size in the RIB and DRB [NMB,UFB].  The
+	purpose of variable hash sizes would be faster file search for users
+	that have large numbers of files (such as TYMNET, SOURCE, etc.).
+
+	Codes may exist for each structure to indicate the actual hash size
+	since it is apparent that various prime numbers work best for hashing
+	algorithms and a smaller field in the UFD could be used.
+
+
+    *   Bug fixes to /C and previous monitors
+
+	1.  (bug)   ECC error recovery on 3652 does not appear to work
+	2.  (bug)   CPXKON vs 3675 blocks
+	3.  (new)   Include all addressable core in dump, %UPS in particular
+
+  Stopcodes that need to use the DISKCD macro.
+CORE1   BACRFP
+CORE1   BACRVP
+CORE1   BADPAG
+FILFND  FILAMO
+FILFND  FILANF
+FILFND  FILATB
+FILFND  FILAUS
+FILFND  FILAUU
+FILFND  FILBNF
+FILFND  FILDMO
+FILFND  FILDMU
+FILFND  FILSEO
+FILIO   UNIONL
+FILIO   WRTDSK
+FILIO   WRTSAT
+FILRIB  RIBBRP
+FILRIB  RIBERR
+FILRIB  RIBHRE
+FILUUO  BADUFD
+FILUUO  CLRCM1
+FILUUO  UFDER1
+MAPIO   MPFBRP
+MAPIO   SAT2ND
+PCBIO   MAPAL1
+PCBIO   NOWRIT
+SIMIO   SIMUUF
+SWAMP   BADSAT
+SWAMP   GIVPG1
+SWAMP   REDSAT
+SWAMP   SEAR14
+ 

@@ -1,0 +1,702 @@
+procedure PATCH
+%
+	procedure to insert, modify, or print information concerning patches.
+%
+begin
+
+fields
+	IN.COMMAND  as "10C",		% for commands %
+	NEWNO  as  "6N",
+	OLD.NO as "6N",
+	NEW.LINE as "72C",
+	FLAG as "N",
+	DID.REL as "N",
+	PATCH.FILE as "10C",
+	PATMAP.NO as "12C",
+	IN.NUM  as  "6N",
+	IN.FIELD as "10C",
+	IN.VER  as  "5C",
+	IN.FILE as  "10C",
+	NEW.FILE as "10C",
+	IN.DATE as  date "ZM/ZD/YY",
+	HOLD.DATE as  date "ZM/ZD/YY",
+	OCT.NO as "N",
+	NUMBER.OF.ZEROS as "NN",
+	YES.OR.NO as "10C"
+
+define CURRENT.VERSION = 'P034/K'
+
+relation SYSTEM.LST is
+
+    key   SYSNO,
+          PATNO
+
+    data  PATFILE
+
+report PATMAP append to PATCH.FILE
+  page.size 0
+
+report LIST.PATCHES to "*"
+
+  page.size 0
+  
+  report.heading
+    print to LIST.PATCHES "CURRENT PATCH LIST",@cr,@cr,
+    "BIT   PATCH NAME   REMARK",@cr,@cr
+
+report PATCH.REPORT to  "*"
+
+report.heading
+  print to PATCH.REPORT "PATCH REPORT",@tab 30, today as date "MMM ZD, YYYY"
+
+report PATCH.SYSTEM to "*"
+  page.size 0
+
+  report.heading
+   print to PATCH.SYSTEM "PATCHES CURRENTLY INSTALLED ",
+    today as date "MMM ZD, YYYY",@cr,@cr,
+      @tab 4,"System    Date Installed",@cr,
+      @tab 4, "======    ==============",@cr
+
+  group.heading on PATFILE
+    begin
+    print to PATCH.SYSTEM @skip 1,trim(PATFILE)," - "
+    select PATCH.INFO via key then print trim(LINE),@cr,@cr
+    end
+
+report SYSTEM.PATCH to "*"
+  page.size 0
+
+  report.heading
+    print to SYSTEM.PATCH "PATCHES CURRENTLY INSTALLED ",
+      today as date "MMM ZD, YYYY",@cr,@cr
+
+  group.heading on SYSNO
+    print to SYSTEM.PATCH @cr,SYSNO as '5LN',":",@cr
+procedure ENT.PAT
+%
+	internal procedure for entering a patch
+%
+begin
+  
+  type "Patch file: "
+  accept PATFILE
+  let PATFILE = upper.case(PATFILE)
+  type "Patmap code: "
+  accept PATNO
+  type "Remark: "
+  accept LINE
+  type "Monitor Version: "
+  accept MONVER
+  let PATDATE = default
+  insert into PATCH.INFO
+
+  let MONVER = CURRENT.VERSION
+  insert into PATCH.LIST
+
+  type "Function (extra <cr> at end):",@cr
+  accept LINE
+  let CNT = 1
+  while LINE # default do
+    begin
+    insert into DESCRIPTION
+    accept LINE
+    let CNT = CNT + 1
+    end
+
+  type "System: "
+  accept SYSNO
+
+  while SYSNO ne default do
+    begin
+    type "Date installed as MM/DD/YY (<CR> for today): "
+    accept PATDATE
+    if PATDATE = default then let PATDATE = TODAY
+    let MONDATE = default
+    insert into PATCHES
+    type "System: "
+    accept SYSNO
+    end
+end
+
+procedure GETNAME
+%
+	procedure to get patch number from patch name
+%
+begin
+      PATNAME:
+      begin
+      type "Patch file name: "
+      accept IN.FILE
+      if IN.FILE ne default then
+        begin
+        let IN.FILE = upper.case(IN.FILE)
+        for each PATCH.INFO where PATFILE = IN.FILE
+          let IN.NUM = PATNO
+        if IN.NUM = default then
+          begin
+          type "No patch file '",trim(IN.FILE),"'",@cr
+          repeat PATNAME
+          end
+        end
+      end
+end
+procedure ADD.PATMAP.NO
+%
+    procedure to read in patch file, append correct code for patmap, and
+enter patch and attendant information into data base
+%
+begin
+type "File name: "
+accept PATCH.FILE
+if file PATCH.FILE  exists then
+  begin
+  select largest PATCH.LIST via MONVER=CURRENT.VERSION then
+    let NEWNO = PATNO + 1
+  else let NEWNO = 1
+  let PATNO = NEWNO
+  let PATFILE = upper.case(PATCH.FILE)
+  type "Remark: "
+  accept LINE
+  let MONVER=CURRENT.VERSION
+  insert into PATCH.LIST
+
+  let PATDATE = default
+  let MONVER = default
+  insert into PATCH.INFO
+
+  type "Function (extra <cr> at end):",@cr
+  accept LINE
+  let CNT = 1
+  while LINE # default do
+    begin  
+    insert into DESCRIPTION
+    accept LINE
+    let CNT = CNT + 1
+    end
+
+  let NUMBER.OF.ZEROS = (PATNO - 1)/3
+  let OCT.NO = PATNO mod 3
+  if OCT.NO = 0 then let OCT.NO = 4
+  let PATMAP.NO = (OCT.NO as "C")+(NUMBER.OF.ZEROS*"0")
+  type "Patch number is ",PATNO, " and patmap number is ",PATMAP.NO,@cr
+ 
+  write report PATMAP
+    print to PATMAP "patmap[",@27,"q+",trim(PATMAP.NO)
+
+  type "This is patch number ",PATNO," for ",trim(CURRENT.VERSION),
+    " setting bit ",(36 - PATNO),@cr
+  end
+else type "?Cannot find file",@cr
+  
+end
+
+procedure COMPLETE.INFO
+%
+	internal procedure to enter source information
+%
+begin
+
+  ADD.INSTALL:  
+  begin
+  type "Patch number: "
+  accept IN.NUM
+  if IN.NUM = default then
+    apply GETNAME
+  else
+    PAT.NAME:
+    begin
+    for each PATCH.INFO via PATNO=IN.NUM
+      begin
+      type trim(PATFILE),"  ok? "
+      accept YES.OR.NO
+      if upper.case(substr(YES.OR.NO,1,1))='Y' then
+        begin
+        let IN.FILE = PATFILE
+        finish PAT.NAME
+        end
+      end
+    type "No more patch files for patmap ",IN.NUM
+    finish ADD.INSTALL
+    end
+
+  select PATCH.INFO via (PATNO=IN.NUM,PATFILE=IN.FILE) then
+    begin
+    type "Installed into monitor version: "
+    accept IN.VER
+    type "Date (<cr> for today): "
+    accept IN.DATE
+    if IN.DATE = default then
+      let IN.DATE = TODAY
+    alter PATCH.INFO using (IN.VER for MONVER,IN.DATE for PATDATE)
+    end
+  end
+
+end
+
+
+
+procedure PATCH.LST
+%
+	internal procedure to print list of current patches
+%
+begin
+
+    for each PATCH.INFO where MONVER = default
+      write report LIST.PATCHES
+        print to LIST.PATCHES (36 - PATNO),@tab to 6,PATFILE," - ",trim(LINE),@cr
+end
+
+procedure COMPLETE.REPORT
+%
+	internal procedure to print all information on patches
+%
+begin
+
+  type "Report all patches? "
+  accept YES.OR.NO
+  if upper.case(substr(YES.OR.NO,1,1)) = 'Y' then
+    for each PATCH.INFO
+      write report PATCH.REPORT
+        begin
+        print to PATCH.REPORT @skip 1,
+          "Patmap bit: ",(36 - PATNO) AS "6LN","    File name: ",
+         trim(PATFILE),@cr,@tab 4,LINE,@cr,@cr,"Function:",@cr
+        for each DESCRIPTION via (PATNO,PATFILE)
+          print to PATCH.REPORT LINE,@cr
+        print to PATCH.REPORT @cr
+        if MONVER # default then
+          print to PATCH.REPORT @tab 4,"In sources for ",trim(MONVER),
+            " on ",PATDATE,@cr,@cr
+        print to PATCH.REPORT "Currently on     Date installed",@cr,@cr
+        for each PATCHES via (PATNO,PATFILE)
+         if MONDATE = default then
+          print to PATCH.REPORT SYSNO,@tab 14,PATDATE,@cr
+        end
+        
+    else
+      begin
+      apply GETNAME
+      type "Patch report for ",trim(IN.FILE)
+      select PATCH.INFO via (PATNO=IN.NUM,PATFILE=IN.FILE) then
+        begin
+        type @skip 1,
+          "Patmap bit: ",(36 - PATNO) AS "6LN","    File name: ",
+         trim(PATFILE),@cr,@tab 4,LINE,@cr,@cr,"Function:",@cr
+        for each DESCRIPTION via (PATNO,PATFILE)
+          type LINE,@cr
+        type @cr
+        if MONVER # default then
+          type @tab 4,"In sources for ",trim(MONVER),
+            " on ",PATDATE,@cr,@cr
+        type "Currently on     Date installed",@cr,@cr
+        for each PATCHES via (PATNO,PATFILE)
+         if MONDATE = default then
+          type SYSNO,@tab 14,PATDATE,@cr
+        end
+      end
+end
+
+
+
+
+procedure PATCH.RPT
+%
+	internal procedure for report requests
+%
+begin
+
+  type "List, Patch report, System report, Monitor Report or Complete report? "
+  accept IN.COMMAND
+  conditional on upper.case(substr(IN.COMMAND,1,1))
+    begin
+    'L':  apply PATCH.LST
+    'H':  type "Reports available are:",@cr,
+          "    List - list of all current patches by patmap number",@cr,
+          "    Patch report - systems on which patch(es) are installed",@cr,
+          "    System report - patches installed on specific system",@cr,
+          "    Monitor report - patches included in specific monitor version",
+          @cr,
+          "    Complete report - all you want to know about patches",@cr
+          
+    'P':  THIS.REPORT:
+          begin
+	  type "Report all patches? "
+	  
+	  accept YES.OR.NO
+	  if upper.case(substr(YES.OR.NO,1,1)) # "Y" then
+	    begin
+	    type "Patch number: " 
+	    accept IN.NUM
+	    if IN.NUM = default then
+	      apply GETNAME
+            else
+             PAT.NAM:
+              begin
+              for each PATCH.INFO via PATNO=IN.NUM
+                begin
+                type trim(PATFILE),"  ok? "
+                accept YES.OR.NO
+                if upper.case(substr(YES.OR.NO,1,1))='Y' then
+                  begin
+                  let IN.FILE = PATFILE
+                  finish PAT.NAM
+                  end
+                end
+              type "No more patch files for patmap ",IN.NUM,@cr
+              finish THIS.REPORT
+              end
+            type trim(IN.FILE)," installed on:",@cr,@cr
+            for each PATCHES via (PATNO=IN.NUM,PATFILE=IN.FILE)
+              if MONDATE = default then
+               type @tab to 7, SYSNO as '5LN',@tab to 17,PATDATE,@cr
+	    end
+         else
+  	      for each PATCH.INFO
+               write report PATCH.SYSTEM
+                for each PATCHES via (PATNO,PATFILE)
+                 if MONDATE = default then
+                  print to PATCH.SYSTEM @tab to 7,SYSNO as '5LN',
+                    @tab to 17,PATDATE,@cr
+	end
+
+   'M': begin
+        type "Patches included in Monitor version: "
+        let FLAG = 0
+        accept IN.VER
+        for each PATCH.INFO where MONVER = IN.VER
+          begin
+          type PATNO,@tab to 10,PATFILE,@cr
+          let FLAG = 1
+          end
+        if FLAG = 0 then
+          type "No patches in data base for monitor version ",trim(IN.VER),@cr
+        end
+
+   'C': apply COMPLETE.REPORT
+   'S': begin
+        if DID.REL = 0 then
+          begin
+          for each PATCHES
+           if MONDATE = default then 
+            insert into SYSTEM.LST
+          let DID.REL = 1
+          end
+        type "System number (<cr> for all): "
+        accept IN.NUM
+        if IN.NUM = default then
+          for each SYSTEM.LST
+            write report SYSTEM.PATCH
+              print to SYSTEM.PATCH @tab 4,(36 - PATNO),@tab 4,PATFILE,@cr
+        else
+          begin
+          type "PATCHES CURRENTLY INSTALLED ON SYSTEM ",IN.NUM as '5LN',@cr
+          for each SYSTEM.LST via SYSNO = IN.NUM
+            type @tab 4,(36 - PATNO),@tab 4,PATFILE,@cr
+          end
+       end
+
+   end
+  else type "No such report",@cr
+
+end
+procedure ADD.INFO
+%
+	to add system number to patch list
+%
+begin
+
+ADD.PROC:
+begin
+  type "Patch number: "
+  accept IN.NUM
+  if IN.NUM = default then
+    apply GETNAME
+  else
+    PATNAME:
+    begin
+    for each PATCH.INFO via PATNO=IN.NUM
+      begin
+      type trim(PATFILE),"  ok? "
+      accept YES.OR.NO
+      if upper.case(substr(YES.OR.NO,1,1))='Y' then
+        begin
+        let IN.FILE = PATFILE
+        finish PATNAME
+        end
+      end
+    type "No more patch files for patmap ",IN.NUM,@cr
+    finish ADD.PROC
+    end
+
+  type "Add system or function? "
+  accept IN.COMMAND
+
+  if upper.case(substr(IN.COMMAND,1,1))='S' then
+    begin
+    let PATNO=IN.NUM
+    let PATFILE=IN.FILE
+    type "System: "
+    accept SYSNO
+    while SYSNO # default do
+      begin
+      type "Date installed as MM/DD/YY (<CR> for today): "
+      accept PATDATE
+      if PATDATE = default then let PATDATE = TODAY
+      let MONDATE = default
+      insert into PATCHES
+      type "System: "
+      accept SYSNO
+      end
+    end
+
+  else if upper.case(substr(IN.COMMAND,1,1))='F' then
+    select DESCRIPTION via (PATNO=IN.NUM,PATFILE=IN.FILE,CNT=1) then
+      begin
+      type "Function already entered as follows: ",@cr
+      for each DESCRIPTION via (PATNO=IN.NUM,PATFILE=IN.FILE)
+        type LINE,@cr
+      end
+    else
+      begin
+      accept LINE
+      let CNT = 1
+      while LINE # default do
+        begin
+        insert into DESCRIPTION
+	accept LINE
+	let CNT = CNT + 1
+	end
+      end
+  end
+end
+procedure MON.DATE
+begin
+
+type "System: "
+accept NEWNO
+type "Date new monitor installed: "
+accept IN.DATE
+if IN.DATE = default then let IN.DATE = TODAY
+for each PATCHES where SYSNO = NEWNO
+  if MONDATE = default then alter PATCHES using (IN.DATE for MONDATE)
+end
+
+procedure CHANGE
+%
+	to change entries in PATCH.INFO, PATCHES, DESCRIPTION
+%
+begin
+
+  CHANGE.INFO:
+  begin
+  type "Patch number: "
+  accept IN.NUM
+  if IN.NUM = default then
+    apply GETNAME
+  else
+    PATNAME:
+    begin
+    for each PATCH.INFO via PATNO=IN.NUM
+      begin
+      type trim(PATFILE),"  ok? "
+      accept YES.OR.NO
+      if upper.case(substr(YES.OR.NO,1,1))='Y' then
+        begin
+        let IN.FILE = PATFILE
+        finish PATNAME
+        end
+      end
+    type "No more patch files for patmap ",IN.NUM,@cr
+    finish CHANGE.INFO
+    end
+    
+  type "Field: "
+  accept IN.FIELD
+  conditional on upper.case(substr(IN.FIELD,1,1))
+    begin
+
+    'P':  begin
+          type "Correct file name: "
+          accept NEW.FILE
+          select PATCH.INFO via (PATNO = IN.NUM,PATFILE=IN.FILE) then
+            begin
+            let IN.DATE=PATDATE
+            let NEW.LINE=LINE
+            let IN.VER=MONVER
+            end
+          delete from PATCH.INFO via (PATNO = IN.NUM,PATFILE=IN.FILE) 
+          insert into PATCH.INFO using (IN.NUM for PATNO,NEW.FILE for PATFILE,
+            IN.DATE for PATDATE,NEW.LINE for LINE,IN.VER for MONVER)
+          for each PATCHES  via (PATNO = IN.NUM,PATFILE=IN.FILE) 
+            begin
+            let OLD.NO=SYSNO
+            let IN.DATE=PATDATE
+            let HOLD.DATE=MONDATE
+            delete from PATCHES via (PATNO=IN.NUM,PATFILE=IN.FILE,SYSNO=OLD.NO)
+            insert into PATCHES using (IN.NUM for PATNO,NEW.FILE for PATFILE,
+               OLD.NO for SYSNO,IN.DATE for PATDATE,HOLD.DATE for MONDATE)
+            end
+          for each DESCRIPTION via (PATNO=IN.NUM,PATFILE=IN.FILE)
+            begin
+            let OLD.NO=CNT
+            let NEW.LINE=LINE
+            delete from DESCRIPTION via (PATNO=IN.NUM,PATFILE=IN.FILE,
+              CNT=OLD.NO)
+            insert into DESCRIPTION using (IN.NUM for PATNO,
+              NEW.FILE for PATFILE,OLD.NO for CNT,NEW.LINE for LINE)
+            end
+          end
+
+    'N':  begin
+          type "Correct patch number: "
+          accept NEWNO
+          select PATCH.INFO via (PATNO = IN.NUM,PATFILE=IN.FILE) then
+            begin
+            let IN.DATE=PATDATE
+            let NEW.LINE=LINE
+            let IN.VER=MONVER
+            end
+          delete from PATCH.INFO via (PATNO = IN.NUM,PATFILE=IN.FILE) 
+          insert into PATCH.INFO using (NEWNO for PATNO,IN.FILE for PATFILE,
+            IN.DATE for PATDATE,NEW.LINE for LINE,IN.VER for MONVER)
+          for each PATCHES  via (PATNO = IN.NUM,PATFILE=IN.FILE) 
+            begin
+            let OLD.NO=SYSNO
+            let IN.DATE=PATDATE
+            let HOLD.DATE=MONDATE
+            delete from PATCHES via (PATNO=IN.NUM,PATFILE=IN.FILE,SYSNO=OLD.NO)
+            insert into PATCHES using (NEWNO for PATNO,IN.FILE for PATFILE,
+               OLD.NO for SYSNO,IN.DATE for PATDATE,HOLD.DATE for MONDATE)
+            end
+          for each DESCRIPTION via (PATNO=IN.NUM,PATFILE=IN.FILE)
+            begin
+            let OLD.NO=CNT
+            let NEW.LINE=LINE
+            delete from DESCRIPTION via (PATNO=IN.NUM,PATFILE=IN.FILE,
+              CNT=OLD.NO)
+            insert into DESCRIPTION using (NEWNO for PATNO,
+              IN.FILE for PATFILE,OLD.NO for CNT,NEW.LINE for LINE)
+            end
+          end
+
+    'D':  begin
+          select PATCH.INFO via (PATNO = IN.NUM,PATFILE=IN.FILE) then
+            begin
+            type PATDATE," => "
+            accept IN.DATE
+            alter PATCH.INFO using (IN.DATE for PATDATE)
+            end
+          end
+
+    'I':  begin
+          type "System: "
+          accept OLD.NO
+          select PATCHES via (PATNO=IN.NUM,PATFILE=IN.FILE,SYSNO=OLD.NO) then
+            begin
+            type PATDATE," =>"
+            accept IN.DATE
+            alter PATCHES using (IN.DATE for PATDATE)
+            end
+          else type "No record of patch ",trim(PATFILE)," on :",SYSNO,@cr
+          end
+    'M':  begin
+          type "System: "
+          accept OLD.NO
+          select PATCHES via (PATNO=IN.NUM,PATFILE=IN.FILE,SYSNO=OLD.NO) then
+            begin
+            type MONDATE," =>"
+            accept IN.DATE
+            alter PATCHES using (IN.DATE for MONDATE)
+            end
+          else type "No record of patch ",trim(PATFILE)," on :",SYSNO,@cr
+          end
+
+    'S':  begin
+          type "System: "
+          accept OLD.NO
+          select PATCHES via (PATNO=IN.NUM,PATFILE=IN.FILE,SYSNO=OLD.NO) then
+            begin
+            let IN.DATE=PATDATE
+            let HOLD.DATE=MONDATE
+            end
+          else type "No record of patch ",trim(PATFILE)," on :",SYSNO
+          delete from  PATCHES via (PATNO=IN.NUM,PATFILE=IN.FILE,SYSNO=OLD.NO)
+          type "Change to (<cr> to delete): "
+          accept NEWNO
+	  if NEWNO # default then
+            insert into PATCHES using (IN.NUM for PATNO,IN.FILE for PATFILE,
+	      NEWNO for SYSNO,IN.DATE for PATDATE,HOLD.DATE for MONDATE)
+	  end
+
+
+    'F':  begin
+          for each DESCRIPTION via (PATNO = IN.NUM,PATFILE=IN.FILE) 
+             begin
+	     type LINE,@cr,"=>"
+	     accept NEW.LINE
+	     if NEW.LINE # default then
+	       alter DESCRIPTION using (NEW.LINE for LINE)
+	     end
+           end
+
+    'R':  begin
+          select PATCH.INFO via (PATNO = IN.NUM,PATFILE=IN.FILE) then
+            begin
+            type trim(LINE),@cr," => "
+            accept NEW.LINE
+            alter PATCH.INFO using (NEW.LINE for LINE)
+            end
+          end
+
+    'V':  begin
+          select PATCH.INFO via (PATNO = IN.NUM,PATFILE=IN.FILE) then
+            begin
+            type trim(MONVER)," => "
+            accept IN.VER
+            alter PATCH.INFO using (IN.VER for MONVER)
+            end
+          end
+
+    'H':  type "Legal fields are P(ATCH.FILE), D(ATE), V(ERSION), R(EMARK)",
+ @cr,  "    N(UMBER), S(YSTEM), I(NSTALLED.DATE), F(UNCTION), M(ONITOR.DATE)"cr
+
+    'Q':  nothing
+    end
+    else type "No such field",@cr
+
+  end
+end
+type "Patches for monitor version ",CURRENT.VERSION,@cr
+let DID.REL = 0
+GET.COMMAND:
+begin
+type ">"
+accept IN.COMMAND
+conditional on upper.case(substr(IN.COMMAND,1,1))
+  begin
+  'H': type "Legal Commands are:",@cr,
+    "P(ATCH) - To enter new patch and add patmap code to patch",@cr,
+    "R(EPORT) - Five different reports ",@cr,
+    "E(NTER)  - To enter a new patch",@cr,
+    "M(ODIFY) - To change information in patch records",@cr,
+    "N(EWMON) - To enter date new monitor containing patch was installed",@cr,
+    "C(OMPLETE) - To enter source information on patch",@cr,
+    "A(DD.INFO) - To add system or function to patch record",@cr,
+    "Q(UIT)",@cr,@cr,
+    "If you don't know patch number, <cr> for patch name prompt",@cr
+  'P': apply ADD.PATMAP.NO
+  'A': apply ADD.INFO
+  'C': apply COMPLETE.INFO
+  'E': apply ENT.PAT
+  'M': apply CHANGE
+  'N': apply MON.DATE
+  'R': apply PATCH.RPT
+  'Q': finish GET.COMMAND
+  end
+  else type "ILLEGAL COMMAND",@cr
+repeat GET.COMMAND
+end
+
+end
+  H s
