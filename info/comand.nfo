@@ -1,0 +1,211 @@
+$menu COMMANDS;TYMCOM-X Monitor Commands.
+*(INFO)COMAND.NFO:SUMMARY;Command summary.
+*(INFO)COMAND.DOC:DETAILS;Detailed description of commands.
+*(INFO)COMAND.NFO:ABBREVIATIONS;Ambiguous abbreviations.
+*(INFO)COMAND.NFO:MORE;Pointers to more information.
+*(INFO)COMAND.NFO:CONTROL;Special control characters.
+$text SUMMARY;Command summary.
+  RUN/SAVE commands
+GET       Load a program into memory
+START     Start the program that is loaded in memory
+RUN       Combination of GET and START
+R         Run a program from SYS:
+SAVE      Store memory image into file(s)
+SSAVE     Store memory image into file(s) as a sharable program
+HALT      Stop execution of program in memory
+ ^C       Control-C is the same as HALT
+CONTINUE  Resume execution of program in memory
+REENTER   Start execution at the alternate (re-enter) address
+DDT       Start execution of DDT if it is currently in memory
+GO        XDS940 equivalent of RUN
+SAVEBIN   XDS940 equivalent of SAVE
+SAVBIN    XDS940 equivalent of SAVE
+
+  Device commands
+RESOURCES Type list of available devices
+ASSIGN    Assign a device to your job
+REASSIGN  Transfer ownership of device to another job
+DEASSIGN  Release ownership of a device
+CLOSE     Close file by writing out any possible partial buffers
+FINISH    Combination of CLOSE and DEASSIGN
+
+  EXIT/LOGOUT commands
+LOGOUT    Logs you off this system, allows you to LOGIN to another system
+KJOB, BYE, POP  Same as LOGOUT
+EXIT      Quiet form of LOGOUT
+DETACH    Detach job from terminal (it may be allowed to continue running)
+ATTACH    Attach current terminal to a detached job
+CSTART    Start job but leave terminal in Monitor mode (so you can DETACH)
+CCONTINUE Continue job but leave terminal in Monitor mode (so you can DETACH)
+.LOGIN    Message from TYMNET to start a job
+
+  Information commands that do not destroy core image
+DAYTIME   Type date and time of day
+TIME      Type amount of CPU resources used
+CORE      Type amount of memory in use
+VMINFO    Type amount of virtual memory in use
+ ^T       Control-T displays status of currently running job
+PJOB      Types you job number
+E         Examine memory, types out as octal numbers
+D         Deposite into memory, using octal numbers
+VERSION   Examines the contents of location 137 in memory
+DSK       Types amount of disk reads and writes performed
+SCHED     Types the scheduling bits, 0 means normal timesharing
+
+  Status setting commands which do not destroy core image
+SET       See section on the SET command
+TTY       See section on the TTY command
+WATCH     Select statistics to be typed at start and end of command
+ADRBRK    Set address break for debugging
+JCONTIN   OPER command to continue a job accessing a hung device
+TALK      Send message to another terminal
+
+  Commands which run programs
+PCOM      PCOM    Execute commands stored in a file
+DCOM      PCOM    Variant of PCOM
+INITIA    INITIA  Run your INIT program (such as LOGON)
+HELLO     HELLO   Enter SUDS mode
+GEXEC     GEXEC   Enter GEXEC mode
+PASSWORD  PASSWO Changes your network login password
+PROJEC    PROJEC  Changes project code
+MAGNUM    MAGNUM  Database program
+FTMAGN    FTMAGN  Field-Test version of MAGNUM
+XMAGNU    XMAGNU  Experimental version of MAGNUM
+XBASIC    XBASIC  ? basic
+NBASIC    NBASIC  ? basic
+SFORTR    SFORTR  ? fortran
+CFORTR    CFORTR  ? fortran
+AID       AID     Calculator program
+CAL       CAL     Another name for AID
+APL       APL     APL interpreter
+SETE      SETE    Special OPER enable
+OPER      OPER    Program to set license for the job
+PERFORM   PERFOR  Perform a series of RPG commands
+GFD       GFD     Change default directory
+UNDELE    UNDELE  Un-delete files
+PEAK      PEAK    Restricted screen editor
+SPOOL     SPOOL   ?
+TERMIN    TERMIN  ?
+TBA       TBA     TYMSHARE BASIC
+TAPE      TAPE    ?
+DEFER     DEFER   ?
+NEWS      NEWS    ?
+CT1       CT1     Command test program 1
+CT2       CT2     Command test program 2
+CT3       CT3     Command test program 3
+CT4       CT4     Command test program 4
+CT5       CT5     Command test program 5
+CT6       CT6     Command test program 6
+CT7       CT7     Command test program 7
+CT8       CT8     Command test program 8
+CT9       CT9     Command test program 9
+
+SYSTAT    SYSTAT  Display system statistics
+WHO       SYSTAT  Display only names of users on the system
+SYSNO     SYSTAT  Display the system number and monitor version
+PSP       SYSTAT  Display disk space remaining
+WHERE     SYSTAT  Lists job number of a specified user
+USERS     SYSTAT  Summary of number of users on the system
+
+  Commands that run RPG (which may then run other programs)
+TYMEX     RPG     Set XEXEC mode
+XEXEC     RPG     Set XEXEC mode
+PDP10     RPG     Set PDP10 mode
+CTEST     RPG     Set parameters internal to RPG
+PPN       RPG     Translate username to PPN
+HELP      RPG     List commands that RPG knows about
+DATE      RPG     Type date and time in XDS940 format, XEXEC mode only
+MAIL      RPG     Read MAIL.BOX
+POSTMAN   RPG     ?    MAIL.BOX
+SEND      RPG     Send to someone else's MAIL.BOX
+OPNOTICE  RPG    Type messages from the operator, XEXECJ mode only
+
+DO        ---     Search the DO list and run program
+DIFFER    FILCOM  Show differences in comparing two files
+
+CREATE    EDITOR/EDIT10   Create a file
+EDITOR    EDITOR/EDIT10   Edit existing file
+10EDIT    EDIT10  Edit existing file with EDIT10
+MODIFY    EDITOR  Edit existing file with EDITOR
+MAKE      TECO    Create a file with TECO
+TECO      TECO    Edit existing file with TECO
+VUE       VUE     Examine existing file with VUE
+
+COMPILE   RPG     Conditionally compile source programs
+LOAD      RPG     Conditionally compile, then load program into memory
+EXECUTE   RPG     Conditionally compile, then load and execute program
+DEBUG     RPG     Compile and load with DDT, start DDT
+TRY       RPG     Compile and load with DDT, start main program
+CDEBUG    RPG     Load COBOL debugger
+FDEBUG    RPG     Load FORTRAN debugger
+CREF      RPG     Produce cross-reference listing from previous compile
+CROSS     RPG     Same as CREF
+
+DIRECT    DIRIT   Type directory of files
+FILES     DIRIT   XDS940 equivalent of DIRECT
+RENAME    DIRIT   Change name of files
+COPY      DIRIT   Copy files
+DELETE    DIRIT   Delete files
+UNDELETE  UNDELE  Un-delete files
+DECLAR    DIRIT   Declare accessability to files
+FDC       DIRIT   Set file directory codes for UFD
+PFDC      DIRIT   Print current file directory code
+
+TYPE      LISTER  Type file on terminal
+PRINT     LISTER  Output file to lineprinter
+LIST      LISTER  Output file to lineprinter with page headers
+$text ABBREVIATIONS;Ambiguous abbreviations.
+  The following commands can be abbreviated to a single character:
+10EDIT, BYE, D, E, INITIA, JCONTI, KJOB, OPER, R
+
+  The following commands can be abbreviated to a two letters:
+ADRBRK, AID, APL, ASSIGN, ATTACH.  CAL, CCONTINUE, CDEBUG, CFORTRAN, CLOSE,
+CSTART.  DCOM, DDT, DO, DSK.  EDITOR.  FI=FILES, FTMAGN.  GFD, GO.  HALT.  LIST.
+MODIFY.  NBASIC, NEWS.  PASSWORD, PCOM, PDP10, PFDC, PJOB, PPN, PSP.  RUN.
+SCHEDULE, SFORTRAN, SPOOL, SSAVE, START.  TBA, TE=TECO, TIME, TRY, TTY.
+UNDELETE, USERS.  VERSION, VMINFO, VUE.  WATCH.  XBASIC, XEXEC, XMAGNU.
+
+  The following commands can be abbreviated to three letters:
+COMPIL, CONTINUE, COPY, CORE                    CRE=CREATE, CROSS
+CT1, CT2, CT3, CT4, CT5, CT6, CT7, CT8, CT9, CTEST
+DATE, DAYTIME           DEASSIGN, DEBUG, DECLARE, DEFER, DELETE, DETACH
+DIFFER, DIRECT          EXECUTE, EXIT           FDC, FDEBUG
+FINISH (FI=FILES)       GET, GEXEC              HELLO, HELP
+LOAD, LOGOUT            MAGNUM, MAIL, MAKE      OPNOTICE (O=OPER if not XEXECJ)
+PEAK, PERFORM           PRINT, PROJECT          SET
+REASSIGN, REENTER, RENAME, RESOURCES            SAVE, SAVBIN, SAVEBIN
+SYSNO, SYSTAT           TALK, TAPE              TERMINAL (TE=TECO)
+TYMEX, TYPE             WHERE, WHO
+
+  The following commands require four letters:
+CREF (CRE=CREATE)       SETE
+$text MORE;Pointers to more information.
+TYMCOM-X Monitor Commands are documented in the INFO tree under the following
+headings:
+
+CUSPS           Definition of a cusp
+RPG             Rapid Program Generation
+DIRIT           Used by DIRECT and DELETE commands
+SYSTAT          System status
+$text CONTROL;Special control characters.
+List of special characters for PDP10 mode.
+^@ NUL  Null character, used for padding.  Ignored by programs.
+^C      HALT, stop program.  Two control-C's are needed if not in input wait.
+^D EOT  End of Text, indicates end of input to some programs.
+^G BEL  Ring the bell or beep the buzzer on the terminal.
+^H BS   Backspace.  Same as DEL if TTY BSD is set.
+^I HT   Horizontal tab.  Assumed to be set every 8 columns.
+^J LF   Linefeed.  Signifys end of line, appended automatically after CR.
+^K VT   Vertical tab.  Assumed to be set every 8 lines.
+^L FF   Formfeed.  Go to top of page, erases screen on some terminals.
+^M CR   Carriage return.  Enterred at end of every line, LF supplied by Monitor.
+^O      Suppress output until another control-O or when job is in input wait.
+^Q XON  Resume output that was paused by Control-S.
+^R Retype current input line.
+^S XOF  Pause output until a Control-Q is sent from the terminal.
+^T      Show status of running program.
+^U      Delete current line of input and start over.
+^Z EOF  End of File, indicates end of input to most programs.
+^[ ESC  ESCape.  Indicates to some programs to do special processing.
+   DEL  DELete (also known as RUBout).  Delete previous input character.
+  @&[

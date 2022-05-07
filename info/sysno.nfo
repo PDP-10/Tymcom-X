@@ -1,0 +1,395 @@
+$menu SYSTEMS;36-bit hosts on TYMNET.
+*(INFO)SYSNO.NFO:SYS10;TYMCOM-X systems (PDP-10 hosts) on TYMNET.
+*(INFO)SYSNO.NFO:SYS20;TYMCOM-20 systems (AUGMENT).
+*(INFO)SYSNO.NFO:SYS370;TYMCOM-370 systems.
+*(INFO)SYSNO.NFO:DATACENTER;TYMCOM-X systems sorted by Data Center.
+*(INFO)SYSNO.NFO:HARDWARE;List of F3,KI,KL,KS systems sorted by CPU number.
+*(INFO)SYSNO9.NFO:SYS940;TYMCOM-IX systems.
+*(INFO)SYSNO9.NFO:MARKET;DEC's MARKET system.
+$text SYS10;TYMCOM-X systems (PDP-10 hosts) on TYMNET.
+Sorted by system number, as of 7-Oct-87
+This file is (SPL)SYSNO.MEM and (INFO)SYSNO.NFO
+
+Code Generation Systems:
+TYMNET   primary=D25, backup=F33, nodes 2000 to 4777
+TYM5     primary=D54, backup=F33, nodes 5000 and greater
+Private1 primary=F26, backup=D31, private networks
+Private2 primary=F22, backup=D37, private networks
+
+Sysno   OS  Site ID  Utilization
+-----  ---  -------  -----------
+X14    TYM  SanJose  TYMCOM-XX development
+X17    TYM  SanJose  TYMCOM-XX development
+F22    TYM  Fremont  Private Net backup, primary is D37 (move to D31)
+D23    TYM  Dallas   Profile / TBILL / NETDB
+D25    TYM  Dallas   TYMNET 4777 primary, backup is F70
+F26    TYM  Fremont  Private Net primary, backup is D31
+F29    TYM  Fremont  COEES, electronic MAIL interface
+F30    TYM  Fremont  TYMNET Accounting
+D31    TYM  Dallas   Private Net backup, primary is F26
+X32    TYM  Fremont     * test system *
+F33    TYM  Fremont  TYMNET backup, primaries are D54 and D25
+D34    TYM  Dallas   TYMSHARE - internal (master OPER password)
+D35    TYM  Dallas   U.S. Postal Service / Tymquote
+D37    TYM  Dallsa   Private Net Code (primary, C22 is backup)
+F38    TYM  Fremont  TYMSHARE Accounting
+B39    TYM  Fremont  NTD Network development
+D54    TYM  Dallas   TYMNET 5000 primary, backup is F33
+D55    TYM  Dallas   General Timesharing / Railtrack
+D56    TYM  Dallas   TYMNET Order Entry
+F58    TYM  Fremont  Netstat, International Accounting
+S59    TYM  ST-CLOUD CEGI, non-dedicated
+D65    TYM  Dallas   Otis Elevator (dedicated)
+F74    TYM  Fremont  TYMSHARE Accounting / Validation DB / Tymuse
+S83    TYM  ST-CLOUD CEGI, R.A.T.P.
+C148   T20  N 1st C  Office-5  26KL#113
+M169   TYM  ST.LOUIS Mallinckrodt Chemical Co
+S264   TYM  ST-CLOUD CEGI, Societe Generale
+H370   TYM  HOUSTON  Fayez Sarofim
+S443   TYM  ST-CLOUD CEGI, non-dedicated
+C575   T20  N 1st C  Office-11 26KL#119
+W1051  TYM  SEATTLE  Rainier National Bank
+C1087  T20  Fremont  Office-4  26KL#121 (connected to ARPANET.EDU)
+C1088  TNX  Fremont  Office-1    F4#109 (connected to ARPANET.EDU)
+C1643  TNX  Fremont  Office-8    F4#111 (formerly Office-2)
+X4284  TTY  N 1st D  TXS printer on host 4284.04
+
+
+Former PDP10 systems, recently removed from timesharing.  (1984-1987)
+Sysno  CPU  #    OS  Site ID  Utilization
+-----  -------  ---  -------  -----------
+C24    KI  532  TYM  CUP-C       * test system *
+D27    KI  565  TYM  DALLAS   INSD Customers / U.S. Postal Service / Europe
+C28    KL 1286  TYM  CUP-C    PGrade, Netstst, General Administration
+D32    KL 1324  TYM  DALLAS      * test system *
+B36    KL 1415  TYM  CUP-C    NTD Network development
+D57    KI  542  TYM  CUP-C    Network Development
+S60    KS 4097  TYM  ST-CLOUD CEGI
+X62    F3    5  TYM  LIBERTY  TYMCOM-X applications
+F70    KI  733  TYM  Fremont  TYMNET 4777 backup, primary is D25
+D72    KI  565  TYM  DALLAS   (Tymshare Accounting) moved to F74
+D79    KI  666  TYM  DALLAS   (Tymshare Accounting) moved to F74
+S90    KL 1305  TYM  ST-CLOUD CEGI, (formerly SLIGOS in Puteaux, France)
+S92    KS 4097  TYM  ST-CLOUD CEGI, Societe Generale
+X95    KS       TYM  LIBERTY  TYMCOM-XX Development changed to X17
+S170   KS 4097  TYM  ST-CLOUD CEGI, T.V.T.
+S184   KS 4097  TYM  ST-CLOUD CEGI, U.N.C.E.F.
+S301   KS 4097  TYM  ST-CLOUD CEGI, non-deticated
+C897   F3    7  TYM  CUP-A    NTD (Supervisor Development)
+X930   F3    6  TYM  LIBERTY  TYMCOM-X Development
+X2300  26  118  T20  LIBERTY  Office-13 26KL#118 (Eric Dortman's 26KL test system)
+
+  Reserved host numbers
+ 12    KI  ---  TYM               * test system *
+ 63    KL       TYM  DALLAS       * test system *
+-82                  (in TELECOPY database as being valid PDP10 host for TRW)
+-83                  (in TELECOPY database as being valid PDP10 host for TRW)
+L88    KI       TYM  LOCKHEED      not in service       (had a card reader)
+F94    KL       T20                RP06+SA10 both
+C107   KL       TYM  CUP-C         not in service       (test monitor)
+C108   KL       TYM  CUP-C         not in service       (other test monitor)
+C118   KS 4267  T20  LIBERTY   Office-18 (now X95 running TYMCOM-XX)
+F145   KS       T20  FREMONT       not in service
+C180   26  124  T20  CUP-C     Office-3
+C185   F3    3  TNX  CUP-C     Office-10 and/or Office-20
+C212   F4       TNX  CUP-C     Office-12
+C232   F3    2  TNX  CUP-C     Office-8
+S654   KS       TYM  Burlington County Hospital - TYMCARE
+C675   KS       TNX  CUP-VG3   MONG3   not in service
+C818   F4       TNX  CUP-C     Office-9
+S819   KS       TYM  Willis Knighten Hospital - TYMCARE, Shreveport
+C895   F3    4  TNX  CUP-C     Office-15
+C896   F3    5  TNX  CUP-C     Office-6
+P1292  KS       TYM  PARIS         not in service
+C1311  F3    9  TXN  CUP-C     Office-14
+-3984  BASE  reserved kernel host number for PDP10 base
+-4117  BASE  reserved kernel host number for PDP10 base
+-4525  BASE  reserved kernel host number for PDP10 base
+
+
+  TRWNET (use gateway 632 or 633 to get from TYMNET to TRW-NET)
+Sysno  CPU  #    OS  Site ID   Utilization
+-----  -------  ---  -------   -----------
+TRW33  KS 4097  TYM  ANAHEIM   TRW  (GATEWAY 633 OR 632)
+(XRAY:3747) = ND4017 = TYMNET host 632 <=> TW0536 = TRW host 82
+(XRAY:1283) = ND5576 = TYMNET host 633 <=> TW0537 = TRW host 83
+
+
+List of EBUS base node numbers and kernel host numbers, as of 11-Nov-87
+  In directory (TYMNET) on D25 and F33
+ND2100:1294 X32         ND2107:3219 D35         ND2332:7417 D65
+ND2333:4459 F33         ND3115:7252 D37         ND3374:6713 F22
+ND4200:2901 D34         ND4274:7563 D54         ND4525:7453 F70
+ND4613:8674 X63         ND4725:7454 D56
+  In directory (TYM5) on D54 and F33
+ND5577:7916 D55         ND6515:4399 F29         ND6703:3011 X24
+ND6714:4402 B36         ND6716:4418 D23         ND6717:4437 D57
+ND6720:4481 F58         ND6721:4486 F30         ND6722:4531 F74
+ND7004:4343 D31         ND7021:5270 F38         ND7165:2546 D25
+N10350:8671 F26
+  In directory (BUBBNET) on B39
+BB2674:2674 B39
+  Nodes which are no longer being used as EBUS bases:
+ND2762:36, ND3000:90, ND4177:28, ND5473:24, ND5650:72, ND6712:29, ND6715:27
+$text DATACENTER;TYMCOM-X systems sorted by Data Center.
+
+  Cupertino, Calif (PST)                         5 systems (3*KI,2+1*KL)
+Old Replacement CPU   HW  Node   Use
+--- ------    ------- -- ------  ------------------------------------------
+ 22 (F22)     KI--742 PA         hardware moved to Fremont, spare for FSCO
+ 24 (F70)     KI--532 PP           has been sold
+ 26 (F26)     KL-1286 ZZ         hardware moved to Dallas,  running as D35
+ 29 (F29)     KL-1307 XX         hardware moved to Fremont, running as X32
+ 33 (F33)     KL-1081 VV         hardware moved to Fremont, running as F29
+ 34 (D34)     KI--641 AA           has been sold
+ 35 (D35)     KL-1386 QQ         hardware moved to Dallas,  running as D55
+ 36 (B39)     KL-1415 YY         hardware moved to Dallas, running as D31
+ 39 (B39)     KL-1354 RR         hardware moved to Fremont, running as F74
+ 55 (D55)     KL-1336 FF         hardware moved to Fremont, running as B39
+ 57 (D57)     KI--542 EW         hardware moved to Fremont, spare for FSCO
+ 70 (F70)     KI--733 PB         hardware moved to Fremont, running as F70
+              KI--591 --         unused hardware (was V70 in Valley Forge)
+Old system => New system : F28 => F33   B36 => B39  D72+D79 => F74
+
+  San Jose, Nicholson Lane (PST)                4 systems (2*F3,4*KS)
+X14-P035/C05  KS-4257 KS ND2770  1024 pages  32 frames  32+30 ports  8 disks
+X17-P035/C05  KS-4267 KS ND6760  1024 pages  32 frames  32+30 ports  8 disks
+X62-P035/B10  F3----5 F3 ND0115  1024 pages  32 frames  32+32 ports  4 disks
+X930-P035/B10 F3----6 F3 ND6657  1024 pages  32 frames  32+32 ports  4 disks
+
+  Fremont Data Center, Solar Way (PST)         11 systems (9*KL+(1*KL+1*KI))
+F22-P035/C03  KL-1421 3G ND3374  3072 pages 128 frames 128+68 ports 16 disks
+F26-P035/C    KL-1324 3F N10350  8192 pages 100 frames 128+64 ports 16 disks
+F29-P035/C    KL-1081 3J ND4177  2048 pages 127 frames 128+76 ports 16 disks
+F30-P035/C    KL-1388 3C ND6721  4096 pages 108 frames 128+68 ports 24 disks
+X32-P035/C05  KL-1307 XX ND2100  4096 pages 128 frames 128+68 ports 24 disks
+F33-P035/C05  KL-1427 3B ND2333  4096 pages 110 frames 128+68 ports 24 disks
+F38-P035/C    KL-1405 3A ND7021  8192 pages  80 frames 128+54 ports 32 disks
+B39-P035/C    KL-1336 3I BB2674  8192 pages 127 frames 145+62 ports 16 disks
+F58-P035/C    KL-1332 3E ND6720  4096 pages  80 frames 128+54 ports 16 disks
+F74-P035/C    KL-1354 3D ND6722  8192 pages  80 frames 128+54 ports 32 disks
+ 24-          KI--742 PA         hardware moved to Fremont, spare
+ 24-          KI--54        hardware moved to Fremont, spare
+X70-P035/C03  KI--733 3H ND4525  spare KI
+
+  Dallas, Texas (CST)                           10 systems (10*KL)
+D23-P035/C    KL-1275 OO ND6716  4096 pages 110 frames 128+68 ports 16 disks
+D25-P035/C    KL-1460 GG ND7165  4096 pages 127 frames 128+76 ports 16 disks
+D31-P035/C    KL-1415 YY ND7004  4096 pages  60 frames 128+44 ports 24 disks
+D34-P035/C    KL-1286 ZZ ND4200  4096 pages 127 frames 128+76 ports 16 disks
+D35-P035/C    KL-1096 QQ ND2107  4096 pages 127 frames 128+76 ports 16 disks
+D37-P035/C    KL-1461 HH ND3115  8192 pages 110 frames 128+68 ports 16 disks
+D54-P035/C    KL-1376 II ND4274  8192 pages 127 frames 128+76 ports 16 disks
+D55-P035/C    KL-1386 CC ND5577  8192 pages 127 frames 128+76 ports 16 disks
+D56-P035/C    KL-1383 JJ ND4725  4096 pages 127 frames 128+76 ports 16 disks
+D65-P035/C    KL-1380 LL ND5650  4096 pages 127 frames 128+76 ports  8 disks
+ 27           KI--565 KK ND6715  unused hardware
+ 31           KI--666 MM ND7004  unused hardware
+ 34           KI--574 ?? ND6703  unused hardware
+ 57           KI--657 SS ND6717  unused hardware
+ 72           KI--761 NN ND6715  unused hardware
+ 79           KI--565 KK ND2332  unused hardware
+
+  Saint Cloud, France (Western Europe Time)     10 systems (9*KS,0*KL)
+S59-P034/N    KS-4097 59 ND3024  1024 pages  30 frames  64+14 ports  2-14-85
+ 60-P034/N    KS-4097 60 ND3427  no longer timesharing
+S83-P034/N    KS-4097 83 ND2234  1024 pages  30 frames  64+14 ports  2-14-85
+ 90-P034/K-12 KL-1305 90 ND3000  no longer timesharing
+ 92-P034/N-4  KS-4097 92 ND3025  no longer timesharing
+ 170-P034/N-4 KS-4097 S1 ND3761  no longer timesharing
+ 184-P034/K-7 KS-4097 S2 ND2235  host number has been re-assigned
+S264-P034/N   KS-4097 S3 ND3475  1024 pages  30 frames  64+14 ports  05-4-85
+ 301-P034/N   KS-4097 S4 ND2712  no longer timesharing
+S443-P034/K-8 KS-4097 S5 ND3321  1024 pages  30 frames  64+14 ports  7-13-83
+
+
+Other customers                               4 systems (4*KS)
+
+   TRW, Anaheim CA (access to TRWNET via gateway 633)
+TW33-P034/P-10 KS-4097 TW ND514  1024 pages  30 frames 64+14 ports   12-2-81
+
+   Fayez-Sarofim & Co., Houston TX
+H370-P034/J-5 KS-4097 FZ ND4272 1024 pages  30 frames 100+4 ports   10-29-81
+
+   Ranier Bank, Seattle WA
+W1051-P034J-6 KS-4097 RB ND5274 1024 pages  30 frames 64+4 ports   3-23-81
+
+   Mallenkrodt Chemical Co., St. Louis MO
+ 169-P034/N   KS-4097 MA ND5303  no longer timesharing
+$text HARDWARE;List of F3,KI,KL,KS systems sorted by CPU number.
+PDP-10 processors owned by McDonnell Douglas Information Services Group,
+maintained by McDonnell Douglas Field Service Company (formerly TYMSHARE).
+
+The ones marked "part of TYMNET" are capable of building AUX circuits.
+
+TYMCOM-X  2*KI + 18*KL + 9*KS + 2*F3                   = 31 (part of TYMNET)
+TENEX or modified TOPS-20       0*F3 +  2*F4 +  3*26KL =  5 (part of TYMNET)
+TOPS-20           1*KL + 0*KS                          =  1 (not in TYMNET)
+TOPS-10   0*KI +  2*KL + 0*KS                          =  2 (part of MDC-IPC)
+Down      9*KI +  2*KL + 0*KS + 6*F3 +  9*F4 +  9*26KL = 35 property of MDC
+-------  -----   -----   ----   ----    ----   -------   --
+Total    11*KI + 23*KL + 9*KS + 8*F3 + 11*F4 + 12*26KL = 74 36-bit CPUs in MDC
+-----------------------------------------------------------------------------
+Other     4*KI +  2*KL + 6*KS + 0*F3 +  2*F4 +  2*26KL = 16 unknown or other
+Grand Total                                            = 90 36-bit machines
+
+                                                                November 1987
+  13 KI processors (2 running, 9 down, 2 unknown)
+KI  532       was C70-C, has been sold
+KI  542       was C57, turned off 16-Jan-87
+KI  565       was D79
+KI  574       was D34
+KI  591       was V?? was in CUP-A, not running, never was connected
+KI  629       (V70, was in Valley Forge, may have been sold)
+KI  641       was C34, has been sold
+KI  651       (V72, was in Valley Forge, may have been sold)
+KI  657  D63, was D57 and D72
+KI  666       was D31
+KI  733  X24, was C70 (moved from CUP-A to Solar)
+KI  742       was C22 (moved from CUP-A to Solar)
+KI  761       was D27
+
+  AT&T Technologies had 2 KI and 4 KL processors (2 KLs now part of MDC-IPC)
+KI  654     was OSTC.DEC3 in New Jersey (may have been sold)
+KI  661     was OSTC.DEC6 in New Jersey (may have been sold)
+KL 1195         OSTC.DEC2 in St. Louis dual-KL on Async hosts 5243+5244
+KL 1300         OSTC.DEC1 in St. Louis single-KL on Async host 4483+4484
+KL 1312 (leased)OSTC.DEC2 in St. Louis dual-KL on Async hosts 5243+5244
+KL 1428     was leased to OSTC.DEC1 in St. Louis
+
+ 23 KL processors (20 running, 2 down, 1 not ours)
+KL 1081  F29 (formerly C33)
+KL 1095      came from U.C. Berkley, parts cannibalized for KL 2270
+KL 1096  D35
+KL 1275  D23
+KL 1286  D34 (formerly C26)
+KL 1305      was S90, property of SLIGOS in Paris, France, may have been sold
+KL 1307  X32 (formerly C29)
+KL 1324  F26
+KL 1332  F58
+KL 1336  B39 (formerly C55)
+KL 1354  F74 (formerly B39)
+KL 1376  D54
+KL 1380  D65
+KL 1383  D56
+KL 1386  D55 (formerly C35)
+KL 1388  F30
+KL 1405  F38
+KL 1415  D31
+KL 1421  F22 (formerly F74)
+KL 1427  F33 (formerly F28)
+KL 1460  D25
+KL 1461  D37
+KL 2270  Up running TOPS-20 in the Training Lab on Albrae Street
+
+ 15 KS processors (9 running, 6 down)
+KS 4257 X14-TYMCOM-XX           3*RM03, 1*TU45, 0*LP20
+KS 4267 X17-TYMCOM-XX           3*RP06, 1*TU45, 1*LP20
+KS 4097 T33-TRW                 3*RP06, 2*TU45, 0*LP20
+KS 4097 M169-MALLINKRODT                                system down
+KS 4097 H370-FAYEZ SAROFIM      3*RM03, 1*TU??, ?*LP20
+KS 4097 W1051-RANIER BANK       3*RP06, 1*TU45, ?*LP20
+KS 4097 S59-CEGI                1*RP06, 1*TU77, 1*LP20
+KS 4097 S60-CEGI                                        system down
+KS 4097 S83-CEGI                1*RP06, 1*TU77, 0*LP20
+KS 4097 S92-CEGI                                        system down
+KS 4097 S170-CEGI                                       system down
+KS 4097 S184-CEGI                                       system down
+KS 4097 S264-CEGI               1*RP06, 1*TU77, 0*LP20
+KS 4097 S301-CEGI                                       system down
+KS 4097 S443-CEGI               1*RP06, 1*TU77, 1*LP20
+
+  8 F3 processors (2 running, 6 down)
+F3    -  (down) Office-8, host 232, node 4600, now spare in Fremont
+F3    3  (down) Office-10/Office-20, host 185, now spare in Fremont
+F3    4  (down) Office-15, host 895, now spare in Fremont
+F3    5  X62,  running in Fremont (formerly Office-6:896)
+F3    6  X930, running in Fremont (formerly in C930 in VG3)
+F3    7  (down) TYMCOM-X, host 897, now spare in Fremont
+F3    8  (down) Office-?, host ???, now spare in Fremont
+F3    9  (down) Office-14, host 1311, node 3450, now spare in Fremont
+
+ 13 F4 processors (2 running, 9 down, 2 other) (also known as SYSTEM-XXVI)
+F4  100         in storage at Fremont, Liberty St.
+F4  101         in storage at Fremont, Liberty St.
+F4  ---  in use at SRI, assumed to be up
+F4  ---  in use at Cecom, assumed to be up
+F4  ---         was at Scott Air Force Base
+F4  105         in storage at Fremont, Liberty St.
+F4  ---         was at Scott Air Force Base
+F4  ---         was at Scott Air Force Base
+F4  108  Office-1, host 1088, node 6745 in Fremont, Solar Way
+F4  109         in storage at Fremont, Liberty St.
+F4  ---         was at Scott Air Force Base
+F4  111  Office-2, host 1643, node 6511 in Fremont, Solar Way
+F4  ---         was at Scott Air Force Base
+
+ 12 26KL processors (3 running, 9 down) "F4X"="26KL"="Augment Engine"
+F4X 113  Office-5, host 148, node 6533 in San Jose, Building C on North 1st St.
+F4X 114         in storage at Fremont, Liberty St.
+F4X 115         in storage at Fremont, Liberty St.
+F4X 116         in storage at Fremont, Liberty St.
+F4X 117         in storage at Fremont, Liberty St.
+F4X 118         Office-13, host 2300, node 6534 at Fremont, Liberty St.
+F4X 119  Office-11, host 575, node 6535 in San Jose, Building C on North 1st St.
+F4X 120         (location unknown, was at Fremont at one time)
+F4X 121  Office-4 (-7), host 1087, node 5557 in Fremont, Solar Way Data Center
+F4X 122         in storage at Fremont, Liberty St.
+F4X 123         (location unknown, was at Fremont at one time)
+F4X 124         Office-3, host 180, node 2413, location unknown
+$text SYS20;TYMCOM-20 systems (AUGMENT).
+                                                As of November 1987
+OAD   [34627,365100]  1088,575, 148,895,896,897, 185,180,1087,1643,1311
+OAD1  [25204,317110]  1088
+OAD4  [25204,317114]  1087,193
+OAD5  [25204,303400]  148,895
+OAD8  [25204,2374]    1643,180
+OAD11 [25204,75236]   575
+
+ OAD1:1088 ND6745 FJ Welcome to AUGMENT Service from Office-1 (TENEX-F4)
+ OAD2:232  ND4600 FC     ?Host not available (TENEX-F4, now is Office-8)
+ OAD3:180  ND2413 O8     ?Host not available
+ OAD4:1087 ND5557 FI TOPS-20: Office-4, Tymnet 1087, 26KL Monitor 5.4(1041)-2
+ OAD5:148  ND6533 VG T-20/PC: Office-5, Tymnet 148, 26KL Monitor 2.1(2)-2
+ OAD6:896         FE     ?Host not available (now part of X62)
+ OAD8:1643 ND6511 FH Welcome to AUGMENT Service from Office-8 (TENEX-F4)
+ OAD9:818                ?Host not available
+OAD10:185         FA     ?Host not available
+OAD11:575  ND6535 VG T-20/PC: Office-11, Tymnet 575, 26KL Monitor 2.1(2)-2
+OAD12:212                ?Host not available
+OAD13:2300 ND6534 FL     ?Host not available (Dortman's test 26KL)
+OAD14:1311 ND3450 FB     ?Host not available (TENEX-F3)
+OAD15:895         FD     ?Host not available
+OAD18:118  ND2770 95     ?Host not available (now part of X95)
+OAD20:185         FA     ?Host not available
+     :193                ?Host not available
+     :897                ?Host not available (F3 running TYMCOM-X)
+$text SYS370;TYMCOM-370 systems.
+Memo from RESOURCE PLANNING & MANAGEMENT as of 5-JULY-1983
+
+Host   CPU   Description
+----  ----   ---------------------------------------------------------
+F40   3033   PAYMENT SYSTEMS, GENERAL TYMSHARING
+L42   3032   DEDICATED TO EDI IN ST.LOUIS
+D43   3083   GENERAL TIMESHARING, FORD MOTOR CO
+D47   3083   ARMY CORP OF ENGINEERS, DEDICATED GOVERNMENT USE
+S52   4381   GENERAL TIMESHARING, FRANCE
+
+ 44   4341   GENERAL TIMESHARING, WESTERN ELECTRIC, MDS DEVELOPMENT
+ 45    158   TYMSHARE - ACCOUNTS RECEIVABLE
+ 46   4341   DYNATAX DEVELOPMENT
+ 41   4341   GENERAL TIMESHARING, EXXON, SOUTHWEST BELL, EDI
+ 48   3033   GENERAL TIMESHARING, ELMER FOX, MDS CUSTOMERS, WESTERN ELECTRIC
+ 49   3033   GENERAL TIMESHARING, BEATRICE FOODS, SOUTHWEST BELL
+ 50
+ 51
+ 53
+ 82          TAX CENTERS
+ 85    158   GENERAL TIMESHARING, EUROPE
+ 142  4341   INTERNAL (GNOSIS / MIDAS)
+
+Check with Debbie Burns (408)446-6629 or Jan Krivanec (408)446-7081.
+ONTYME ID for Resource Planning & Management is IPC.SRAMAIL.
+
+
+   Z ka

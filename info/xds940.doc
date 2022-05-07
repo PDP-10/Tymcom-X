@@ -1,0 +1,229 @@
+$menu XDS940;TYMCOM-IX (XDS 940) Documentation tree.
+*(INFO)XDS940.DOC:MUD;Master User Directory information.
+*(INFO)XDS940.DOC:PASSWORD;PASSWORD file format.
+*(INFO)XDS940.DOC:LUD/940;LUD file format.
+*(INFO)XDS940.DOC:CHARACTERS/940;Special characters for the 940
+*(INFO)XDS940.DOC:EXEC/940;Commands which do not erase user memory
+*(INFO)XDS940.DOC:CORE/940;Commands that change user core
+*(INFO)XDS940.DOC:PROGRAM/940;Programs
+*(INFO)XDS940.DOC:LANGUAGES/940;Programming languages
+*(INFO)XDS940.DOC:FILES/940;Files
+$menu MUD;Master User Directory information.
+*(INFO)XDS940.DOC:FORMAT;Mud file format.
+*(INFO)XDS940.DOC:CHARACTERS;MUD character set.
+*(INFO)XDS940.DOC:CPARW;CPARW bit definitions.
+$text FORMAT;MUD file format.
+THE FILE CONSISTS OF 2039 DATA BLOCKS OF 256 WORDS EACH.
+THE HASHING ALGORITHM ADDRESSES A DATA BLOCK.
+A DATA BLOCK CONTAINS A VARIABLE NUMBER OF MUD ENTRIES, DESCRIBED
+BELOW; IF A MUD ENTRY WILL NOT FIT IN THE HASHED DATA BLOCK, THE ENTRY
+WILL GO IN THE FOLLOWING DATA BLOCK.  IN THIS CASE A -1 APPEARS AFTER
+THE LAST ENTRY.  NORMALLY THIS WORD WOULD BE ZERO.
+DESCRIPTION OF A MUD ENTRY:
+WORD NO.       DESCRIPTION
+1,2,OR 3   COMPACTED USER NAME, 12 CHARS MOD 45, 4 CHARS PER WORD
+           (SEE *CHARACTER SET)  IF THE NAME IS 4 CHARS. OR LESS
+               THE SIGN BIT WILL BE TURNED ON THE ONE WORD.
+               IF THE NAME IS 5 TO 8 CHARS., THE SIGN BIT IS TURNED ON
+               THE SECOND WORD.  OVER 8 CHARS., NO SIGN BITS ARE ON.
+               BIT 1 IS AVAILABLE IN EACH WORD.
+DATA 1 & 2     CIPHERED PASSWORD
+DATA 3         BIT 0           NO CHARGE USER IF ON
+               BITS 1-2        RESERVED FOR U.U.N. OVERFLOW
+               BIT 3           IGNORE COLON OPTION LOG INTO HOME SYSTEM ONLY
+               BIT 4           PASSWORD KLUDGE
+               BITS 5-23       GLOBAL ACCOUNT NO. (19 BITS)
+DATA 4         BITS 0-6        UNUSED
+               BITS 7-23       UNIVERSAL USER NO. (17 BITS)
+DATA 5         CPARW           CONTROL PARAMETER WORD
+DATA 6        PASSWORD CHANGE DATE
+DATA 7        HOME COMPUTER
+
+$text CPARW;CPARW control parameters.
+BIT NO.        DESCRIPTION
+0      TYMSHARE PROPRIETARY
+1      PREMIUM CHARGE CONTROL
+2      OPERATOR
+3      ALLOWS LOGIN OVER SHUT
+4      ACCOUNT SUPERVISOR
+5      BYPASS TYMSHARE ID MSG
+6      PREVENT MULTIPLE LOGINS UNDER THIS USER NAME
+7      COMMON NAME (MORE THAN ONE COMPUTER)
+8      LOW PRIORITY SCHEDULING (SLOW MODE)
+9      PASSWORD CONTROL (NOT ALLOWED TO CHANGE IF ON)
+10     RESERVED
+11     RESTRICTED USE BIT
+DISTRICT IS IN THE RIGHT HALF OF THIS WORD LEFT SHIFTED TWO
+
+$text CHARACTERS;MUD username character set.
+CHAR.    DECIMAL NO.
+SPACE  0
+A-Z    1-26
+-      28
+.      29
+/      30
+0-9    31-40
+:      41
+@ OR * 42      PRINTS *
+'      43
+ALL OTHERS  44   PRINTS $
+27     RESERVED
+NAMES MAY NOT START WITH A "."
+LOWER CASE IS TRANSLATED TO UPPER CASE.
+CONTROL CHARACTERS ARE IGNORED.
+
+$text LUD/940;940 LUD file format.
+THE LUD STORAGE AREA CONSISTS OF 7 ARM POSITIONS OF 4 PAGES EACH, TOTAL
+28 PAGES; EACH PAGE CONTAINS 32 BLOCKS OF 64 WORDS EACH.
+EACH BLOCK (64 WORDS) CONTAINS 7 LUD ENTRIES LEAVING 1 WORD AT END.
+THE END OF ENTRIES IN A BLOCK IS FLAGGED BY A ZERO WORD.  MINUS ONE
+AT END INDICATES THAT ENTRIES HASHED INTO A BLOCK OVERFLOW INTO
+THE FOLLOWING BLOCK.
+THE HASH DIVISOR IS 887 LEAVING 9 FREE BLOCKS AT END. (28 X 32 =896)
+THE BLOCK NUMBER IS DETERMINED FROM THE NAME AS FOLLOWS:
+REM((W1+W2+W3+W4)/887)
+DESCRIPTION OF A LUD ENTRY:
+WORD NO.
+0-3    USER NAME IN 940 ASCII
+4      FILE DIRE. POINTER
+5      BITS 0-1 LANGUAGE CONTROL
+       BIT 2 DAYLIGHT SAVING CONTROL
+       BITS 3-7 TIME ZONE
+       BITS 8-23 IF NON BLANK ARE LUD LOCATOR TO DIRECTORY CONTAINING
+                 FILE FOR ENFORCED PROJECT CODE VALIDATION
+6      SAME AS MUD DATA 3
+7      SAME AS MUD DATA 4
+8      CPARW (SAME AS MUD DATA 5)
+
+$text PASSWORD;Password file format.
+THE PASSWORD FILE (UN1)PSWD CONSIST OF TWO ENTRIES PER USER SO VALIDATED.
+ENTRY 1 USER'S PASSWORD NAME
+ENTRY 2 3 WORDS, PARAMETERS,PASSWORD,PASSWORD
+
+BITS IN THE PARAMETER WORD OF ENTRY 2 HAVE THE FOLLOWING MEANINGS:
+
+BIT 2   OPER LICENSE ENTRY
+BIT 3   CUSTOMER SERVICES LICENSE
+BIT 4   TYMNET ACCESS LICENSE
+BIT 5   INSTALLERS LICENSE
+BIT 6   REMOTE SPOOL DS LICENSE
+BIT 7   ACCOUNTING LICENSE
+BIT 8   SUB SYSTEM LICENSE, IF THIS BIT IS ON BIT 2 MUST BE OFF
+BIT 9   VALID ENTRY (MUST BE THERE OR ENTRY IS IGNORED)
+BIT 14  MANAGERS LICENSE
+BITS 15-23 DISTRICT NUMBER
+$text CHARACTERS/940;Special characters for the 940
+Ctl-A   Delete previous character
+Ctl-D   End of data, used for COPY TERMINAL TO FILENAME
+Ctl-J   LINEFEED ends current line, allows for more input
+Ctl-M   RETURN ends current line, ends command
+Ctl-Q   Delete current line
+Ctl-V   Quote next control character
+Ctl-W   Delete previous word
+Ctl-[   ESCape, halts execution of BASIC and FORTRAN interpreters
+Ctl-_   Emergency exit key
+!       Command list (switches)
+"       Comment, continues Ctl-D or to matching ", displayed if in COMMAND file
+#       At start of command, means to run program from (UPL)
+#       Wildcard character to DIRIT
+:       Wildcard field to DIRIT
+^       Read input from file
+$text EXEC/940;Commands which do not erase user memory
+COMMAND Read commands from a file
+CONTINUE Resume execution
+COPY    sourcefile TO destinationfile, type CR after "OLD FILE" or "NEW FILE"
+DATE    Display date and time of day
+DECLARE Changes controls on a file: Read, Write, Append, Public, Proprietary
+DEINIT  Tells LOGIN there is no INIT file
+DELETE  Delete file by name
+DIRECTORY Displays directory: number, controls, type, date, use, size, name
+DO      Same as COMMAND, read commands from a file
+DSC     Display incremental disk blocks used
+DUMP    Saves core image in file (BASIC and FORTRAN interpreters)
+FDC     File Directory Controls, protection for the directory
+FILES   Displays file types and file names in the directory
+INIT    Mark a particular file as being an INIT file for LOGIN
+GFD     Get File Directory
+LAST    Display the number of the last file in the directory
+LIST    List file names in the directory in reverse chronological order
+LIMIT   Set CPU time limit
+MEMORY  Display number of unused words in user memory
+PFDC    Print File Directory Controls
+PMT     Print Memory Table
+PROJECT Change to new project code
+REENTER Resume BASIC or FORTRAN (program variables are still intact)
+REMOVE  Delete file by number (in LOGIN directory but not GFD directory)
+RENAME  oldfilename AS newfilename
+STATUS  Display status of used bytes in memory
+SYSNO   Display system number, disk number, moniter version, EXEC version
+TIME    Display CPU time and terminal time
+TOUT    Send terminal output to a file
+TYPE    Same as COPY FILENAME TO TERMINAL
+WHO     (somehow related to SYSNO, not documented)
+WHY     Display message associated with most recent error
+$text CORE/940;Commands that change user core
+BRANCH  to starting location (XDDT)
+FAILSAFE Get core image (before disconnect) from the file /$/
+EXIT    Quiet LOGOUT
+FDX     Computer echos characters from the terminals, for full duplex
+GO      Runs a compiled program stored in GO format
+HDX     Turn off computer echoing of characters for half duplex terminals
+LOGOUT  LOGOUT, prints CPU time and terminal time used
+MAIL    Read mail
+ONESC   Allow ESCape to stop execution, and Ctrl-_ to return to EXEC
+ONLC    Enable the input of lowercase characters
+OFFESC  Disable the effect of ESCape and emergency exit
+OFFLC   Convert all incoming lowercase characters to uppercase
+PASSWORD Change the password that you give the TYMNET Supervisor to LOGIN
+PLACE   Puts program into memory (XDDT)
+RECOVER Recover contents of DUMP file into user memory, for CONTINUE or REENTER
+RUN     =RECOVER+CONTINUE for DUMP file, =COMMAND for symbolic file
+SAVE    firstloc TO lastloc ON filname (XDDT)
+SETFAILSAFE     Create an empty /$/ file for the FAILSAFE operation
+SUMMARY Display date, time, total bytes used, number of files in directory
+$text PROGRAM/940;Programs
+BINTAPE Reads/writes binary files on paper tape
+CHECKSUM Displays checksum of one file
+CIPHER  Encrypts file
+COMPARE Binary file comparison
+CONFILE Reads file, converts it, punches on paper tape
+CONTAPE Reads paper tape, converts it, writes file
+DDF     Debug PERP/DEFER file by executing it immediately
+DEFER   One-shot PERP
+FDM     File Directory Management, crunches symbolic files into one binary file
+PERP    Perform a procedure at a particular time and perpetually
+SCOMPARE Symbolic file comparison
+TAPE    Reads/writes symbolic files on paper tape
+VERIF   Display checksum of a range of files
+$text LANGUAGES/940;Programming languages
+BFO     Batch FORTRAN-4
+CAL     CAL
+DCAL    DCAL
+EDI     EDITOR
+        NARP
+SBA     Super BASIC
+SFO     Super FORTRAN
+XCAL    XCAL
+XFO     X FORTRAN
+        XDDT
+$text FILES/940;Files
+6 million byte limit.
+Names can be made of the characters 1-9, A-Z, and @.
+Other characters may be quoted by paired slash or apostrophe / '.
+Comments to file names after hyphen, listed in directory.
+Reserved names are TPE, TERMINAL, NOTHING, ALL, and abbreviations.
+The contents of a file in another user name in the same account can be
+  accessed if it has been declared public.  The contents of a file in
+  another account but on the same system can be accessed if the file name
+  contains the character @, any legal control character (protected), or
+  any lowercase character (unprotected).  The file name is designated by
+  showing in parentheses the user name of the directory in which the file
+  exists, followed by the file name.
+Up to 200 new files can be created per LOGIN if 3-character names are used.
+Private controls are R, W, R/W, AP, R/A (Read Write Append).
+Public controls are NO, YES, YES/WT, PRP, PRP/WT (Public Proprietary Write).
+One file can have the INIT control - it is run when user logs in.
+File types SYMbolic text, BINary, GO, DUMp, BAD.
+
+[End of 940CMD.NFO]
+  %@as

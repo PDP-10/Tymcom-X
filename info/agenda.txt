@@ -1,0 +1,616 @@
+(INFO:930)AGENDA.TXT - Agendas for the Tymcom-X Support Group meetings.
+
+-------- << 19-Aug-87 minutes >> --------
+
+
+-------- << 12-Aug-87 minutes >> --------
+
+0.  PJOBN is only 7 bits wide.  Thus D56 will not really work with 160
+    jobs and we will have to wait for future development.
+
+1.  Weekend Fires
+    A.  Carl - Westin Hotels in Seatle, FE cannot load monitor...
+	FE should be trying to isolate what appears to be sporatic disk
+	or RH interrupts rather than bringing up the system.
+    B.  Osman & Lenny - NIS in Cupertino, apparent RH problem turned out
+	to be a problem with a power supply.  Diagnosed by Osman and Lenny
+	and left to the FE to get the part and finish up.  Osman followed
+	up with the district manager.
+
+2.  Monitor release /C, documentation and updates
+    A.  DOCs done except for final review.
+    B.  ASP and DSKCLN changes not in document.  A separate document will
+	be prepared due to the significant changes.  Fremont now using the
+	new asp %7 on all systems.
+    C.  Discussion of some documentation items... how to mention 32 vs 64
+	disk capability.  [Joe to revise].
+    D.  /C runnng everywhere in Fremont except B39.  Dallas waiting for DOCs.
+
+2.5) Future additions
+    A.  Inactivity timeout, system wide command given by operator
+    B.  Revision of many monitor generated messages to CTY/OPR
+	1.  Watchdog timer (Suggested GETTAB entry to set storage limit)
+	2.  THUNG messages not always logges to CTY
+	3.  BAD SAT reports
+
+3.  Computing Resources
+    A.  2020 "DD" now has 3 working RP06s.  After 5 tapes a full DSKCLN
+	was run and FMUP errors occurred.  Joe will investigate before we
+	continue with the rebuild on "DD".  Possible SPAGES problems.
+    B.  KI/KL base in Fremont Data Center... working on it... soon!!!
+    C.  uNet - Map complete, meeting with Dennis on Thursday 8/13.
+
+4.  Excess hardware
+    Vax 11/750 to be delivered to Nicholson Lane, Thursday...
+    Determine what is needed to connect to uNet (DUP-11 says Corbett).
+
+5.  Course outline for FSCO and Operations training
+    Still in progress.  Tentative course date, end of September.  Much
+    depends on how much time we have to devote to preparation and the move
+    to South Bay Center.
+
+6.  Move of Hardware to Nicholson
+    Monday    24th: De-install power and machines
+    Tuesday   25th: De-install machines complete
+    Wednesday 26th: Move equipment and power to Nicholson
+
+    Library - Dennis and Carl to pack
+    Hallway - To be packed during the backups (if boxes available)
+    KL-10   - Osman to pack
+
+7.  TRW Add-Pack operation
+    Joe to try to put together an ADD-PACK dry run using "DD".
+    It appears the TRW date is the 20th.  We will still be up and running.
+
+8.  MDCIS War
+    It appears that there are two factions... one in St. Louis that believes
+    the initial estimates and recommendations of Angela and Carl... to do the
+    billing implementation and keep the business in St. Louis, and one that
+    is pushing to move the applications to TYMCOM-X in Dallas to pick up the
+    extra business (expected to be lost after the conversion) by getting paid
+    to do the conversion.  The higher-ups are leaning toward the billing
+    conversion.
+
+9.  Organizational change
+    Curt Miller now reports to Bill Kersten, in charge of Tymnet technical
+    support and product support.
+
+10. SUBMIT-XEXEC
+    Final review of documentation and testing of current software is underway
+    by Dennis and Carl.  Carl has put a new "shared" version of SUBMIT on SYS
+    on system 930.  Some bug fixes are expected and if no problems crop up, a
+    general release of this version will take place 9/1.
+
+
+
+
+-------- << 03-Aug-87 minutes >> --------
+
+1.  TrainNet
+    A.  F3s  - interested in connecting to TrainNet  (Grandey and King)
+    B.  2020 - interestd in connection (TXS)
+
+    Grandey said that their refusal was based on the reported cost of
+    future maintenance and their lack of floor space.  They are interested
+    in some arrangement, including a leased line to Nicholson Lane with a
+    Micro Engine connection into our microNode network.  We should be able
+    to provide connectivity to one or both F3s and one of the 2020s via an
+    extra DR11-C board (when we get the ABLE DUAL-DR board repaired).
+
+    What we may be able to get out of the deal is access to a private net
+    in which to do some development work on DEC interfaced products.  For
+    example, the PDP-10 base, ethernet/LAN connection or HASP/3780 to DEC.
+
+2.  Status of /C monitor release
+    A.  D56 with 160 jobs and 200 ports under /C
+	Carl suggested testing jobs greater than 127 to see if it works.
+	Joe is going to check the field size of the PJOBN DDB pointer.
+    B.  D25 and D56 will be possible staging systems n Dallas
+    C.  Joe has nearly completed the documentation and STOPCD document.
+	It is under review by Craig, Carl and Osman for comments and any
+	corrections.
+    D.  All of Fremont is running /C except for system B39.
+
+3.  Review of /D monitor release ( What to put into /D )
+    A.  Performance changes
+	1.  Close without wait, Validate RIB without wait (TITO speedup)
+	2.  SYSDVF function to read an entire GETTAB table
+	3.  Contiguious file page creation (without double charging)
+	4.  Virgin page bit for .CHMFP/.CHSMP chanio calls (ASP speedup)
+    B.  SUBMIT-XEXEC changes
+	1.  Exit in child indication
+	2.  Enable/Disable for individual licenses
+	3.  Batch job indicator
+    C.  Once only changes
+	1.  REFSTR for the 2020s (in /B06 and /X01)
+	2.  INITIA and NOINITIA startup flags
+	3.  Implementation of .DSKCLN and INITIA at startup
+    D.  Security
+	1.  HR license (Home Read)
+	2.  SETE -1 for TITO operator license
+	3.  SETE command in the monitor (see ENABLE/DISABLE)
+    E.  Accounting
+	1.  Batch job indicator, deferred charges
+    F.  Host/Base fixes
+	1.  SCNSER improvements
+	2.  Eliminate crashes when Base is reset
+	3.  Eliminate crashes as seen on system B39
+    G.  Segment modifications
+	1.  Non 400000 high segments, via segment start address table
+	2.  EXE files for full mapping capability
+	    a.  SAV files expanded to C-O-W pages
+	    b.  SHR files marked R-O or C-O-W if SETUWP enabled
+	    c.  SWR files marked R-W for all pages
+	    d.  Monitor able to produce R-W or C-O-W/private pages
+	3.  WSAVE command to create .SWR and .LOW (until full EXE)
+    H.  2020 specific changes
+	1.  Fixup the LOAD PREBOOT areas for SMFILE and SMMON
+
+4.  Congratulations to both Joe and Carl for placing #1 in each of their
+    respective TYMNET training classes.
+
+5.  Weekend Fires
+    D37 crashes caused by a missing patch.  Joe installed the patch after
+    diagnosing that it was the same problem he saw on D57 and developed
+    INTKIL.PAT to fix a problem that cropped up since /P.
+
+6.  Ranier Bank fire
+    MR, ZM didn't clear the bad parity problem.
+    2020 booting the diagnostic monitor clears some registers that MR will
+    not clear and that solved their problem.
+
+7.  Move update for Nicholson and the machine move
+    A.  Nicholson ready except for power.  Schedule is to take the power out
+	of Liberty on July 24-25 and install on 25-26 at Nicholson.
+    B.  Machines to de-install the same 2 days to be moved on Wednesday.
+    C.  Leased line to be installed August 14th.  Modems to arrive by same.
+
+8.  Excess hardware, new hardware
+    A.  Training wants the uVax and LN03 back (eventually).
+    B.  A VT100 is available for $0 book value, we've asked for it.
+    C.  Do we consider the F3s as excess or connect them?
+	The current theory is to keep them, at least until the 2020s have
+	proven themselves worthy of replacing the F3s.  Parity errors 4x
+	a day do not make for a dependable machine.
+    D.  Vax 11/780 in St. Louis scheduled for 135 Nicholson.
+    E.  Vax 11/750 in Cypress scheduled for St. Louis.
+	We may see both as part of the remote diagnostics project.
+
+9.  Micro-Net TXSNET configurations and planning
+    A.  With changes for TrainNet and such, all the changes are made.
+    B.  We are waiting on Dennis Ernst and possibly locating DR-11 cables.
+
+10. Comments on 90842 DEC Software Support via Dispatch
+    Some comments, mostly typographical in nature were expessed.
+
+11. NAD fire
+    As per requests from Doug Ellenberg and investgation by Carl and Joe
+    it seems that WF on (SYS)NAD and HFon (SOURCE)NAD are both pretty bad
+    security problems allowing users to clobber any file on the system or
+    file in the SOURCE directory.  Both files now have RF until further
+    action (to be discussed on 9/3) is considered.
+
+12. FSCO training for operators and FSCO site engineers
+    Initially scheduled for late August gives a week to work up a plan.
+    We still need to decide who is going to teach what to whom.  A meeting
+    is to be held later to discuss what needs to be done.
+
+    Of note... one group whats to learn how to use the PDP-10 as part of an
+    SBI issue.  However, their intent is possibly too trivial to entertain.
+
+
+-------- << 01-Jul-87 minutes >> --------
+
+-- Old Business --
+
+1)  /B10 "The Reliable Monitor"
+    F appears to have been fixed.  (MTCOPY test still pending).
+    Everyone agreed that /B10 was reliable.  We would wait until 8-Jul-87
+    before starting the /C process of distribution.
+
+2)  B39 Ran with /B08 three days, now running with /B10
+    Note: As of 6/30 19:21, it is running /P-16.
+
+    o   Only base related stopcodes have been seen.  However, since it is
+	is still crashing, the monitor was rolled back.
+    o   Action item: try changing the configuration to standard and retry
+	using /B10.
+    o   In /Cxx maybe redo SCNSER and use B39 as the portal system.
+
+3)  Resources
+     a)  20/20
+	 o   Disk cables have arrived, need installation.
+	 o   Now that tape unit will not work in PE (1600 bpi) mode.
+
+     b)  BLDG C's test system
+	 o   Nodes and base to go away by mid-late July.  (See c below)
+
+     c)  Fremont test system
+	 o   Bill Fischer appears to agree to the idea, details need to
+	     be worked out with Richardson and IPC.  It appears we may be
+	     up and running in Fremont by mid July.
+
+4)  AR/ARX parity checking.
+    o   It was agreed that it would be reasonable to enable the feature and
+	and that this is a good first item to coordinate with Richardson
+	first.
+
+5)  Ed Roop
+    o   No information about this topic in my notes.
+
+
+-- New Business --
+
+1)  Now that we have /B10, what needs to go into M33 sources next?
+2)  Giving seminars to operation and FSCO personnel:
+     a) How can we be more affective than just giving 2hrs of
+        seminars every month?
+
+
+-------- << 01-Jul-87 agenda >> --------
+
+-- Old Business --
+
+1)  /B10 "The Reliable Monitor"
+2)  B39 Ran with /B08 three days, now running with /B10
+     Note: As of 6/30 19:21, it is running /P-16
+3)  Resources
+     a)  20/20
+     b)  BLDG C's test system
+     c)  Fremont test system
+3)  
+-- New Business --
+
+1)  Now that we have /B10, what needs to go into M33 sources next?
+2)  Giving seminars to operation and FSCO personnel:
+     a) How can we be more affective than just giving 2hrs of
+        seminars every month?
+
+-------- << 24-Jun-87 minutes >> --------
+-------- << 24-Jun-87 agenda >> --------
+
+-- Old Business --
+
+1) Computing resources
+
+2) .... 
+
+-- New Business --
+
+1) Monitor Distribution
+   a) /B08
+   b) FTACFC STOPCD
+   c) Running KL-10's with AR/ARX PE enabled
+
+2) "Special Events" meeting at Fremont D. C.
+
+-- Information --
+
+1) Monitor
+   a) B39 would not run /B06
+   b) Telecopy fails when monitor is generated with some number of ports
+
+
+-------- << 17-Jun-87 minutes >> --------
+
+-- Old Business --
+
+1)  Review /B06 status
+    o   BPXKON search bug fixed by checking length of list properly
+    o   CPXKON problems with command list length also fixed
+    o   Discussion on propagation of /B06
+	3 additional systems in Fremont this week, remainder next week.
+	If no problems by 7-July, distribute /B06 as P035/C.
+
+2)  Review computing resources status
+    a)  Swing machine (CUP-C)
+	3675s are up, but system isn't up yet.
+	Locks on building changed, card-key system removed.
+
+    b)  Foonly F3
+	System 934/930 now available for use.  Needs disk reformatting
+	and verification that that is all that is wrong.  Good idea to
+	send "both" F3 systems to TYMNET training to back each other up
+	and to provide a running system for us while our machines are
+	in transit to Nicholson Lane.
+
+    c)  2020 MR4257
+	o   Tape drive problem BOT/EOT resolved.
+	o   RH11 cable found as problem, new cable ordered.
+	o   2 RP06s formatted and heads aligned.
+	o   3rd RP06 to be worked on today, needs power supply.
+	o   4th RP06 needs complete overhaul and will be looked at by
+	    Lenny to be fixed in the future.
+
+    d)  KI in Fremont
+	o   Space will be available when 38s old disks are moved.  We
+	    can probably put 1 row of disks and KI in part of that area.
+	o   Some co-ordination / negotiation with Bill Fischer needed.
+
+3)  Move to South Bay Center
+    What is the time frame between late August and early September?
+    o   Tentative schedule to be posted:
+	Bubb Road to move by July 12
+	Valley Green to move by late August
+	Fremont Liberty to move between Valley Green and Orchard Pkwy
+	Orchard Pkwy to move by early September
+
+    Judy Carlson will contact us to fix a time to come and talk to us
+    about our telephone line needs, internal and external.
+
+    Bookcases and Lateral files will need to be emptied and boxed ahead
+    of time to allow a contractor to static spray the items to match the
+    new furniture at the new site.
+
+    Desks and other furniture will be provided by us at Nicholson site.
+
+    Craig to distribute minutes of South Bay planning meetings instead
+    of J. Duckett.
+
+
+
+-- New Business --
+
+1)  System 38 post mortem results
+    o   Good idea to have post mortem meetings, more in the future.
+    o   No one had anything better to say about what we could have done
+	different in regards to the rebuild-rebuild effort.
+    o   Rick Daniels repetedly complimented our group's actions and
+	responsiveness during the rebuilds.
+
+2)  SETOP Meeting results
+    Scaled down version of the elaborate plan planned.  We decided to
+    make the new SETOP meet as many of the new requirements as possible
+    with the least amount of effort, due to the potential lifespan of
+    the PDP-10 TYMCOM-X product offering.
+
+3)  Strategic planning for PDP-10 future
+    This item turned into a >>rathole<< and was eventually deferred to
+    a separate meeting scheduled for Friday, 19-Jun-87 13:00.
+    Disk reliability issues to be taken up as part of the Friday meeting.
+
+    a)  Best efforts to produce visible reliability
+    b)  Regroup tasks by results of cost/benefit analysis
+    4)  Disk Reliability issues
+	a)  DSKCLN document
+	b)  Disk initialization:  PAKCOP, MONITOR, REFSTR
+	c)  System initialization: BOOTS, MONITOR, ONCE
+	d)  TWICE?
+
+5)  XEXEC/EXECX - SUBMIT testing and new version release
+    The lack of follow-through on the testing of the current release of
+    the product running on system 930 was mentioned.  A realistic testing
+    of XEXEC/EXECX is scheduled to be completed by next week.  Joe and
+    Dennis are to be involved testing previous complaints by users.
+
+6)  Freeze on monitor development: Designate applications that require
+    development in order to bring them up to the proper revision levels.
+    This topic really involves keeping Carl and Joe busy working on the
+    monitor related CUSPs instead of the monitor during the propagation
+    phase of P035/B06 in order to release a "reliable" P035/C monitor.
+
+    The following utilities need work:
+    a)  LOGINN - EXECX waiting for run loginn/init in child frame
+    b)  TAKEIT - Run properly in all monitor startup modes
+    c)  DSKCLN - Messages corrected and made human readable.
+    d)  SYSTAT - Properly distributed for 365x disks.
+    e)  ASP    - Verified in production, development on restore reliability.
+    f)  CHKPNT - Take over the task of unshutting the system from INITIA.
+    g)  INITIA - Allow DSKCLN and CHKPNT to do their own tasks.
+    h)  TITO   - Investigate SETE -1 to restore files with license.
+    i)  PAKCOP - Merge for various flavors of disks.
+    j)  BOOTS  - Add "smarts" to make it better and faster.
+    k)  SOUPR  - SOUP: CAM & FED, SOUPR or SMERGE for monitor building.
+    l)  MONED  - Newer MONED, MONED1 capability and design!!!
+
+7)  Files disappearing on system 58.  *.SHR from some directories.
+    - Suspected that operations deleted them during the conversion.
+
+8)  Operations Seminars - Contact Rick Daniels for topics by end of week.
+    How to contact a consultant?,  New memo by Craig.
+-------- << 17-Jun-87 agenda >> --------
+
+-- Old Business --
+
+1)  Review /B06 status
+
+2)  Review computing resources status
+    a)  Swing machine (CUP-C)
+    b)  Foonly F3
+    c)  2020 MR4257
+    d)  KI in Fremont
+
+3)  Move to South Bay Center
+    What is the time frame between late August and early September?
+
+-- New Business --
+
+1)  System 38 post mortem results
+
+2)  Disk Reliability issues
+    a)  DSKCLN document
+    b)  Disk initialization:  PAKCOP, MONITOR, REFSTR
+    c)  System initialization: BOOTS, MONITOR, ONCE
+    d)  TWICE?
+
+3)  SETOP Meeting results
+
+4)  Strategic planning for PDP-10 future
+    a)  Best efforts to produce visible reliability
+    b)  Regroup tasks by results of cost/benefit analysis
+
+5)  XEXEC/EXECX - SUBMIT testing and new version release
+
+6)  Freeze on monitor development: Designate applications that require
+    development in order to bring them up to the proper revision levels.
+    a)  LOGINN - EXECX waiting for run loginn/init in child frame
+    b)  TAKEIT - Run properly in all monitor startup modes
+    c)  ...
+
+-------- << 10-Jun-87 minutes >> --------
+
+1)  Old business
+
+    a)  Report on changes to systems 31 and 58
+
+	31: Running generic /B01 on a KL since Thursday 4-Jun-87 after
+	    encountering additional processor problems on the KI.
+	    The monitor is a copy of a KL monitor patched to say F31.
+
+	58: Downgraded to 2 strings of 3675s without any noticeable
+	    problems reported.  Now running on 14 spindles even though
+	    the equivalent storage would have required 17 before the
+	    downgrade.
+	    Running /B03-3 from system F29, patched to say F58.
+
+    b)  Report on status of /B06
+
+	/B06 was created as specified from the /B03 monitor backing out
+	the new features added in /B04 and /B05 but keeping the source
+	changes corresponding to the DDT patches for bug fixes.
+
+	o   Apparently, /B06 has the same problem demonstrated with /B05 on
+	    system 32:  TELECOPY doesn't work properly.
+	o   A new twist however, is that a system with less than 78 jobs
+	    exhibits this problem, while the same code configured for 78 or
+	    more jobs appears to work correctly.  {{strange}}
+	o   Block-IO problems are suspect, but unproven until we can perform
+	    further testing on a KI/KL system in the data centers.
+	o   Possible position dependent or size dependent code problem.
+	o   Restriction: No monitors to be built for less than 80 jobs.
+	o   Work to continue on BPXKON search error problem for /B06 /B07.
+
+	Osman to gather data to build a table showing the propagation and
+	deployment status of current and future monitors to all systems.
+
+    c)  Report on KI/KL for our use
+
+	o   It appears that Dallas may be able to supply a truly TEST system
+	    but would want to be able to swap out hardware with little or
+	    no real notice.
+	o   Fremont has room in the I/O room to put a KI for our use, but
+	    again, it will probably be taken out of commission with little
+	    or no notice depending on problems.  Osman is going to check out
+	    the possibilities.
+	o   In CUP-C, the Ampex disk drives are gone, and Paul is working on
+	    bringing up a string of Memorex drives.  Osman will check.
+
+    d)  For the 2020: KS sn# MR4257
+	o   An intermittant RH11 problem.
+	    Even when it fails, it only partially fails!
+	o   RP06 tester is coming to check head alignment this week.
+	    Lenny is interested in learning how it works and using it to
+	    go through the motions on getting the 4th RP06 working.
+	o   Still waiting on tape BOT/EOT sensor parts.  They have been
+	    ordered by John Healy.
+	o   Osman is going to work with Healy as much as possible to get the
+	    heads aligned and packs formatted.  Also to track down the RH11
+	    problem.  The cable is suspect.  See comic strip on 2020!
+
+
+
+-------- << 10-Jun-87 minutes continued>> --------
+
+-- New Business --
+
+1)  Pick actions to improve center reliability:  Fremont Data Center
+    ref:  Bill Fischer's  2-June memo
+
+    o   Seminars for operations:
+>>	Osman will talk to Rick Daniels about seminars and teaching.
+
+    o   Get IPC more involved in the decision making about monitor
+	changes and enhancements.
+
+2)  Consolidate 62 and 930
+    Work has begun using the swing hardware in CUP-C to make a single
+    system of the files on systems 62 and 930.  When completed, this will
+    be put on the 2020 3-pack RP06 system in Fremont Liberty.  No further
+    progress can be made until we have the Memorex disks online in CUP-C.
+
+3)  Review Ed Roop consolidation memo and assign tasks.
+    o   Discussion about more than 32 disks and 112K virgin monitor code.
+	There is currently a definate tradeoff between the number of disks
+	and the number of jobs.  With 64 disks, we can support 64 jobs.
+    o   Some idea about multiple controllers, and multiple CPU's each with
+	one string of disks online at a time, able to address the others
+	if necessary.
+    o   Joe and Carl to make written comments about the disk usage so that
+	proper recommendations can be made as part of the consolidation
+	study for TYMNET.
+    o   Carl to talk with Landa and determine exactly what is expected of
+	us for the threshold numbers being requested.
+    o   (Open) Document the monitor changes already made, and what needs to
+	be done to the monitor and performance measuring tools to provide
+	the improvements desired by IPC, TYMNET and ourselves.
+
+4)  Third Party Position - Bert Novak
+
+    Our president says it straight:  what is our significant business issue
+    and the position of third party within ISG?  To go after the contracts
+    internal to ISG and MDC.  There is a significant market and a greater
+    savings to MDC and to ISG for Field Service Company.
+
+    Read the current Field Goal for details.
+
+
+-------- << 10-Jun-87 agenda >> --------
+
+1) Old business
+   a) Report on changes to systems 31 and 58
+   b) Report on status of /B06
+   c) Report on KI/KL for our use
+
+2) more to be added here
+
+-------- << 3-Jun-87 minutes >> --------
+
+1)  Decide which monitor version to run in Fremont.
+    o   Decided to create P035/B06 from /B03-3 (nothing from /B04 or /B05
+    except to include the DDT patches for bug fixes).
+
+
+2)  Move to South Bay Center
+    a)  Determine phone requirements
+	o   2 phone lines in KL and VAX reference areas for outdial modems.
+	o   2 phone lines with modems into the micronet at the Lab site.
+
+    b)  Determine async requirements
+	o   Need a new diagram showing micronet terminal concentrator(s)
+	    connected to rest of micronet on N 1st.
+
+3)  Computing resources
+    a)  Put 2020's on dispatch.
+	o   Codes are XMR4257 and XMR4267 for new KS and X95 respectively.
+
+    b)  Acquire KI10 system in Bldg. C for swing machine.
+	o   Rumor has it that Dallas said they would provide a test KI.
+
+4)  AT&T Conversion
+    a)  Report on recommendation
+	o   Report ran out of time.  Briefly, the problem areas are numerous
+	    and the recommendations are to implement a billing conversion for
+	    TOPS-10 to St. Louis service billing instead of converting the
+	    applications to TYMCOM-X.
+
+    b)  Will IPC fund TOPS10 accounting development?
+	o   A good question.  We will see...
+
+
+-------- << 3-Jun-87 agenda >> --------
+
+1) Decide which monitor version to run in Fremont.
+
+2) Move to South Bay Center
+   a) Determine phone requirements
+   b) Determine async requirements
+
+3) Computing resources
+   a) Put 2020's on dispatch.
+   b) Acquire KI10 system in Bldg. C for swing machine.
+
+4) AT&T Conversion
+   a) Report on recomendation
+   b) Will IPC fund TOPS10 accounting development?
+
+  GO$¶

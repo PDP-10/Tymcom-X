@@ -1,0 +1,543 @@
+$menu DETAILS;Detailed description of commands.
+*(INFO)COMAND.DOC:10EDIT;RPG ##.
+*(INFO)COMAND.DOC:ADRBRK;The ADRBRK command.
+*(INFO)COMAND.DOC:AID;Calculator program.
+*(INFO)COMAND.DOC:APL;APL interpreter.
+*(INFO)COMAND.DOC:ASSIGN;Assign device to job.
+*(INFO)COMAND.DOC:ATTACH;--- ##.
+*(INFO)COMAND.DOC:BYE;--- ##.
+*(INFO)COMAND.DOC:CAL;Another name for AID.
+*(INFO)COMAND.DOC:CCONTINUE;--- ##.
+*(INFO)COMAND.DOC:CDEBUG;RPG ##.
+*(INFO)COMAND.DOC:CFORTRAN;CFORTRAN.
+*(INFO)COMAND.DOC:CLOSE;Close files after ^C or HALT.
+*(INFO)COMAND.DOC:COMPILE;RPG ##.
+*(INFO)COMAND.DOC:CONTINUE;--- ##.
+*(INFO)COMAND.DOC:COPY;RPG ##.
+*(INFO)COMAND.DOC:CORE;--- ##.
+*(INFO)COMAND.DOC:CREATE;RPG ##.
+*(INFO)COMAND.DOC:CREF;RPG ##.
+*(INFO)COMAND.DOC:CROSS;RPG ##.
+*(INFO)COMAND.DOC:CSTART;--- ##.
+*(INFO)COMAND.DOC:CT1;Command test program 1.
+*(INFO)COMAND.DOC:CT2;Command test program 2.
+*(INFO)COMAND.DOC:CT3;Command test program 3.
+*(INFO)COMAND.DOC:CT4;Command test program 4.
+*(INFO)COMAND.DOC:CT5;Command test program 5.
+*(INFO)COMAND.DOC:CT6;Command test program 6.
+*(INFO)COMAND.DOC:CT7;Command test program 7.
+*(INFO)COMAND.DOC:CT8;Command test program 8.
+*(INFO)COMAND.DOC:CT9;Command test program 9.
+*(INFO)COMAND.DOC:CTEST;RPG ##.
+*(INFO)COMAND.DOC:D;--- ##.
+*(INFO)COMAND.DOC:DATE;RPG ##.
+*(INFO)COMAND.DOC:DAYTIME;--- ##.
+*(INFO)COMAND.DOC:DCOM;Start up PCOM detached.
+*(INFO)COMAND.DOC:DDT;--- ##.
+*(INFO)COMAND.DOC:DEASSIGN;Opposite of ASSIGN.
+*(INFO)COMAND.DOC:DEBUG;RPG ##.
+*(INFO)COMAND.DOC:DECLARE;RPG ##.
+*(INFO)COMAND.DOC:DEFER;DEFER ##.
+*(INFO)COMAND.DOC:DELETE;RPG ##.
+*(INFO)COMAND.DOC:DETACH;--- ##.
+*(INFO)COMAND.DOC:DIFFERENCES;RPG ##.
+*(INFO)COMAND.DOC:DIRECT;RPG ##.
+*(INFO)COMAND.DOC:DO;RPG ##.
+*(INFO)COMAND.DOC:DSK;--- ##.
+*(INFO)COMAND.DOC:E;--- ##.
+*(INFO)COMAND.DOC:EDITOR;RPG ##.
+*(INFO)COMAND.DOC:EXECUTE;RPG ##.
+*(INFO)COMAND.DOC:EXIT;--- ##.
+*(INFO)COMAND.DOC:FDC;RPG ##.
+*(INFO)COMAND.DOC:FDEBUG;RPG ##.
+*(INFO)COMAND.DOC:FI;RPG ##.
+*(INFO)COMAND.DOC:FILES;RPG ##.
+*(INFO)COMAND.DOC:FINISH;Combination of CLOSE and DEASSIGN.
+*(INFO)COMAND.DOC:FTMAGNUM;Field-Test version of MAGNUM.
+*(INFO)COMAND.DOC:GET;Get a program into memory.
+*(INFO)COMAND.DOC:GEXEC;Enter GEXEC mode.
+*(INFO)COMAND.DOC:GFD;Change default directory.
+*(INFO)COMAND.DOC:GO;--- ##.
+*(INFO)COMAND.DOC:HALT;--- ##.
+*(INFO)COMAND.DOC:HELLO;Enter SUDS mode.
+*(INFO)COMAND.DOC:HELP;RPG ##.
+*(INFO)COMAND.DOC:INITIA;Run your INIT program (such as LOGON).
+*(INFO)COMAND.DOC:JCONTINUE;--- ##.
+*(INFO)COMAND.DOC:KJOB;--- ##.
+*(INFO)COMAND.DOC:LIST;RPG ##.
+*(INFO)COMAND.DOC:LOAD;RPG ##.
+*(INFO)COMAND.DOC:LOGOUT;--- ##.
+*(INFO)COMAND.DOC:MAIL;RPG ##.
+*(INFO)COMAND.DOC:MAGNUM;Database program.
+*(INFO)COMAND.DOC:MAKE;RPG ##.
+*(INFO)COMAND.DOC:MODIFY;RPG ##.
+*(INFO)COMAND.DOC:NBASIC;NBASIC ##.
+*(INFO)COMAND.DOC:NEWS;NEWS ##.
+*(INFO)COMAND.DOC:OPER;Program to set license for the job.
+*(INFO)COMAND.DOC:OPNOTICE;RPG ##.
+*(INFO)COMAND.DOC:PASSWORD;Changes your network login password.
+*(INFO)COMAND.DOC:PCOM;Execute commands stored in a file.
+*(INFO)COMAND.DOC:PDP10;RPG ##.
+*(INFO)COMAND.DOC:PEAK;Restricted screen editor.
+*(INFO)COMAND.DOC:PERFORM;Perform a series of RPG commands.
+*(INFO)COMAND.DOC:PFDC;RPG ##.
+*(INFO)COMAND.DOC:PJOB;--- ##.
+*(INFO)COMAND.DOC:POP;--- ##.
+*(INFO)COMAND.DOC:POSTMAN;RPG ##.
+*(INFO)COMAND.DOC:PPN;RPG ##.
+*(INFO)COMAND.DOC:PRINT;RPG ##.
+*(INFO)COMAND.DOC:PROJECT;Changes project code.
+*(INFO)COMAND.DOC:PSP;SYSTAT ##.
+*(INFO)COMAND.DOC:R;Run a program from SYS:[1,4].
+*(INFO)COMAND.DOC:REASSIGN;Give ASSIGNed device away.
+*(INFO)COMAND.DOC:REENTER;--- ##.
+*(INFO)COMAND.DOC:RENAME;RPG ##.
+*(INFO)COMAND.DOC:RESOURCES;List available devices.
+*(INFO)COMAND.DOC:RUN;--- ##.
+*(INFO)COMAND.DOC:SAVBIN;--- ##.
+*(INFO)COMAND.DOC:SAVE;--- ##.
+*(INFO)COMAND.DOC:SAVEBIN;--- ##.
+*(INFO)COMAND.DOC:SCHEDULE;--- ##.
+*(INFO)COMAND.DOC:SEND;RPG ##.
+*(INFO)COMAND.DOC:SET;SET commands.
+*(INFO)COMAND.DOC:SETE;Special OPER enable.
+*(INFO)COMAND.DOC:SFORTRAN;SFORTRAN ##.
+*(INFO)COMAND.DOC:SPOOL;Enter a spool request for OPERATIONS.
+*(INFO)COMAND.DOC:SSAVE;--- ##.
+*(INFO)COMAND.DOC:START;--- ##.
+*(INFO)COMAND.DOC:SYSNO;Displays system number and version.
+*(INFO)COMAND.DOC:SYSTAT;SYSTAT ##.
+*(INFO)COMAND.DOC:TALK;--- ##.
+*(INFO)COMAND.DOC:TAPE;TAPE ##.
+*(INFO)COMAND.DOC:TBA;TYMSHARE BASIC.
+*(INFO)COMAND.DOC:TECO;RPG ##.
+*(INFO)COMAND.DOC:TERMIN;TERMIN ##.
+*(INFO)COMAND.DOC:TIME;--- ##.
+*(INFO)COMAND.DOC:TRY;RPG ##.
+*(INFO)COMAND.DOC:TTYCOMMANDS;TTY commands.
+*(INFO)COMAND.DOC:TYMEX;RPG ##.
+*(INFO)COMAND.DOC:TYPE;RPG ##.
+*(INFO)COMAND.DOC:UNDELETE;UNDELETE ##.
+*(INFO)COMAND.DOC:USERS;SYSTAT ##.
+*(INFO)COMAND.DOC:VERSION;--- ##.
+*(INFO)COMAND.DOC:VMINFO;--- ##.
+*(INFO)COMAND.DOC:VUE;RPG ##.
+*(INFO)COMAND.DOC:WATCH;--- ##.
+*(INFO)COMAND.DOC:WHERE;SYSTAT ##.
+*(INFO)COMAND.DOC:WHO;SYSTAT ##.
+*(INFO)COMAND.DOC:XBASIC;XBASIC ##.
+*(INFO)COMAND.DOC:XEXEC;RPG ##.
+*(INFO)COMAND.DOC:XMAGNUM;Experimental version of MAGNUM.
+$text BYECOMMANDS;EXIT/LOGOUT commands
+LOGOUT    Logs you off this system, allows you to LOGIN to another system
+KJOB      Same as LOGOUT
+BYE       Same as LOGOUT
+POP       Same as LOGOUT
+  LOGOUT and KJOB accept a list of job numbers to kill.  If the one or more
+  numbers are given, separated by commas, then those jobs will be logged out
+  instead of your current job.  Account supervisors can kill jobs in the same
+  account, most people can only kill jobs that have their username.
+
+EXIT      Do a quiet LOGOUT, do not print "TRU's used", etc.
+  Does not run alternate logout program, handy for hard-copy terminals.
+
+DETACH    Detach job from terminal (it may be allowed to continue running).
+  Detached jobs take up system resources, and are usually killed.
+
+ATTACH 1  Attach current terminal to job 1 if it is your detached job.
+  You must have the same UUN(PPN) and license as the job you want to attach to.
+  This command switches your terminal from one job to another.  Use the
+  KJOB command with an argument to kill a detached job.
+
+CSTART    Start job but leave terminal in Monitor mode.
+  Useful only if you type DETACH or ATTACH as your next command.
+
+CCONTINUE Continue job but leave terminal in Monitor mode
+  Useful only if you type DETACH or ATTACH as your next command.
+
+.LOGIN    Message from TYMNET to start a job
+$text INFCOMMANDS;Information commands.
+DAYTIME   Type date and time of day
+
+TIME      Type amount of CPU resources used
+
+CORE      Type amount of memory in use
+
+VMINFO    Type amount of virtual memory in use
+
+ ^T       Control-T displays status of currently running job
+
+PJOB      Types you job number
+
+E         Examine memory, types out as octal numbers
+
+D         Deposit into memory, using octal numbers
+
+VERSION   Examines the contents of location 137 in memory
+
+DSK       Types amount of disk reads and writes performed
+
+SCHED     Types the scheduling bits, 0 means normal timesharing
+$text STATCOMMANDS;Status setting commands.
+
+SET       See section on the SET command.
+
+TTY       See section on the TTY command.
+
+ADRBRK    Set address break for debugging.  See "ADRBRK" for more info.
+
+WATCH     Select statistics to be typed at start and end of command.
+WATCH DAY       Output time of day when a command is recognized.
+WATCH RUN       Output the run time (CPU seconds / TRU) when command is done.
+WATCH WAIT      Output the elapsed time, from when command started to end.
+WATCH READ      Output the number of blocks read (SIMIO) when command ends.
+WATCH WRITE     Output the number of blocks written (SIMIO) when command ends.
+
+JCONTIN   OPER command to continue a job accessing a hung device.
+.FCONT    Other half of the JCONTINUE command.
+  Works only if the specified job is waiting for operator intervention.
+
+TALK      Send message to another terminal.
+  Works only if the terminal does not have a job running.  Example:
+  TALK TTY17 When do you plan to go to lunch?  /JMS
+$text SYSCOMMANDS;Commands that run SYSTAT.
+SYSTAT    SYSTAT  Display system statistics
+WHO       SYSTAT  Display only names of users on the system
+SYSNO     SYSTAT  Display the system number and monitor version
+PSP       SYSTAT  Display disk space remaining
+WHERE     SYSTAT  Lists job number of a specified user
+USERS     SYSTAT  Summary of number of users on the system
+$text EDITCOMMANDS;Commands that run editors.
+CREATE    EDITOR/EDIT10   Create a file
+EDITOR    EDITOR/EDIT10   Edit existing file
+10EDIT    EDIT10  Edit existing file with EDIT10
+MODIFY    EDITOR  Edit existing file with EDITOR
+MAKE      TECO    Create a file with TECO
+TECO      TECO    Edit existing file with TECO
+VUE       VUE     Examine existing file with VUE
+$text DIRCOMMANDS;Commands that run DIRIT.
+DIRECT    DIRIT   Type directory of files
+FILES     DIRIT   XDS940 equivalent of DIRECT
+RENAME    DIRIT   Change name of files
+COPY      DIRIT   Copy files
+DELETE    DIRIT   Delete files
+UNDELETE  UNDELE  Un-delete file
+DECLAR    DIRIT   Declare accessability to files
+FDC       DIRIT   Set file directory codes for UFD
+PFDC      DIRIT   Print current file directory code
+$text TMMANDS;Commands that run LISTER.
+TYPE      LISTER  Type file on terminal
+PRINT     LISTER  Output file to lineprinter
+LIST      LISTER  Output file to lineprinter with page headers
+$text RPGCOMMANDS;Commands that run RPG.
+TYMEX     RPG     Set XEXEC mode
+XEXEC     RPG     Set XEXEC mode
+PDP10     RPG     Set PDP10 mode
+
+CTEST     RPG     Set parameters internal to RPG
+PPN       RPG     Translate username to PPN
+HELP      RPG     List commands that RPG knows about
+DATE      RPG     Type date and time in XDS940 format, XEXEC mode only
+
+MAIL      RPG     Read MAIL.BOX
+POSTMAN   RPG     ?    MAIL.BOX
+SEND      RPG     Send to someone else's MAIL.BOX
+OPNOTICE  RPG    Type messages from the operator, XEXECJ mode only
+
+DO        ---     Search the DO list and run program
+DIFFER    FILCOM  Show differences in comparing two files
+
+COMPILE   RPG     Conditionally compile source programs
+LOAD      RPG     Conditionally compile, then load program into memory
+EXECUTE   RPG     Conditionally compile, then load and execute program
+DEBUG     RPG     Compile and load with DDT, start DDT
+TRY       RPG     Compile and load with DDT, start main program
+CDEBUG    RPG     Load COBOL debugger
+FDEBUG    RPG     Load FORTRAN debugger
+CREF      RPG     Produce cross-reference listing from previous compile
+CROSS     RPG     Same as CREF
+$text 10EDIT;RPG ##.
+$text ADRBRK;The ADRBRK command.
+The format of the ADRBRK command is:
+	.ADRBRK <ADDRESS> <ARGS>
+
+Where ARGS is a list of zero or more of the following:
+READ    BREAK ON READ WHICH IS NOT AN INSTRUCTION FETCH
+WRITE   BREAK ON WRITE
+FETCH   BREAK ON INSTRUCTION FETCH
+ALL     READ WRITE AND FETCH
+NONE    USED TO CLEAR ADDRESS BREAK
+MONITOR USED TO SET AN ADDRESS BREAK FOR MONITOR'S VIRTUAL ADDRESS
+	SPACE. NEEDS WC. BREAK ONLY SETUP WHILE THIS JOB IS RUNNING.
+	MESSAGE "EXEC ADDRESS BREAK FOR LOC X AT EXEC Y" PRINTED
+	IF NO PI IN PROGRESS.
+	BE CAREFUL WITH THIS - IT IS POSSIBLE TO CRASH THE SYSTEM
+	IN MANY WAYS BY SETTING A MONITOR ADDRESS BREAK AT CLEVER
+	PLACES (AT ADDRESS BREAK ROUTINE, FOR INSTANCE).
+<NULL>  SAME AS ALL
+
+IF ALL ARGS ARE LEFT OUT, CURRENT ADDRESS BREAK STATUS IS PRINTED.
+ALL ARGS CAN BE ABBRIEVIATED TO THEIR SHORTEST UNIQUE FORM.
+LOCATION ABKSET IN CLOCK1 CAN BE PATCHED TO JFCL TO STOP ADDRESS
+BREAK FROM BEING USED BY COMMAND SO IT CAN BE USED FOR
+GENERAL MONITOR DEBUGGING.  THIS IS A KL ONLY FEATURE. NOT PUT
+INTO KI BECAUSE MI PROG DISABLE NORMALLY SET, DISABLING ADDRESS
+BREAK. /EVS 31-AUG-78
+$text AID;AID ##.
+$text APL;APL ##.
+$text ASSIGN;Assign device to job.
+ASSIGN    Assign a device to your job.
+  Gives your job exclusive use of a device, if you have GD license.
+$text ATTACH;--- ##.
+$text BYE;--- ##.
+$text CAL;CAL ##.
+$text CCONTINUE;--- ##.
+$text CDEBUG;RPG ##.
+$text CFORTRAN;CFORTRAN ##.
+$text CLOSE;Close files after ^C or HALT.
+CLOSE     Close file by writing out any possible partial buffers.
+  Very handy after typing two Control-C's to stop a job.  If you don't use
+  the CLOSE command, any partially written file will disappear.
+$text COMPILE;RPG ##.
+$text CONTINUE;Resume execution of program in memory.
+CONTINUE        Resume execution of program in memory.
+  CONTINUE works if the program is stopped (via HALT, ^C, EXIT, or an error).
+$text COPY;RPG ##.
+$text CORE;--- ##.
+$text CRE;RPG ##.
+$text CREATE;RPG ##.
+$text CREF;RPG ##.
+$text CROSS;RPG ##.
+$text CSTART;--- ##.
+$text CT1;CT1 ##.
+$text CT2;CT2 ##.
+$text CT3;CT3 ##.
+$text CT4;CT4 ##.
+$text CT5;CT5 ##.
+$text CT6;CT6 ##.
+$text CT7;CT7 ##.
+$text CT8;CT8 ##.
+$text CT9;CT9 ##.
+$text CTEST;RPG ##.
+$text D;--- ##.
+$text DATE;RPG ##.
+$text DAYTIME;--- ##.
+$text DCOM;PCOM ##.
+$text DDT;Starts debugger.
+DDT             Start execution of DDT if it is currently in memory
+  DDT is loaded using the DEBUG command.
+$text DEASSIGN;Opposite of ASSIGN.
+DEASSIGN  Release ownership of a device.
+  Gives up the exclusive lock obtained via the ASSIGN command.
+$text DEBUG;RPG ##.
+$text DECLARE;RPG ##.
+$text DEFER;DEFER ##.
+$text DELETE;RPG ##.
+$text DETACH;--- ##.
+$text DIFFERENCES;RPG ##.
+$text DIRECT;RPG ##.
+$text DO;RPG ##.
+$text DSK;--- ##.
+$text E;--- ##.
+$text EDITOR;RPG ##.
+$text EXECUTE;RPG ##.
+$text EXIT;--- ##.
+$text FDC;RPG ##.
+$text FDEBUG;RPG ##.
+$text FI;RPG ##.
+$text FILES;RPG ##.
+$text FINISH;Combination of CLOSE and DEASSIGN.
+FINISH    Combination of CLOSE and DEASSIGN
+$text FTMAGN;FTMAGN ##.
+$text GET;Get a program into memory.
+GET PROG 30K    Get a SAVE program into memory, assign 30K words to it.
+  This loads a program into memory but does not start it.  The amount of
+  memory may be specified in K (kilowords) or P (pages) but is usually
+  left off (since the Monitor knows the minimum amount needed).
+
+After a GET, useful commands are: E, D, VERSION, START, DDT, REENTER, SAVE.
+$text GEXEC;GEXEC ##.
+$text GFD;GFD ##.
+$text GO;Alias for RUN.
+GO              XDS940 equivalent of RUN
+$text HALT;Stop program.
+HALT            Stop execution of program in memory (used after ATTACH).
+  Stops execution of the program, if your terminal is in command mode.
+
+ ^C             Control-C is the same as HALT, sometimes two ^C are needed
+  One Control-C will stop the job if it is waiting for input.  Two consecutive
+  Control-C's are required if the jobs is not in input wait.
+$text HELLO;HELLO ##.
+$text HELP;RPG ##.
+$text INITIA;INITIA ##.
+$text JCONTINUE;--- ##.
+$text KJOB;--- ##.
+$text LIST;RPG ##.
+$text LOAD;RPG ##.
+$text LOGOUT;--- ##.
+$text MAGNUM;MAGNUM ##.
+$text MAIL;RPG ##.
+$text MAKE;RPG ##.
+$text MODIFY;RPG ##.
+$text NBASIC;NBASIC ##.
+$text NEWS;NEWS ##.
+$text OPER;OPER ##.
+$text OPNOTICE;RPG ##.
+$text PASSWORD;PASSWORD ##.
+$text PCOM;PCOM ##.
+$text PDP10;RPG ##.
+$text PEAK;PEAK ##.
+$text PERFORM;PERFORM ##.
+$text PFDC;RPG ##.
+$text PJOB;--- ##.
+$text POP;--- ##.
+$text POSTMAN;RPG ##.
+$text PPN;RPG ##.
+$text PRINT;RPG ##.
+$text PROJEC;PROJEC ##.
+$text PSP;SYSTAT ##.
+$text R;Run a program from SYS:[1,4].
+R PROG          Run a program from SYS:[1,4]
+  The monitor looks for PROG.SHR, PROG.HGH, PROG.LOW and PROG.SAV in that order.
+  It loads and starts the first one it finds.  (PROG.EXE will be added later)
+
+RUN PROG 30K    Combination of GET and START
+  The RUN command looks for the program in your current directory.
+$text REASSIGN;Give ASSIGNed device away.
+REASSIGN  Transfer ownership of device to another job.
+  Not very useful.
+$text REENTER;Re-enter program.
+REENTER         Start execution at the alternate (re-enter) address.
+  This works only if the program has declared a REENTER address.
+$text RENAME;RPG ##.
+$text RESOURCES;List available devices.
+RESOURCES Type list of available devices.
+  Not very useful.
+$text RUN;--- ##.
+RUN PROG 30K    Combination of GET and START
+  The monitor looks for PROG.SHR, PROG.HGH, PROG.LOW and PROG.SAV in that order.
+  It loads and starts the first one it finds.  (PROG.EXE will be added later)
+
+R PROG          Run a program from SYS:[1,4]
+  The R command looks for the program in the system directory.
+$text SAVBIN;Alias for SAVE.
+SAVBIN          XDS940 equivalent of SAVE
+$text SAVE;Save a loaded program in binary form.
+SAVE PROG1      Save memory image in PROG1.SAV or PROG1.HGH + PROG1.LOW
+  If the program has only one segment, it will be stored in SAV format.
+  A two segment program is stored in HGH and LOW files.
+
+The SSAVE command is use if you want people to share your program.
+$text SAVEBIN;Alias for SAVE.
+SAVEBIN         XDS940 equivalent of SAVE
+$text SCHEDULE;--- ##.
+$text SEND;RPG ##.
+$text SET;SET commands.
+  Commands that do not require special license
+
+SET LOGOUT      When job gets detached, log it out immediately
+SET DETACH      When job gets detached, stop it and leave it detached
+SET CONTIN      When job gets detached, continue running and leave it detached
+SET TIMOUT      When job gets detached, stop it, wait 15 minutes before log out
+
+SET ATTACH      Tell LOGINN to ask if this job is found detached
+SET NOATT       Tell LOGINN to ignore this job if it is found detached
+
+SET AUTOLO 15   Set autologout timer to 15 minutes of inactivity
+SET NOAUTO      Disable the autologout timer
+
+SET LIMIT 123   Set TRU limit to 123
+
+SET WSMAX  95   Set working-set size limit to 95 pages
+
+  Commands which require license
+
+SET OPR             Declare the current TTY as the OPR: device
+SET NOTOPR          Inform the system that no TTY is OPR:
+
+SET DATE mm-dd-yyyy Set the date-month-year for the system
+SET TIME hhmm       Set the time of day for the system
+
+SET HAPPY           Tell the network that the system is not sad
+SET BIGBEN 240      Make "pages free" come out every 240 minutes (4 hours)
+SET SCHPRV          Set schedular priority
+SET CLRSPR          Clear schedular priority
+
+SET LOCK            Lock job in core
+SET NOLOCK          Clear lock bit
+$text SETE;SETE ##.
+$text SFORTRAN;SFORTRAN ##.
+$text SPOOL;SPOOL ##.
+$text SSAVE;Save a sharable program.
+SSAVE PROG      Save memory image in PROG1.SAV or PROG1.SHR + PROG1.LOW
+  Makes a sharable-save file.
+
+The SAVE command creates a non-sharable file, and is not recommended.
+$text START;Start program.
+START           Start the program that is currently in memory.
+  The START command can be given an argument, and will start there.
+
+The program in memory must have been set up by a GET, R, RUN, or LOAD command.
+$text SYSNO;SYSTAT ##.
+$text SYSTAT;SYSTAT ##.
+$text TALK;--- ##.
+$text TAPE;TAPE ##.
+$text TBA;TBA ##.
+$text TECO;RPG ##.
+$text TERMIN;TERMIN ##.
+$text TIME;--- ##.
+$text TRY;RPG ##.
+$text TTYCOMMANDS;TTY commands.
+A          Set parameter A for CR/LF delay (0-7)
+B          Set parameter B for CR/LF delay (0-7)
+C          Set parameter C for CR/LF delay (0-15)
+BACKSP     Output a backspace when DELETE or BS is input
+NO BACK    Output backslash and deleted character when DELETE is input
+BSD        Backspace Same as DELETE, convert ^H to DEL on input
+NO BSD     Backspace is not converted to DELETE
+CLASS      Six character terminal name, such as VT102
+CRLF       Output free CRLF when WIDTH is exceeded
+NO CRLF    Don't output free CRLF
+DEF        Deferred echo, done only when the host is ready for input
+NO DEF     Let the remote echo characters as they are typed
+ECHO       Echo input back to terminal
+NO ECHO    Local copy, don't echo printing characters, do echo ESC and ^
+ERASE      Erase deleted characters by echoing backspace-space-backspace
+FILL       Set FILL1 and FILL2 to the same value
+FILL1      Number of fillers to send after a formfeed(FF) or vertical tab(VT)
+FILL2      Number of fillers to send after a horizontal tab (HT)
+FORM       Terminal has hardware formfeeds and responds to VT
+NO FORM    Output 8 linefeeds for each FF, 4 for each VT
+IN         Input rate code, number from 0 to 15 (see also OUT)
+LC         Terminal understands lower case
+NO LC      Translate lower case on input to upper
+OUT        Ouput rate code, number from 0 to 15 (see also IN)
+RBS        Remote will echo backspace
+RTCOMP     Control-R/Control-T compatibility
+NO RTCOMP  Enables .RETYPE and USESTA
+RXE        Reverse XON enable, remote sends XOFF to terminal when host is busy
+TAB        Terminal has hardware tabs
+NO TAB     Translate Control-I to next multiple of 8 spaces
+TAPE       Paper-tape-reader mode, no LF after CR, ignore DELETE
+NO TAPE    Cancel paper-tape-reader mode
+TYPE       0=normal, 1=Katakana/8-bit (undocumented, may go away in next monitor)
+UCO        Upper case only, convert lowercase to upper on output
+NO UCO     Don't convert lowercase on output to terminal
+WIDTH      Number of columns on a line, used to send free CRLF
+XON        Flow control from terminal, ^S=XOFF=pause, ^Q=XON=resume output
+NO XON     Treat ^Q and ^S as data from terminal
+$text TYMEX;RPG ##.
+$text TYPE;RPG ##.
+$text UNDELETE;UNDELETE ##.
+$text USERS;SYSTAT ##.
+$text VERSION;--- ##.
+$text VMINFO;--- ##.
+$text VUE;RPG ##.
+$text WATCH;--- ##.
+$text WHERE;SYSTAT ##.
+$text WHO;SYSTAT ##.
+$text XBASIC;XBASIC ##.
+$text XEXEC;RPG ##.
+$text XMAGNU;XMAGNU ##.
+
+   "@Ð

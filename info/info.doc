@@ -1,0 +1,318 @@
+$menu INFO;Enter "1" for information about the INFO program.
+*(INFO)INFO.DOC:INST;Instructions on how to use INFO.
+*(INFO)INFO.DOC:HELP;Commands to the INFO program.
+*(INFO)INFO.DOC:FILES;The format of the text files.
+*(INFO)INFO.DOC:PUB;Using PUB to prepare formated files.
+*(INFO)INFO.DOC:PUBLISH;The PUBLISH command.
+
+$text INST;Instructions on how to use INFO.
+The INFO program displays information stored in the INFO tree.
+
+There are two ways to get to a particular piece of information.
+1) If you know the title, you can simply enter the title.  For example, "INST"
+   is the title of this piece of text.
+2) If you do not know the title, you can search through the menus.  When each
+   menu is displayed, you can enter either the number of an item or its title.
+A colon ":" in front of a title means the item is another menu.
+
+The first page of the selected item will be displayed.  To view the next page,
+press the "Return" key or press the "space" bar.  When you have hit the end of
+The item, INFO will report "[XXXX;no more]" at the bottom of your screen.
+
+At this point, you can type a period "." to go back to the beginning of the
+item, type an carat "^" to look at the menu that contains the current item,
+or type a left angle bracket ">" to go to the next item in the menu.
+
+This is the end of "INST".  If you want to quit now, enter "QUIT".  Otherwise
+press ">" to look at the next subject, which is a list of commands for INFO.
+$text HELP;Commands to the INFO program.
+Built-in command for INFO version 31:
+
+GOTO     Moves to specified node
+MENU     [Moves to node,] prints menu
+TEXT     [Moves to node,] prints text [starting at page]
+CONTENTS [Moves to node,] prints table of contents [to count levels]
+PUBLISH  [Moves to node,] writes all nodes in subtree + contents + index to file
+UP       Moves up in tree [count levels]
+NEXT     Moves to next node in tree
+TOP      Moves to root node of tree
+SET      Changes a terminal characteristic
+EDIT     [Moves to node,] enters EDIT10 for file containing node
+BUILD    Builds internal data base [from file pointed to]
+REBUILD  Rebuilds portions of data base which changed
+VERIFY   Prints differences between data base and reality
+WHERE    Prints name of file containing the named node
+QUIT     Returns to monitor
+HELP     Prints help message [about given command]
+
+For more details, type "HELP <cmd>" or "INST"
+GOTO; Moves to specified node
+
+<GOTO-COMMAND> ::= GOTO [<PATH^XNAME>]
+
+<path!name> ::= [<path!name>]/<node!name>
+<node!name> ::= <unique left subset of node name>
+
+        ----------------------------------------------------------------
+
+MENU; [Moves to node,] prints menu
+
+<MENU-COMMAND> ::= MENU [<PATH^XNAME>]
+
+<path!name> ::= [<path!name>]/<node!name>
+<node!name> ::= <unique left subset of node name>
+
+        ----------------------------------------------------------------
+
+TEXT; [Moves to node,] prints text [starting at page]
+
+<TEXT-COMMAND> ::= TEXT [<PATH^XNAME>] [<PAGE^XNO>]
+
+<path!name> ::= [<path!name>]/<node!name>
+<node!name> ::= <unique left subset of node name>
+<page!no> ::= <integer>
+
+        ----------------------------------------------------------------
+
+CONTENTS; [Moves to node,] prints table of contents [to count levels]
+
+<CONTENTS-COMMAND> ::= CONTENTS [<TREE^XNAME>] [<COUNT>]
+
+<tree!name> ::= :<path!name>
+<path!name> ::= [<path!name>]/<node!name>
+<node!name> ::= <unique left subset of node name>
+<count> ::= <integer>
+
+        ----------------------------------------------------------------
+
+PUBLISH; [Moves to node,] writes all nodes in subtree + contents + index to file
+
+<PUBLISH-COMMAND> ::= PUBLISH [<TREE^XNAME>] [<COUNT>]
+
+<tree!name> ::= :<path!name>
+<path!name> ::= [<path!name>]/<node!name>
+<node!name> ::= <unique left subset of node name>
+<count> ::= <integer>
+
+        ----------------------------------------------------------------
+
+UP; Moves up in tree [count levels]
+
+<UP-COMMAND> ::= UP [<COUNT>]
+
+<count> ::= <integer>
+
+        ----------------------------------------------------------------
+
+NEXT; Moves to next node in tree
+
+<NEXT-COMMAND> ::= NEXT
+
+        ----------------------------------------------------------------
+
+TOP; Moves to root node of tree
+
+<TOP-COMMAND> ::= TOP
+
+        ----------------------------------------------------------------
+
+SET; Changes a terminal characteristic
+
+<SET-COMMAND> ::= SET [<PARAMETER>]
+
+<parameter> ::= WIDTH=<integer> | LENGTH=<integer>
+              | BLANK | NONBLANK | TERMINAL=<term-type>
+              | FORM | NOFORM | <term-type>
+
+<term-type> ::= 100 | 100 | 33 | TTY
+              | TELETYPE | 126 | TI | 315
+              | LA36 | DECWRITTER | 325 | DIABLO
+              | 420 | ADM1A | 430 | ADM3A
+              | 431 | ADM31 | 440 | 444
+              | HP2621 | 2621 | VT100 | VT102
+              | Rainbow
+
+        ----------------------------------------------------------------
+
+EDIT; [Moves to node,] enters EDIT10 for file containing node
+
+<EDIT-COMMAND> ::= EDIT [<PATH^XNAME>]
+
+<path!name> ::= [<path!name>]/<node!name>
+<node!name> ::= <unique left subset of node name>
+
+        ----------------------------------------------------------------
+
+BUILD; Builds internal data base [from file pointed to]
+
+<BUILD-COMMAND> ::= BUILD [<POINTER>]
+
+<pointer> ::= <file!name>[:<path!name>][;<comment>]
+<file!name> ::= [(<user!name>)] <fil> [.<ext>]
+<path!name> ::= [<path!name>]/<node!name>
+<node!name> ::= <unique left subset of node name>
+
+        ----------------------------------------------------------------
+
+REBUILD; Rebuilds portions of data base which changed
+
+<REBUILD-COMMAND> ::= REBUILD
+
+        ----------------------------------------------------------------
+
+VERIFY; Prints differences between data base and reality
+
+<VERIFY-COMMAND> ::= VERIFY
+
+        ----------------------------------------------------------------
+
+WHERE; Prints name of file containing the named node
+
+<WHERE-COMMAND> ::= WHERE [<PATH^XNAME>]
+
+<path!name> ::= [<path!name>]/<node!name>
+<node!name> ::= <unique left subset of node name>
+
+        ----------------------------------------------------------------
+
+QUIT; Returns to monitor
+
+<QUIT-COMMAND> ::= QUIT
+
+
+        ----------------------------------------------------------------
+
+HELP; Prints help message [about given command]
+
+<HELP-COMMAND> ::= HELP [<COMMAND>]
+
+<command> ::= GOTO | MENU | TEXT | CONTENTS | PUBLISH | UP | NEXT | TOP | SET
+            | EDIT | BUILD | REBUILD | VERIFY | WHERE | QUIT | HELP
+
+        ----------------------------------------------------------------
+$text FILES;The format of the text files.
+
+INFO will read ASCII text files created with any editor.  If the files
+contain line numbers, they are stripped before printing.  There are
+basically two types of files which INFO will recognize: 1) Unformatted
+files, containing text only; 2) Formatted files, containing menus or more
+than one node.
+
+Unformatted files are useful only as terminal nodes since a file must be
+formatted in order to point to other nodes (have a menu). The advantage is
+that documentation often already exists in this state and it can therefor
+be used merely by creating a pointer to it in some menu.
+
+Formatted files must follow the following rules:
+
+1) All TEXT associated with a node must begin with a new page of which the
+     first line is of the form
+     $TEXT <nodename>;<title>.
+2) All MENU's must be wholly contained on one page which must begin with
+     a line of the form
+     $MENU <nodename>;<title>.
+3) If there are both a menu and text for any node, the text must begin on
+     the first page after the menu for that node.
+4) All lines in a menu other than the first must be of the form
+     *<filename>:<nodename>;<title>.
+5) Pages are delimited by formfeeds.
+
+$text PUB;Using PUB to prepare formated files.
+
+There is a PUB source file "INFO.DFS" on the same directory as INFO.  The
+file contains definitions, etc., to allow the user to very simply prepare
+a document for INFO using PUB.  The file generated may have any number of
+menus, but the menus may only point to terminal nodes in the file or to
+nodes outside the file.  The file begins with the require statement
+
+     .require "INFO.DFS" source!file;
+
+PUB will assume that the file being generated is in the same directory as
+INFO unless you tell it otherwise with
+
+     .username(<username>);
+
+PUB also assumes that the generated file will not be renamed from ???.DOC
+unless you tell it otherwise with
+
+     .filename(<filename>);
+
+These statements should imediately follow the require statement if they
+are included.
+
+If the file is going to have any text nodes which do not appear within a
+menu that will be defined in this file, they should come next.  Each text
+node should begin with
+
+     .node(<nodename>,<title>);
+
+Afterwards, the menus should be defined with
+
+     .menu(<nodename>,<title>);
+
+No text is allowed after a MENU statement.  The menu is built with combinations
+of the statements .node and .pointer.  The format of the .node statement is
+described above. format of the .pointer statement is:
+
+      .pointer(<filename>,<nodename>,<title>);
+
+This is to allow menus to point to other menus in the same file or other
+files.
+
+When everything has been defined, the statement
+
+     .last
+
+must be given to allow PUB to close up properly.
+
+Below is an example of a simple PUB file:
+
+     .require "INFO.DFS" source!file;
+     .filename(SAMPLE.NFO);
+     .node(LONELY,A lonely node not in a menu);
+     <text for LONELY>
+     .menu(SAMPLE,A sample PUB generated file);
+     .node(PART1,First node in menu SAMPLE);
+     <text for PART1>
+     .node(PART2,Second node in menu SAMPLE);
+     <text for PART2>
+     .pointer(SAMPL3.DOC,PART3,Third node in menu SAMPLE);
+     .menu(ELPMAS,Another sample);
+     .node(PART1A,Another PART1);
+     <text for PART1A>
+     .node(PART2A,Another PART2);
+     <text for PART2A>
+     .last
+
+This would compile as
+
+     .COMPILE SAMPLE
+     PUB: SAMPLE.PUB 1
+       INFO.DFS 1.
+     3MENU.PUG 1.
+     $text LONELY
+     $menu SAMPLE
+       $text PART1
+       $text PART2
+       *SAMPL3.DOC:PART3
+     $menu ELPMAS
+       $text PART1A
+       $text PART2A
+     PASS TWO  SAMPLE.DOC 1 2 3 4 5 6 7.
+
+
+$text PUBLISH;The PUBLISH command.
+
+The publish command may be used to produce a very nice looking
+document from a subtree of info nodes.  The command is given followed
+by the name (or path) to the node which is the root of the subtree
+which is to be documented.  The path may be eliminated if the current
+node is the root of the subtree.  The result will be a file on the
+current directory with the name of the root of the subtree and the
+extension "LST".  The fill will have a table of contents and a two
+level alphabetical index in the back.  All of the nodes below the
+node named will be in the document.  Warning, listing the entire data
+base produces a huge listing!  Make sure that you specify the proper
+subtree.
+
+    @^

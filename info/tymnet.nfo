@@ -1,0 +1,175 @@
+$menu TYMNET;General TYMNET information.
+*(INFO)TYMNET.NFO:TERMID;TYMNET Terminal ID codes.
+*(INFO)TYMNET.NFO:NETLOGIN;Special characters for PLEASE LOG IN.
+*(INFO)TYMNET.NFO:HOSTS;PDP-10 hosts (TYMCOM-X) on TYMNET.
+*(INFO)TYMNET.NFO:GATEWAYS;Gateways to BUBB-NET and TRAIN-NET.
+*(INFO)TYMNET.NFO:TYMTERM;TYMSHARE terminal model numbers.
+*(INFO)TYMSAT.CAL:TYMCALIF;TYMNET nodes in California.
+*(INFO)TYMSAT.ALL:TYMNODES;TYMNET nodes sorted by state.
+$text TERMID;TYMNET Terminal ID codes.
+When TYMNET asks "please enter your terminal identifier", the most common
+answer is "A".
+
+     ID   speed   description
+     --   -----   -------------------
+     A     any    CRT with no fill
+     B     150    Teletype 37 with no parity
+     C     300    Impact printer, wide carriage, long delays
+     D     110    Teletype ASR-33, short delays
+     E     300    Thermal printer, short CRLF delay
+     F    split   Syner-Data Beta terminal, 150 baud in, 300 baud out
+     G     300    Belt printer, long delay after LF and FF
+     G    1200    G.E. Terminet, long delay after CR, LF, FF
+     H
+     I    1200    Dot matrix printer (LA350, short delay, 72 columns)
+     J     150    Teletype 37 with even parity
+     Y            Transaction Terminals
+     <cr>  134    IBM Selectric model 2741
+$text NETLOGIN;Special characters for PLEASE LOG IN.
+During "please log in:", the following characters have special significance:
+
+Colon           Terminates username, host number follows.
+Control-A       Set the circuit to use 64 characters per second (default).
+Control-B       Set the circuit to use 128 characters per second (1200 baud).
+Control-C       Set the circuit to use 512 characters per second (2400/4800).
+Control-D       Set the circuit to use 2048 characters per second (aux circuit).
+Control-I       Select best path to enhance interactive response time.
+Control-H       Set half-duplex mode.
+Control-K       Set KATAKANA mode.
+Control-P       Set parity even.
+Control-R       Set reverse XON enable (from terminal to host).
+Control-U       Set uppercase KATAKANA mode.
+Control-V       Select best path to enhance bandwidth for high volume traffic.
+Control-W       Delete previous word, either username or host number.
+Control-X       Set XON enable (from host to terminal).
+ESCape (control-[)      Erases LOGIN string and starts over.
+Carriage Return         Terminates LOGIN string.
+Semicolon               Terminates LOGIN string.
+$text HOSTS;PDP-10 hosts (TYMCOM-X) on TYMNET.
+Sysno  CPU  #   Site ID   Utilization   [extracted from (SPL:930)SYSNO.NFO]
+-----  -------  -------   -----------                                  21-Jan-86
+C22    KI  742  CUPC      TYMNET (backup for private network)
+D23    KL 1275  DALLAS    TYMNET, International Acct, Network Data, Order Entry
+C24    KI  532  CUPC      3350 development and BASE development
+D25    KL 1460  DALLAS    TYMNET only, Public Network, Code Generation
+C26    KL 1307  CUPC      TYMNET only, Private Network
+D27    KI  761  DALLAS    European Customers, TYMACS (Army Accounting)
+F28    KL 1388  FREMONT   TYMNET only, Sales, Network Stats, Miscellaneous
+C29    KL 1286  CUPC      General Customers
+F30    KL 1427  FREMONT   TYMNET Accounting
+D31    KI  666  DALLAS    TYMNET (backup for Private Network)
+C33    KL 1081  CUPC      TYMNET only, Public Network Support
+C34    KI  641  CUPC      TYMSHARE (master OPER), Japanese, General
+C35    KL 1386  CUPC      General Customers, Tymquote, Validation
+C36    KL 1415  CUPC      TYMNET, NTD
+D37    KL 1461  DALLAS    TYMNET only, Private Network
+F38    KL 1405  FREMONT   TYMSHARE MIS Accounting (Royalty Accounting)
+C39    KL 1354  CUPC      TYMNET only, NTD
+D54    KL 1376  DALLAS    Unicon, General Customers, (backup for Order Entry)
+C55    KL 1336  CUPC      General Customers, Railtrack Customers
+D56    KL 1383  DALLAS    TYMNET only, Order Entry
+C57    KI  542  CUPC      Japanese Customers, Network Field Engineers
+F58    KL 1332  FREMONT   TYMNET only, International Accounting
+D65    KL 1380  DALLAS    Otis Elevator (dedicated)
+C70    KI  733  CUPC      TYMNET only, Public Network, Code Generation
+D72    KI  657  CUPC      TYMSHARE Accounting
+F74    KL 1421  FREMONT   Internal Users, Validation Databases, TYMUSE
+D79    KI  565  DALLAS    Internal Products Accounting
+X95    KS 4267  LIBERTY   TYMCOM-XX development
+X118   F3    4  LIBERTY   TYMCOM-X development (backup)
+C897   F3    5  CUP-A     NTD development
+X930   F3    6  LIBERTY   TYMCOM-X development
+
+Other systems
+TRW33  KS 4097  ANAHEIM   TRW  (Gateway 633)
+M169   KS 4097  ST. LOUIS Mallinckrodt Chemical Company
+H370   KS 4097  HOUSTON   Fayez Sarofim
+W1051  KS 4097  SEATTLE   Rainier National Bank
+
+P90    KL 1305  ST-CLOUD  CEGI, (formerly SLIGOS in Puteaux)
+S83    KS 4097  ST-CLOUD  CEGI  PARIS
+S92    KS 4097  ST-CLOUD  CEGI  PARIS
+S59    KS 4097  ST-CLOUD  CEGI  PARIS
+S60    KS 4097  ST-CLOUD  CEGI  PARIS
+S170   KS 4097  ST-CLOUD  CEGI  PARIS
+S184   KS 4097  ST-CLOUD  CEGI  PARIS
+S264   KS 4097  ST-CLOUD  CEGI  PARIS
+S301   KS 4097  ST-CLOUD  CEGI  PARIS
+S443   KS 4097  ST-CLOUD  CEGI  PARIS
+$text GATEWAYS;Gateways to BUBB-NET and TRAIN-NET.
+
+Temporary note: Until everyone is moved in to South Bay Center, be aware
+that some gateways are not functional.  Try the following for BUBBNET:
+
+Tymnet host   Location   BubbNet host
+5981          Cupertino           9
+1552          Fremont            12
+2866          Fremont            11
+7255          Orchard Parkway   104
+
+
+
+
+TYMNET       host             as of 15-Mar-86           TRAINNET host   Where
+------       ----  ------------------------------------  ------  ----   ------
+ND7355      :1820  TYMNET-FRE (G-2)   TRAINING NET (G-2) ND2001  F:2    Solar
+ND7356      :1822  TYMNET-CUP (G)(2)  TRAINING NET (G-2) ND2002  C:3    Cup-C
+             ^^^^                                                ^
+Use this host number going to TRAINET           Use this user name to get back
+
+
+TYMNET       host             as of 15-Mar-86            BUBBNET host   Where
+------       ----  ------------------------------------  ------  ----   ------
+ND6024 BUBBC:5946  TYMNET-BUBBC-H2-G2   BUBB-NET-H2-G2   ND2601  C:2    Cup-C
+ND7344  BUBB:1461  TYMNET-BUBBV-VG6-G2  BUBB-NET-VG6-G2  ND2616  B:6    VG-2
+ND7345 BUBBD:1579  TYMNET-BUBBCG2       BUBB-NH8G2       ND2034  D:8    Dallas
+ND7346 BUBBV:5516  TYMNET-BUBBV-1-G2    BUBB-NETG2       ND2036  V:1    V Forge
+ND7347  BUBB:5981  TYMNET-C-H9-G2       BUBB-NET-H9-G2   ND2240  B:9    Cup-C
+ND7350 BUBBF:1552  TYMNET-BUBB-FRE-G2   BUBBNET-FRE-G2   ND2043  F:12   Solar
+ND7351 BUBBF:2866  TYMNET-BUBB-FRE-G2   BUBBNET-FRE-G2   ND2042  F:11   Solar
+ND7353 BUBBC:3171  TYMNET-BUBB-VG-G2    BUBBNET-VG-G2    ND2037  C:10   VG-2
+ND7354 BUBBL:7255  TYMNET-ORCHARD-G2  BUBBNET-ORCHARD-G2 ND2255 L:104   San Jose
+             ^^^^                                                 ^^^
+Use this host number going to BUBBNET           Use this host number to get back
+
+$text TYMTERM;TYMSHARE terminal model numbers.
+TI = Texas Instruments, LA = DEC hardcopy, VT = DEC CRT, ADM = Lear Siegler
+PE = Perkin Elmer, HP = Hewlett Packard
+
+TYM100  TI725
+TYM110  TI735
+TYM125  TI745/TI746
+TYM126  TI745/TI746
+TYM126A TI745 with APL character set
+TYM127  TI749
+TYM130  TI707
+TYM150  TI785
+TYM155  TI787
+TYM212  TI733KSR
+TYM213  TI733ASR with tape reader
+TYM225  TI743/TI744
+TYM315  LA36
+TYM316  LA36 with APL character set
+TYM325  1620    Diablo
+TYM350  TI820KSR
+TYM420  ADM1A
+TYM425  ADM31
+TYM430  ADM3A
+TYM431  ADM11
+TYM444  HP2621P with printer
+TYM470  PE1250/PE1251
+TYM550  HP7220A
+TYM550A HP7220C
+TYM551  HP7221
+TYM736  TI810RO/TI815/TI711
+TYM737  TI822RO receive only (no keyboard)
+TYM912  212A Penril modem
+TYM921  212 Ventel modem 1VE
+TYM923  212 Ventel modem 3VE
+TYM925  212 Ventel modem 5VE
+TYM927  Ventel PCMP-1200
+PWS1    PC100 Digital Rainbow-100 (personal work station)
+PWS2    PC200 Digital DECmate-II  (personal work station)
+1100/1105    TI771/TI772
+1100/1123    TI DS990/781
+

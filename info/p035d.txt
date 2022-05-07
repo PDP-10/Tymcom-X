@@ -1,0 +1,368 @@
+Proposed /D monitor enhancements
+
+    A.  Performance changes
+
+	1.  Close without wait, Validate RIB without wait (TITO speedup)
+
+	    This change is intended for increased speed for programs that
+	    perform mass copying from one area to another and restart at
+	    a known reference point when a failure occurs.  System backup
+	    and recovery procedures should benefit.
+
+	    Details of implementation include permitting RIB validation in
+	    the PCBIO section of the monitor to proceed without waiting for
+	    completion such as file page validation is permitted in normal
+	    paging I/O.  The CLOSE UUO would use common code with the
+	    validate RIB function after I/O has been completed to disk.
+
+	2.  SYSDVF function to read additional monitor tables
+
+	    This is intended as an improvement for performance monitoring
+	    tools in order to read an entire table of information in a single
+	    read function instead of one word at a time incurring very costly
+	    system overhead in order to monitor machine usage.
+
+	    Implementation details include modifying an existing function
+	    to return an entire monitor table to the requesting user in the
+	    same manner as entire DDB and UDB records are passed.  In this
+	    implementation tables which are not readily accessible via the
+	    GETTAB function would be made available. (eg. CTYBUF, SAXBUF)
+
+	3.  Contiguious file page creation (without double charging)
+
+	    It appears that in implementing the kernel routines for VMOVPG
+	    contigious file page creation was broken.  This modification will
+	    re-implement the previously existing feature.  The main benefit
+	    is faster loading of files to and from disk.
+
+	    Implementation involves utilizing the sweep/fill code to allocate
+	    additional pages on disk and locating the source of the double
+	    charging for disk acceses using this code.
+
+	4.  Virgin page bit for .CHMFP/.CHSMP chanio calls (ASP speedup)
+
+	    This feature will prevent the monitor from reading a page from
+	    disk just to zero it out when mapping it to user space.  The user
+	    will still receive a zeroed out page, but no disk read will be
+	    necessary.  No security is lost, because at present the data in
+	    specified page would have been readable (had the user not just
+	    wanted a page to scribble in).
+
+	    In implementation this means that the routines which map pages
+	    from the disk would set the virgin bit in the LMAP slot which
+	    signals the monitor to VCREATE a page of zeroes in memory at the
+	    specified address instead of reading the page from disk.  The
+	    page is assigned the proper disk address and when unmapped it
+	    will replace the disk page.  In the case of super-map, programs
+	    such as ASP would realize an increase in speed because the data
+	    would be transferred only once per page between memory and disk.
+
+
+    B.  SUBMIT-XEXEC changes
+
+	1.  Notice in child indication
+
+	    This would be allow XEXEC to determine which child has received
+	    NTQ (notice to quit) from TAKEIT or another job and to process
+	    that job accordingly.  At present it is impossible to determine
+	    the difference between a ZAP/LOGOUT and receiving NTQ.
+
+	    Implementation would entail setting a bit in JBTST2 when NTQ is
+	    received and reporting NIC to the parent.  The EVICT UUO uses a
+	    new flag bit to actually EVICT the child without notifying the
+	    parent.
+
+	2.  Enable/Disable for individual licenses
+
+	    This feature would allow a job to be created with license that
+	    has been validated (via OPER or .FOCFM) but not currently enabled.
+	    The Enable and Disable commands would allow the user to turn on
+	    or off various license capabilities without having to respecify
+	    the validation information.  As such, batch jobs can have a
+	    pre-validation done by the SUBMIT program and the user may set
+	    or clear various licenses without putting passwords into control
+	    files.  The feature will make setting various licenses easier for
+	    the interactive user, so they may enable only the license needed
+	    for a particular function.
+
+	    Implementation involves keeping a GETTAB table of license names,
+	    values and a byte pointer to the license field.  (See below).  The
+	    current SETLIC UUO functions for process license would pertain to
+	    frame license as well with JBTSLC holding the saved license for
+	    both the process and the frame.
+
+	    LICTBL: Point 1,'WC '!1,18		; Write Core
+		    Point 1,'RC '!1,19		; Read Core
+		    Point 1,'OP '!1,20		; Operator
+		    Point 1,'SY '!1,21		; Systat
+		    Point 1,'GD '!1,22		; Get Devices
+		    Point 1,'TD '!1,23		; Transfer Devices
+		    Point 1,'ST '!1,24		; Structures
+		    Point 1,'HF '!1,25		; Home Files (Write)
+		    Point 1,'JL '!1,26		; Jacct-Login
+		    Point 1,'AC '!1,27		; Aux Circuit
+		    Point 1,'XC '!1,28		; eXchange Charges
+		    Point 1,'QM '!1,29		; Queue Manager
+		    Point 1,'HR '!1,30		; Home Read
+		    Point 1,'-- '!0,31		; --Unused--
+		    Point 2,'RP '!1,33		; Read in Project
+		    Point 2,'RF '!2,33		; Read Files
+		    Point 2,'RA '!3,33		; Read Absolute
+		    Point 2,'WP '!1,35		; Write in Project
+		    Point 2,'WF '!2,35		; Write Files
+		    Point 2,'WA '!3,35		; Write Absolute
+
+
+	3.  Batch job indicator
+
+	    This would provide a way for TAKEIT and other programs to tell
+	    the difference between any normal "child" and a batch job.  Some
+	    CUSPS could then do intelligent things knowing that a user is not
+	    available and typing things such as "Do you really want to?" are
+	    somewhat meaningless.  Some commands could be restricted if they
+	    are issued from a batch job (eg. LOGOUT, EXIT, DETACH, etc.).
+
+	    Implementation would provide a bit in the .FOCFM call to which is
+	    copied to the sign bit of JBTST2.  XC license (JL,WC) is required.
+	    LOGIN/LOGOUT accounting records could also contain an indicator so
+	    that "deferred" or "batch-job" charges/discounts may apply.
+
+
+    C.  Once only changes
+
+	1.  REFSTR for the 2020s (in /B05 and /X01)
+
+	    These changes are to make the 2020 boot structure the same as
+	    the KI/KL/F3 structure.  Pages in (SYS)HOME.SYS are now in the
+	    same places on all processors.
+
+	    Implementation was pretty simple in REFSTR and ONCE/ONCDSK.  The
+	    major problem was divorcing FEFILE.SYS from HOME.SYS and setting
+	    up a pointer per/unit for the file.  Further study indicates that
+	    FEFILE.SYS be a structure-wide pointer rather than unit-specific.
+
+	2.  INITIA and NOINITIA startup flags
+
+	    This feature will enable operations to bring up the system during
+	    the rebuild process running a DSKCLN but not running any of the
+	    other startup jobs.  This may depend upon INITIA and the .DSKCL
+	    forced command working in co-operation with each other.
+
+	    Implementation will be setting flag in ONCE similar to CONSOLE
+	    and NETWORK (with INITIA as default).  TTYINI will only setup the
+	    proper commands on each line depending on the flag setting.  The
+	    .DSKCL command will always be set except in MANUAL or READONLY.
+	    THe INITIA command will be set except as above and for NOINITIA.
+
+	3.  Implementation of .DSKCLN and INITIA at startup
+
+	    As previously mentioned these commands will be activated during
+	    system startup.  This mechanism is meant to be cleaner than the
+	    current mechansm which runs INITIA on all startup ports and then
+	    determines that DSKCLN should be run if this is port 0.  The new
+	    .DSKCL command will run DSKCLN and may be set on any port/job.
+	    For 2020's the option of having .KMCLO run prior to DSKCLN is
+	    desired.  DSKCLN needs to be told to go into CHECK or CE mode to
+	    perform additional structure checks.
+
+
+
+    D.  Security
+
+	1.  HR license (Home Read)
+
+	    This license will work similar to HF with the exception that only
+	    READ capability will be permitted.  HF will imply HR just as WF
+	    currently implies RF.  No License will be required to set HR.  The
+	    only restriction is that the user must be connected or have access
+	    to the directory in which the file resides.
+
+	    Implementation will be to check all HF references in the monitor
+	    and add checks for HR to allow read access.  In addition, any time
+	    a read access is required and RF is checked, if the directory is
+	    the same as the FPN, HR should be checked.  This also includes the
+	    implied HR access from HF.
+
+	2.  SETE -1 UUO for TITO operator license
+
+	    This feature will provide operations with the capability to do
+	    the normal TITO file restore without losing license due to not
+	    having the proper license set.  This will allow us to remove the
+	    license that operations has just for file restoration and permit
+	    better control of their privileges.
+
+	    Implementation would involve a special SETE slot (-1) which will
+	    not be usable except with the SETE UUO.  Other restrictions will
+	    apply, such as the username "OPER" and a public-key password that
+	    TITO ead to determine oper validations.  We'd like something
+	    that changes at least daily internally even if the end result is
+	    the same.  Hackers beware!
+
+	3.  SETE command in the monitor (see ENABLE/DISABLE)
+
+	    This will remove the hazard of having to reload the system when
+	    the structure is in an unstable state, just to obtain license to
+	    do the work necessary to fix the unstable structure.
+
+
+    E.  Accounting
+
+	1.  Batch job indicator, deferred charges
+
+	    Changes should be made to the LOGINN and LOGOUT records written
+	    to the accounting stream to indicate that a job is a batch job
+	    as designated by the batch bit in JBTST2.  This may not matter to
+	    the monitor an may be a change to the LOGINN and LOGOUT cusps.
+
+	    The CHKPNT program shopuld also be modified at the same time to
+	    indicate batch jobs in the check-point records it generates.
+	    This will allow stream reading programs and accounting programs
+	    to detect batch jobs which span multiple accounting files.
+
+
+    F.  Host/Base fixes (SCNSER improvements)
+
+	1.  Eliminate crashes when Base is reset
+
+	    Make the base re-synch code smarter so that it may determine
+	    which version of the base code it is dealing with and re-synch
+	    without crashing when the base is restarted.
+
+	2.  Eliminate crashes as seen on system B39
+
+	    The symptoms on system 39 require more research and probably a
+	    grip on generating our own base code.  (If system 39 is really
+	    going away at the end of 4Q '87 then this may be a waste of our
+	    resources.)
+
+
+    G.  Segment modifications
+
+	1.  Non 400000 high segments, via segment start address table
+
+	    Introduce JBTSEG which contains segment specific information
+	    including the start address of the high segment if any.
+
+	2.  EXE files for full mapping capability
+
+	    Teach SEGCON how to setup JBTSEG and an initial UPT based on
+	    the contents of the EXE file directory for .EXE files.  It may
+	    fall out that an in-core page map could be constructed which
+	    may then be used to remember frequently used programs or high
+	    segments.  Using this technique the following capabilities
+	    could decrease the I/O incurred by repetedly reading the RIB
+	    of a file when loading or executing programs from disk.
+
+	    a.  SAV files expanded to C-O-W pages
+		Pages never referenced need not occupy physical memory.
+
+	    b.  SHR files marked R-O or C-O-W if SETUWP enabled
+		Pages would be shared automatically and private copies would
+		be made whenever a user needed to "write" on pure shared code.
+		(This happens now, but the mechanism may change somewhat.)
+
+	    c.  SWR files marked R-W for all pages
+		(See b above.  Listed separately so that we do not FORGET the
+		 distinction between .SHR and .SWR files.)
+
+	    d.  Monitor able to produce R-W or C-O-W/private pages
+		(Again, this happens now, but EXE files require these to be
+		 created and shared for ranges of zero-compressed pages).
+
+	3.  WSAVE command to create .SWR and .LOW (until full EXE)
+
+	    In order to implement .SWR fully, the monitor needs to create
+	    .SWR files just as it creates .SHR and .HGH files.
+
+
+    H.  2020 specific changes
+
+	1.  Fixup the LOAD PREBOOT areas for SMFILE and SMMON
+
+	    Create page 0 on each unit with the proper information to point
+	    to SMFILE and SMMON (for diagnostic booting) so that diagnostics
+	    may be stored on a TYMCOM-X system pack without interfering with
+	    the system.  This is all documented in the 2020 reference manual.
+	    TYMCOM-X currently supports only the system PREBOOT area.
+
+	2.  Fix page fail for unibus timeout (UBGOOD) for KMC,LPT
+
+	    Add UBGOOD routine which traps unibus timeout errors and causes
+	    an error return rather than a page fail STOPCD for missing KMC-11
+	    or LPT (and any other devices on the unibus).  This will allow
+	    the monitor to run in CONSOLE mode even without a working KMC-11
+	    and allow an LPT to be defined when one does not exist.
+
+	3.  Make MANUAL mode reload the KMC (if present)
+
+	    Modify the startup code to issue .KMCLOD if the system is to be
+	    brought up in any mode other than CONSOLE.  If the mode is not
+	    MANUAL then issue .DSKCLN next.  If the mode is INITIA then the
+	    INITIA command should be issued after the successful completion
+	    of DSKCLN.
+
+    I.  Increase maximum device specification
+
+	1.  More than 127 frames
+
+	    Increase the size of the frame field in the DDB.  There are two
+	    major approaches to this.  a) increase to 8 or 9 bits remaining
+	    in the same general location of the DDB.  b) Move this field to
+	    a new location (possibly invalidating many programs which think
+	    they know where to find this information in the DDB).  In either
+	    case, some programs may need to be modified to run under the new
+	    monitor.  This will need to be examined in more detail.
+
+	2.  More than 255 ports
+
+	    Change the TTY DDB configuration macros to permit a larger number
+	    of ports.  The actual maximum is 256 per base and not 256 total.
+	    This permits 256 on the network base, 256 PTYs and 256 hard-wire
+	    terminals if we wish to implement this third category.  This new
+	    "category" would permit the CTY to be a port on the internal base
+	    and allow ports on the DZ-11s on 2020s at the same time.  It is
+	    also the start of segmenting SCNSER so that TYMNET support could
+	    be extracted and inserted as a driver for TOPS-10 or TOPS-20.
+
+    J.  Rewrite COMCON command scanner to check batch bit
+
+	This is part of a rewrite of the command scanner to remove the current
+	confusing set of ranges for various types of commands to determine the
+	validitiy based on command mode (i.e. PDP10, XEXEC, XEXECJ, SUDS).
+
+
+    K.  Variable UFD hash constants for each UFD
+
+	A default hash size would exist per structure and individual UFDs
+	would contain the proper hash size in the RIB and DRB [NMB,UFB].  The
+	purpose of variable hash sizes would be faster file search for users
+	that have large numbers of files (such as TYMNET, SOURCE, etc.).
+
+	Codes may exist for each structure to indicate the actual hash size
+	since it is apparent that various prime numbers work best for hashing
+	algorithms and a smaller field in the UFD could be used.
+
+
+    L.  Bug fixes to /C and previous monitors
+
+	1.  (bug)   ECC error recovery on 3652 does not appear to work
+	2.  minor   Reformat CPU status block typeout to include AR/ARX
+	3.  (bug)   CPXKON vs 3675 blocks
+	4.  (new)   Include all addressable core in dump, %UPS in particular
+
+
+    M.  /D modifications already completed
+
+	1.  /C01
+	    a.  Put $END macros at end of all modules.
+	    b.  Re-instated code in /A14 that had been removed for /B.
+	    c.  Re-instated code in /B04 that had been removed for /B05.
+	    d.  Fix ADD-PACK code to add SPAGES/SWAP.SYS pages properly.
+
+	2.  /C02
+	    a.  Change SEND command to run SENDMA from SYS.
+	    b.  Fixed KAF in CORE1 at NXTWS2 when all pages are paged out.
+	    c.  Device errors on nonremovable disks now go into BAT pages.
+	    d.  SAXINY assumes 1st kontroller instead of printing messages.
+	    e.  Don't charge double when SIMIO writes contiguious pages.
+    \ù

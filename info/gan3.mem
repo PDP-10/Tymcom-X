@@ -1,0 +1,255 @@
+ A (INFO)GAN3.MEM - last updated 12-May-87, last verified 1-Jan-87.
+ B Check (INFO)FAKPPN.MEM before assigning any new PPNs with LVALID.
+ C Be sure to update this file, (INFO)GAN3.MEM, when you are done.
+ D
+ E To create (INFO)GAN3.SRT, "DO (XEXEC)SORT" and "GAN3.SRT=GAN3.MEM".
+ F
+ G On 31-Oct-86, all GAN 3 users in the MUD were valid on hosts 930, 62, 95.
+ H "Password" = Date network password was changed in MUD (or else GFD only).
+ I "Entered"  = Date entry was copied into NETVAL (CUD rebuilt on 19-Apr-86).
+ J Entries with no date list either the name of a former employee or the name
+ K of the person who created the directory using LVALID.
+ L
+ M  NAME         GAN,UUN    Password  Entered     X930
+------------    --------    --------  --------  -----------
+LPQ             3,     3        CARL              38 files.
+SAILFOO         3,   100        CARL              13 files.
+WFW             3,   117        BILL.WHEIR        15 files.
+XCONSULT        3,   633    05/21/81  04/19/86     no UFD
+DWS             3,  6366        DAVE.SUTTON        3 files.
+NOT-DENCOFF     3, 10765        DENCOFF            1 files.
+HELGEM          3, 16154        SUBMIT             1 files.
+WFWCUSP         3, 16622        WFW                1 files.
+DOC2            3, 24177    12/03/82  04/19/86     1 files.
+NOT-JMS         3, 31116        JMS                1 files.
+PEAK            3, 35556    08/12/85  08/19/86    62 files
+M33             3, 42754    10/09/85  04/19/86  1539 files.
+TSUCOOP         3, 50527    09/05/86  04/19/86    13 files.
+PASSAV          3, 52660    03/04/82  04/19/86
+????            3,106163                                author of file in M33
+SYSFIL          3,112233         ?                 7 files.
+F40             3,112726    06/12/81  04/19/86     no UFD
+????            3,120416                                author of file in M33
+MONDOC          3,123054    01/18/79  04/19/86   216 files.
+????            3,125127                                author of file in M33
+ZONNIE          3,136773        Z.WILLIAMSON       4 files.
+OSNF            3,140673    01/28/85  04/19/86     0 files.
+OSP             3,140674    08/24/84  04/19/86   213 files.
+OSB             3,145107    08/24/84  04/19/86   241 files.
+LAGOLD          3,147525        LYNN.GOLD          9 files.
+IMPORT          3,152602    05/22/85  04/19/86     1 files.
+OSMAN           3,156346    05/07/86  06/26/86   115 files.
+RCMTEST         3,157566    02/07/77
+TXSSUP (matoka) 3,160031    09/29/86  09/30/86    20 files.
+F10             3,163562         ?                 No UFD
+LINK10          3,163564    07/17/80  04/19/86   186 files.
+FOROTS          3,163651         ?                 1 files.
+SOCCI           3,167354        ERNIE.SOCCIE     348 files.
+MAIL            3,167357    03/14/84  07/22/86    32 files.
+COBOL10         3,175351    07/17/80  04/19/86
+COBOLQA         3,175764    07/17/80  04/19/86
+F10QA           3,177645         ?                 No UFD
+PASBLD          3,177775    04/23/83  04/19/86
+PASLIB          3,177776    04/23/83  04/19/86
+NDT  (sdaniels) 3,211135    05/24/84  04/19/86   810 files.
+XAIL            3,212137    GFD only  08/11/86    50 files.
+SAIL            3,212140    GFD only  08/11/86   154 files.
+TNXAIL          3,212141    GFD only  08/11/86     No UFD
+CMUAIL          3,212142    GFD only  08/11/86    12 files.
+DOCAIL          3,212143    GFD only  08/11/86    50 files.
+UORAIL          3,212144    09/18/86  09/17/86    60 files.
+SAILIB          3,212145    12/21/82  04/19/86   249 files.
+MPL             3,213211    01/17/83  04/19/86   690 files.
+FJSAIL          3,213567    GFD only  08/08/86    12 files.
+OSARC   (--)    3,214400        CARL             599 files.
+????            3,220711                                author of file in M33
+KL10            3,222635    06/18/80  04/19/86   166 files.
+WRS             3,225443    05/21/85  09/02/86   270 files.
+XMAIL           3,225444        WRS?               No UFD
+PERP            3,225445        WRS?               No UFD
+KS2020          3,230623    08/20/80  04/19/86     9 files.
+KSBACK          3,230624        GLYONS             0 files.
+TXSDOC  (mch)   3,231227    04/29/86  07/01/86     4 files.
+MICROCYCLES     3,232134    07/19/80  04/19/86
+INFO            3,232154    GFD only  04/19/86    41 files.
+FRENCH          3,232631    07/30/80  04/19/86     No UFD
+FORK            3,232761    09/21/84  04/19/86     No UFD
+LEEBOLTON       3,233113
+PUB             3,234002    08/11/79  04/19/86    38 files.
+EMACS           3,234372        CARL              36 files.
+ALARMCLOCK      3,234424    08/23/83  04/19/86
+SPPOPER         3,234620    09/18/85  04/19/86    15 files.
+TYMGRIPE        3,235436    09/06/78  04/19/86     2 files.
+SAILTEST        3,242733    GFD only  04/19/86   115 files.
+SPPARCH         3,250244    08/10/81  04/19/86    49 files.
+SYSMAINT        3,251616    09/18/85  06/26/86    33 files.
+TODD            3,252045        T.SORENSON         1 files.
+YAMM            3,253600    GFD only  04/19/86     3 files.
+SPTBARK         3,254606    05/01/79  04/19/86
+SPTBAQA         3,254607    05/08/80  04/19/86
+SPUNKDEV        3,254610    03/18/80  04/19/86
+SPUNKTEST       3,254611    05/08/80  04/19/86
+SPUNKREV        3,254612    05/01/79  04/19/86
+TBAFTDEB        3,254616    05/01/79  04/19/86
+EDITOR          3,254617    09/23/81  04/19/86     No UFD
+????            3,262461                                author of file in M33
+XXARC           3,270100    03/14/84  04/19/86    39 files.
+????            3,273463                                author of file in M33
+GLYONS          3,274033        GREG.LYONS         0 files.
+XEXEC           3,275244    10/29/79  04/19/86    98 files.
+TXSTEXT (wilkes)3,300745    05/20/85  09/02/86   102 files.
+PASCALQA        3,306333    08/27/80  04/19/86
+PASCALIB        3,306413    02/11/80  04/19/86
+PASCALX         3,306414    02/11/80  04/19/86
+FOROTSQA        3,314667         ?                 No UFD
+PASCALDOC       3,315030    04/17/80  04/19/86
+AUGMENT         3,317016    05/31/86  04/19/86
+SPL             3,324525    12/21/82  04/19/86   167 files.
+PASISRC         3,325470    07/10/80  04/19/86
+PASIDOC         3,325471    07/10/80  04/19/86
+PASIQA          3,325472    07/10/80  04/19/86
+PASGDOC         3,325577    07/11/80  04/19/86
+PASGQA          3,325600    07/11/80  04/19/86
+PASSRC          3,325601    07/11/80  04/19/86
+PASDOC          3,325602    01/31/82  04/19/86
+PASQA           3,325603    07/11/80  04/19/86
+PASRELCR        3,325604    07/11/80  04/19/86
+PASXMIT         3,325605    07/11/80  04/19/86
+PASULIB         3,325606    07/11/80  04/19/86
+PASCOOR         3,325607    07/11/80  04/19/86
+PASOLD          3,325610    07/11/80  04/19/86
+PASPROC         3,326306    07/17/80  04/19/86
+PASHOW          3,326310    07/17/80  04/19/86
+T10AIL          3,326471    08/24/84  04/19/86     No UFD
+PASGSRC         3,326647    07/21/80  04/19/86
+XPPTEST         3,326737    07/22/83  04/19/86
+JAIL            3,326740    07/22/80  04/19/86    30 files.
+TYMAIL          3,326742    08/24/84  04/19/86     0 files.
+PASNEW          3,327106    07/23/80  04/19/86
+OSU     (???)   3,330611    05/22/85  04/19/86   258 files.
+TBAUSPS         3,340310    10/02/81  04/19/86
+ERNSTD          3,343301        DENNIS.ERNST       No UFD
+FLETCHERC       3,346551    07/20/84  04/19/86    42 files.
+TXSTEST (tjb)   3,346701    05/21/85  09/02/86     0 files.
+ZORK            3,346702        TIM.BRINGLE        0 files.
+11CURR          3,351272    03/21/86  04/19/86     6 files.
+CUSP10          3,352366    12/01/80  04/19/86
+MSGDB           3,352367    12/01/80  04/19/86
+MSGSLV          3,352370    12/01/80  04/19/86
+MSG10           3,352371    12/01/80  04/19/86
+CARL            3,352477    05/31/86  09/30/86   616 files.
+MFICHE          3,365076    02/24/81  06/16/86     No UFD
+OSFT            3,365575    03/02/81  04/19/86
+GAZEL           3,367714        GAZEL.TAN          1 files.
+????            3,367732                                author of file in M33
+VUE             3,377411    06/13/85  04/19/86    61 files.
+YEUX            3,377412    02/16/84  04/19/86    34 files.
+KAREN           3,377477        CARL               2 files.
+K.LISP          3,377754        KDAWSON            5 files.
+K.SAIL          3,377755        KDAWSON            7 files.
+K.AUXIO         3,377757        KDAWSON           12 files.
+K.SLR           3,377760        KDAWSON            3 files.
+K.TAPE          3,377761        KDAWSON           11 files.
+PEAK.B2         3,377762        KDAWSON            No UFD
+PEAK.OLD        3,377763        KDAWSON           65 files.
+PEAK.BAK        3,377764        KDAWSON            No UFD
+PEAKDOC         3,377765        KDAWSON           10 files.
+PEAKX           3,377766        KDAWSON           64 files.
+PEAK1           3,377767        KDAWSON            9 files.
+KDEV3           3,377770        KDAWSON           13 files.
+KDEV1           3,377771        KDAWSON            0 files.
+PRT             3,377772        KDAWSON           13 files.
+MAILDEV       77774        KDAWSON            No UFD
+KDEV2           3,377775        KDAWSON            No UFD
+KLIB            3,377777        KDAWSON           31 files.
+DENCOFF         3,410765    04/23/86  06/26/86    32 files.
+SUBMIT          3,416154    11/09/84  09/02/86     2 files.
+JMS             3,431116    01/29/85  06/26/86   257 files.
+LRAC            3,700000        CARL               No UFD
+LOGGER          3,700001        CARL              31 files.
+MYPEAK          3,700004        CARL              76 files.
+CB-GAMES        3,700020        CARL               4 files.
+CB-MAGNUM       3,700040        CARL               No UFD
+CB-EXE          3,700050        CARL              28 files.
+CB-MEMO         3,700070        CARL              31 files.
+CB-INFO         3,700071        CARL              86 files.
+CB-MAIL         3,700072        CARL              70 files.
+MACRO53         3,700100        CARL               3 files.
+MACRO53TST      3,700101        CARL              11 files.
+CB-DEC          3,700120        CARL              47 files.
+CB-DECDIR       3,700121        CARL              51 files.
+TOPS10          3,700124        CARL              25 files.
+CB-SAIL         3,700140        CARL             167 files.
+CB-SAIL-ARC     3,700141        CARL              27 files.
+CB-SAIL-LIB     3,700142        CARL               No UFD
+CB-SAILIB       3,700143        CARL               No UFD
+CB-PARSER       3,700144        CARL               No UFD
+LPQUE           3,700200        CARL               No UFD
+LPTSPL          3,700201        CARL               6 files.
+NEWSPL          3,700202        CARL              53 files.
+NEWRPG          3,700210        CARL              19 files.
+NEWSCAN         3,700220        CARL             110 files.
+NEWTYPE         3,700221        CARL               No UFD
+CSTEMPLATE      3,700240        CARL              11 files.
+VMAP            3,700241        CARL              45 files.
+NEWINFO         3,700242        CARL              25 files.
+NEWFDM          3,700243        CARL              63 files.
+NFDM            3,700244        CARL              27 files.
+TTR             3,700300        CARL               3 files.
+BIONIC          3,700301        CARL               No UFD
+PASSFRAME       3,700302        CARL              22 files.
+CB-KERMIT       3,700303        CARL              11 files.
+CB-GALAXY       3,700304        CARL               No UFD
+BLISS36         3,700305        CARL               No UFD
+XBLISS          3,700306        CARL               No UFD
+PRODUCTLIST     3,700340        CARL               No UFD
+EYES            3,700400        CARL               No UFD
+VIEW            3,700401        CARL               No UFD
+OEIL            3,700402        CARL               No UFD
+XUEY            3,700403        CARL               No UFD
+VU              3,700404        CARL               No UFD
+TOPS20          3,700600        JMS                No UFD
+TOPS10-603A     3,700603        JMS                No UFD
+TOPS10-DOC      3,700700        JMS                No UFD
+TOPS10-701      3,700701        JMS                2 files.
+TOPS10-702      3,700702        JMS               28 files.
+703-TOPS10      3,700703        JMS                0 files.
+703-SMFILE      3,700704        JMS                No UFD
+703-DECNET      3,700705        JMS                No UFD
+703-DECNET      3,700705        JMS                No UFD
+703-TOOLS       3,700706        JMS                No UFD
+703-ANF10       3,700707        JMS                No UFD
+JMS-CSM         3,704000        JMS               12 files.
+JOESMITH        3,704001        JMS               20 files.
+DEC-CUSPS       3,704002        JMS                1 files.
+JMS-INFO        3,704003        JMS               39 files.
+ATPCH           3,704004        JMS               25 files.
+DEC             3,704005        JMS              101 files.
+MRC-MM          3,704006        JMS                9 files.
+TED             3,704007        JMS              107 files.
+SALLY           3,704010        JMS                5 files.
+GIGI            3,704011        JMS               29 files.
+REGIS           3,704012        JMS              353 files.
+JMS-KERMIT      3,704103        JMS                0 files.
+DCOFFEY         3,705001        DENCOFF            No UFD
+TJB             3,746701        JMS (see also [3,346701])
+JW.DSKCLN       3,771001        WILKES            25 files.
+JW.WORK         3,771002        WILKES             9 files.
+TELE            3,776655         ?                 No UFD
+PSP             3,777000        OSMAN              No UFD
+SYSINFO         3,777001        OSMAN              1 files.
+MWORK           3,777002        OSMAN             24 files.
+UWORK           3,777003        OSMAN             22 files.
+BWORK           3,777004        OSMAN              9 files.
+SWORK           3,777005        OSMAN              1 files.
+BADFILES        3,777006        OSMAN             15 files.
+EMSAA.SERVER    3,777123        MAIL               No UFD
+SAFIYEG         3,777700        OSMAN              4 files.
+JASONG          3,777701        OSMAN              7 files.
+GABRIELG        3,777702        OSMAN              6 files.
+NATHANIELG      3,777703        OSMAN              2 files.
+MARYG           3,777704        OSMAN              4 files.
+DAVIDG          3,777705        OSMAN              0 files.
+ZZZ-LAST-DIR    3,777776        JMS                1 files.
+JUNKMAIL        3,777777        CARL               8 files.
+     G O;
