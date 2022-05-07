@@ -1,0 +1,16 @@
+"/Patch to log Core Page Number in INSOHT/
+filio:
+insoht+2/jrst ttyini
+insoh1+11/jrst ttyini+1
+
+ttyini!aos ttyini+11
+ttyini+1!tlz t4,-1
+ttyini+2!rot t4,-1
+ttyini+3!skipge t4
+ttyini+4!jrst ttyini+7
+ttyini+5!hrlm pg,ttyini+12(t4)
+ttyini+6!skipa
+ttyini+7!hrrm pg,ttyini+12(t4)
+ttyini+10!rot t4,1
+ttyini+11!popj p,
+ttyini+12!0

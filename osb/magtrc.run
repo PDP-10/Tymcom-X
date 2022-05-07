@@ -1,0 +1,51 @@
+"/patch to catch zero pages in MAGNUM relations/
+mapio:
+ttyini!push p,t1
+ttyini+1!move t1,devfil(f)
+ttyini+2!came T1,100
+ttyini+3!jrst ttyini+12
+ttyini+4!hllz t1,devext(f)
+ttyini+5!came t1,101
+ttyini+6!jrst ttyini+12
+ttyini+7!move t1,devppn(f)
+ttyini+10!camn t1,102
+ttyini+11!jrst ttyini+14
+ttyini+12!pop p,t1
+ttyini+13!popj p,
+
+ttyini+14!pushj p,unlfil
+errcon:
+ttyini+15!pushj p,errset
+ttyini+16!jrst kjstop
+ttyini+17!pushj p,errtty
+ttyini+20!pushj p,inlmes
+ttyini+21!"/BINGO/
+ttyini+22!"/!!! -/
+ttyini+23!"/ Unde/
+ttyini+24!"/sirab/
+ttyini+25!"/le Fi/
+ttyini+26!"/le Op/
+ttyini+27!"/erati/
+ttyini+30!"/on/
+ttyini+31!pushj p,uuopcp
+ttyini+32!jrst kjstop
+
+filrib:
+ttyini+33!pushj p,ttyini
+ttyini+34!move t1,t2
+ttyini+35!jrst dlttci+1
+
+dlttci/jrst ttyini+33
+
+mapio:
+ttyini+36!push p,t1
+ttyini+37!jumpl t1,ttyini+44
+ttyini+40!subi t1,(t4)
+ttyini+41!caig t1,1
+ttyini+42!jrst ttyini+44
+ttyini+43!pushj p,ttyini
+ttyini+44!pop p,t1
+ttyini+45!move m,t1
+ttyini+46!jrst kfcre2+2
+
+kfcre2+1/jrst ttyini+36

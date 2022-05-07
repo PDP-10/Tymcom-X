@@ -1,0 +1,67 @@
+"/BIOBAS.RUN - Check BLOCK-IO errors connected with the Base/
+
+scnser:
+
+ttyini!252525252525
+ttyini+1!0
+ttyini+2!0
+ttyini+3!0
+ttyini+4!0
+ttyini+5!0
+ttyini+6!0
+ttyini+7!0
+ttyini+10!0
+ttyini+11!0
+ttyini+12!0
+ttyini+13!0
+ttyini+14!0
+ttyini+15!0
+ttyini+16!0
+ttyini+17!0
+ttyini+20!hrrz t3,ldbbio(u)
+ttyini+21!move t1,ttyini
+ttyini+22!movem t1,biodat(t1)
+ttyini+23!move t1,biocsh(t3)
+ttyini+24!pushj p,csval
+ttyini+25!camn t1,csvcnt
+ttyini+26!jrst .-1
+ttyini+27!popj p,
+
+ttyini+30!hrrz t1,ldbbio(u)
+ttyini+31!move t1,biodat(t1)
+ttyini+32!came t1,ttyini
+ttyini+33!jrst ttyini+42
+ttyini+34!aos ttyini+1
+ttyini+35!move t1,uptime
+ttyini+36!movem t1,ttyini+2
+ttyini+37!hrrz t1,ldbbio(u)
+ttyini+40!movei t1,biochr(t1)
+ttyini+41!movem t1,ttyini+3
+ttyini+42!hrrz t1,ldbbio(u)
+ttyini+43!popj p,
+
+ttyini+44!hrrzi t3,biochr(t1)
+ttyini+45!came t3,ttyini+3
+ttyini+46!jrst ttyini+66
+ttyini+47!hrli t3,biochr(t1)
+ttyini+50!hrri t3,ttyini+10
+ttyini+51!blt t3,ttyini+14
+ttyini+52!move t3,jbtppn(j)
+ttyini+53!movem t3,ttyini+4
+ttyini+54!move t3,jbtaun(j)
+ttyini+55!movem t3,ttyini+5
+ttyini+56!move t3,jbtfpn(j)
+ttyini+57!movem t3,ttyini+6
+ttyini+60!move t3,jbtnam(j)
+ttyini+61!movem t3,ttyini+7
+ttyini+62!jfcl
+ttyini+63!jfcl
+ttyini+64!jfcl
+ttyini+65!jfcl
+ttyini+66!hrli t3,biochr(t1)
+ttyini+67!popj p,
+
+gobin+2!pushj p,ttyini+20
+blkib1!pushj p,ttyini+30
+gotbuf+6!pushj p,ttyini+44
+

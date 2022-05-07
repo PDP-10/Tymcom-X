@@ -1,0 +1,16 @@
+SUBTTL	CONFIG - CONFIGURATION DEFINITION - KL
+XP SYSNO,'X32'
+XP APRSN,<'KL',,^D1307>	;CPU type and serial number
+XP APRNAM,<'FFF',,2100>	;Hardware and base number
+XP TIMZON,^D<-8>	;Pacific Standard Time
+
+XP JOBS, ^D50		;Number of jobs (including null job)
+XP PORTS,^D128		;TYMNET ports 0-127
+XP TAPES,^D4		;Number of tape drives
+XP DISKS,^D<6*8>	;Number of disks
+XP DSKTYP,'3652P'	;Memorex 3652 disks, formatted in pages 5/14/88
+;XP DISKS,^D<6*8>	;Number of disks
+;XP DSKTYP,'3675P'	;Memorex 3675 disks, formatted in pages
+
+XP DEFDEB,0		;Don't reload on JOB or DEBUG stopcodes
+XP PRINTS,2		;2 printers, LPT0: and LPT1:
