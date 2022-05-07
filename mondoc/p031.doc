@@ -1,0 +1,484 @@
+P031 New Features            & New UUO's             January 26, 1977
+
+
+                            Introduction.
+
+P031  introduces  5   new  UUO's,  new  Project-Code   Facility,  and
+accounting totally thru the "Stream" mechanism.
+UUO CHPJC (Change Project Code) is CALLI AC,-61.
+UUO PUTSAR (Put Stream Accounting Record) is CALLI AC,-62.
+The GETTAB UUO has three new items:
+        -44: returns in AC,AC+1 the double-precision microcycles
+        -45: returns in AC,AC+1 the d.p. TRU's
+        -46: returns in AC,AC+1 the d.p. kilo-core-microcycles
+
+In  addition,  Restricted  Command  Mode  is  now  restricted  to the
+following commands:  EXIT LOGOUT DETACH CONTINUE BYE HALT  (^C) KJOB,
+the null  command (just a  CR), and the  following commands  from the
+"forced command  table" in  SCNSER which  the user  may not  type but
+which are required for monitor stability:  .LOGIN .FCONT INITIA.
+
+The monitor command MODIFY,  formerly unavailable in PDP-10  mode, is
+now available in both XEXEC and PDP-10 modes.
+
+REASSIGN UUO DOES NOT PERFORM  A RELEASE OF THE REASSIGNED  DEVICE IF
+THE CALLER IS REASSIGNING IT TO HIMSELF AND HAS IT INITTED ALREADY.
+
+LOGINN,  LOGOUT, and  CHKPNT all  write records  into the  stream via
+PUTSAR.  The "FACT" file no longer exists.  All accounting data is in
+the "stream  files", (UN1)MMDDYY.SAT.  CHKPNT  is the only  writer of
+.SAT files; if it cannot  update any given MMDDYY.SAT, it  creates an
+alternate MMDDYY.S01.  No alternates past MMDDYY.S77 will be created.
+MMDDYY is the GMT date.
+
+
+
+
+                              CHPJC UUO
+
+
+CALL:   MOVEI AC,BLOCK  ;POINT AT DATA AREA
+        HRLI AC,1       ;TO SET PJC FROM BLOCK &PRESERVE PJCVFY
+        HRLI AC,3       ;TO SET BOTH PJC & PJCVFY FROM BLOCK
+        CHPJC AC,
+         ERR RTN        ;WILL NEVER HAPPEN ON READ CALL
+        OK RTN          ;AC PRESERVED, BLOCK CHANGED
+
+BLOCK:  WORD 0: PROJECT-CODE CHARS 1-5, BITS 0-34
+        WORD 1: CHARS 6-10, BITS 0-34
+        WORD 2: BITS 0-13, CHARS 11 & 12
+                BITS 14-34 ZERO
+                BIT 35  RETURN PJCVFY HERE ON ALL CALLS
+P031 New Features            & New UUO's             January 26, 1977
+
+
+                        IGNORE THIS ON SET CALL, USE ON SET BOTH
+
+
+LICENSE:        No license required to read PJC
+                XC or WPJ license required to set PJC if PJCVFY=1
+                No license required to set PJC and
+                 PJCVFY if PJCVFY=0.
+ERROR RETURN: On SET or SET BOTH, error return if no license
+
+The function of PJCVFY is to  require setters of PJC to be XC  or WPJ
+licensed,  as  some sort  of  assurance  that the  new  PJC  has been
+verified properly.  If a user is not subject to verification,  do not
+set  this  bit.   If  you do,  subsequent  setters  will  need  to be
+licensed.  The current state of PJCVFY is returned with the PJC  on a
+read call.
+
+READ  function:   AC/ 0,,BLOCK.   Returns current  PJC and  PJCVFY in
+Block. AC preserved.
+
+SET   function:   AC/1,,BLOCK.  Set  PJC  from Block,  do  not change
+PJCVFY.  Return previous PJC and PJCVFY in Block. AC preserved.
+
+SET  BOTH function:   AC/3,,BLOCK.  Set  PJC and  PJCVFY  from Block.
+Return previous PJC and PJCVFY in Block. AC preserved.
+
+
+
+
+                             PUTSAR UUO
+
+CALL:   MOVEI AC,HEADER         ;POINT AT RECORD HEADER WORD
+        PUTSAR AC,
+         ERROR RTN              ;AC=ERROR CODE
+        OK RETURN
+
+HEADER: BYTE (9)RECORDTYPE (21)0 (6)RECORDLENGTH
+BODY:   AS MANY WORDS AS RECORDLENGTH REQUIRES
+        (RECORDLENGTH INCLUDES THE HEADER WORD)
+
+ERROR CODES:
+        0:  ACT DEVICE BUFFER FULL, NO JOB HAS INITTED THE
+                DEVICE. THE SYSTEM IS RUNNING FOR FREE; ALL
+                STEPS HAVE BEEN TAKEN TO REMEDY SITUATION,
+                AND NONE WORKED. OPERATOR DEASSIGNED ACT DEVICE.
+        1:  NO LICENSE TO WRITE THIS RECORDTYPE
+        2:  RECORDLENGTH IS WRONG FOR THIS RECORDTYPE
+        3:  RECORDTYPE IS BAD
+P031 New Features            & New UUO's             January 26, 1977
+
+
+RECORDTYPES:
+        21: LOGIN RECORD--REQUIRES JL LICENSE
+        22: CHKPNT REC  -- "       "
+        23: LOGOUT REC  -- "       "
+        24: UPTIME REC --  "       "
+
+No  further recordtypes  defined at  present. If  others  are defined
+later, they must be  .le. 377 in order  not to foul up  CHKPNT, which
+uses  types .ge.  400 for  error and  control info  put in  SAT file.
+Record  formats  are  fully  described  in  (MONDOC)STREAM.DOC.   THE
+MONITOR WILL DATE-STAMP ALL  PUTSAR RECORDS; THEREFORE THEY  MUST NOT
+RESIDE IN A READ-ONLY PAGE.
+
+
+
+
+                    Extended LOOKUP ENTER RENAME
+
+Three new words exist in extended UUO blocks:  words (octal) 35,36,37
+contain the file's  Project-Code, format identical to  that described
+above for  CHPJC UUO.   PJCVFY is  meaningless.  The  following rules
+apply when doing an extended UUO with these new arguments:
+1.  A Write-Files-Licensed user may set them on ENTER RENAME
+        They will be returned on LOOKUP. ON CREATION OF
+        ANY FILE, THE WF-LICENSED USER MAY SPECIFY THE
+        PJC IN HIS ENTER BLOCK.
+2.  A Write-Project-Licensed user may set them on RENAME or on
+        any Update-mode ENTER.  They will be returned on a
+        Create-mode ENTER and on LOOKUPs.  At Creation,
+        the current session PJC is placed in the RIB and
+        returned to the user.
+3.  A user without WF or WPJ may not set these values.  They
+        will be returned on ENTER LOOKUP. Attempts to change
+        them with RENAME will result in no change.
+        At creation of a file, the current session PJC is
+        placed in the RIB and returned to the user.
+
+
+
+
+            EXTENDED LOOKUP BLOCK FORMAT, WORDS 35,36,37
+DATA FILES ONLY (NOT UFD'S):
+        WORD 35         5 ASCII CHARACTERS BEGINNING BIT 0
+        WORD 36         "   "       "        "
+        WORD 37         2 ASCII CHARS, BITS 0-13
+                        BINARY ZEROS   BITS 14-34
+                        BIT 35=1 IF THIS PJC VERIFIED
+P031 New Features            & New UUO's             January 26, 1977
+
+
+UFD'S ONLY:
+        WORD 35         0 OR PPN
+        WORD 36         0 OR FILENAME IN SIXBIT
+        WORD 37 BITS 0-17: 0 OR EXTENSION IN SIXBIT
+                BIT 18=1 IF PROJECT-CODE ACCOUNTING THIS USER
+                BITS 34-35: USER'S PJC CLASS CODE
+
+In UFD lookup blocks, the PPN/filename/ext/class code found
+in words 35-37 are used by LOGINN and (SYS)PROJEC.SAV to
+determine what type of PJC verification to enforce, if any:
+
+CLASS 0:        (NO VERIFICATION REQUIRED)
+        WORD 35: 0
+        WORD 36: 0
+        WORD 37: BITS 0-17:     0
+                 BIT 18   :     1 OR 0
+                 BITS 34,5:     0
+CLASS 1:        (VERIFY BY CUSTOMER'S PROGRAM)
+        WORD 35: PPN FOR RUN UUO
+        WORD 36: FILENAME FOR RUN UUO
+        WORD 37: BITS 0-17:     0
+                BIT 18:         1 OR 0
+                BIT 34-35:      01
+CLASS 2:        (VERIFY BY (SYS)PROJEC.SAV)
+        WORD 35: PPN FOR LOOKUP
+        WORD 36: FILENAME FOR LOOKUP
+        WORD 37: BITS 0-17:     EXTENSION FOR LOOKUP
+                 BIT 18:        1 OR 0
+                 BIT 34-35:     10 (BINARY)
+
+
+
+
+                      XCHARG UUO NEW FUNCTION 4
+
+XCHARG  UUO  now will  perform  a reset  of  selected  TRU components
+accepting component values directly  from the caller.  XC  license is
+required.    Component  values   offered  must   lie  in   the  range
+(Saved,Current).  Component values  lying outside this range  will be
+ignored  and  an error  return  given.  This  UUO  also  performs the
+equivalent of  XCHARG function  0 as  it executes  successfully.  The
+call is:
+CALL:   MOVE AC,[-LENGTH,,BLOCK]        ;ARGUMENT BLOCK
+        XCHARG AC,
+         ERROR RTN, AC=ERROR CODE
+        OK RTN, AC PRESERVED, BLOCK READ
+
+BLOCK:  EXP 4   ;SPECIFY FUNCTION 4
+P031 New Features            & New UUO's             January 26, 1977
+
+
+        EXP BITMASK     ;1's for components to be reset
+        ....
+        TABLE SPACE FOR COMPONENTS
+        ....
+
+ERROR RETURNS:  AC bits 33-35 contain:
+0: NO LICENSE 
+1: NO PREVIOUS SAVE (XCHARG FUNCTION 0) DONE
+2: SYSTEM RUNNING WITHOUT ACCOUNTING..CANNOT WRITE XCHARG RECORD
+3: BAD COMPONENT: AC BITS 0-32 = MASK OF BAD COMPONENTS
+4: BAD BLOCK LENGTH IN AC LEFT HALF.
+5: BAD BITMASK..EXTRANEOUS BITS AS DETERMINED BY COUNT
+
+BLOCK LENGTH RESTRICTIONS: 4 .LE. LENGTH .LE. 24 OCTAL
+
+BITMASK RESTRICTIONS:
+        BIT 0 SIGNIFIES THE 1st COMPONENT, etc.
+        IF ANY BITS PAST BIT (COUNT-2) =1, ERROR RETURN
+
+
+CALCULATION PERFORMED, FOR EACH COMPONENT WHOSE
+BITMASK BIT=1:
+        "IF CURRENT .GE. USER .GE. SAVED VALUES THEN 
+                CURRENT:=SAVED:=USER VALUE
+        ELSE NO CHANGE TO CURRENT & SAVED, REPORT ERROR"
+FOR EACH COMPONENT WHOSE BITMASK BIT=0:  NO CHANGE TO
+        CURRENT OR SAVED VALUES.
+
+When XCHARG function 4 gives a failure return code of 3 in  AC 33-35,
+bits 0-32 of  AC contain 1's wherever  a bad component  was detected.
+That component was not touched by the XCHARG.
+
+DOUBLE-PRECISION VALUES: NOTE:  The 1st bit of a pair of bits  in the
+bitmask which signify a  double-precision component is the  one which
+XCHARG tests.  If the 1st bit is 0, both will be considered 0, and if
+it is 1, both will be assumed to be 1.  No error is generated  if the
+bits do not have the same value.
+
+The components and their meanings:
+
+BITMASK       COMPONENT NAME & MEANING          LOC IN BLOCK
+BIT NO.
+
+0:      JBTCPU  HI-ORDER Micro-cycles*size      BLOCK+2
+1:      JBTKCT  LOW-ORDER  "   "                BLOCK+3
+2:      JBTCP2  HI-ORDER Micro-cycles           BLOCK+4
+3:      JBTCMP  LOW-ORDER  "  "                 BLOCK+5
+4:      JBTELP  ELAPSED TIME*SIZE               BLOCK+6
+P031 New Features            & New UUO's             January 26, 1977
+
+
+5:      JBTBCS  BREAK CHARS*SIZE                BLOCK+7
+6:      JBTCIN  CHARS IN                        BLOCK+10
+7:      JBTCOT  CHARS OUT                       BLOCK+11
+8:      JBTBET  BLOCK I/O ELAPSED TIME          BLOCK+12
+9:      JBTBIO  BLOCK I/O CHARS XFERRED         BLOCK+13
+10:     JBTSER  ENTERS & RENAMES*SIZE           BLOCK+14
+11:     JBTSLK  LOOKUPS*SIZE                    BLOCK+15
+12:     JBTSIN  DISK BLOCKS READ*SIZE           BLOCK+16
+13:     JBTSOT  DISK BLOCKS WRITTEN*SIZE        BLOCK+17
+14:     JBTERN  ENTERS & RENAMES                BLOCK+20
+15:     JBTDLK  LOOKUPS                         BLOCK+21
+16:     JBTRCT  DISK BLOCKS READ                BLOCK+22
+17:     JBTWCT  DISK BLOCKS WRITTEN             BLOCK+23
+
+
+Proper use  of new XCHARG  function 4:  the  user should first  do an
+XCHARG function 0, SAVE  CHARGES.  He should then read  saved charges
+into one  array, read  current charges into  a second  array, perform
+whatever calcualtion is appropriate  to derive a value  between these
+two limits for components of interest, and then do an XCHARG function
+4 with a bitmask whose 1's signify the components of  interest.  Note
+that function  4 requires  each component  to be  in its  proper word
+position in the  argument block, as  indicated in the  section above.
+This  is  achieved  by  specifying a  bitmask  of  777777,,0  (all 18
+components)  in the  "Read Saved"  and "Read  Current"  functions and
+doing the calculations in place in the "Read Saved" array.
+
+
+
+
+                         The CHKPNT WATCHDOG
+
+Since all accounting is now done via the stream mechanism, it becomes
+vital  that CHKPNT  run  at all  times.   If CHKPNT  does  not answer
+requests to empty the ACT device buffer, the system grinds to  a halt
+as  more &  more processes  go  into wait  for space  to  write their
+records to the ACT device.
+
+A Watchdog  has been  installed in  the monitor  which runs  once per
+minute and checks to be sure the ACT device is being serviced.  A new
+bit in the STATES word records the status of stream activity; the bit
+is called STMDED, and is 1 if the Watchdog has decided that CHKPNT is
+dead for any reason.
+Here is what the Watchdog does:
+1. If the system is open for timesharing (not restarting,
+        Shut, or Super-shut) and yet no job has the
+        ACT device initted, then the message
+          "SYSTEM UN-SHUT WITHOUT ACCOUNTING
+P031 New Features            & New UUO's             January 26, 1977
+
+
+           LOG IN TO 'OPER' AND 'R CHKPNT'  "
+        is written on the operator TTY and console
+        CTY, the CTY bell is set to ringing, and the ACT
+        device Unhappy Bit in ALR620 is set.
+   In normal operation the ACT device is kept assigned
+   by console to the CHKPNT job at all times, even
+   when CHKPNT does a RELEASE UUO and/or EXIT to the monitor.
+   Thus this message will appear only if: 1) someone
+   hangs the CHKPNT job; 2) someone attaches to the job and
+   logs it out; or 3) someone attaches to the job
+   and enters the DEASSIGN ACT command.
+2. If the job (CHKPNT) to which ACT is assigned has hit an
+        error condition which set JERR in JBTSTS, then
+        the message
+         "CHKPNT PROGRAM FATAL ERROR.
+          'R CHKPNT' AFTER ATTACHING TO JOB <XX> "
+        is send to operator TTY and console CTY (or just
+        to CTY if no operator TTY), the CTY bell is set
+        ringing, the stream mechanism is declared DEAD by
+        setting the STMDED bit in STATES, and the system
+        is SHUT.
+
+Note that the system is SHUT in case 2, because the ACT-owner  job is
+not runable and the ACT  buffer will quickly fill up.  New  users are
+prevented from logging in.  However an operator (with  shut override)
+can log into OPER (which attaches him to the CHKPNT JOB),  and re-run
+CHKPNT, which un-shuts the system as it re-initializes.
+
+CHKPNT will  also clear  the STMDED  bit when  it is  un-shutting the
+system.  Before CHKPNT  re-initializes and  begins servicing  the ACT
+device,  the  system  will  appear hung  to  all  users  except those
+(normally OPER) which  log in after this  state has been  reached and
+whose AUN  matches that of  the CHKPNT job.   Any OPER job  which was
+trying to access the ACT  device to write a record before  the STMDED
+bit went on will also appear hung.
+
+For a further discussion of this please see (MONDOC)ERRMSG.031.
+
+
+
+
+                      Changes to LOGINN, LOGOUT
+
+These have  been changed  in two  areas:  all  references to  the old
+APPEND package,  which implemented writing  to the "FACT"  files, are
+removed,  and  a  call  to PUTSAR  is  substituted.   If  PUTSAR fail
+returns, they write  a message on  the operator terminal  via SETUUO.
+P031 New Features            & New UUO's             January 26, 1977
+
+
+For this they have been  given OP license.  PUTSAR FAIL CODE  0 MEANS
+SYSTEM IS  UP FOR  FREE. OTHERWISE  IF CHKPNT  IS DEAD,  PUTSAR WAITS
+UNTIL IT  IS REVIVED BEFORE  SUCCESS/FAIL RETURNING TO  LOGOUT.  This
+ties up  a job number  even though  the user may  hang up  his phone.
+When CHKPNT is  re-initialized, LOGOUT will  write its record  to the
+stream, then give up the job slot and circuit via the LOGOUT UUO.
+
+The second area of change is in LOGINN and implements  the validation
+of  Project-Codes  on Login.   Please  refer to  the  section "Design
+Notes, PJC Facility" if the following is unclear:
+
+1. Before running any Init  file designated by the LUD,  LOGINN first
+checks the 3 locations in the user's UFD RIB which contain info about
+his classification for PJC's.  These cells are in the extended lookup
+block left after Loginn has run its routine UFDSET.
+
+2.  If the cells indicate a class 0 user (no validation), LOGINN goes
+ahead & RUN's any init file, or else just exits.
+
+3.  If  a Class 1  user is indicated,  the PPN/FN in  the cells  is a
+program to run which will do validation.  In most cases this  will be
+a custom program written by the field or by the customer Acct. Super.
+LOGINN  RUN's this  program  at entry+1,  passing  to it  a  bunch of
+registers full of dandy  info, such as the  name of the INIT  file to
+run once PJC validation is finished.  LOGINN sets  Restricted Command
+Mode and the indicated  PPN/FN as the Restricted  Command File,before
+the RUN.
+
+4.  If a Class 2 user is indicated, the PPN/FN point to a hash table.
+LOGINN does a RUN(entry+1) on (SYS)PROJEC, passing a register-load of
+stuff including this PPN/FN.  PROJEC looks in this file for  the PJC.
+PROJEC is  the RCF and  user is  in RCM, analagously  to class  1. JL
+LICENSE IS PASSED BY  LOGINN TO (SYS)PROJEC, ONLY; IT  IS IMMEDIATELY
+THROWN AWAY.  IF A USER PROGRAM DOES RUN UUO, ENTRY+1 ON (SYS)PROJEC,
+JL WILL BE MISSING, AND THE PROGRAM EXITS WITH A MESSAGE.
+
+
+
+
+                     Design Notes, PJC Facility
+
+These  are intended  as casual  design notes  and  overall philosophy
+description.  Relevant reading: Tymcom-X Project-Code Facility Users'
+Guide, and VALID: TYMCOM-X Account-Supervisor Project-Code Facility.
+
+The facility is  secure against all  users without WPJ  license.  The
+VALID program must  have WF and  ST (structure) license.   It reduces
+P031 New Features            & New UUO's             January 26, 1977
+
+
+license to  WPJ and  ST at initialization.   The PROJEC  program must
+also have WF,  and it lowers license  to WPJ.  This  technique allows
+these files to  exercise WPJ rights in  the callers' GAN  even though
+they reside in SYS.
+
+VALID  needs ST  to do  UFD interlocking.   Monitor  changes (CHKWRT,
+FILFND) allow WPJ-licensed caller to RENAME UFD's, which is how VALID
+records class info in the user's UFD.  VALID requires its  callers to
+have ACCT SUP status or TYMSHARE PROPRIETARY status.
+
+PROJEC needs WPJ in order to change PJC for users whose PJCVFY=1, and
+to be able to change PJC in a file RIB via extended RENAME.
+
+All user hash tables in  PROJ.COD files need WPJ license  not because
+it is exercised but as a certification of validity to PROJEC that the
+(unlicensed) user has  not written on the  file. (Such a  write would
+destroy the license.)
+
+The hash tables are set up  by VALID with a variable number  of pages
+depending on how  many codes arebe hashed  in.  The code  uses a
+"Load Factor" of  67%--it will choose a  number of pages to  use such
+that the absolute maximum  capacity times load factor is  .ge. number
+of  entries to  be made.   Typically users  will have  a  1-page hash
+table.   Entries are  3 words.   Words 0,1,2  of the  table  have the
+following  info:  number  of  pages of  table, number  of  entries in
+table, and the prime number used in putting them in.
+
+The  hash is  essentially D.  Knuth, Vol  3 p521,  algorithm  D, with
+provision  for  3-word  entries.   Open  addressing  with  collisions
+resolved by secondary hash.  Collisions don't seem to happen  much in
+testing,  and  more than  2  secondary probes  are  rarely necessary,
+especially with  the load factor  at 67%.  The  load factor  could be
+changed by redifining a symbol in VALID.
+
+If applications ever  come up requiring  capacities in excess  of 650
+entries in  a table, another  entry can be  added to PRMTAB  in VALID
+using prime=largest prime .le. (number of pages times ^d512  all over
+3).
+
+PROJEC looks up proffered PJC's  in these hash tables using  the same
+algorithm by which they were put there, except PROJEC  never modifies
+the hash table.   PROJEC reads page  0 of the  hash table to  get the
+control info which tells it  how many more pages to read,  what prime
+to use in hashing, and when to conclude that the proffered PJC is not
+there (Rare case if table were precisely full).
+
+PROJEC runs in RCM with  itself as RCF and escape  interrupt enabled,
+P031 New Features            & New UUO's             January 26, 1977
+
+
+when run  by LOGINN.   The user is  thus unable  to exit  the program
+except by  giving a  valid PJC, logging  off, or  hanging up.   If he
+hangs up, DETACH is a  legal RCM command, so the monitor  will detach
+or disconnect him.  Under some error conditions, PROJEC will initiate
+a logout, only if run by LOGINN.  Similar conditions arising during a
+regular user-initiated run just exit to the system.
+
+Whereas LOGINN is responsible for noticing whether a user is  class 1
+or 2 and running PROJEC only for class 2, PROJEC must notice  this on
+a user-initiated RUN.  So if a class 1 user types .PROJECT  BLAH BLAH
+the system goes thru 2 steps to get him to the proper  program: first
+run PROJEC, which in turn runs the program pointed to in his UFD RIB,
+presumably a  custom-validation program written  by his  Acct. Super.
+and residing in the A.S.  directory.
+
+Such customomer-written validation  programs (lets call  them SUPERV)
+may  be written  in  FORTRAN.  To  give SUPERV's  the  flexibility to
+accept register-loads  of arguments from  LOGINN, etc., we  provide a
+MACRO driver program which is loaded before the FORTRAN  main program
+and which  calls it  after saving info.   The driver  is also  a main
+program.  Trickery with the  Loader command string enables  loading 2
+mains.
+
+We presume that SUPERV's will want to mimic the external  behavior of
+PROJEC as much as possible to reduce confusion.  We do not  place any
+restrictions on how they validate a PJC, however.
+   å

@@ -1,0 +1,628 @@
+P034/P
+------
+
+/N01
+----
+
+COMMON, COMCON, CLOCK1 and UUOCON:  Renamed pointer JBYLIM for inactivity
+	time-out to JBYINA so that JBYLIM could be used for TRU-limit
+	interrupt pointer.  /CARL
+
+COMMON: Added interrupt cause (16) and pointer JBYLIM for the interrupt
+	channel.  Points to last 6 bits of UPTTP1.  TRU limit is stored
+	in JBTLIM(J) as per "SET LIMIT" command, UUO not yet defined.
+	/CARL 6-15-84
+
+/N02
+----
+
+COMMON: Added new job table JBTINT to hold interrupt channel assignments
+	which were previously in LH of JBTIOA and RH of JBTSLC.  Also
+	moved new TRU interrupt from UPTTP1 here since it must be in main
+	memory for clock level.  Above changes affect byte pointers in
+	table INTBYP.  /CARL 6-22-84
+
+PICON:  Removed unnecessary references to JBTIOA,JBTSLC and changed code
+	at APRENB/APRDIS to clear JBTINT instead.  Same change done in
+	INTADR code at INTAD1+5.  Also cleared %UPT+UPTTP1 here since it
+	seemed like it "ought" to be done here as well.  /CARL 6-22-84
+
+PICON:  Removed label INTAD3 by changing test condition and calling an
+	existing routine instead of jrst'ing past code block.  /CARL 6-22-84
+
+CLOCK1: Added code to fire the TRU interrupt if enabled when the user
+	exceeds his limit instead of just falling through to ERRTLE.
+	Added label CIP5B for call to ERRTLE just prior to CIP6.
+	/CARL 6-22-84
+
+
+
+/N03
+----
+
+COMCON:	Set maximum of ^D3435973 for SET LIMIT and complain if more is
+	specified.  Changed SETLIM references to SETTRU.  Now sets both
+	JBTLIM(J) and JBTSLM(J) to the current "maximum" limit.
+
+COMMON:	Replaced table JBTTRU with JBTSLM to contain the maximum TRU
+	limit for the frame.  JBTLIM is used for the current TRU limit
+	from now on and is checked at clock level, reset from JBTSLM on
+	RESET UUO (or frame reset) or SETLIM uuo with argument of 0.
+
+UUOCON:	Added SETLIM (CALLI -150) functions to set/reset (.SLSET), extend
+	(.SLEXT) and increment (.SLINC) the current TRU limit.  GETTAB
+	table -56 (.GTSLM) returns the limit set by the console, and the
+	old .GTLIM (GETTAB -30) returns the current limit as before.
+        /CARL 7-21-84
+
+/N04
+----
+
+CLOCK1:	Added JBTSLM to CLRJBT routine, fixed critical place test by
+	loading XWD JACCT,KJP instead of JACCT+KJP in TRU check routine.
+        /CARL 7-22-84
+
+/N05
+----
+
+COMMOD: Added <> around XP definition of SPTNMM to circumvent what
+	appears to be a MACRO bug.  SPTNMM is correctly defined as
+	17 instead of 62.  Was only used once @CRESP1+5 in FILFND
+	which should be patched to HRRI T3,17 in P034/N. /CARL 10-21-84
+
+/N06
+----
+
+FILUUO: Fixed typo in definiton of ECOD'x where x is %%XCOD which
+        was initialized to - instead of 0.  Apparently was bad since
+        originally written in P030/D.  /CARL 10-22-84
+
+SCNSER: Moved misplaced code (RTCONT) from RTATS+6 to after TATUUO at
+        TATUU1+4.  Apparently calls to RTATS where source DDB neq DDB
+        for the port # in F fell into RTCONT erroneously.
+	/CARL 11-12-84
+
+ONCDSK: Copied "DDT" and "BOOTS" commands from ONCE into FILES just
+        to make it easier to get out of FILES in hairy situations.
+        No more "reboot monitor" when stuck in FILES. /CARL 12-5-84
+
+/N07
+----
+
+ACTSER: Changed WRTAC1+4 from JRST @SPCACT-40(T3) to XCT SPCACT-40(T3) to
+        force execution of STOPCD instead of jrst SYSCRS.  /CARL 2-27-85
+
+
+UUOCON: changed SETMAI calli to set mail waiting based on job number rather
+than user name and changed PRVMSK to allow non-priv jobs to set/clear own
+[mail waiting] bit.  (for TUMS)  /WRS 3-3-85
+
+
+/N08
+----
+
+CLOCK1: Added check for UBR non zero before doing context switching
+	wrubr, when switching jobs or setting up nuljob.  /CARL 3-29-85
+
+
+ONCE:	Added UPTTB0 with BLT pointer for UPT trap vectors so we can copy
+	UPT stuff into page 0 to aid in tracking UBR=0 bug.  /CARL 3-30-85
+
+COMMON: Moved non-F3 IRING/ORING buffers and anything else not hard-coded
+	for page-0 locations out of the way so page 0 was as free as was
+	possible for tracking UBR=0 bug.  /CARL 3-30-85
+
+/N09
+----
+
+S:	Commented out MAPONC(DUM,1) to see if we really need it!  It
+	was put in originally because we thought something wanted an
+	extra page, possibly fixed with /L31? F3TSER fix.  /CARL 4-10-85
+
+/N10
+----
+
+UUOCON:	Changed code using register to copy EPYPSN [EPTPTR(%UPS.N)] then
+	does a DPB PG,register to simply do DPB PG,EPYPSN to free an AC.
+        /CARL 4-12-85
+
+FRMSER:	Put in check for NULQ in FRMASN, since only jobs actually in the
+	NULL queue should be re-assigned.    /CARL 4-12-85
+
+COMMON:	Added symbol BADQUE which is incremented every time a frame is
+	attempted assignment because JNA is clear, but the job is NOT
+	in the NUL queue.  /CARL 4-12-85
+
+SETETY: Sete password changed.  /WRS 5-21-85
+
+KMCSER: Fixed code at SETRM1, changed AOS T2,PG3ADR to AOS PG3ADR which
+	was only executed if the IRING was NOT in page 0.  /CARL 6-13-85
+
+
+/N11
+----
+
+UUOCON: Changed GETTAB .GTSLF tables from XWD FOO+WAYFOO,TABLE(J) to
+	XWD FOO+WAYFOO+J,TABLE to get around bug with polish fixups in
+	the new MACRO %53A(1152).  /CARL 5-16-85
+
+UUOCON: Add some new GETTAB table pointers to provide the proper tables
+	for STOPCDs and compatibility with DECs TOPS-10 tables which
+	only have dissimilar indicies.  /CARL
+	Changed SETINA and SETPRV UUOs to use default inactivity value
+	from NSWTBL.  Added SETUUO function to set it.  /CARL
+
+COMMON:	Added FETTBL,FETMXL globals for the feature test tables, added
+	CRSLEN,CSRMXL for addition to the GETTAB index table.  /CARL
+	Added INADEF to NSWTBL (re-using obsolete offset word 7) for
+	the default inactivity time limit.  /CARL
+
+COMMOD:	Change EXTERNAL to ## and INTERNAL to ::.  /CARL
+
+COMCON:	Interned WATTAB,COMTAB,SETBL and added WATMXL,COMMXL,SETMXL for
+	the new GETTAB indicies in UUOCON, sixbit table of WATCH,MONITOR
+	and SET commands.  (Added TTY and TERMINAL to SET table to jump
+	into the TTY command).  /CARL
+	Added SET DEFAULT INACTIVITY [N] command requires OP to set the
+	system-wide inactivity logout time limit in minutes.  /CARL
+
+SCNSER:	Added TTYTBL @ TTCWDT+1 (to skip 'NO') and TTYMXL for the new
+	GETTAB indicies.  Sixbit table of TTY commands.  /CARL 6-18-85
+
+S:	Changed STOPCD macro.  /JMS 6-19-85
+
+ERRCON:	Put in a dummy DIE routine (which fakes a JSR SYSCRS).  /JMS 6-19-85
+
+F3TSER:	Replace JSR SYSCRS with STOPCD, update all STOPCDs.  /JMS 6-19-85
+MAGSER:	Replace JSR SYSCRS with STOPCD, update all STOPCDs.
+
+LPTSER:	Update all STOPCDs to assemble with new macro.  /JMS 6-19-85
+
+/N12
+----
+
+ERRCON:	Install DEC's DIE routine (from 7.03 sources) to process stopcodes.
+
+COMMON:	Defined global variables - .CPxxx = CPU Data Block, .SYxxx = System
+	wide error counts.  Included only the variables used by DIE routine.
+
+COMCON:	Add PRTPPN and PRTDDB routines.  The latter outputs the DDB pointed
+	to by F as DEVICE:FILE.EXT[P,PN].
+
+PICON:	Minor mods to the order in which routines are called for fatal APR err.
+
+SCNSER:	Added more routines to output data to the CTY.
+
+/JMS 6-24-85
+
+	The new stuff is between "Start of STOPCD data" (page 45) and
+	"End of STOPCD data" (page 56), with additional information up to
+	"End of SYSCRS/REBOOT" (page 59).
+
+COMMON:	Add DEC's routines, RCDCSB records CPU status block, TYPSTB displays it.
+	Redefine JOB=.CPJOB, add DVCSTS (under REPEAT 0) to do CONI on all.
+
+S:	Defined DEBUGF flags, PIOFF and PION macros, XCT and CPU stop types.
+
+F3TSER:	Slight reformatting of STOPCDs.
+MAGSER:	Slight reformatting of STOPCDs.
+LPTSER:	Slight reformatting of STOPCDs.
+
+PICON:	Remove routine to output KL CPU status (replaced by RCDCSB and TYPSTB).
+	Give names to STOPCDs at APRFAT and nonzero in 30.  Add FLTCHK routine.
+
+ERRCON:	Change DIE routine to use the right global symbols.  Set up an
+	emergency stack for EXEC PDL OV.
+
+UUOCON:	Make GETTAB table 51 point to .SYSxx variables, table 52 to CRSHAC.
+
+CLOCK1:	Add code to calculate the Universal Date/Time and store it in DATE.
+
+SCNSER:	Add dummy routine to save protocol/disable keep-alive.
+
+SIMIO:	Add routine at SIMIOS(FCR.E+3) to output T1 via STOPCD routines.
+
+/JMS 6-29-85
+
+COMCON:	The PRTDDB routine borrowed from COMCON.703 uses DEC's convention of
+	<PUSHJ P,SAVE1>, had to change to <JSP T4,SAVE1>.  The routine PRPER can
+	not be used to print a period (license prints "!").   /JMS 6-30-85
+
+/N13
+----
+
+ALL:	Add the line S$NAME='module' at the beginning of each source file.
+/JMS 7-1-85
+
+COMCON,SCNSER:	Change name of routine to print a prompt to PRPRMT.  Add
+	PRPER to output a period only.  /JMS 7-2-85
+
+COMMON:	Change ">=" to ".GE." to balance angle brackets.  /JMS 7-2-85
+
+COMFAK:	Combine COMFAK and COMTXT into COMTXT.MAC, change command files to
+	assemble COMTXT without S+K?SYM.  /JMS 7-2-85
+
+COMMOD:	Make FTULNH global again.  WARNING: COMMOD.N12 will not load on KI
+	or KL because FTULNH is not declared as being INTERNAL.  /JMS 7-3-85
+
+/N14
+----
+
+FILFND,CTYSIM,ONCE,DZKON,DR11C,KMCSER,COMCON,F3TSER,MAGSER,REFSTR:
+	Remove all references to SYSCRS from these files.
+/JMS 7-9-85
+
+COMCON,COMMON: Added code at COMMAND+1 to count times COMCNT is wrong
+	in CMNOTF (%SYCCO) and at COMCMR+6 to count total commands that
+	are processed in COMTOT (%SYNCP).  /CARL 7-9-85
+
+
+FILFND: Added the following stopcodes...
+	FILDMO (DSKCLN) DRB Max count overflow
+	FILDMU (DSKCLN) DRB Max count underflow
+	FILANF (DSKCLN) ATB not found in list
+	FILBNF (DSKCLN) DDB not found in FNB device block list
+	FILATB (DSKCLN) Bad ATB pointer
+	FILLAS (DSKCLN) LMAP slot active/super
+	FILAMO (DSKCLN) ATB Max write count overflow
+	FILSEO (DSKCLN) SPT free entry count overflow
+	FILAUO (DSKCLN) ATB Unshared map count overflow
+	FILAUU (DSKCLN) ATB Unshared map count underflow
+	FILAUS (DSKCLN) ATB Unshared map count with valid SPT
+
+FILIO:  Added the following stopcodes...
+	PGENIO (STOP) Paging Error: No I/O in progress
+	PGEZER (STOP) Paging Error: Page count is zero
+	PGEOOR (STOP) Paging Error: Out of range
+	PGENDP (STOP) Paging Error: Not a disk page
+	OHTFUL (STOP) Output Hash Table Full - Too many DP errors
+	OHTENF (STOP) Output error Hash Table - Entry not found
+
+CORE1:  Added the following stopcodes...
+	REMVPG (STOP) Remove virtual page - Error
+	BACRFP (DSKCLN) SAT (M) Bit already clear - File Page
+	BACRVP (DSKCLN) SAT (M) Bit already clear - Virtual Page
+	ULKNME (STOP) Unlock UPx - Not mine error
+	PFLNUL (STOP) Page fault from NULL JOB
+	PFLPR0 (STOP) Page fault writing - Page protection 0
+	LAFUPS (STOP) LMAP Activation Failure - %UPS preserved
+	LAFPOR (STOP) LMAP Activation Failure - Page out of range
+	LDFPOR (STOP) LMAP Deactivation Failure - Page out of range
+	CHTFLS (STOP) CHT Failure - Search: RBMASK bits on
+	CHTFNJ (STOP) CHT Failure - Remove: No job in use list
+	CHTFIU (STOP) CHT Failure - Remove: In use/io in progress
+	CHTFNF (STOP) CHT Failure - Remove: CP not found in CHT
+	CHTFMU (STOP) CHT Failure - Remove: Multiply used PGYADR
+	CHTFDP (STOP) CHT Failure - Insert: Duplicate page
+	LRFPRx (STOP) LMAP Read Failure: Page out of range
+	LSFUFx (STOP) LMAP Store Failure - LDC count underflow
+	LSFPRx (STOP) LMAP Store Failure - Page out of range
+	PGUSEO (STOP) Page Use Error: Count increment overflow
+	PGUSEU (STOP) Page Use Error: Count decrement underflow
+	PGUSEA (STOP) Page Use Error: Slot still active
+	PGWNME (STOP) Page Wait queue error: Not me
+/CARL 7-10-85
+
+CORE1,DEBUG,FILRIB,FILUUO,FRMSER,MAPIO,SEGCON,SIMIO: move OPDEFs to S
+
+S:	The OPDEFs moved into S are the following negative CALLIs:
+	VDSKPT, PERSTS, VALPAG, PREREF, WSCTL, PERSET, PAGSTS, VPROT, VCREAT,
+	VCLEAR, VREMOV, VREPL.  VPGSTS was changed in DDT, MAPIO, and SIMIO
+	to conform with the YAMM, which says that CALLI -71 is PAGSTS.
+/JMS 7-11-85
+
+APXKON,F3TSER: Copy F3-OPDEFs into F3SYM.
+SCNSER:	Move TYMNET opdef into F3SYM.
+/JMS 7-11-85
+
+KSSYM:	Changed OPDEF WRADB[JFCL] to DEFINE WRADB,<PRINTX KS does not have ADB>.
+ERRCON,CLOCK1:	Put all references to WRADB inside IFNCPU(KS).
+/JMS 7-12-85
+
+ERRCO:	Add PUSHJ P,PRTDIR to output username of file in STOPCD processor.
+COMCON:	Create PRTDIR, which outputs username in parenthesis.  Calls PPNUSR.
+FILUUO:	Create PPNUSR and USRPPN - routines to translate PPN to USERNAME and
+	USERNAME to PPN.  These two routines search only the in-core tables,
+	and give a nonskip return if not found.  USRPPN is the first part of
+	the LOKLUD routine (the second part reads LUD.SYS).
+/JMS 7-15-85
+
+Module Old name Times    New name  (note: DISK=STOPCD(.,DSKCLN,...)
+====== ========  ==  ==============================================
+CLOCK1 CIP7+3     1  STOP,PAGZER,<Pager - UPT is zero>
+COMCON CKRCER+2   1              no STOPCD at this location
+COMMOD SAXINT+5   1  INFO,SAXIN1,<Spurious SA-10 interrupt>
+COMMON EPT+43     1              no STOPCD at this location
+COMMON SYSINA+4   9  CPU ,CRS147,<147 restart>
+CORE1  ACTLMS+4   1  STOP,LAFUPS,<LMAP Activation Failure - %UPS preserved>
+CORE1  DECUS0+7   1  STOP,PGUSEA,<Page Use Error: Slot still active>
+CORE1  PAGWAT+1   1  STOP,PGWNME,<Page Wait queue error: Not me>
+CORE1  REMCHR+4   1  STOP,CHTFNJ,<CHT Failure - Remove: No job in use list>
+CORE1  REMV16+7   1  STOP,REMVPG,<Remove virtual page - Error>
+CORE1  REMV31+14  4  DISK,BACRFP,<SAT (M) Bit already clear - File Page>
+CORE1  REMV41+3   1  DISK,BACRVP,<SAT (M) Bit already clear - Virtual Page>
+CORE1  SRCCHT+1   1  STOP,CHTFLS,<CHT Failure - Search: RBMASK bits on>
+CORE1  STOLMA+1  12  STOP,LSFUFA,<LMAP Store Failure - LDC Count underflow>
+CORE1  USRFLT+3   4  STOP,PFLNUL,<Page fault with LDC in use>
+ERRCON EXCMPE+3   1  STOP,S..IME,<Illegal Memory-reference from Exec>
+ERRCON INSSIM+2   0  STOP,S..UIL,<Uuo at Interrupt Level>
+ERRCON ILLINS+2  98 DEBUG,S..EUE,<Exec Uuo Error>
+ERRCON UUOCTR     4  JOB ,UUOCTR,<UUO from Concealed mode, Trap>
+ERRCON UUOSTR     0  CPU ,UUOSTR,<UUO from Supervisor mode, Trap>
+FILFND CNVATP+1   1  DISK,FILATB,<Bad ATB pointer>
+FILFND DECRMV+13  3  DISK,FILAMO,<ATB Max write count overflow>
+FILFND DECUMC+4   2  DISK,FILAUU,<ATB Unshared map count underflow>
+FILFND DECUMC+10 10  DISK,FILAUS,<ATB Unshared map count zero with SPT>
+FILFND ULKDB0+4   3  DISK,FILBNF,<DDB Not found in FNB device block list>
+FILFND USRUSI+22  1 DEBUG,USRUS1,<Unexpected CHANIO error in USETI>
+FILIO  INSOH3+1   3  STOP,OHTFUL,<Output Hash Table Full - Too many DP errors>
+FILRIB USEOUT+3  15  DISK,RIBBRP,<RIB error - Bad Retreival Pointer>
+FILRIB RIBERR+6  14  DISK,RIBTME,<Too Many RIB errors - disk is unsafe>
+FILUUO CLRACH+7   1              no STOPCD at this location
+FILUUO CLRCOM+5   1  DISK,CLRCM1,<CLRCOM decremented DRBCNT too far>
+FILUUO TSTRES+13  1  DISK,UUOXWR,<UUO eXit with Resources still owned>
+FILUUO UPDUFD+16  2  DISK,UFDER1,<UFD error return from DIRSRC>
+FILUUO USRUSI+22  1  DEBG,USRUS1,<Unexpected CHANIO error in USETI>
+FTASER FXWN21+12  1              no STOPCD at this location
+FTASER SCMBF1+3   2  JOB ,MTATMW,<Too many data words>
+FTASER SGTDEV+14  1              no STOPCD at this location
+MAPIO  MAPF34+4   7  JOB ,MPFBRP,<MAPF error - Bad Retreival Pointer>
+PATCH            12              patches to the Monitor to get more information
+PCBIO  GETTR1+2   1  STOP,GETTR3,<End of list detected at GETTR1+2>
+PCBIO  GTDON4+4   1  JOB ,GTDON1,<PCB link zero at GTDONE+12 or GTDON4+4>
+PCBIO  MAPALL+4   8  STOP,MAPAL1,<Bad Retreival Pointer detected at MAPALL+4>
+PICON  APRFAT    26  CPU ,APRFAT,<Fatal APR error - hardware failure>
+PICON  USEPER+3   2  STOP,NJBPER,<Parity error in Null Job>
+PLTSER PLTBL+3    1              STOPPC=147 (PLTBL=144, see COMMON SYSINA+4)
+PTPSER PTPBL+3    1              STOPPC=147 (PTPBL=144, see COMMON SYSINA+4)
+SCHED1 PAGWK1+2   3  JOB ,PAGWK2,<Job not coming out of SW queue at PAGWK1+2>
+SCNSER CNTPRT     1  INFO,TTYBMT,<Bad Message Type from Base>
+SCNSER FRCIBF+1   1 DEBUG,TTYBNP,<Block mode IO not in progress>
+SCNSER GETBBP+1   5  STOP,TTYNFB,<No Free Buffrers>
+SCNSER PGBIN+6    1  JOB ,TTYNPB,<No PTY Buffer for block IO>
+SCNSER PGTRI+7    2  XCT ,TTYNPB,<No PTY Buffer for block IO>
+SEGCON MAPHSF     1  JOB ,MAPHSF,<Unexpected error from CHANIO VMAP>
+SIMIO  FCR.E+4   23  JOB ,SIMIOX,<Unexpected error at SIMIOS>
+SIMIO  SIMRM1+1   1  JOB ,SIMRMV,<Unexpected VREMOV error at SIMRM1+1>
+SWAMP  GIVPGK+5   8  DISK,GIVPG1,<Error in GIVPGK - F bit is not on>
+SWAMP  GTSA42+5   1  DISK,GTSA43,<Error at GTSA42 - STTPTR is zero>
+SWAMP  SEAR15+1   1  DISK,SEAR14,<Error at SEAR15+1 - No bits free in SAT>
+UUOCON USRXIT+3   3  JOB ,UUOXWL,<UUO eXit With Locks still active>
+/JMS 7-17-85
+
+COMMON:	Put DEC's definitions for the CONFIG table inside REPEAT 0,<>.
+/JMS 7-18-85
+
+S:	Added ND and NDL macros.  They define a value as being global if not
+	already defined, and show the value defined in the listing.  All
+	occurrances of IFNDEF FOO,<XP FOO,BAR> can be replaced with ND FOO,BAR.
+/JMS 7-18-85
+
+COMMOD:	Added XP SPCBN,30 and XP RPCBN,14 inside IFCPU(KL)
+CONF##:	Removed XP SPCBN,30 and XP RPCBN,14 from all KL config files.
+/JMS 7-18-85
+
+MAPIO,SEGCON:	"STOPCD ] ;COMMENT" is OK, but MACRO generates bad code for
+	"STOPCD ] ;COMMENT ;;ADD1PG+5".  Cure: Move "]" to seperate line.
+/JMS 7-19-85
+
+/N15
+----
+
+COMMON,UUOCON,FRMSER:	Add CARL's changes to enable job inactivity timer from
+	LOGIN and CREFRM uuos.
+
+ONCE:	Change the instruction that sets up the LUUO trap to
+	IFCPU (KI),<MOVEM T1,EPT+41>
+	IFNCPU(KI),<MOVEM T1,41>	;KL and KS use Exec virtual address 41.
+/JMS 7-19-85
+
+S	Change "1B<tab>" back to "1B0<tab>".  MACRO 47 was generating "good"
+	code for this, MACRO 53 rightly reported an "N" error.
+/JMS 7-23-85
+
+/N16
+----
+
+
+
+ONCE:   Added 2 lines @ ONCGP1+lots to initialize the default inactivity
+	timer INADEF to INADFL  /CARL 7-24-85
+
+COMCON,ERRCON: Minor reformatting of STOPCD output.  /JMS 7-24-85
+
+FILUUO: Fixed logic error in PPN=>USERNAME search.  Save JOB around
+	code to grab CB resource to get GFD'd USERNAME.  /JMS 7-24-85
+
+/N17
+----
+
+COMCON:	Fix PJOBX to output 'DET' for jobs that are detached.
+FILUUO:	Clean up the stack before calling GIVCBR in USRPPN and PPNUSR routines.
+ERRCON:	Add a new frame halt status code for jobs halted by a job STOPCODE.
+	For haass HC.SYS added HT.MED - Monitor Error Detected at user PC.
+S:	Add PFALL macro.  Use "PFALL ADDR" instead of ";JRST ADDR".
+/JMS 7-25-85
+
+/N18
+----
+
+ONCE:	Moved setting of INADEF from (/N16 p.13) to p.33 just after the
+	BLT that clears all of COMMON's low core (SYSBEG, etc).  /CARL 7-25-85
+
+SCNSER: Changed TTYBMT and TTYBPN stopcodes from INFO to STOP, since we
+	aren't really able to continue at this point.  BMT - unknown or
+	bad message type, we could be anywhere inside a message, BPN -
+	bad port #, we need to sift through (some messages are multi-word
+	and we can't just go to SCNIN2).   Added TTYBZP INFO stopcd in
+	the BADPRT code, for message types which should be 0 or are really
+	ignored anyway, to print the info, then execute the code for the
+	appropriate message as if no error occurred.  /CARL 7-25-85
+
+SCNSER,ERRCON: Changed TTYBPN stopcd and added TTYBZP stopcd to use PRTP1U
+	routine in ERRCON to print out P1 & U, as Message type and Port for
+	bad message (or) port stopcds that eventually continue.  /CARL 7-25-85
+
+ERRCON:	Fix the KI version of the routine to type out the instruction that
+	caused an IME stopcode (Illegal memory-reference from Exec).
+
+UUOCON:	Add comments describing which DEC CALLIs we are missing.  Match
+	angle brackets.
+
+/N19
+----
+
+DDT: Fixed 1^B,2^B,3^B buffers and munched FILDDT commands as well.
+     /CARL 7-26-85
+
+COMMON: Removed (POPJ) "No CRASH.EXE" message till later date.  Removed
+	symbol SYSBG1, never referenced.  Moved NFCNT to %SYCCO until we
+	get a chance to check where referenced.  /CARL 7-26-85
+
+UUOCON: PRVMSK had PDVINA on the wrong side of the comma.  /CARL 7-26-85
+
+/N20
+----
+
+ERRCON:	Call CONMES instead of CONMSG for JOB stopcodes, CONMSG hung the
+	CPU.  /JMS 7-26-85
+
+COMMON:	Move DSKDIE from COMMON to ERRCON and document it.  /JMS 7-26-85
+	Deleted NFCNT (same as CMNOTF / %SYCCO) never referenced.
+	/CARL 7-26-85
+
+
+/N21
+----
+
+UUOCON:	Add dispatches for CALLI 67 and CALLI 70 uuos.  Each one currently
+	points to a POPJ, but if the POPJ at CALI67 is changed to a JFCL,
+	then CALLI 67 causes a JOB stopcode (S..JOB).  If the POPJ at CALI70
+	is patched to a JFCL, then CALLI 70 causes a DEBUG stopcode (S..CI7).
+/JMS 7-29-85
+
+CLOCK1:	Add code to call routine in ERRCON to decrement the stopcodes-per-minute
+	counter.  (TOPS-10 now uses 2-word CLOCK requests, TYMCOM-X only 1 word)
+ERRCON:	Set up right data for the clock request.  Current limits are to stop
+	if 2 stopcodes within 60 seconds, 4 stopcodes within an 8-minute period,
+	and 8 stopcodes per hour.
+/JMS 7-29-85
+
+/N22
+----
+
+CTYSIM: Change POPJ's to JRST CTYOUT to force string output (fixes to
+	CTY ^Z<xxx> messages), Change some JRST's to PJRSTs.  /CARL 7-29-85
+
+/N23
+----
+
+ERRCON:	Add SKIPE S to not output job status twice during STOPCD.
+SCNSER:	Clear byte count consistantly so that we don't put 34 characters into
+	a 32 byte message.  WRS noticed that the two extra characters were
+	getting thrown away because they were not accounted for.
+/JMS 7-30-85
+
+DDT:	Change the default $1M mask to 1000.  Now DDT will output "LABEL+offset"
+	where offset can go up to 777.  Add OPDEF for VPEEK, POKE, and SETMOD
+	so that it will assemble with MACRO 53.
+/JMS 7-30-85
+
+CLOCK1: In once-a-minute check for JBYINA against JBTINA(J), change the
+	CAIL to a CAILE to only give the user 0-59 seconds rather than
+	60-119 seconds extra slack time for autologout.  /CARL 7-31-85
+
+/N24
+----
+
+FILIO:	Change STOPCD(,XCT,BADSAT) and give it a unique name.
+	STOPCD(.+1,INFO,WRTSAT,WRTST1,<Disk output error writing SAT>)
+	This STOPCD was hit on C57 and did not output enough info.  It now
+	outputs the disk page number that got the error.  (Note: the stopcode
+	BADSAT in SWAMP is when a SAT is read from the disk, and fails the
+	consistancy check.  WRTSAT is when the SAT cannot be written.
+
+SCNSER:	JFCL out the JSR SPCINI in SVPPC routine until we know it works.
+
+ERRCON:	Comment out MOVE U,LINTAB(U) in DIETYO until the CTY gets an LDB.
+
+COMMON:	Carl found a PUSHJ P,SAVE4 in the part of RCDSTB that reads the
+	SBUS DIAGs.  It needed to be JSP T4,SAVE4 and was causing the KL to
+	halt due to ILL MEM REF when the stopcode processor was saving the
+	machine status.
+
+HALT:	For your info:  There are only two occurrances of the HALT instruction
+	in the Monitor.  The first is at DIE+1, DIEREH=Recursion in Error
+	Handler.  This is if a 2nd stopcode occurs while processing a stopcode.
+	The second HALT occurs if the Console PDP-11 is not running when a
+	stopcode is detected.  This is because the CTY cannot be used to output
+	information.  (If the PDP-11 is reloaded, and the KL continued, the
+	stopcode will then be processed.)
+/JMS 8-14-85
+
+/N25
+----
+
+PICON:	Ignore nonzero in 30 if we are in the process of outputting a STOPCD.
+ERRCON:	Re-enable channel 1 interrupts for JOB, DEBUG, and INFO stopcodes.
+	This is so that the base will not get upset and crash the PDP-10 when
+	the system is continued after one of the above stopcodes. 
+/JMS 8-19-85
+
+/N26
+----
+
+ERRCON: Added PRTCRS routine to print out 30 and the Key in a useful
+	manner.  /Carl
+PICON:  Changed CRSHWD checking STOPCD to call PRTCRS.  /Carl
+COMMON:	Reformatted crash code, commented out where it tells the base
+	where to dump into PDP-10 memory. (Never again!)
+	Added SYSBTS:: at 146 to JRST LODBTS so this may eventually
+	work someday.  /CARL 8-20-85
+
+/N27
+----
+
+
+SCNSER: Fixed problem with loop in input ring processing caused by bad
+	JRST ZAPLOG's which should have been PUSHJ P,ZAPLOG's.  Reworked
+	LOGIN & RCVAUX to use new-style ZAPLOG and return to SCNIN1.
+	Put a DEBUG stopcode at ZAPLOG which is called in a few places.
+	Added INFO stopcode TTYZNE to notify us if a zapper hasn't been
+	reflected to the base and the base re-assigns the same port.
+	Added state 7, .ASWTP to aux-circuit build tables which causes
+	RCVSUR to check for errors and if none, reset the build process
+	back to state 1, .ASRQ1 to re-try the circuit; SNDAUX will
+	continue to decrement the response timeout unless a response is
+	received.  Thus, if we get a bad type 7 message from the base,
+	we will (a) No longer loop forever, (b) not confuse either the
+	base or the user by a spurious zapper, (c) actually zap the aux
+	port and re-request another circuit from the supervisor to keep
+	everyone happy.  If we get a bad type 6 message from the base,
+	we will (a) No longer loop forever, (b) recover gracefully and
+	print a stopcode message on the CTY before continuing.  /CARL 8-30-85
+
+
+/N28
+----
+
+PROBLEM: CRSHID gives up, says "the crash code was not executed".
+DIAGNOSIS: In /N23 and /N27, 3 words of the crash data block are not set up.
+CURE:  Set up STOPCN, PISTS, and APRSTS when a STOPCODE is hit.
+Note: The LH of CONFIG-2 still points to the old crash data block.  GETTAB
+  table 44 points to the new crash data block.  (GETTAB tables 55 and 56
+  need to be defined to do this right.)
+
+COMMON: Change 5 lines in the crash code to set up STOPCN, PISTS, and APRSTS.
+UUOCON: Make table 44 point to .GTCRS for now.  /JMS 8-31-85
+
+/N29
+----
+
+
+P034/Q
+------
+
+/P01
+----
+    y<tÃ

@@ -1,0 +1,18 @@
+.library man.dfs
+.synopsis
+Close all files and deassign all devices.
+.syntax
+FINISH
+.description
+Any files which have not been closed are
+closed, and pending data is written from the buffers.
+All devices are deassigned.
+
+Useful after aborting a program with two ^Cs to close
+files that may be partially written.
+If this is not done,
+the next RESET operation will cause the file to be closed
+in a maner that will save the previous version, if any.
+.see also
+CLOSE
+DEASSIGN

@@ -1,0 +1,552 @@
+$menu OPEN/LOOKUP/IOSTAT;Definitions for TOPS-10.
+*(MONDOC)RIBDAT.NFO:RIBDAT;RIB info in extended LOOKUP/ENTER block.
+*(MONDOC)RIBDAT.NFO:RIBDIFFER;Comparison of TOPS-10 and TYMCOM-X RIBs.
+*(MONDOC)RIBDAT.NFO:LOOKUPERROR;LOOKUP/ENTER/RENAME error codes.
+*(MONDOC)RIBDAT.NFO:OPENUUO;Parameters for the OPEN/FILOP uuos.
+*(MONDOC)RIBDAT.NFO:IOSTAT;I/O Status Bits.
+$text RIBDAT;RIB info in extended LOOKUP/ENTER block.
+;DEFINE RIB LOCATIONS (IE, INDEX IN EXTENDED LOOKUP/ENTER BLOCK)
+
+.RBCNT==0       ;COUNT OF ARGS FOLLOWING
+        RB.NSE==1B18    ;(ENTER ONLY) NON-SUPERSEDING ENTER
+        RB.DSL==1B19    ;DON'T SEARCH LIB ON LOOKUP
+        RB.AUL==1B20    ;ALLOW UPDATE (OR RENAME) IF FILE FOUND IN LIB
+        RB.NLB==1B21    ;DON'T LOAD-BALANCE ACROSS UNITS
+.RBPPN==1       ;DIRECTORY NAME OR POINTER
+.RBNAM==2       ;FILENAME
+.RBEXT==3       ;EXTENSION, ACCESS DATE, ERROR CODE
+        RB.CRX==7B20    ;EXTENSION OF RB.CRD
+        RB.ACD==77777   ;ACCESS DATE
+.RBPRV==4       ;PRIVILEGE, MODE, CREATION TIME AND DATE
+        RB.PRV==777B8   ;PRIVILEGE
+        RB.MOD==17B12   ;MODE
+        RB.CRT==3777B23 ;CREATION TIME
+        RB.CRD==7777B35 ;CREATION DATE
+.RBSIZ==5       ;LENGTH
+.RBVER==6       ;VERSION
+.RBSPL==7       ;SPOOLED FILE NAME
+.RBEST==10      ;ESTIMATED LENGTH
+.RBALC==11      ;ALLOCATION
+.RBPOS==12      ;POSITION TO ALLOCATE
+.RBFT1==13      ;OBSOLETE
+.RBUFW==13      ;UNITS FILE WAS WRITTEN ON
+        RB.UNI==377B17  ;UNIT
+        RB.CON==7B20    ;CONTROLLER
+        RB.APR==77777B35;APR SERIAL NUMBER
+.RBNCA==14      ;NON-PRIV. CUSTOMER ARG
+.RBMTA==15      ;TAPE LABEL
+.RBDEV==16      ;LOGICAL UNIT NAME
+.RBSTS==17      ;FILE STATUS BITS
+        RP.LOG==1B0     ;LOGGED IN
+        RP.CHG==1B5     ;SOME FILE HAS CHANGED IN THIS UFD SINCE THE LAST BACKUP
+        RP.UCE==1B9     ;CHECKSUM ERROR
+        RP.UWE==1B10    ;WRITE ERROR
+        RP.URE==1B11    ;READ ERROR
+        RP.UER==7B11    ;ALL UFD ERRORS
+        RP.DIR==1B18    ;DIRECTORY
+        RP.NDL==1B19    ;NO DELETES
+        RP.DMP==1B20    ;UNPROCESSED DUMP ON THIS FILE
+        RP.NFS==1B21    ;DON'T FAILSAFE
+        RP.ABC==1B22    ;ALWAYS BAD CHECKSUM
+        RP.CBS==1B23    ;RP.CMP SET ON ENTRY TO UFD COMPRESSOR
+        RP.ABU==1B24    ;ALWAYS BACK UP
+        RP.NQC==1B25    ;NON-QUOTA CHECKED FILE
+        RP.CMP==1B26    ;UFD COMPRESSING
+        RP.FCE==1B27    ;CHECKSUM ERROR
+        RP.FWE==1B28    ;WRITE ERROR
+        RP.FRE==1B29    ;READ ERROR
+        RP.RMS==1B30    ;RMS FILE
+        RP.PAL==1B31    ;THIS IS A PREALLOCATED FILE
+        RP.BFA==1B32    ;BAD BY FAILSA RESTORE
+        RP.CRH==1B33    ;CLOSED AFTER CRASH
+        RP.BDA==1B35    ;BAD BY DAMAGE ASSESSMENT
+        RP.ERR==715     ;ALL FILE ERRORS
+.RBELB==20      ;ERROR LOGICAL BLOCK
+        RB.EVR==7B2     ;ERROR (BAD BLOCK) FORMAT VERSION
+        RB.ETO==1B3     ;ERROR TYPE: OTHER (NOT DATA OR SEARCH ERROR)
+        RB.ETD==1B4     ;ERROR TYPE: DATA (PARITY OR HARD ECC)
+        RB.ETS==1B5     ;ERROR TYPE: SEARCH OR HEADER COMPARE
+        RB.ETM==77B8    ;MASK OF ALL ERROR TYPE BITS
+        RB.EBN==777777777 ;NUMBER (WITHIN UNIT) OF FIRST BAD BLOCK
+.RBEUN==21      ;ERROR UNIT AND LENGTH
+        RB.ENB==777B8   ;NUMBER OF CONTIGUOUS BAD BLOCKS
+        RB.EUN==377B17  ;UNIT NUMBER WITHIN CONTROLLER
+                        ; (BIT 10=UNIT 7, BIT 17=UNIT 0)
+        RB.EKN==7B20    ;CONTROLLER NUMBER
+        RB.ECN==77777   ;CPU NUMBER
+.RBQTF==22      ;FCFS LOGGED-IN QUOTA (UFD'S ONLY)
+.RBQTO==23      ;LOGGED-OUT QUOTA (UFD'S ONLY)
+.RBQTR==24      ;RESERVED QUOTA (UFD'S ONLY)
+.RBUSD==25      ;NUMBER OF BLOCKS ALLOCATED TO FILES IN THIS UFD (UFD'S ONLY)
+.RBAUT==26      ;AUTHOR
+.RBNXT==27      ;FUTURE DEC ARGUMENT
+.RBPRD==30      ;OBSOLETE
+.RBIDT==30      ;BACKUP'S INCREMENTAL DATE/TIME IN UFD
+.RBPCA==31      ;PRIV. CUSTOMER ARG
+.RBUFD==32      ;POINTER BACK TO UFD
+.RBFLR==33      ;RELATIVE BLOCK IN FILE COVERED BY THIS RIB
+.RBXRA==34      ;POINTER TO NEXT RIB IN CHAIN
+.RBTIM==35      ;CREATION DATE,,TIME IN INTERNAL SYSTEM FORMAT
+.RBLAD==36      ;LAST ACCOUNTING DATE (UFD)
+.RBDED==37      ;DIRECTORY EXPIRATION DATE (UFD)/FILE EXPIRATION DATE (LABELED TAPES)
+.RBACT==40      ;ACCOUNT STRING WORD 1
+.RBAC2==41      ;ACCOUNT STRING WORD 2
+.RBAC3==42      ;ACCOUNT STRING WORD 3
+.RBAC4==43      ;ACCOUNT STRING WORD 4
+.RBAC5==44      ;ACCOUNT STRING WORD 5
+.RBAC6==45      ;ACCOUNT STRING WORD 6
+.RBAC7==46      ;ACCOUNT STRING WORD 7
+.RBAC8==47      ;ACCOUNT STRING WORD 8
+.RBMAX==50      ;LENGTH OF LOOKUP/ENTER/RENAME BLOCK
+$text RIBDIFFER;Comparison of TOPS-10 and TYMCOM-X RIBs.
+Differences between TOPS-10 and TYMCOM-X extended LOOKUP blocks.
+
+              000 .RBCNT  10+X  Count and flags
+000 777777 000000         10+X  Must be zero for extended block
+000        400000 .RBNSE  10    Non-superseding ENTER
+000        200000 .RBDSL  10    Don't Search LIB: on LOOKUP
+000        100000 .RBAUL  10    Allow Updates in LIB:
+000         40000 .RBNLB  10    No load balancing
+
+              001 .RBPPN  10+X  PPN or pointer to PATH block
+001 777777 000000               Project number if nonzero
+001        777777               Programmer number if LH nonzero, else pointer
+
+              002 .RBNAM  10+X  File name
+002 777777 777777               Zero on RENAME to delete file
+
+              003 .RBEXT  10+X  File extension and access date
+003 777777 000000         10+X  Extension
+003        700000 RB.CRX  10    Creation date high order bits
+003         77777 RB.ACD  10    Access date in DEC 15-bit form
+003        400000            X  Set if file is being superceded
+003        200000            X  unused
+003        140000            X  Creation date high order bits
+003         37777            X  Access date (days since 1/1/64 GMT)
+
+              004 .RBPRV  10+X  Protection value
+004 777000 000000 RB.PRV  10+X  Protection code (TYMCOM-X slightly different)
+004    740 000000 RB.MOD  10+X  Data mode (0=ASCII, 17=DUMP)
+004     37 770000 RB.CRT  10    Creation time, minutes since midnight
+004          7777 RB.CRD  10    Creation time, low 12 bits of DEC format
+004     37 770000            X  Creation time, minutes since midnight GMT
+004          7777            X  Creation date, days since 1/1/64 GMT
+
+              005 .RBSIZ  10+X  File size
+005 777777 777777         10+X  Size in words
+
+              006 .RBVER  10+X  File version number (DIRECT reports this)
+006 777777 777777         10    Same as .JBVER = BYTE(3)WHO(9)MAJ(6)MIN(18)EDIT
+006 777777 000000            X  UUN of programmer who last modified file (?)
+006        777777            X  Version number
+
+              007 .RBSPL  10    Spooling name on ENTER (DIRECT reports this)
+007 777777 777777         10    6 character name (for info only)
+              007 .RBFUT     X  Reserved for future definition
+007 777777 777777            X  not used by TYMCOM-X
+
+              010 .RBEST  10+X  Estimated size (interacts with .RBALC)
+010 777777 777777         10+X  Attempt to allocate this many blocks
+
+              011 .RBALC  10+X  Allocated size (interacts with .RBEST)
+011 777777 777777         10    Actual blocks, ENTER requests contiguous
+011 777777 777777            X  Actual blocks, words if 1B19 of word 0
+
+              012 .RBPOS  10    File position
+012 777777 777777         10    Start block of contiguous file allocation
+012 777777 777777            X  not used by TYMCOM-X
+
+              013 .RBUFW  10    Unit for write
+013 777400 000000         10    Reserved for DEC
+013    377 000000 RB.UNI  10    Unit bit map (1b17=unit 0, 1b16=unit 1, etc)
+013        700000 RB.CON  10    Controller number of last write
+013         77777 RB.APR  10    CPU serial number of last write
+              013 .RBFT1     X  For future definition
+013 777777 777777            X  not used by TYMCOM-X
+
+              014 .RBNCA  10    Non-privileged Customer Argument
+014 777777 777777         10    Can be changed by anyone
+              014 .RBLIC     X  File license word
+014 740000 000000            X  Bits 1-4 of word 3 in UFD entry
+014  37700 000000            X  Bits 19-26 of word 2 in UFD entry
+014     77 000000            X  Creation seconds, 0 to 59
+014        777777            X  File license
+
+              015 .RBMTA  10+X  Magnetic tape label
+015 777777 777777         10    VOLID used by BACKUP durring full-save
+
+              016 .RBDEV  10+X  Device name
+016 777777 777777         10    SIXBIT/DSKB0/ or such, 0 on TYMCOM-X
+
+              017 .RBSTS  10+X  File status bits
+017 777777 000000         10+X  UFDs only: Status of UFD and files in it
+017        777777         10+X  Status of this particular file
+
+              020 .RBELB  10+X  Error Logical Block
+020 777777 777777         10+X  Block number of first bat spot in file
+
+              021 .RBEUN  10    Error Unit Number
+021 777777 777777         10    Unit #, controller #, # of blocks, CPU #
+              021 .RBXT1     X  Extra
+021 777777 777777            X  unused by TYMCOM-X
+
+              022 .RBQTF  10+X  Quota, First-Come-First-Served
+022 777777 777777         10+X  UFDs only: Logged in quota in blocks
+022 777777 777777         10+X  Non-UFDs: reserved for future definition
+
+              023 .RBQTO  10+X  Quota, Out
+023 777777 777777         10+X  UFDs only: Logged out quota in blocks
+023 777777 777777         10+X  Non-UFDs: reserved for future definition
+
+              024 .RBQTR  10    Quota, Reserved
+024 777777 777777         10    UFDs only: Reserved quota (not implemented)
+024 777777 777777         10+X  Non-UFDs: reserved for future definition
+              024 .RBMXA     X  Max allocated
+024 777777 777777            X  UFDs only: Previous .RBUSD (for accounting)
+
+              025 .RBUSD  10+X  Blocks used
+025 777777 777777         10+X  UFDs only: Blocks at time of last LOGOUT
+025 777777 777777         10+X  Non-UFDs: reserved for future definition
+
+              026 .RBAUT  10+X  Author
+026 777777 777777         10+X  PPN of job which created of superseded file
+
+              027         10    Reserved for DEC
+027 777777 777777         10    Reserved for future definition
+              027            X  Username
+027 777777 777777 .RBUNM     X  UFDs only: First 6 characters of user name
+
+              030 .RBIDT  10    Incremental date/time
+030 777777 777777         10    UFDs only: Date/time of last BACKUP incremental
+              030 .RBUNM+1   X  Username
+030 777777 777777            X  UFDs only: Second 6 characters of user name
+
+              031 .RBPCA  10    Privileged Customer Argument
+031 777777 777777         10    Set only by LOGIN or [1,2]
+              031 .RBTRU     X
+031 777777 777777            X  not used by TYMCOM-X
+
+              032 .RBUFD  10    UFD back pointer
+032 777777 777777         10    Block number of RIB of UFD this file is in
+              032 .RBXT2     X  Extra 2
+032 777777 777777            X  not used by TYMCOM-X
+
+              033 .RBFLR  10    First logical block pointed to by this RIB
+033 777777 777777         10    Nonzero in extended RIBs
+              033 .RBALP     X  Allocated pages
+033 777777 777777            X  Total pages actually used, including RIBs
+
+              034 .RBXRA  10    Extended RIB address
+034 777777 777777         10    Cluster number pointing to next RIB
+              034 .RBSNM     X  Spare-RIB number
+034 777777 777777            X  Number of spare RIBs in the file
+
+              035 .RBTIM  10    Date/time when RIB was last updated
+035 777777 000000         10    Days since 18-Nov-1858
+035        777777         10    Fraction of a day (approx 1/3 second)
+              035 .RBPJC     X  Project code (3 words of ASCII)
+035 777777 777776            X  First 5 characters
+
+              036 .RBLAD  10    Last accounting date
+036 777777 777777         10    UFDs only: universal date/time
+              036 .RBPJC+1   X  Project code
+036 777777 777776            X  Second 5 characters
+
+              037 .RBDED  10    Directory expiration date
+037 777777 777777         10    UFDs only: Set by LOGIN, for accounting
+037 777777 777777         10    ANSI labelled tapes only: File expiration date
+              037 .RBPJC+2   X  Project code
+037 777760 000001            X  Last 2 characters, verify flag
+
+              040 .RBACT  10    Project accounting string in ASCIZ
+040 777777 777776         10    First 5 of 39 characters (never in UFD)
+              040 .RBPID     X  Process ID code
+040 777777 777777            X  UUN in left half, index in right half
+
+              041 .RBAC2  10    Characters 6-10
+              042 .RBAC3  10    Characters 11-15
+              043 .RBAC4  10    Characters 16-20
+              044 .RBAC5  10    Characters 21-25
+              045 .RBAC6  10    Characters 26-30
+              046 .RBAC7  10    Characters 31-35
+              047 .RBAC8  10    Characters 36-39 plus a null (ASCIZ)
+
+TOPS-10 RIB pointers are stored in words 050-175.
+TYMCOM-X RIB pointers are stored in words 041-775.
+$text LOOKUPERROR;LOOKUP/ENTER/RENAME error codes.
+ERFNF%==0       ;FILE NOT FOUND
+ERIPP%==1       ;INCORRECT PPN
+ERPRT%==2       ;PROTECTION FAILURE
+ERFBM%==3       ;FILE BEING MODIFIED
+ERAEF%==4       ;ALREADY EXISTING FILE NAME
+ERISU%==5       ;ILLEGAL SEQUENCE OF UUOS
+ERTRN%==6       ;TRANSMISSION ERROR
+ERNSF%==7       ;NOT A SAVE FILE
+ERNEC%==10      ;NOT ENOUGH CORE
+ERDNA%==11      ;DEVICE NOT AVAILABLE
+ERNSD%==12      ;NO SUCH DEVICE
+ERILU%==13      ;ILLEGAL MONITOR CALL FOR GETSEG OR FILOP, OR SAVE.
+ERNRM%==14      ;NO ROOM
+ERWLK%==15      ;WRITE-LOCKED
+ERNET%==16      ;NOT ENOUGH TABLE SPACE
+ERPOA%==17      ;PATIAL ALLOCATION
+ERBNF%==20      ;BLOCK NOT FREE
+ERCSD%==21      ;CAN'T SUPERSEDE A DIRECTORY
+ERDNE%==22      ;CAN'T DELETE NON-EMPTY DIRECTORY
+ERSNF%==23      ;SFD NOT FOUND
+ERSLE%==24      ;SEARCH LIST EMPTY
+ERLVL%==25      ;SFD NEST LEVEL TOO DEEP
+ERNCE%==26      ;NO-CREATE FOR ALL S/L
+ERSNS%==27      ;SEGMENT NOT ON SWAP SPACE OR JOB LOCKED
+ERFCU%==30      ;CAN'T UPDATE FILE
+ERLOH%==31      ;LOW SEG OVERLAPS HI SEG (GETSEG)
+ERNLI%==32      ;NOT LOGGED IN (RUN, SAVE)
+ERENQ%==33      ;FILE STILL HAS OUTSTANDING LOCKS SET
+ERBED%==34      ;BAD .EXE FILE DIRECTORY (GETSEG,RUN)
+ERBEE%==35      ;BAD EXTENSION FOR .EXE FILE(GETSEG,RUN)
+ERDTB%==36      ;.EXE DIRECTORY TOO BIG(GETSEG,RUN,SAVE.)
+ERENC%==37      ;TSK - EXCEEDED NETWORK CAPACITY
+ERTNA%==40      ;TSK - TASK NOT AVAILABLE
+ERUNN%==41      ;TSK - UNDEFINED NETWORK NODE
+ERSIU%==42      ;RENAME - SFD IS IN USE
+ERNDR%==43      ;DELETE - FILE HAS AN NDR LOCK
+ERJCH%==44      ;JOB COUNT HIGH (A.T. READ COUNT OVERFLOW)
+ERSSL%==45      ;CANNOT RENAME SFD TO A LOWER LEVEL
+ERCNO%==46      ;CHANNEL NOT OPENED (FILOP.)
+ERDDU%==47      ;DEVICE "DOWN" AND UNUSEABLE
+ERDRS%==50      ;DEVICE IS RESTRICTED
+ERDCM%==51      ;DEVICE CONTROLLED BY MDA
+ERDAJ%==52      ;DEVICE ALLOCATED TO ANOTHER JOB
+ERIDM%==53      ;ILLEGAL I/O DATA MODE
+ERUOB%==54      ;UNKNOWN/UNDEFINED OPEN BITS SET
+ERDUM%==55      ;DEVICE IN USE ON AN MPX CHANNEL
+ERNPC%==56      ;NO PER-PROCESS SPACE FOR EXTENDED I/O CHANNEL TABLE
+ERNFC%==57      ;NO FREE CHANNELS AVAILABLE
+ERUFF%==60      ;UNKNOWN FILOP. FUNCTION
+ERCTB%==61      ;CHANNEL TOO BIG
+ERCIF%==62      ;CHANNEL ILLEGAL FOR SPECIFIED FUNCTION
+ERACR%==63      ;ADDRESS CHECK READING ARGUMENTS
+ERACS%==64      ;ADDRESS CHECK STORING ANSWER
+ERNZA%==65      ;NEGATIVE OR ZERO ARGUMENT COUNT
+ERATS%==66      ;ARGUMENT BLOCK TOO SHORT
+ERLBL%==67      ;MAGTAPE LABELING ERROR
+$text OPENUUO;Parameters for the OPEN/FILOP uuos.
+;OPEN BLOCK
+
+.OPMOD==0       ;MODE, ETC.
+.OPDEV==1       ;DEVICE NAME
+.OPBUF==2       ;BUFFER HEADER ADDRESSES
+
+;OPEN AND PHYSICAL BITS
+
+UU.PHY==1B19    ;BIT 19 .NE. BIT 18 OF CALLI IMPLIES
+                ; PHYSICAL DEVICE SEARCH
+
+UU.PHS==1B0     ;SIGN BIT IN OPEN BLOCK IMPLIES PHYSICAL
+                ; DEVICE SEARCH
+UU.DEL==1B1     ;DISABLE ERROR LOGGING
+UU.FSP==UU.DEL  ;FULL SCNSER CONTROL FOR PTY
+UU.DER==1B2     ;DISABLE ERROR RETRY
+UU.BJP==UU.DER  ;BATCH JOB PTYS
+UU.DMR==UU.DER  ;DISABLE MESSAGE RE-ASSEMBLY
+UU.AIO==1B3     ;ASYNCHRONOUS I/O
+UU.IBC==1B4     ;ENABLE INHIBITING OF BUFFER CLEAR
+UU.SOE==1B5     ;STOP OUTPUT ON ERROR. DISALLOW OUTPUT WITH ANY ERROR BITS SET.
+UU.RRC==1B6     ;AUTOMATIC REWRITE OF RIB ON CHANGE
+UU.LBF==1B7     ;USE LARGE BUFFERS (DISK ONLY)
+UU.DEC==177B14  ;RESERVED FOR DEC
+UU.CUS==7B17    ;RESERVED FOR CUSTOMER
+
+
+;CLOSE BITS
+
+CL.DAT==1B29    ;DELETE ACCESS TABLE FROM DISK DATA BASE
+CL.RST==1B30    ;INHIBIT CREATING A NEW FILE (OR SUPERSEDING
+                ; AN OLD ONE) ON OUTPUT CLOSE
+CL.NMB==1B31    ;INHIBIT DELETING NAME BLOCK ON A
+                ; CLOSE WITH ONLY A LOOKUP DONE
+CL.ACS==1B32    ;INHIBIT UPDATING ACCESS DATE
+CL.DLL==1B33    ;INHIBIT DEALLOCATION OF ALLOCATED
+                ; BUT UNWRITTEN BLOCKS
+CL.IN==1B34     ;INHIBIT CLOSING INPUT
+CL.OUT==1B35    ;INHIBIT CLOSING OUTPUT
+SUBTTL  MISC. I/O -- FILOP.
+
+;ARGUMENT BLOCK FOR FILOP.
+;;  !=========================================================================!
+;;  !UP!                                  !           FUNCTION CODE           !
+;;  !-------------------------------------------------------------------------!
+;;  !                                I/O MODE                                 !
+;;  !-------------------------------------------------------------------------!
+;;  !                           DEVICE NAME OR UDX                            !
+;;  !-------------------------------------------------------------------------!
+;;  !        OUTPUT BUFFER HEADER        !        INPUT BUFFER HEADER         !
+;;  !-------------------------------------------------------------------------!
+;;  !      NUMBER OF OUTPUT BUFFERS      !      NUMBER OF INPUT BUFFERS       !
+;;  !-------------------------------------------------------------------------!
+;;  !        PTR TO RENAME BLOCK         !        PTR TO LOOKUP BLOCK         !
+;;  !-------------------------------------------------------------------------!
+;;  !        LENGTH OF PATH BLOCK        !         PTR TO PATH BLOCK       
+;;  !-------------------------------------------------------------------------!
+;;  !           PROJECT NUMBER           !        PROGRAMMER NUMBER           !
+;;  !-------------------------------------------------------------------------!
+;;  !      LENGTH OF FILESPEC BLOCK      !       PTR TO FILESPEC BLOCK        !
+;;  !=========================================================================!
+
+;OFFSETS IN ARGUMENT BLOCK
+.FOFNC==0       ;FUNCTION (AND FLAGS)
+        FO.PRV==1B0     ;JOB IS JACCT OR [1,2] AND WANT TO USE PRIVS
+        FO.ASC==1B1     ;ASSIGN AN EXTENDED CHANNEL
+        FO.UOC==1B2     ;USE ALREADY-OPEN CHANNEL
+        FO.CFW==1B3     ;FUNCTION CODE IS ACTUALLY ADDRESS OF
+                        ; ADDRESS OF CHANNEL,,FUNCTION CODE
+        FO.CHN==777B17  ;CHANNEL NUMBER
+        FO.FNC==777777B35 ;FUNCTION CODE OR ADDRESS (AS ABOVE)
+.FOIOS==1       ;I/O STATUS (OPEN MODE)
+.FODEV==2       ;DEVICE
+.FOBRH==3       ;BUFFER RING HEADER POINTERS
+.FONBF==4       ;NUMBER OF BUFFER TO BUILD
+.FOLEB==5       ;PTR TO RENAME,,LOOKUP/ENTER BLOCK (SEE .RB??? SYMBOLS)
+.FOPAT==6       ;PTR TO PATH BLOCK (SEE .PT??? SYMBOLS)
+.FOPPN==7       ;(PRIVILEGED) IN-YOUR-BEHALF PPN
+.FOFSP==10      ;PTR TO FILESPEC BLOCK (SEE .FOF?? SYMBOLS)
+
+.FOMAX==11      ;LENGTH OF FILOP. BLOCK
+
+
+; OFFSETS IN FILESPEC BLOCK RETURNED FROM FILOP. UUO
+; THE BLOCK WILL ALWAYS BE TERMINATED BY A ZERO WORD AND MUST
+; BE ACCOUNTED FOR IN THE WORD COUNT SUPPLIED BY THE USER.
+.FOFND==0       ;NODE NAME (RESERVED)
+.FOFDV==1       ;DEVICE
+.FOFFN==2       ;FILE NAME
+.FOFEX==3       ;EXTENSION
+.FOFPP==4       ;PPN
+.FOFSF==5       ;FIRST SFD
+.FOFMX==.FOFSF+<.PTMAX-.PTSFD-1> ;MAXIMUM LENGTH
+
+;FUNCTION CODES
+.FORED==1       ;READ ONLY
+.FOCRE==2       ;CREATE (NEW FILE ONLY)
+.FOWRT==3       ;WRITE (CREATE OR SUPERSEDE)
+.FOSAU==4       ;SINGLE ACCESS UPDATE
+.FOMAU==5       ;MULTI-ACCESS UPDATE
+.FOAPP==6       ;APPEND
+.FOCLS==7       ;CLOSE (OPTIONAL FLAGS IN .FOIOS, SEE CL.???)
+.FOURB==10      ;UPDATE RIB
+.FOUSI==11      ;USETI
+.FOUSO==12      ;USETO
+.FORNM==13      ;RENAME
+.FODLT==14      ;DELETE
+.FOPRE==15      ;PREALLOCATE
+.FOSIO==16      ;OPEN FOR SUPER I/O
+.FOINP==17      ;INPUT
+.FOOUT==20      ;OUTPUT
+.FOSET==21      ;SETSTS
+.FOGET==22      ;GETSTS
+.FOREL==23      ;RELEASE
+.FOWAT==24      ;WAIT FOR I/O TO STOP
+.FOSEK==25      ;SEEK
+.FORRC==26      ;REWRITE RIB IF CHANGED
+.FOGTF==27      ;UGETF
+.FOMTP==30      ;MTAPE
+.FOUTP==31      ;UTPCLR
+.FORAW==32      ;RENAME WITH ALLOCATION IN WORDS
+.FOFIL==33      ;RETURN FILESPEC ASSOCIATED WITH AN OPEN CHANNEL
+$text IOSTAT;I/O Status Bits.
+SUBTTL  MISC. I/O -- GETSTS AND SETSTS
+
+IO.IMP==1B18    ;IMPROPER MODE -- SOFTWARE DETECTECTED ERROR
+IO.DER==1B19    ;DEVICE ERROR
+IO.DTE==1B20    ;DATA ERROR
+IO.BKT==1B21    ;BLOCK TOO LARGE
+IO.ERR==17B21   ;I/O ERROR BITS
+IO.EOF==1B22    ;END OF FILE
+IO.ACT==1B23    ;DEVICE IS ACTIVE
+IO.D29==1B29    ;DEC029 MODE (CDP ONLY)
+IO.SIM==1B29    ;SUPER-IMAGE MODE (CDR ONLY)
+IO.WHD==1B29    ;WRITE DISK PACK HEADERS (DSK ONLY)
+IO.SSD==1B28    ;SEMI-STANDARD MODE (DTA ONLY)
+IO.NSD==1B29    ;NON-STANDARD MODE (DTA ONLY)
+IO.SFF==1B29    ;SUPPRESS FORM FEEDS (LPT ONLY)
+IO.BOT==1B24    ;BEGINNING OF TAPE (MAG TAPE ONLY)
+IO.EOT==1B25    ;END OF TAPE (MAG TAPE ONLY)
+IO.PAR==1B26    ;PARITY 1=EVEN 0=ODD (MAG TAPE ONLY)
+IO.DEN==3B28    ;DENSITY 0-STD 1-200 2-556 3-800 (MAG TAPE ONLY)
+IO.NRC==1B29    ;READ WITH NO REREAD CHECK (MAG TAPE ONLY)
+IO.PTI==1B24    ;SUBJOB IN TTY INPUT WAIT (PTY ONLY)
+IO.PTO==1B25    ;SUBJOB HAS TTY OUTPUT AVAILABLE (PTY ONLY)
+IO.PTM==1B26    ;SUBJOB IS IN MONITOR MODE (PTY ONLY)
+IO.ABS==1B25    ;ENABLE USING BREAK MASK (TTY ONLY)
+IO.BKA==1B26    ;BREAK ON ALL CHARACTERS (TTY ONLY)
+IO.TEC==1B27    ;TRUTH IN ECHOING MODE (TTY ONLY)
+IO.MAI==1B27    ;MAINTENANCE MODE (KDP AND DTE DEVICE ONLY)
+IO.SUP==1B28    ;SUPPRESS ECHOING (TTY ONLY)
+IO.FCS==1B29    ;FULL CHARACTER SET (TTY ONLY) -- OBSOLETE SYMBOL
+IO.LEM==1B29    ;LINE EDITOR MODE (TTY ONLY)
+IO.SYN==1B30    ;SYNCRONOUS MODE I/O
+IO.UWC==1B31    ;USE USER'S WORD COUNT
+IO.MOD==17B35   ;DATA MODE
+
+;I/O MODES
+
+.IOASC==0       ;ASCII
+.IOASL==1       ;ASCII LINE
+.IOPIM==2       ;PACKED IMAGE MODE
+.IOBYT==3       ;BYTE MODE
+.IOIMG==10      ;IMAGE
+.IOIBN==13      ;IMAGE BINARY
+.IOBIN==14      ;BINARY
+.IOIDP==15      ;IMAGE DUMP
+.IODPR==16      ;DUMP RECORDS
+.IODMP==17      ;DUMP
+
+SUBTTL  MISC. I/O -- BUFFER HEADER AND BUFFER'S CONTROL BLOCK FORMATS
+
+;BUFFER HEADER FORMATS
+;BUFFER'S CONTROL BLOCK
+;;  !=======================================================!
+;;  !VR!I!                       !ADDRESS OF CURRENT BUFFER !
+;;  !-------------------------------------------------------!
+;;  !                 BYTE POINTER TO DATA                  !
+;;  !-------------------------------------------------------!
+;;  !                     BYTE COUNTER                      !
+;;  !=======================================================!
+;;  !      (MPX: ONLY) UNIVERSAL INDEX OF THIS DEVICE       !
+;;  !=======================================================!
+
+.BFADR==0       ;ADDRESS OF BUFFER RING
+        BF.VBR==1B0     ;VIRGIN BUFFER RING
+        BF.IBC==1B1     ;INHIBIT BUFFER CLEAR
+.BFPTR==1       ;BYTE POINTER TO DATA
+.BFCTR==2       ;ITEM BYTE COUNT
+.BFUDX==3       ;UNIVERSAL DEVICE INDEX (MPX: ONLY)
+
+;INDIVIDUAL BUFFER HEADER
+;;  !=======================================================!
+;;  !                           !        FILE STATUS        !
+;;  !-------------------------------------------------------!
+;;  !US!        DATA SIZE       !    NEXT BUFFER ADDRESS    !
+;;  !-------------------------------------------------------!
+;;  !  (MPX:) UNIV.DEV. INDEX   !        WORD COUNT         !
+;;  !=======================================================!
+;;  /                                                       /
+;;  /                                                       /
+;;  !                         DATA                          !
+;;  /                                                       /
+;;  /                                                       /
+;;  !=======================================================!
+
+.BFSTS==0       ;FILE STATUS WORD
+        BF.STS==0,,-1   ;FILE STATUS THIS BUFFER
+.BFHDR==1       ;BUFFER CONTROL THIS BUFFER
+        BF.IOU==1B0     ;BUFFER IN USE
+        BF.SIZ==377777B17  ;SIZE OF BUFFER
+        BF.NBA==777777  ;NEXT BUFFER ADDRESS
+.BFCNT==2       ;WORD COUNT OF DATA (SOMEWHAT DEVICE DEPENDENT)
+
+SUBTTL  MISC. I/O -- MVHDR.
+
+MVHDR%==1       ;CHANNEL NOT OPEN
+
+     /t>å

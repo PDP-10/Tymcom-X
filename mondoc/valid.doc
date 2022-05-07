@@ -1,0 +1,468 @@
+VALID: Tymcom-X Account-Supervisor Project-Code Facility
+
+
+
+
+
+
+
+                            Introduction
+
+The  Account  Supervisor on  a  Tymcom-X account  is  responsible for
+establishing the "rules" for the use of Project-Codes (PJC's)  by his
+users.  For this, Tymshare  provides a program called VALID  by which
+he may declare to the system:
+                Which users may use PJC's without restriction
+                Which users' PJC's will be restricted
+  and,          How the restricted users' PJCs will be verified
+
+The VALID program is accessed by the system command ".R VALID".  Only
+Account-Supervisors  or  Tymshare  personnel  may  run  this program.
+VALID accepts as input some  option keywords from the terminal  and a
+disk  file  containing  text describing  the  restrictions  which the
+Account Supervisor would like to have enforced.
+
+Before reading further,  please read the write-up  entitled "Tymcom-X
+Project-Code Facility Users' Guide".
+
+
+
+
+
+                Use of VALID; General Considerations
+
+VALID processes  a descriptive text  file, encodes  the descriptions,
+and  writes   the  encoded  descriptions   into  various   files  and
+directories in  your account.  You  should keep a  copy of  this text
+file  for  reference  in  the  event  that  you  need  to  know  what
+restrictions are in effect.   VALID also produces an  optional output
+listing file describing its  actions in response to  the commandments
+in the input text file.  You will probably want to keep this listing,
+also.
+
+As described in the Users'  Guide, 3 classes of service  exist within
+the  Project-Code Facility.   Class 0  users will  not be  subject to
+restriction  and will  not be  of much  concern to  you or  the VALID
+program.
+
+A user is, by default, a Class 0 user until you declare otherwise via
+the VALID program.
+VALID: Tymcom-X Account-Supervisor Project-Code Facility
+
+
+Class 1 users are required  by the system to satisfy a  program which
+YOU have  written.  Your  program may  use any  criteria it  likes to
+validate a  PJC, so long  as the character-restrictions  mentioned in
+the guide are observed:  a  PJC is 12 ASCII characters  not beginning
+with asterisk "*",  and not containing semicolon,  carriage-return or
+linefeed.  In  addition, some other  restrictions on  character usage
+are sensible:
+1.  Do not try to put leading blanks in a PJC.
+2.  Do not use TAB characters.
+3.  Do not make heavy use of non-printing controls.
+        (For your class 2 users:
+        Avoid ^Q ^U ^A ^W ^D ESC (ALTMODE).  These mean
+        something to the Editor with which you construct
+        your text file, and you only make it confusing
+        for all to put these into the text.)
+
+The  program which  you  have written  will  need to  offer  the same
+services  as are  offered  by the  Tymshare-written  program PROJECT,
+described  in the  Guide.   It may  be  written in  FORTRAN.   In the
+description  below, the  phrase  "(ASNAME)ASPROG" will  refer  to the
+program you have written.
+
+It is VERY IMPORTANT that this program reside in a directory  in your
+account.  Probably in your directory is best.
+
+Class  2 users  are required  by  the system  to supply  a  PJC which
+matches one in a  list of PJC's you  give to VALID. Given  this list,
+VALID  makes  a  hash  table file  called  "PROJ.COD"  in  the user's
+directory. Each user can have  his own list, in his own  PROJ.COD, or
+users may share  a PROJ.COD file.  The  PROJECT program will  look in
+the appropriate PROJ.COD file  whenever the user asks to  change PJC.
+The system will notice any modification which the user makes  on this
+file, and refuse to validate PJC's from it thereafter.  You  are thus
+assured that what  you put there will  not be changed  with impunity.
+In the description below,  the phrase "(ASNAME)PROJ.COD" will  mean a
+hash table which you explicitly name which resides in  your directory
+[or some other directory in your account].
+
+
+
+
+
+                   Syntax of Descriptive Text File
+
+The descriptive file (the "source") consists of a sequence of entries
+each of which describes the  status of a single user.   Entries begin
+with a line that starts  with asterisk, "*" followed by  username and
+other information.
+VALID: Tymcom-X Account-Supervisor Project-Code Facility
+
+
+You may construct  the source file in  the Tymshare Editor or  in the
+editor called EDIT10, whichever is more comfortable for you.   In the
+syntax of *USERNAME  lines below, spaces may  be replaced by  tabs or
+multiple space characters.
+
+The items inside  of curly braces,  {{'s and }}'s,  are alternatives.
+You must select one of them.
+
+The  items inside  of square  brackets, [['s  and ]]'s,  are options.
+They can be totally omitted.
+
+The words "PROGRAM",  "LIST" ,"FILE", "NOVERIFY" "BILLING:  USER" and
+"BILLING:  PROJECT"  are   literal  keywords  recognized   by  VALID.
+Everything on  a source  line following a  semicolon is  considered a
+comment by VALID.
+
+The general form of an entry is:
+*USERNAME KEYWORD(S) (ASNAME)ASFILENAME [;COMMENT]
+
+
+1. Form for class 1 user:
+
+*USERNAME "PROGRAM" (ASNAME)ASPROG [;COMMENT]
+
+
+So,  for example,  you  might write:  *JONES  PROGRAM (JOHNSON)ASPROG
+;COMMENT if you  wished user JONES to  be forced to verify  thru your
+program (JOHNSON)ASPROG, and have the system assume that  his billing
+for  storage is  to be  by username.   [See below  for  discussion of
+BILLING option].
+
+2. Form for class 2 user:
+
+*USERNAME "LIST" [;COMMENT]
+First Project-Code
+Second PJC
+Third PJC
+  etc.
+  .
+  .
+(list ends at next *USERNAME line)
+
+Another format for the class 2 user is:
+
+*USERNAME "FILE" (ASNAME)FILE.EXT  [;COMMENT]
+
+This is useful if  you want to have  many class 2 users  verify using
+VALID: Tymcom-X Account-Supervisor Project-Code Facility
+
+
+the same list of  PJC's.  You set it  up in one of  their directories
+using  the "LIST"  form, then  name that  file in  subsequent entries
+using the "FILE" form.  For example:
+*JONES LIST  ;BARNES,ALBERT & JACOBS ALL USE THIS LIST
+K-333
+L-101                   ;THIS ONE NEW EFFECTIVE 17 JUNE 76
+K-375
+B-242
+A-1001                  ;SPECIAL ACCOUNTING PROJECT
+*BARNES FILE (JONES)PROJ.COD
+*ALBERT FILE (JONES)PROJ.COD
+*JACOBS FILE (JONES)PROJ.COD  ;JACOBS NEW AS OF 10 AUG 76
+
+This example illustrates the use of comments to keep the  source file
+informative.   Also  note that  the  PJC lines  may  contain comments
+(everything  after  the semicolon)  but  that the  PJC  is everything
+literally up to 12  characters unless a semicolon or  carriage return
+is seen  sooner.  Therefore,  do not TAB  over from  the PJC  to your
+comment or the TAB will be taken as part of the code.
+
+It is likely that  you may want the  PROJ.COD file to reside  in your
+own directory, but  you may not wish  to be subject to  it, yourself.
+The next example illustrates how to set this up.  Assume that Account
+Supervisor JOHNSON is to be a class 0 user.
+
+3. Form for Class 0:
+
+*USERNAME "NOVERIFY" [;COMMENT]
+This is useful where you wish to remove somebody
+from class 1 or 2 to class 0.  For example, take
+Account Supervisor JOHNSON above:
+*JOHNSON LIST ;THIS LIST IS FOR BARNES,JONES & ALBERT
+K-333
+L-101
+K-375
+B-242
+A-2001
+*BARNES FILE (JOHNSON)PROJ.COD
+*JONES FILE (JOHNSON)PROJ.COD
+*ALBERT FILE (JOHNSON)PROJ.COD
+*JOHNSON NOVERIFY ;JOHNSON REVERTS TO CLASS 0 HERE
+
+The NOVERIFY keyword is not  necessary when you are setting  up users
+the very first  time who have  not been classified  for Project-Codes
+before.  Remember that they are already Class 0 by default  until you
+have put them in class 1 or 2.
+VALID: Tymcom-X Account-Supervisor Project-Code Facility
+
+
+
+
+
+
+
+
+
+
+                           BILLING Option
+
+In cases where the extra  expense is justified, you may  want storage
+charges in some user  directories to be broken down  by Project-Code.
+The  VALID program  provides a  way for  you to  declare this  to the
+system.  The default  setting is billing by  username, if you  omit a
+declaration altogether.
+
+The BILLING declaration has two forms:  "BILLING: USER" and "BILLING:
+PROJECT".   This declaration  must proceed  the other  keywords which
+determine the class.  Therefore,  the complete form for a  user entry
+is:
+
+*USERNAME {BILLING-DECLARATION} CLASS-KEYWORD FILENAME [;COMMENT]
+
+The BILLING: USER form is recognized for completeness' sake by VALID,
+but  is  in  a  sense  superfluous,  since  if  the  BILLING: PROJECT
+declaration is  not seen,  BILLING: USER is  assumed.  Note  that you
+cannot change the BILLING attribute  by itself and leave the  user in
+his  present class,  etc.   Each time  VALID processes  an  entry, it
+erases all  previous options that  may have been  in effect  for that
+user  and establishes  the ones  which are  explicitly  or implicitly
+declared in that entry.  Therefore your source file always accurately
+represents the current restrictions in force.
+
+
+
+
+
+         Operating VALID: Option Keywords to control a run.
+
+As  mentioned in  the Introduction,  VALID accepts  some  keywords or
+"switches" which  control its  execution.  To run  VALID and  set the
+options, use the system command ".R VALID".  The program will respond
+with "OPTIONS:".   Type any  of the  following keywords  separated by
+spaces or commas:
+
+LIST            To produce a listing
+NOLIST          +To suppress listing
+TEST            To make a dry run. More detail below
+VALID: Tymcom-X Account-Supervisor Project-Code Facility
+
+
+CONFIRM         To be asked to confirm all file over-writes
+NOCONFIRM       +To have VALID go ahead & over-write old files
+ABORT           To stop the run after the first error
+PROCEED         +To keep going even if errors encountered.
+INPUT=file      To name the source descriptive text file
+                 and skip being prompted for it later.
+
+If  you  simply  give  a carriage  return  to  OPTIONS:,  the default
+settings will be: NOLIST  PROCEED NOCONFIRM.  In the list  above, the
+"+" signs indicate which of a pair is the default.
+
+LIST option:  VALID will write a listing of its actions on a  file of
+extension ".LST" whose name is that of the source input file, in much
+the same way as the FORTRAN compiler creates .REL and .LST files.  If
+your input is from BLUB.IN, a listing will be written on BLUB.LST.
+
+TEST  option:   VALID  creates  PROJ.COD  files  and  writes  in user
+directories, we said in  the Introduction.  However, you can  use the
+TEST switch to get a dry run which will uncover any  typographical or
+other  errors  in  your  source file  without  writing  any  files or
+directories.
+
+CONFIRM option:   VALID may find  that PROJ.COD  files  already exist
+for the users you name in  your source.  If you have set  the CONFIRM
+switch, VALID will pause with the message "USERNAME  OLD FILE?".  You
+may give "Y" or "N". If  "N" is given, the old PROJ.COD file  will be
+left untouched.
+
+ABORT option: VALID will issue error messages for a number of reasons
+as it processes the source.   If you have set ABORT, VALID  will quit
+at the end of processing  for the current user.  This is  valuable if
+you are  making a real  run and  want to stop  before doing  too much
+damage.  See below for a discussion of error messages and what  to do
+about them.
+
+INPUT=file option:  This is a quick way to answer the  question which
+VALID asks next after the OPTIONS question:
+
+TEXT FILE INPUT:  This is a request for the name of  your descriptive
+text file.  will be accepted.
+
+
+
+
+
+                             SAMPLE RUN
+VALID: Tymcom-X Account-Supervisor Project-Code Facility
+
+
+Let  us  suppose  Account Supervisor  JOHNSON  has  created  the file
+VALID.INP with the following specifications for his users:
+
+
+*BARNES LIST
+T-102 4Q76
+T-177 3Q75
+T-99
+GENERAL
+CLIENT X
+CLIENT Y
+CUSTOMER Z
+B. F. SKINNER ASSOCIATES
+*CARTER FILE (BARNES)PROJ.COD
+*JONES FILE (BARNES)PROJ.COD
+*WOLF BILLING:PROJECT LIST
+R&D
+PRODUCTION
+*TROTTER PROGRAM (JOHNSON)CODES ;FORTRAN PROG BY L. SMITH
+*SMITH (JOHNSON)CODES
+*WILLIAMS NOVERIFY 
+*TAYLOR PROGRAM (JOHNSON)CODES
+
+First of all  we may note that  JOHNSON  has not included  himself in
+this specification file.  He does  not have to if he wants  to remain
+in whatever class he is in.
+
+We may also note that in specifying the program  (JOHNSON)CODES, that
+it is not necessary to give the extension.
+
+JOHNSON  submits  this source  file  to VALID  for  a dry  run  and a
+listing:
+.R VALID
+OPTIONS: TEST,LIST,CONFIRM
+TEXT INPUT FILE: VALID.INP
+and receives some error messages:
+BAD PROJECT CODE B. F. SKINNE   USER BARNES   ERROR!
+LINE 16  SPECIFICATION ??   USER SMITH    ERROR!
+COULDN'T SET SPECIFICATIONS FOR USER  TAYLOR   ERROR!
+E.O.F.
+ERROR(S): 3
+E.O.J.
+
+Now he types his listing file
+.TYPE VALID.LST
+
+BAD PROJECT CODE B. F. SKINNE   USER BARNES ERROR!
+-----BARNES USES (BARNES)PROJ.COD STORAGE BILLED BY USERNAME
+VALID: Tymcom-X Account-Supervisor Project-Code Facility
+
+
+-----CARTER USES (BARNES)PROJ.COD STORAGE BILLED BY USERNAME
+-----JONES USES (BARNES)PROJ.COD STORAGE BILLED BY USERNAME
+-----WOLF USES (WOLF)PROJ.COD STORAGE BILLED BY PROJ CODE
+-----TROTTER USES (JOHNSON)CODES.SAV STORAGE BILLED BY USERNAME
+LINE 16  SPECIFICATION ??  USER SMITH   ERROR!
+-----WILLIAMS USES (.NONE.) STORAGE BILLED BY USERNAME
+COULDN'T SET CLASSIFICATION FOR USER TAYLOR   ERROR!
+
+Note  that the  message "----WILLIAMS  USES (.NONE.)  ...."  does not
+indicate anything  wrong.  This  will appear for  all users  put into
+class 0 by NOVERIFY.
+
+
+
+
+
+                      Error Messages from VALID
+
+Many  messages from  VALID  indicate simple  typographical  or syntax
+errors which will be obvious  from perusing the source file.   In the
+above example, we have 2 trivial errors and one more substantial one.
+BAD PROJECT CODE xxxx messages  result from PJC's that are  too long.
+The truncated PJC was put in the PROJ.COD file. LINE nn SPECIFICATION
+?? messages result from VALID not finding one of its keywords BILLING
+PROGRAM  FILE  LIST NOVERIFY  after  the username.   In  the example,
+PROGRAM was accidentally not typed.
+
+"LINE nn USERNAME ??"  message:  VALID cannot recognize  the username
+following the "*".  It must be 12 characters or less.
+
+"SYNTAX  ERROR   USER  username"  messages  are  a  general catch-all
+message from  not adhering  to the  syntax described  above.  Typical
+reasons:   left out  a keyword  or part  of (ASNAME)ASPROG  or didn't
+start comment with semicolon.
+
+"SYNTAX   ORDER  ERROR,   USER  xxx"   comes  from   putting  BILLING
+declarations after  the FILE/LIST/PROGRAM  ASPROG keywords.   It must
+precede them.
+
+"CAN'T FIND xxxx.xxx, BETTER FIX  THIS" happens when you name  a FILE
+or PROGRAM which  doesn't yet exist.   VALID can proceed,  but things
+will not work properly when it comes time to use the facility  if you
+do not first create the program/file, then re-run VALID.
+
+"GIVING  WRITE-PROJECT LICENSE  TO filename"  is an  advisory message
+that does not indicate  anything wrong.  This license is  required by
+your validation program and any PROJ.COD files but cannot be  used by
+anyone to destroy files or information.
+VALID: Tymcom-X Account-Supervisor Project-Code Facility
+
+
+"COULDN'T SET CLASSIFICATION FOR USER name" messages result  if VALID
+is unable to access  the directory of the  user.  If you name  a user
+outside your account, you will get this message.
+
+"NO DIRECTORY, USER  CANNOT BE SET UP  YET. USER name"  messages mean
+that the named user does not yet exist to the system.  If he has been
+validated on the system  by your Tymshare representative but  has not
+yet logged in,  this message may appear.   The solution:  GFD  to his
+directory,  then GFD  back.   This will  create the  directory  if it
+doesn't already exist.
+
+"UFD INTERLOCK  BUSY FOR  name" messages  can happen  if one  of your
+users gets hung up trying to  log in. It should be a rare  message if
+you ever get  it at all. Bring  it to your  Tymshare representative's
+attention.
+
+"BAD  PROJECT  CODE  xxxxx"  means that  the  code  was  too  long or
+contained an illegal character.
+
+"LIST 'WAY TOO BIG, USER xxx" messages will be rare.  The system will
+presently handle lists  of over 600 Project  Codes.  If you  get this
+message, probably your source file became garbaged.  If  it persists,
+please consult your Tymshare representative.
+
+"EMPTY CODE LIST, SERIOUS TROUBLE FOR USER name" means  exactly that:
+You have said "*USERNAME LIST" and followed it immediately by another
+"*USERNAME" line.  This guy will not be able to get onto the system.
+
+"CORE UUO FAIL SET.HT" is a message that indicates a  system problem.
+Please bring your output to the attention of Tymshare.
+
+"BHASH PAST JOBREL", "GRABBING  PG FOR STRING", "STRING ATE  UP WHOLE
+BUFFER!","PRIME  0  IN  HT",  "2NDARY  PROBE  OUT  OF  RANGE", "TABLE
+OVERFLOW!", "FILE WRITE FAILED", "**SYSTEM CALL WPJ RENAME FAILED**",
+"XMISSION ERRORS", and "CAN'T  INIT DUMP CHANNEL" messages  are other
+system problem messages to bring to Tymshare's attention.
+
+
+
+
+
+            Writing, Loading & Debugging "(ASNAME)ASPROG"
+
+As we  said, your PJC-verifier  for class 1  users may be  written in
+FORTRAN.  There are some subtleties however which require  linkage to
+Assembly-Language  routines and  the assistance  of a  Tymshare field
+analyst.  Please  contact your Tymshare  representative, who  can put
+VALID: Tymcom-X Account-Supervisor Project-Code Facility
+
+
+you  in  contact  with  the  proper  analyst  and  provide  you  with
+information on  the available Assembly-Language  routines for  you to
+use.
+
+Remember that whatever program you write will become very privileged,
+having  the  authority  to  keep  users  from  entering  the  system.
+Therefore it  must be thoroughly  checked-out before being  placed in
+service.  Again, this debugging and checkout phase will require a bit
+of assistance from the Tymshare analyst.
+
+Documentation  available  from  Tymshare  describes   the  subtleties
+mentioned  above, and  outlines the  restrictions which  your am
+must observe and actions it must take.
+S@<ä

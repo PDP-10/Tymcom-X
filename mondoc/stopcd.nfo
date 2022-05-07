@@ -1,0 +1,328 @@
+$menu STOPCD;TOPS-10 stopcodes.
+*(MONDOC)STOPCD.NFO:OVERVIEW;Sample output from a stopcode crash.
+*(MONDOC)STOPCD.NFO:MEMO;Extract from STOPCD MEM file.
+$text OVERVIEW;Sample output from a stopcode crash.
+%DECsystem-10 not running
+?CPU0 monitor error. Stopcode name is IME at exec PC 475131
+UUO was 047040,,000115 for file DSKB0:TEST.MIC[11,10,MIC]
+Job 13 on TTY6 running DSKCPY user [1,2]
+
+CPU status block on Wednesday, 10-Sep-84 17:45
+APRID = 000231,,364130
+ERA = 602000,,131427
+CONI APR, = 007760,,000003
+CONI PI, = 000000,,000777
+CONI PAG, = 000000,,620001
+DATAI PAG, = 700100,,000131
+AR ARX Data Word = 000000,,000000
+IO Page Fail Word = 000000,,000000
+
+SBUS Diags:
+CNTRLR	FNC 0		FNC 1
+000000	006000,,000000	036100,,016012
+000001	006000,,000000	036100,,016005
+000010	007743,,166340	000500,,001000
+
+Reload monitor
+Location 30 contains 475131
+Dumping on DSKA:CRASH.EXE[1,4]
+Reloading monitor from DSKA:SYSTEM.EXE[1,4]
+
+Startup option: DEFAULT ;Operator did not respond
+-----------------------------------------------------
+
+Above is an example of the output of a typical STOPCD in the TOPS-10 7.02
+Monitor.  Each STOPCD has a three letter mnemonic, in this case, IME stands
+for Illegal Memory-reference in Exec mode.  The stopcode processor outputs
+the CPU number (in case there is more than one, as in SMP), the PC of the
+exec mode instruction that got the illegal memory reference, and the date/time
+of the crash.  If a job other than the null job was running, the stopcode
+processor then outputs the job number, PPN, program name, user PC of the last
+UUO, the UUO number, and file (if any) associated with the UUO.  It then
+stores the exec PC in location 30, and jumps to the non-zero-in-30 routine.
+
+Whenever non-zero is detected in location 30, its value is printed on the CTY.
+Unless dumps are being suppressed, the system memory image is automatically
+dumped in SYS:CRASH.EXE[1,4].  If auto reloads are not disabled, the system is
+automatically reloaded from whatever file the current monitor was loaded from.
+
+All this takes less than 15 seconds.  If the Operator does not respond to
+the "Startup option" question within 30 seconds, the system will automatically
+bring itself up (with the correct date and time).
+
+Some STOPCDs do not reload the monitor.  For JOB and DEBUG stopcodes, a
+crash dump is taken, the CRSCPY program started, and the system resumes.
+At the start of the crash, the console PDP-11 broadcasts "DECsystem-10 not
+running" to all terminals connected to RSX20F.  If the KL resumes operation
+within 60 seconds, the connection between the terminals and the KL is
+maintained.  The KL broadcasts "[DECsystem-10 continued]" after it has
+written a snapshot-dump to SYS:CRASH.EXE.
+$text MEMO;Extract from STOPCD MEM file.
+                       STOPCODES SPECIFICATION
+                    (List of Monitor Error Stops)
+
+                            November 1983
+                          File:  STOPCD.RNO
+                              Edition 5.1
+
+         Copyright (C) 1984, Digital Equipment Corporation.
+                         All Rights Reserved.
+
+                               CONTENTS
+                                                                  Page
+
+        1.0     ADDITIONAL DOCUMENTATION                             1
+        2.0     IDENTIFYING DEBUG STOPCODES                          1
+        3.0     IDENTIFYING JOB STOPCODES                            2
+        4.0     IDENTIFYING STOP STOPCODES                           2
+        5.0     IDENTIFYING CPU STOPCODES                            3
+        6.0     IDENTIFYING HALT STOPCODES                           3
+        7.0     CONTINUABLE STOPCODE EXAMPLES                        3
+        8.0     LIST OF STOPCODES                                    5
+
+
+
+                   STOPCODES (MONITOR ERROR STOPS)
+
+
+
+When the monitor detects an internal error, it executes  its  stopcode
+macro.  This macro prints the following message on the CTY:
+
+              ?CPU0 monitor error.  Stopcode name is xxx
+
+Where:
+
+     xxx  Is a mnemonic identifying the error.
+
+There are five types of stopcodes:
+
+     1.  DEBUG (Refer to Section ?.?.)
+
+     2.  JOB (Refer to Section ?.?.)
+
+     3.  STOP (Refer to Section ?.?.)
+
+     4.  CPU (Refer to Section ?.?.)
+
+     5.  HALT (Refer to Section ?.?.)
+
+
+
+
+1.0  ADDITIONAL DOCUMENTATION     ADDITIONAL DOCUMENTATION
+
+The following manuals provide additional information:
+
+     o    TOPS-10 Operator's Guide
+
+This manual describes the procedure for reloading the system.
+
+
+     o    TOPS-10 Crash Analysis Guide
+
+This manual describes how to analyze  a  crash,  and  how  to  prevent
+future monitor errors.
+
+
+     o    TOPS-10/TOPS-20 SYSERR Manual
+
+This manual describes the SYSERR program, which  provides  a  dump  to
+help you analyze a hardware error.
+
+
+
+2.0  IDENTIFYING DEBUG STOPCODES     IDENTIFYING DEBUG STOPCODES
+
+A debug stopcode is not immediately harmful  to  any  job  or  to  the
+system.  The monitor prints the following message on the CTY:
+
+               ?CPU0 monitor error.  Stopcode name xxx
+               [Continuing system]
+
+Processing then continues.  Fill out an SER form.
+
+Sometimes a DEBUG stopcode acts like a  JOB  stopcode.   (See  Section
+1.7.2.)
+
+
+
+
+3.0  IDENTIFYING JOB STOPCODES
+
+A JOB stopcode endangers the integrity of the job  that  is  currently
+running.  The monitor prints the following message on the CTY:
+
+               ?CPU0 monitor error.  Stopcode name xxx
+               [Aborting job]
+
+Also, the following message prints on the user's terminal:
+
+                     ?Monitor error; UUO at addr
+
+Where addr is one of the following:
+
+     User location n
+     Exec location n;  Exec called from exec location m
+     Exec location n;  Exec called from user location m
+
+And m and n are memory addresses.
+
+Then the monitor aborts the current job and continues.   Fill  out  an
+SER form.
+
+
+
+4.0  IDENTIFYING STOP STOPCODES     IDENTIFYING STOP STOPCODES
+
+A STOP stopcode endangers the integrity of  the  entire  system.   The
+monitor prints the following message on the CTY:
+
+               ?CPU0 monitor error.  Stopcode name xxx
+               Reload monitor
+
+This means that  all  jobs  are  aborted  and  the  system  begins  to
+automatically dump and reload the monitor.
+
+If the monitor can obtain  the  necessary  information,  it  prints  a
+supplementary message on the CTY of the form:
+
+            JOB jobn on TTYnnn running xxxxxx
+            UUO is octal representation at user PC address
+            File filespec
+
+Where:
+
+     jobn is the number of the job causing the error.
+
+     nnn is the number of the controlling TTY.
+
+     xxxxxx is the name of the program running for that job.
+
+     octal representation is the octal representation of the monitor
+          call failing for that job.
+
+     address is the value of the program counter for that job.
+
+     filespec is the file specification for the file being accessed.
+
+
+5.0  IDENTIFYING CPU STOPCODES
+
+A CPU stopcode has the same effect as a STOP stopcode.  That is, a CPU
+stopcode  endangers  the  integrity of the entire system.  The monitor
+prints the following message on the CTY:
+
+               ?CPU0 monitor error.  Stopcode name xxx
+               Reload monitor
+
+This means that  all  jobs  are  aborted  and  the  system  begins  to
+automatically dump and reload the monitor.
+
+If the monitor can obtain  the  necessary  information,  it  prints  a
+supplementary message on the CTY of the form:
+
+            Job jobn on TTYnnn Running xxxxxx
+            UUO is octal representation at user PC address
+            File filespec
+
+Where:
+
+     jobn is the number of the job causing the error.
+
+     nnn is the number of the controlling TTY.
+
+     xxxxxx is the name of the program running for that job.
+
+     octal representation is the octal representation of the monitor
+          call failing for that job.
+
+     address is the value of the program counter for that job.
+
+     filespec is the file specification for the file being accessed.
+
+
+
+6.0  IDENTIFYING HALT STOPCODES     IDENTIFYING HALT STOPCODES
+
+A HALT stopcode affects the entire system.  Also, the  monitor  cannot
+automatically  reload.   In  this case, the system halts, and you must
+manually dump and reload the monitor.
+
+HALT stopcodes do not cause the monitor to print  the  stopcode  error
+message.
+
+(See Part VI of the TOPS-10 Operator's Guide.)
+
+
+
+7.0  CONTINUABLE STOPCODE EXAMPLES     CONTINUABLE STOPCODE EXAMPLES
+
+The following are examples of what you will see on the  CTY  when  the
+monitor  detects  a  continuable  stopcode.   In each of the following
+examples, the monitor executed its stopcode macro, dumped  the  memory
+image, and continued the system.
+
+
+
+Example
+
+
+     ?CPU0 monitor error. Stopcode name is ICN
+
+
+     CPU Status Block on 30-May-80 19:29:21
+
+     CONI APR, = 001060,,004102
+     CONI PI, = 000000,,000777
+     CONI PAG, = 000000,,020000
+     DATAI PAG, = 500100,,000002
+     [Dumping on DSK:CRASH.EXE[1,4]]
+     [Continuing system]
+
+
+
+Example
+
+
+     %DECSYSTEM-10 NOT RUNNING
+
+     ?CPU1 monitor error. Stopcode name is EUE
+     Job 5 on TTY1 running DDT User [1,2]
+     UUO is 0 at user PC 002472
+
+
+     CPU Status Block at 4-Oct-79 8:16:36
+
+     APRID = 000231,,342002
+     ERA = 600000,,040513
+     CONI APR, = 007760,,000003
+     CONI PI, = 000000,,000377
+     CONI PAG, = 000000,,620001
+     DATAI PAG, = 700100,,002255
+     AR ARX Data Word = 000000,,057000
+     IO Page Fail Word = 000000,,000000
+
+     SBUS Diags:
+
+     CNTRLR FNC 0          FNC 1
+     000004 007040,,040610 000200,,000000
+
+     [Dumping on DSK:CRASH.EXE[1,4]]
+     [CONTINUING SYSTEM]
+
+     [DECsystem-10 Continued]
+
+
+
+Example
+
+
+     ?CPU1 monitor error. Stopcode name is IEZ
+     File DSKE0:OPSER.LOG[1,2]
+     Job 1 on CTY running OPSER User [1,2]
+     [Dumping on DSK:CRASH.EXE[1,4]]
+     [Continuing system]
+
+[End of STOPCD.NFO]
+      

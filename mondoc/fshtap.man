@@ -1,0 +1,37 @@
+     Instructions for running a micro-fiche spooling request:
+     1.  Set OP license
+     2.  Make sure there is a 1600 BPI 9 track tape drive free  for  the
+         micro-fiche tape to be written on.
+     3.  Type "R FSHTAP"
+     4.  The program will request the tape unit.  Type the name  of  the
+         tape unit, for example, "FTA1".
+     5.  If the name given is not for a tape unit or  the  unit  is  not
+         capable  of  1600  BPI  9 track operation, the program will say
+         "not a tape unit" and ask for the tape unit name again.
+     6.  The program will ask for a username.   Type  the  username  for
+         which the request has been made.  For example, "M33".
+     7.  The program will type
+         
+                MOUNT TAPE LABELED
+         
+                ......
+         
+         Type return when tape is mounted.
+     8.  Mount a tape on the indicated drive and put a label on it  that
+         is the same as indicated by the program.  For monitor fiche 
+	 generation the following should be added to the tape label:
+	 "Soccie/Session Detail Tymcom-X".  The write protect ring should
+         be in.
+     9.  Type return.  The program will now write on the tape.
+    10.  When the program is finished writing, it will rewind and unload
+         the  tape.   it will then either exit or go back to the step in
+         which it types out "mount tape labeled"  and  ask  for  another
+         tape to be mounted.
+    11.  When the program finally exits, call  Zytron  at  733-4900  and
+         tell  them that there is a tape(s) to be picked up for Tymshare
+         and where to pick it  (them)  up.   Also  tell  them  that  the
+         completed fiche are to be delivered.
+    12.  When the fiche are delivered, they should be delivered  to  the
+         original  requester  along  with  the  receipt.  Do not deliver
+         fiche to the operating systems group unless they are  the  ones
+         who requested the fiche.

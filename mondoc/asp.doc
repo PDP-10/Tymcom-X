@@ -1,0 +1,238 @@
+
+
+
+                       ASP OPERATING INSTRUCTIONS
+
+
+
+     1.0  OVERVIEW
+
+     ASP (Absolute Structure save and  restore  Program)  is  a  utility
+     which  allows  an entire file structure to be saved to and restored
+     from magnetic tape.  Whereas file to tape save and restore programs
+     like  TITO  save each file individually, ASP saves all the pages on
+     the structure sequentially.  Therefore, it is not possible to  save
+     or restore individual files with ASP.
+
+     The usefulness of ASP lies in the fact that it is  much  faster  to
+     save  a  file  structure page by page than to save it file by file.
+     TITO takes from 1 to 2 hours per reel of  tape,  depending  on  the
+     size  of  the  files that are being saved.  ASP takes 11 minutes to
+     write one reel of tape at 6250 BPI, regardless of the state of  the
+     file structure.
+
+     Since ASP runs as the only job on the system (if it  did  not,  the
+     file  structure  would  not  be in a stable state to have its image
+     saved) there is no synchronization problem between  files  -  since
+     there are no other jobs, all files are saved in a stable state.
+
+     The format of an ASP tape has been designed to minimize both  human
+     and  machine  error  in  the save/restore.  Each tape has the exact
+     date and time it was written, so that it is impossible  to  try  to
+     restore  tapes  from  different  saves  to  a structure.  Each data
+     record is followed by a small epilogue record containing a checking
+     code and record serial number with respect to all tapes in the set.
+     This allows recovery from tape errors (although at the  expense  of
+     losing data).
+
+
+
+     2.0  OPERATING ENVIRONMENT
+
+     Whenever ASP is run for saving or restoring a file structure, there
+     can  be  no other jobs logged into the system, including CHKPNT and
+     PJ.  The system must be super-shut (sched 600000) to ensure that no
+     other users can login.
+
+     For SAVEs, the save to tape can be done, and the system can then be
+     restored  to normal timesharing state by running CHKPNT by hand and
+     unshutting the system.  Thus, the monitor need not be taken down to
+     do the save.
+
+     For RESTOREs, a file structure must be setup to  restore  to  which
+     has  the  same structure name, capacity, number of units, and first
+     four characters of unit ID.  The system must be brought up in "READ
+     ONLY"  mode.  The RESTORE is then performed.  Immediately after the
+     restore, the system must be taken down, as the SAT  tables  on  the
+     disk  have been re-written and the checking counts that the monitor
+     keeps in core will no longer match those of the SAT tables  on  the
+                                                                  Page 2
+
+
+     disk.   The  system  is then brought up again, and DSKCLN should be
+     run to ensure the integrity of the file structure.
+
+
+
+     3.0  COMMANDS
+
+     Commands may be abbrieviated to their shortest unique form.  If  no
+     tape  unit  is  specified  for  a  command  which requires one, the
+     currently open tape unit is assumed, if there is one.
+
+
+
+     3.1  SAVE <tape Unit>
+
+     This command is used to save a file structures contents on  one  or
+     more ASP tapes.  The system must be super-shut, and the job running
+     ASP must be the only one on the system in order  for  the  SAVE  to
+     proceded.   This  ensures  the file system is internally consistent
+     during the entire save operation.
+
+     ASP will print out the information it writes to the header  of  the
+     tape, and begin the restore using the current density.
+
+
+
+     3.1.1  End Of Tape - If the end of the current tape is reached, ASP
+     will print "NEXT TAPE UNIT:".  The operator should then type in the
+     name of the tape unit on which the next tape to be written  is  on.
+     If  the  current  tape unit is to be used, the operator must rewind
+     the tape at the tape unit's console and  mount  the  new  tape.   A
+     carriage  return  will  be interpreted by ASP to mean the currently
+     open tape unit.
+
+
+
+     3.1.2  Unrecoverable Write Errors - If an unrecoverable write error
+     to  tape occurs, ASP will print out an error message and prompt the
+     operator with "NEXT TAPE UNIT:".  The operator  should  then  mount
+     another  tape  on  the  tape unit and type in the tape unit's name.
+     ASP will then rewrite the tape it was currently working on.
+
+
+
+     3.2  CHECK <tape Unit>
+
+     This command reads in what should be the ASP header record  of  the
+     specified  tape.   It  prints  out the ASP version number, date and
+     time  the  tape  set  was  written,  structure  name,  first   four
+     characters  of  unit  ID  of  the  units in the structure, and tape
+     number.  This command is used to identify ASP tapes in the event of
+     the physical tape labels being unreadable or non-existent.
+                                                                  Page 3
+
+
+     3.3  RESTOR <tape Unit>
+
+     This command restores a set of ASP tapes to the file structure.
+
+
+
+     3.3.1  Requirements To Commence RESTOR - The file structure  to  be
+     restored  to  must  have  the  same  capacity, number of units, and
+     structure name as the structure that was originally saved onto  the
+     ASP  tapes to be restored.  The file structure should be refreshed.
+     The system should then be brought up in "READONLY" mode.  (If  this
+     is  not done, the system will crash during the restore.) The system
+     should then be super-shut, and the ASP job should be the  only  one
+     on  the  system.   The  ASP  tapes  to  be  restored must have been
+     recorded together with one ASP SAVE command.  (The header  of  each
+     tape  contains  the  exact  date and time the SAVE was started, and
+     these must match.)
+
+
+
+     3.3.2  End Of Tape - When the  end  of  the  tape  currently  being
+     restored  is  reached, ASP will prompt with "NEXT TAPE UNIT:".  The
+     operator should mount the next tape number  in  sequence  with  the
+     last  restored on a tape unit and type the name of the tape unit to
+     ASP.
+
+
+
+     3.3.3  Restore Completion - If the restore goes correctly, ASP will
+     print  a  message  informing  the  operator  that  the  restore has
+     completed successfully.
+
+
+
+     3.3.4  Post Restore Procedure - After an ASP restore is  completed,
+     the  system  should  be  taken  down  immediately with a deposit in
+     location 30.  This is because the SAT pages on the  file  structure
+     have  been  overwritten  on  the  disk,  and  the bit counts in the
+     monitor under which ASP ran no longer match those  new  SAT  pages.
+     Thus,  it  is possible to see the message "BAD SAT ON <disk unit>".
+     Ignore these messages after an ASP restore if they are seen.
+
+
+
+     3.3.5  Aborted Restores - If for any reason an ASP restore does not
+     complete  successfully,  the  structure  being  restored to must be
+     refreshed and the restore started over from the beginning.  If this
+     is not done, the file structure is very probably in an inconsistent
+     state.
+                                                                  Page 4
+
+
+     3.3.6  Run DSKCLN After A RESTOR - As a precaution,  DSKCLN  should
+     be run over the freshly restored structure to ensure file structure
+     integerity and consistency.
+
+
+
+     3.4  HELP
+
+     Prints out a list of commands and a short description of them.
+
+
+
+     3.5  STATUS <tape Unit>
+
+     Prints out specified tape unit name, available  densities,  current
+     density, and whether or not the tape is write protected and at load
+     point.
+
+
+
+     3.6  DENSIT <density>
+
+     If no  density  is  specified,  DENSIT  will  just  print  out  the
+     available  densities on the specified tape unit.  Else, it will set
+     the recording density for the entire run to the specified argument.
+     (Example:  DENSIT 6250).
+
+
+
+     3.7  REWIND <tape Unit>
+
+     Rewinds the specified tape unit.
+
+
+
+     3.8  UNLOAD <tape Unit>
+
+     Unloads the specified tape unit.
+
+
+
+     3.9  OPEN <tape Unit>
+
+     Sets the currently open tape unit to the specified argument if  the
+     unit is available.
+
+
+
+     3.10  DAYTIM
+
+     Prints out current date and time.
+                                                                  Page 5
+
+
+     3.11  QUIT
+
+     Exits from ASP.
+
+
+
+     4.0  KNOWN DEFICIENCIES
+
+     On restores, ASP attempts no recovery from unrecoverable tape  read
+     errors.   The  restore  is aborted.  Future versions of ASP will be
+     able to continue past the bad record or  records  to  complete  the
+     restore,  at  the expense of losing some data.  DSKCLN will be able
+     to handle the problem of losing RIBs or UFD data pages,  but  there
+     will  be no way to detect the lossage of data pages from user files
+     unless DSKCLN is modified to input a  list  of  disk  page  numbers
+     which have been lost.

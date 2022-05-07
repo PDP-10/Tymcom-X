@@ -1,0 +1,172 @@
+Strategy for deleting files with Bad RIBS
+
+The following is intended to be a discussion of the issues
+that should be considered when deleting a file with a bad RIB,
+or when dealing with a system where there is a problem reading
+or writing any critical disk data (for example, when bad SAT messages
+occur, data page in a critical file becomes unreadable).
+
+The basic issue to keep in mind is whether or not the specific symptom
+observed (file with a bad RIB, bad SAT, bad data page in a file)
+is an indication of a more general problem with the disk subsystem
+hardware (or perhaps the file system software, although this is
+less frequent a reason than hardware failures). If the file with
+the bad RIB is just a symptom of a disk subsystem component's imminent
+failure, more is at stake than just that one file - the integrity of
+the entire file system could be at stake. Therefore, efforts should be
+made to determine if there is an underlying problem, or if its just
+that an isolated page went bad.
+
+For this reason, it is never usually a good idea just to delete a file
+with a RIB error without checking around a little to make sure nothing
+else is likely to get clobbered.
+
+There are two basic kinds of disk failures - media failure and device
+failure.  The reason for seperate error bits in the monitor for device
+and data errors (IODERR and IODTER) is to allow the equipment/media
+distinction to filter up to the user's level.  Almost all disk hardware
+subsystems have internal checking on their own operation of some kind.
+For example, our IBM compatible disk subsystem has a whole series of
+sense byte codes for "equipment checks", an error which indicates that
+the disk subsystem has found a problem with itself and cannot transfer
+the requested data successfully.  Sometimes these failures can be
+induced by problems with the medium (the physical pack and its
+formatting), so an equipment check is not always due to bad hardware,
+but most of the time an equipment check is due to an internally
+detected hardware problem.  This means that the data on the disk might
+still be OK.  If the hardware problem is corrected, the data may again
+become readable.
+
+Media failures are also indicated to the operating system by the
+disk hardware subsystem. These are "data check" errors in the IBM
+compatible disk subsystem. These types of errors can be caused
+either by faulty medium (bad spot on the pack) or by some other problem
+reading the medium (bad or misaligned read/write head, dirt on the head
+or on the pack, etc). With the IBM compatible gear, most data checks
+seem to fall into the ECC correctable category. Therefore, any ECC
+uncorrectable errors usually indicate problems with the device
+almost as frequently as problems with the recorded data.
+It is sometimes difficult to judge why these uncorrectable errors
+occur. Hardware maintainence personnel must usually be consulted,
+and experiments are tried, and diagnostics run to see if the failure
+can be reproduced and tracked down.
+
+When any problem with the disks is discovered, either through a RIB
+error, or loss of other critical system data (SATs, data pages of
+critical UFDs, the LUD or DUL, etc.) some investigation should be done.
+
+The first thing to do is to set license and do a PSP command. This will
+give a short report of system disk errors. Many hard errors on one or more
+devices is a possible indication of a general disk system problem.
+This is not always the case, though - sometimes all the errors are attributable
+to one bad page which many jobs are attempting to access unsuccessfully.
+Note whether or not the errors are device (HDEV:69) or data (HDAT:69)
+errors. If the errors are device errors, the data is probably OK
+and a spare drive should be tried if possible. However, avoid swapping
+packs around too much - if a faulty disk pack is the source of
+problems on one drive, moving it to another drive could contaminate
+the other drive as well. Judgement in each individual situation must
+be used when making decisions like swapping drives.
+A large number of hard data errors is also usually a problem with the hardware
+itself rather than the recorded data.
+
+To gather more information as to why there is a large number or hard
+errors, run ERRCHK. If most of the errors on the drive or drives
+seems to be the same cylinder, surface and sector, its probably
+just one bad spot on the disk, or a slight head alighment problem.
+If many different disk records are seen in the error report,
+chances are greater that the drive itself has failed rather than
+the recorded data. If the drive is fixed, the data may or may not
+be readable depending on what was wrong with the drive (if the problem
+was a failure to write properly, then the data is probably lost).
+See if a pattern shows up - is the head number always the same?
+Is the cylinder number always the same?
+
+Another fact to keep in mind when looking at PSP output is that many
+rib error counts (RIBERR:69) can occur from just one bad RIB. This is
+because the operating system writes the RIPBDR bit into RIBSTS of a
+rib which it finds bad, and each time that RIB is brought into
+a PCB, the bit will be seen and the RIBERR counter incremented.
+If the RIB remains in the PCB, the hard error count for the drive
+won't even be incremented, since the data will be accessed
+without having to do the I/O again. No effort is made to invalidate
+the data in a PCB (i.e. forget that the data from the disk address
+of the bad page is in that PCB) just because a hardware detected error
+or software detected consistency error has occurred. Therefore
+many RIB errors can happen as a result of just one hardware errors.
+
+When data from a PCB is written out and the write fails, the disk
+address involved in the transfer is inserted into the output error hash
+table, and never gets deleted.  From that point on until the monitor
+running crashes or is brought down, attempts to read that disk address
+into the PCB system will result in an error.  This is another way that
+multiple RIB and SAT errors can happen with only one hardware failure.
+
+Try to find a distinct connection between the RIB with the error in it
+and error data the system provides. Use the TSTSUP program to read
+in the RIB and see what has gone wrong. Remember that for certain
+kinds of transfer failures you will see the data that was last successfully
+read into that page. Is most of the data reasonable? If only part
+of the data is bad, is there a pattern to the data? Do you recognize
+the data? Sometimes there is a problem with addressing data on the disk -
+a request to read or write one record results in the wrong record
+being transferred without any hardware indications. This will cause
+a RIBERR or SATERR without incrementing the hardware error counts.
+This can happen because the monitor keeps a count of free pages in all the
+sats in the STT tables, and the SATs are checked for consistency using
+these counts. The RIB has RIBCOD, RIBSLF, and the RIBNAM,PPN,EXT data
+that are used for consistency checking.
+
+Another problem to watch out for is a hardware undetected channel failure.
+If the channel transfers the data to the wrong place in memory,
+it is possible to get RIBERR and SATERR problems.
+
+Another failure mode sometimes seen is many soft or hard device or data
+errors on all the drives on a particular controller. This usually
+indicates a controller problem. After maintainence fixes the problem,
+the system will probably run normally (unless lots of garbage data has
+been written out as aresult of the problem.)
+
+If after you collect all this data you determine that in your judgement
+the disk hardware is endangering the file system, tell operations and
+maintainence this and have them run tests on the disk subsystem.
+(Make sure they don't write on the file system packs!). Continuing
+to run under conditions like this can be very risky. The model to use
+to scare yourself into recommending that the system be taken down
+to fix the problem is to imagine that all data being written to the
+disk is scrambled before it gets to the disk. Under those conditions
+almost anyone would take the system down and fix the problem right away.
+Of course, the problem is usually not that severe, but the situation
+can sometimes be quite similar.
+
+If on the other hand, it looks like there aren't really many distinct
+failures, and the hardware looks relatively safe, the system should remain
+up and the file with the bad data or RIB should be deleted and restored.
+The (MPL)DELBAD program will delete bad RIBS (a LOOKUP which fails with
+error code 6, bad rib, followed by a deleting RENAME will get rid of
+a file with a bad RIB).
+
+Even a few hard device errors can be chalked up to an intermittent
+failure and are no cause for alarm as long as there is no evidence
+that the problem will reoccur often enough to cause real problems.
+That is usually the question you should ask yourself: why are these
+errors happening and what is to keep more of them from happening,
+eventually becoming a serious threat to file system integrity?
+
+Errors reading UFD ribs and UFD data pages usually cause error code
+1 to be returned. These errors are more serious, since they imply
+the loss of many files, or if the UFD involved is the MFD, many
+directories. A special effort should be made to make sure the
+data which appears to be lost could not be read again if the
+hardware was fixed. ATTEMPTS TO REBUILD A FILE SYSTEM WHEN
+THE HARDWARE IS UNRELIABLE CAN BE DISASTROUS!
+
+In summary, one must first convince onesself that the hardware that
+the file system is running on is in good shape, and that the errors
+seen can be attributed to bad spots on the medium itself.
+If that is the case, then the file with the RIB error can be safely
+deleted and restored. For SATs, a full DSKCLN run will usually rebuild
+the SAT correctly and successfully write it out to the medium, since
+most read errors are due to bad data and not the inability to write
+good data back out to that record of the disk.
+  

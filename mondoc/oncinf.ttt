@@ -1,0 +1,303 @@
+
+	AB.ACK==0b18		; OK (ACKnowledged) for ABbreviations.
+	AB.NAK==1b18		; OK (Not AcKnowledged) for ABbreviations.
+	AB.VER==1b19		; VERIFICATION required for Command.
+	AB.TCV==1b20		; Verify if TYPE or CHANGE (TYPONL) [ONCDSK]
+
+ONCE>
+
+TYPE	ab.ack
+TYPE     Report information about the system.
+         TYPE CORE   - the default minimum core available to users.
+         TYPE SYSTEM - reports the system number.
+
+CHANGE	ab.ack
+CHANGE   Change information about the system.
+         CHANGE CORE   - changes the default minimum user core.
+         CHANGE SYSTEM - changes the system number.
+
+FULL	ab.nak
+FULL     Bring up the system with a FULL DSKCLN.
+
+GO	ab.ack
+GO       Bring up the system with the default settings.
+
+FILES	ab.nak!ab.ver
+FILES    Enter the ONCDSK file dialogue.  This is a subsystem of ONCE
+         which is normally used ONLY for restructuring or repairing
+         the disk file system.  The commands in this subsystem could
+         damage the file system if they are used incorrectly.  If you
+         are NOT sure of what you are doing, DO NOT enter this section.
+
+READONLY ab.ack!ab.ver
+READONLY Bring up the system SUPER SHUT for emergency examination.
+         Writing on the disk is prevented until a FULL DSKCLN has
+         been run.  Also, you may not UNSHUT the system until the
+         DSKCLN program has been run.
+
+CONSOLE	ab.ack
+CONSOLE  Bring the system up STAND-ALONE on the CTY.
+         This results in very limited use of the system and the
+         system MUST be reloaded before it can be brought up on
+         the network.  Usually ONLY used to load a network node.
+
+DDT	ab.ack
+DDT      Enter executive DDT.  To be used ONLY by software wizards
+         for emergency patching and examination of the monitor.
+         UNDER NO CIRCUMSTANCES SHOULD YOU NORMALLY USE THIS COMMAND!
+
+MANUAL	ab.ack!ab.ver
+MANUAL   Bring up the system MANUALLY for DEBUGGING ONLY!
+
+BOOTS	ab.nak!ab.ver
+BOOTS    Crash the system with "BOOTS LOADED" immediately.
+
+KMC	ab.ack
+KMC      Bring the system up loading the KMC-11 but without the
+         rest of the automatic restart procedure.  This must NEVER
+         be used for a restart after a system CRASH.  ONLY to be
+         used when the system has been taken down gracefully and
+         DSKCLN has already been run.
+
+HELP	ab.ack
+HELP     Type out this message.
+
+
+$TEXT oTYPE;Once "TYPE" command extensions
+
+CORE	ab.ack
+TYPE CORE   - Type the default minimum core available to users.
+
+SYSTEM	ab.ack
+TYPE SYSTEM - Type the system number.
+
+HELP	ab.ack
+TYPE HELP   - Type out this message.
+
+
+<null> or <error>
+Type  "TYPE HELP"  for a list of options.
+
+
+$Text oCHANGE;Once "CHANGE" command extensions
+
+CORE	ab.nak!ab.ver
+CHANGE CORE   - Change the default minimum core available to users.
+
+SYSTEM	ab.nak!ab.ver
+CHANGE SYSTEM - Change the system number.
+
+HELP	ab.ack
+CHANGE HELP   - Type out this message.
+
+<null> or <error>
+Type  "CHANGE HELP"  for a list of options.
+$Text odCOMMAND;ONCDSK commands
+
+
+Are you SURE you want to do this? \]
+
+Entering FILES (ONCDSK) dialogue...
+  Type "GO" to return to ONCE.
+  Type "HELP" for a list of options.
+
+FILES*
+
+DSKCLN	Ab.Nak!Ab.Ver
+DSKCLN  Query or Select DSKCLN mode.
+        List the current mode and allow the operator to change it.
+
+TYPE	Ab.Ack
+TYPE    List information about the structure.
+        Type "TYPE HELP" for a list of options.
+
+CHANGE	Ab.Ack
+CHANGE  Change information about the structure.
+        Type "CHANGE HELP" for a list of options.
+
+ADD	Ab.Nak!Ab.Ver
+ADD     Add a unit to the structure.
+        Reconfigure the disk structure and add another pack.
+
+DISOLVE	Ab.Nak!Ab.Ver
+DISOLVE Disolve the structure.
+        Remove all units from the system structure.
+
+DEFINE	Ab.Nak!Ab.Ver
+DEFINE  Define a NEW structure.
+        Create a completely new system structure.
+
+REFRESH Ab.Nak!Ab.Ver
+REFRESH Refresh the structure.
+        Erase the current file system and start over
+        with a "FRESH" disk.
+
+GO	Ab.Ack
+GO      Terminate the ONCDSK dialogue.
+        Return to the ONCE dialogue.
+
+HELP	Ab.Ack
+HELP    Type this message.
+
+$Text odTYPE;ONCDSK "TYPE" command extensions
+
+Type "TYPE HELP" for a list of options.
+
+STR	Ab.Nak
+STR     Name of the STRUCTURE and UNITS on it.
+
+UNITS	Ab.Nak
+UNITS   Names of all units NOT in a file structure.
+
+SWAP	Ab.Nak
+SWAP    Names of all units in the Active Swapping list.
+
+BAT	Ab.Nak
+BAT     Number of BAD pages and regions for a unit.
+
+SATPCBS	Ab.Nak
+SATPCBS Number of SAT PCBs.
+
+RIBPCBS	Ab.Nak
+RIBPCBS Number of RIB PCBs.
+
+ALL	Ab.Nak
+ALL     All of the above.
+
+HELP	Ab.Ack
+HELP    Type this message.
+
+str-name  Type information about the structure.
+unit-name Type information about the unit.
+
+
+CHGIT:	SETZM TYPONL
+	SCAN (CHG,O)
+NULCHG:
+HLPCHG:	MOVEI T1,[ASCIZ /
+Type "CHANGE HELP" for a list of options.
+/]
+	JRST HLPTY1
+
+	DEFINE MKCHG <
+	X SWAP,<PUSHJ P,CHGASL>,Ab.Nak!Ab.Ver,<
+SWAP      Change the active swapping list.>
+	X SATPCBS,<PUSHJ P,CHGSPC>,Ab.Nak!Ab.Ver,<
+SATPCBS   Change the number of SAT PCBs.>
+	X RIBPCBS,<PUSHJ P,CHGRPC>,Ab.Nak!Ab.Ver,<
+RIBPCBS   Change the number of RIB PCBs.>
+	X BAT,<PUSHJ P,CHGBAT>,Ab.Nak!Ab.Ver,<
+BAT       Refresh the BAT pages for a UNIT.>
+	X HELP,<JRST CHGHLP>,Ab.Ack,<
+str-name  Change parameters for the structure
+unit-name Change parameters for a unit.
+HELP    Type this message.
+>
+>
+	SCNTB (TYPUIP,TYPSRP,CHG)
+
+TYPUIP:	HRRZ	P2,UNISTR(U)	;IN CASE IN FS
+	MOVEM	P2,UIPSVU	;SAVE IT!
+	MOVEI	P1,SCNUIP	; Get address of Scan Table
+	SETOM	CMDSCF		; Specify STR/UNIT stuff
+	PUSHJ	P,CMDSCN	; Call Scanning routine
+	  JRST	HLPUIP		; No good!
+	MOVE	P2,UIPSVU	;RESTORE in case needed.
+	XCT	DSPUIP(P3)	; Yes?
+	JRST	FILCMD		; Return as if cr typed.
+UIPSVU:	0
+
+UIPHLP:	Move	P3,-2(P1)	; Setup AOBJN pointer for messages
+UIPHL1:	Hrrz	T1,(P3)		; Get address of message
+	Pushj	P,LNGMES	; Print a long message
+	Aobjn	P3,UIPHL1	; Next?
+	Jrst	FILCMD		; Return.
+NULUIP:
+HLPUIP:	MOVEI T1,[ASCIZ /
+Type "TYPE unit-name HELP" for a list of options./]
+	SKIPL TYPONL
+	MOVEI T1,[ASCIZ /
+Type "CHANGE unit-name HELP" for a list of options./]	;WAS A CHANGE
+	JRST HLPTY1
+
+	DEFINE MKUIP <
+	X ID,<PUSHJ P,UNITID>,Ab.Nak!Ab.Ver!Ab.Tcv,<
+... ID    Unit ID.>
+	X SWAP,<PUSHJ P,UNITSW>,Ab.Nak!Ab.Ver!Ab.Tcv,<
+... SWAP  Pages for swapping.>
+	X ALL,<JRST UNITPA>,Ab.Nak!Ab.Ver!Ab.Tcv,<
+... ALL   All of the ABOVE.
+          The Unit-ID, Pages for Swapping.>
+	X HELP,<JRST UIPHLP>,Ab.Ack,<
+... HELP  Type this message.
+>
+>
+	SCNTB (HLPUIP,HLPUIP,UIP)
+
+
+UNATP1:	PUSHJ P,UNITID
+	PUSHJ P,UNITSW
+	PUSHJ P,UNITST
+	JRST FILCMD
+
+UNITPA:	SKIPGE TYPONL
+	JRST UNATP1	;ONLY TYPING
+	MOVEI T1,[ASCIZ /Do you want the STANDARD values?
+/]
+	PUSHJ P,ASKQUE
+	 JRST UNATP1	;NO
+	PUSHJ P,UNCHKA		;CALL THE CHANGE PAR ROUTINE
+	JRST FILCMD
+
+UNCHKA:	SKIPN UNIHID(U)
+	PUSHJ P,UNITID
+	SKIPL UNISUN(U)		;IF IN ACTIVE SWAP DON'T CHANGE SWAP
+	JRST UNATP3
+	JUMPE P2,UNATP2	;IF NOT IN STR, OK TO CHANGE
+	HLRZ T1,STRREF(P2)
+	JUMPE T1,UNATP3	;IF IN STR, DO NOT CHANGE UNLESS NEEDES REF
+UNATP2:	LDB T1,UNYKTP
+	XCT SWPDEF(T1)
+	MOVEM T2,DBLSTD
+	LDB	T1,UNYP4S	;GET CURRENT SWAP SPACE
+	PUSH	P,T1		;AND SAVE IT.
+	PUSHJ P,UNITSW
+	POP P,T1
+	JUMPN T1,UNATP3	;ALREADY HAD SWAP SPACE
+	LDB	T1,UNYP4S
+	JUMPE T1,UNATP3	;OR DID NOT GET ANY
+	PUSHJ P,FTYUNI	;TYPE NAME IF NECESSARY
+	 JFCL
+	MOVEI T1,[ASCIZ /Unit HAS swapping space, suggest changing swapping list
+/]
+	PUSHJ P,CONOUT	;TELL SOMEONE ABOUT CHANGE
+UNATP3:	PJRST	UNITST
+
+
+TYPSRP:	SCAN (SRP,O)
+NULSRP:
+HLPSRP:	MOVEI T1,[ASCIZ /
+Type "TYPE str-name HELP" for a list of options./]
+	SKIPL TYPONL
+	MOVEI T1,[ASCIZ /
+Type "CHANGE str-name HELP" for a list of options./]
+	JRST HLPTY1
+
+	DEFINE MKSRP <
+	X OVERDRAW,<PUSHJ P,STRTOV>,Ab.Nak!Ab.Ver!Ab.Tcv,<
+... OVERDRAW  The number of pages for overdraw.>
+	X CRASH,<PUSHJ P,STRTCH>,Ab.Nak!Ab.Ver!Ab.Tcv,<
+... CRASH     The number of pages for CRASH.SAV.>
+	X ALL,<JRST STRTPA>,Ab.Nak!Ab.Ver!Ab.Tcv,<
+... ALL       All of the ABOVE.
+              The number of pages for Overdraw, for CRASH.SAV.>
+	X HELP,<JRST SRPHLP>,Ab.Ack,<
+... HELP      Type this message.
+>
+>
+	SCNTB (HLPSRP,HLPSRP,SRP)
+
+STRTPA:	PUSHJ P,STRTOV
+	PUSHJ P,STRTCH
+	JRST SRPCMD
+

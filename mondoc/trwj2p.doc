@@ -1,0 +1,194 @@
+Significant changes to TYMCOM-X between P034/J and P034/P
+
+  I.  Reliability
+
+    A.  Uptime (crash causes eliminated)
+        1.  Hang while attempting to shut down the system.
+        2.  XBASIC and PASCAL closing channel 0 from monitor context.
+        3.  2020 problem recovering from ECC correction at end of cylinder.
+        4.  PASCAL creating files with bad RIBS.
+        5.  Zapper problem on PTYs in block IO mode.
+        6.  Too many files open and too little freecore available.
+	7.  TALK message to a frame in the process of logging out.
+	8.  CORE command clearing an active user high-segment.
+	9.  Address error using previous context registers causing an
+	    executive page map failure.
+       10.  GETSEG which destroyed I/O state while performing old-style
+	    buffered I/O.  [XBASIC]
+       11.  Mapping pages into a file in a directory that is over quota.
+       12.  Releasing (removing) context pages for another frame.
+       13.  Improper output on bad port with garbaged LDBOUT bits.
+       14.  Catch loop in DDB linkages which caused a system hang.
+       10.  Bad page map when job is requeued twice within one clock tick.
+       11.  Using up freecore by not deallocating shared pages correctly.
+
+    B.  New STOPCD (stop-code) reporting and recovery system.
+	STOPCDs are now categorized into several types.  STOP, CPU, HALT and
+	DISK cause the system to crash or reload.  JOB, EVENT and INFO print
+	available information on the CTY and continue normal system operation
+	without causing the system to crash or reload.
+
+    C.  Operational Efficiency
+
+	1.  Modified ONCE and ONCDSK commands and messages to aid the
+	    operations staff in performing the correct functions.
+	2.  Fixed pack-set ID on virgin packs during a system re-build.
+	3.  Removed all code referring to obsolete SWAP space when a
+	    refresh or rebuild is required for a pack-set or strucure.
+	4.  Amplified many console messages during system restart.
+	5.  Added the NETWORK command and modified operation of CONSOLE
+	    command in ONCE to flag the use of TYMNET (default) or the
+	    CTY when bringing the system up in any available mode.
+	6.  Allowed CHANGE SYSTEM on hosts with micro-node bases to set
+	    the system number between 1 and 99999.  Affects KS-10 & F3.
+	7.  Changed CONSOLE mode to allow all commands to be entered
+	    in either upper or lower case.  Added (^Z?) help message.
+	8.  Force updating of the home pages as an integral part of a
+	    REFRESH to avoid inconsistancy problems at system startup.
+
+     D.  Eliminated the SPARE-LDB and it's myriad of associated problems.
+
+     E.  Fixed many  port backpressure problems.
+	 1.  New backpressure algorithm to help prevent character lossage.
+	 2.  Fix input and skip AUXCALs to not go into OUTPUT wait forever.
+	 3.  Allow the input line to exceed the maximum length.
+
+     F.  Modify WSCTL call to not change the user working set status while
+         performing a read operation.
+
+     G.  Catch interrupts which previously were lost while sleeping using
+         the HIBER UUO.
+
+     H.  Make AUXCAL 10 (.AXSIC) work correctly with RESCAN, similar to
+         SKPINC (TTCALL 13) for command ports.
+
+     I.  Added new hang flag to hard-kill a frame without detaching.
+
+
+ II.  Performance
+
+    A.  Speed improvement
+	1.  Added CHANIO 47 (.CHVMP) to map a private page into a file.
+
+    B.  Frame handling UUOs
+	1.  Added FRMOP 41 (.FOSTP) to simulate an <ESC> on a frame.
+	2.  Added FRMOP 42 (.FOFCF) to force a special command.
+	3.  Added FRMOP 43 (.FOCPC) to change the project code.
+	4.  Added FLSTOP (CALLI -147) to stop with a halt status 4,,7.
+	5.  Added FLEXIT (CALLI -142) to exit with a halt status 4,,2.
+	6.  Fixed FRMOP 22 (.FOSVA) to read the start offset correctly.
+        7.  Added access right 32 for passing license to another frame.
+
+    C.  Changed FRMOP .FOCFM (Create Frame) to new a format which allows
+	the changed privilege bits and license bits of the parent to be
+	passed to the child frame.
+	** Note: The next release of TYMCOM-X has added project code and
+	network-origin information to the new .FOCFM format data block.
+
+    D.  The frame INACTIVITY TIMEOUT feature is now fully implemented.  Any
+	frame with this feature enabled will be logged off after a specified
+	(or default) time limit in minutes, set by the "SET AUTOLOGOUT n"
+	command or the SETINA (CALLI -146) or SETPRV (CALLI -11) monitor
+	calls.  The currrent timeout may be read with .GTINA (GETTAB -55).
+	In addition, this feature can be enabled automatically by setting
+	the appropriate bit in the LUD.  A system-wide default may be set by
+	an authorized user with the "SET DEFAULT INACTIVITY n" command.
+
+    E.  Added Special Command Mode (SCM) to run the users Restricted
+	Command Mode (RCM) program for un-recognized monitor commands.
+	Settable with SETPRV (CALLI -11) and SETRCF (CALLI -57).  With
+	this change the monitor command running the RCM or SCM will be
+	found in SIXBIT in user register 1 to avoid a double rescan.
+
+    F.  Added a micro-cycle timing clock to allow other Tymshare products
+        to improve their performance.  CALLI -144 (SETMCY) was added to
+        set the micro-cycle timer and interrupt type 15 was added to use
+        the timer.
+
+    G.  More dynamic allocation of internal data structures to take
+	advantage of the expanding size of available memory.
+
+    H.  Prevent race condition with yellow balls and interrupts.
+
+    I.  The TRU limit for a job may now be set or extended by both the monitor
+        command "SET LIMIT n" and the SETLIM UUO.  A frame my now request an
+        interrupt when the TRU limit has been exceeded.
+
+
+III.  Security
+
+    A.  Added CL.DMP flag to CLOSE UUO for TITO to set the file-dumped bit
+	without possibly losing data during an update.
+
+    B.  Zap the current circuit when "frame capacity exceeded" is detected
+	upon network LOGIN so as to prevent confusion.
+
+    C.  Check frame license for same or greater capabilities in the source
+	frame when attaching to another frame.
+
+    D.  Return maximum current license on a file instead of none when an
+	attempt is made to set greater file license.
+
+E.  Give special (!) prompt instead of (.) in PDP mode when a user has
+	any license set.
+
+    F.  Prevent AUX CIRCUITS from logging into a SHUT system.
+
+    G.  Fixed frame access rights checking routines to check child rights
+	rather than parents rights where appropriate.
+
+    H.  Added LOGOUT ON STOP feature to force a LOGOUT on a frame if it
+	stops for any reason.  Set with SETPRV (CALLI -11).  May NOT be
+	turned off once it is turned on.
+
+
+
+IV.  Accounting
+
+    A.  TRU scaling added for value-added and royalty products.
+
+    B.  Fixed FRMOP 1 (.FOCFM) to pass the project code to the child.
+
+    C.  Fixed FRMOP 1 (.FOCFM) to write an accounting record using the
+	proper network-origin information for the newly created frame.
+
+
+V.  Miscellaneous features
+
+    A.  New or Changed commands
+	1.  Added UNDELETE command to "undelete" files "deleted" with DIRIT.
+	2.  Added XMAGNUM command to run (SYS)XMAGNUM.
+	3.  Added the VUE command to run the VUE editor.
+	4.  Added PCOM and DCOM command to run the PCOM program.
+	5.  Deleted the obsolete PCHECK command.
+	6.  Added USESTAT command to display incremental frame data.
+	7.  Added TTY [NO] RTCOMP to allow (^T) to force USESTAT on a
+	    running frame.  [Only works in PDP mode] (AUXCAL 101).
+	8.  SET [NO]AUTOLOGUT to set or clear INACTIVITY TIMEOUT time.
+	9.  TALK GAN to allow OPER (OP license) or an account supervisor
+	    to issue a TALK message to all users in the appropriate GAN.
+       10.  Changed the DAYTIME command to print the time zone after the time.
+
+    B.  Miscellaneous
+	1.  Add internal counters for OHT disk-page processing.
+	2.  Provide better handling of own %UPT lock.
+	3.  Update various text messages to refer to frames.
+        4.  Added CHNIO function 46 (.CHNXT) to get the next free channel.
+	5.  Correct the CHANIO function range check.
+	6.  Handle page argument of -1 for various mapping calls.
+	7.  Increase the network terminal ID code (TIC) field to 5 bits.
+	8.  Change monitor "TRANSMISSION ERROR" message to "I/O ERROR".
+	9.  Allow ATTACH UUO to simulate a continue command upon attach.
+       10.  Correct misplaced scanner timing routines to use the proper
+	    locations so that users may GETTAB their values.
+       11.  Added entries for new tymnet terminal types.
+       12.  Enlarged baud rate field from 3 to 4 bits for Tymnet specifications.
+       13.  Added AUXCAL 100 (.AXTTP) to set sixbit terminal type.
+       14.  Define a new error class 3 subtype to be called when an illegal
+            CALL parameter is given, HT.CAL (4).
+
+    C.  Processor specific changes
+	1.  Modified interrupt table initialization for KS processors.
+	2.  Don't negotiate BLOCK I/O ports on KS and F3 micronode bases.
+	4.  Fix clock-timer during ONCE/FILES when refreshing a KS disk.
+

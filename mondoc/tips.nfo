@@ -1,0 +1,469 @@
+$MENU TIPS;Tips for monitor people.
+*(MONDOC)tips.nfo:BADFOR;Recovery from disk packs with bad format.
+*(MONDOC)tips.nfo:CRAFIX;How to fix the CRASH file size.
+*(MONDOC)tips.nfo:PACKID;Inconsistent Pack Set ID handling.
+*(MONDOC)tips.nfo:RIBERR;Deleting Files with RIB Errors.
+*(MONDOC)tips.nfo:SATDEBUG;Notes on writing out SATS while debugging.
+*(MONDOC)tips.nfo:UUOCHANGES;Making modifications to "UUOs".
+*(MONDOC)tips.nfo:OPERTIME;Changing time zone for OPER.
+$TEXT CRAFIX;How to fix the CRASH file size.
+
+How to fix the size of (SYS)CRASH.SAV
+=====================================
+example done on an F3, but should work anywhere
+
+.o$					>> Set License: WA RA
+!gf sys					>> GFD to (SYS)
+
+!dir (sys)crash.sav/ev			>> Check file
+
+CRASH SAV   8 9-JAN-64  0.00 RD RD NO  1-MAR-85(A) 0(M)   2048 NDL NFS
+
+!copy crash.sav,same			>> Overwrite file to remove NDL bit
+
+!dir (sys)crash.sav/ev			>> Check file
+
+CRASH SAV   1 9-MAR-85 1747.00 ALL RD  NO 10-MAR-85(A) 1(M)      0
+
+!lkbddt					>> Run (MPL)LKBDDT
+FILE:
+$"/dsk/$w				>> Find where 'DSK:' is located
+DDTEND+2/   446353,,0
+
+ddtend 2/   446353,,0   $"/dskb0/	>> Substitute unit DSKB0: for device
+$g					>> Restart LKBDDT
+FILE: (sys)crash.sav			>> Specify (SYS)CRASH.SAV
+
+e$x					>> Enter file
+
+0/   12   40,,0				>> Setup .CHCFP,,CHAN
+1/   1,,6465   520.			>> Setup #pages > 514
+chanio 1$x				>> Create file pages
+SKIP
+
+0/   JOBUUO,,0   45,,0			>> Setup .CHFTR,,CHAN
+1/   1010   1,,0			>> Setup #words for 512 pages
+chanio 1$x				>> Truncate file to size
+SKIP
+
+.rbsts/   0   $q ndl nfs		>> Set NDL and NFS bits in status
+r$x					>> Rename file
+
+c$x					>> Close file
+
+^C
+
+!dir (sys)crash.sav/ev			>> Check file size, status bits
+
+CRASH SAV 514 9-MAR-85 1756.44 ALL RD  NO 10-MAR-85(A) 0(M) 262144 NDL NFS
+
+!as dsk str				>> Assign STR for TSTSUP
+
+!tstsup
+$1B>>DATBRK   PAGE/   T1   alc$x	>> Check page allocation for file
+File: (sys)crash.sav			>> Specify (SYS)CRASH.SAV
+
+<FOUND>
+DETAILED REPORT?y			>> Get detailed report
+
+UNIT            NUMBER OF PAGES		>> If all 514 pages not on one unit
+0               514			   then something went wrong.....
+
+look$x					>> Get the RIB page number for
+File: (sys)crash.sav			>> (SYS)CRASH.SAV
+
+<FOUND>
+$1B>>DATBRK   PAGE/   MOVE 30045   =200000,,30045
+
+page/   MOVE 30045   1			>> Get first HOM page
+$p					   into memory
+$1B>>DATBRK   PAGE/   T1
+d+22[   200000,,13   200000,,30045	>> Substitute RIB for CRASH.SAV
+write$x					>> Write it out to disk
+$1B>>DATBRK   PAGE/   T1
+d 22[   200000,,30045			>> Verify that it was written OK
+
+page/   T1   6				>> Get second HOM page
+$p					   into memory
+$1B>>DATBRK   PAGE/   P2
+d+22[   200000,,13   200000,,30045	>> Substitute RIB for CRASH.SAV
+write$x					>> Write it out to disk
+$1B>>DATBRK   PAGE/   P2
+d 22[   200000,,30045			>> Verify that it was written OK
+^C
+
+!					*** ALL FINISHED ***
+$TEXT SATDEBUG;Notes on writing out SATS while debugging.
+
+While debugging, it is important not to bring the system up
+without running DSKCLN in fix mode if the last monitor crash
+happened after file pages were allocated in the SATS but before
+the SATS get written out. A way to avoid having to run DSKCLN
+after many crashes is to PUSHJ to SATONC (should only do this at
+UUO level) until SATWRT becomes -1.
+
+
+$TEXT RIBERR;Deleting Files with RIB Errors.
+
+A file with a RIB error can only be deleted by deleting its UFD entry.
+The lost pages will be recovered by DSKCLN.  However, you can only risk
+writing the UFD entry back out if no one is using the directory.
+Another approach is to read in the bad RIB, make sure there are no I/O
+errors reading it, look at the data to make sure no one else is using
+the page for another RIB or data page for another file, and set its
+contents to a RIB with no pointers, RIBALP zero, make sure PPN, NAM,
+and EXT match that of the UFD entry, clear RIBSTS bits that say RIB
+error, make sure RIBCOD and RIBSLF are setup properly.  If all this is
+not done, the system can crash when it consistency checks the RIB.
+Also be aware that the core pages used by the regular paging system and
+the PCB system are different, and even if you map the RIB in and change
+it and write it back out, a copy of the old data may still exist in the
+RIB PCBs.  Usually, if the system has a load on it the offending RIB
+will leave the PCB when someone else needs that PCB.
+
+Strategy for deleting files with Bad RIBS
+
+The following is intended to be a discussion of the issues that should
+be considered when deleting a file with a bad RIB, or when dealing with
+a system where there is a problem reading or writing any critical disk
+data (for example, when bad SAT messages occur, data page in a critical
+file becomes unreadable).
+
+The basic issue to keep in mind is whether or not the specific symptom
+observed (file with a bad RIB, bad SAT, bad data page in a file) is an
+indication of a more general problem with the disk subsystem hardware
+(or perhaps the file system software, although this is less frequent a
+reason than hardware failures).  If the file with the bad RIB is just a
+symptom of a disk subsystem component's imminent failure, more is at
+stake than just that one file - the integrity of the entire file system
+could be at stake.  Therefore, efforts should be made to determine if
+there is an underlying problem, or if its just that an isolated page
+went bad.
+
+For this reason, it is never usually a good idea just to delete a file
+with a RIB error without checking around a little to make sure nothing
+else is likely to get clobbered.
+
+There are two basic kinds of disk failures - media failure and device
+failure.  The reason for seperate error bits in the monitor for device
+and data errors (IODERR and IODTER) is to allow the equipment/media
+distinction to filter up to the user's level.  Almost all disk hardware
+subsystems have internal checking on their own operation of some kind.
+For example, our IBM compatible disk subsystem has a whole series of
+sense byte codes for "equipment checks", an error which indicates that
+the disk subsystem has found a problem with itself and cannot transfer
+the requested data successfully.  Sometimes these failures can be
+induced by problems with the medium (the physical pack and its
+formatting), so an equipment check is not always due to bad hardware,
+but most of the time an equipment check is due to an internally detected
+hardware problem.  This means that the data on the disk might still be
+OK.  If the hardware problem is corrected, the data may again become
+readable.
+
+Media failures are also indicated to the operating system by the disk
+hardware subsystem.  These are "data check" errors in the IBM compatible
+disk subsystem.  These types of errors can be caused either by faulty
+medium (bad spot on the pack) or by some other problem reading the
+medium (bad or misaligned read/write head, dirt on the head or on the
+pack, etc).  With the IBM compatible gear, most data checks seem to fall
+into the ECC correctable category.  Therefore, any ECC uncorrectable
+errors usually indicate problems with the device almost as frequently as
+problems with the recorded data.  It is sometimes difficult to judge why
+these uncorrectable errors occur.  Hardware maintainence personnel must
+usually be consulted, and experiments are tried, and diagnostics run to
+see if the failure can be reproduced and tracked down.
+
+When any problem with the disks is discovered, either through a RIB
+error, or loss of other critical system data (SATs, data pages of
+critical UFDs, the LUD or DUL, etc.)  some investigation should be done.
+
+The first thing to do is to set license and do a PSP command.  This will
+give a short report of system disk errors.  Many hard errors on one or more
+devices is a possible indication of a general disk system problem.  This is
+not always the case, though - sometimes all the errors are attributable to
+one bad page which many jobs are attempting to access unsuccessfully.  Note
+whether or not the errors are device (HDEV:69) or data (HDAT:69) errors.
+If the errors are device errors, the data is probably OK and a spare drive
+should be tried if possible.  However, avoid swapping packs around too much
+- if a faulty disk pack is the source of problems on one drive, moving it
+to another drive could contaminate the other drive as well.  Judgement in
+each individual situation must be used when making decisions like swapping
+drives.  A large number of hard data errors is also usually a problem with
+the hardware itself rather than the recorded data.
+
+To gather more information as to why there is a large number or hard
+errors, run ERRCHK.  If most of the errors on the drive or drives seems
+to be the same cylinder, surface and sector, its probably just one bad
+spot on the disk, or a slight head alighment problem.  If many
+different disk records are seen in the error report, chances are
+greater that the drive itself has failed rather than the recorded data.
+If the drive is fixed, the data may or may not be readable depending on
+what was wrong with the drive (if the problem was a failure to write
+properly, then the data is probably lost).  See if a pattern shows up -
+is the head number always the same?  Is the cylinder number always the
+same?
+
+Another fact to keep in mind when looking at PSP output is that many rib
+error counts (RIBERR:69) can occur from just one bad RIB.  This is because
+the operating system writes the RIPBDR bit into RIBSTS of a rib which it
+finds bad, and each time that RIB is brought into a PCB, the bit will be
+seen and the RIBERR counter incremented.  If the RIB remains in the PCB, the
+hard error count for the drive won't even be incremented, since the data
+will be accessed without having to do the I/O again.  No effort is made to
+invalidate the data in a PCB (i.e.  forget that the data from the disk
+address of the bad page is in that PCB) just because a hardware detected
+error or software detected consistency error has occurred.  Therefore many
+RIB errors can happen as a result of just one hardware errors.
+
+When data from a PCB is written out and the write fails, the disk
+address involved in the transfer is inserted into the output error hash
+table, and never gets deleted.  From that point on until the monitor
+running crashes or is brought down, attempts to read that disk address
+into the PCB system will result in an error.  This is another way that
+multiple RIB and SAT errors can happen with only one hardware failure.
+
+Try to find a distinct connection between the RIB with the error in it
+and error data the system provides.  Use the TSTSUP program to read in
+the RIB and see what has gone wrong.  Remember that for certain kinds
+of transfer failures you will see the data that was last successfully
+read into that page.  Is most of the data reasonable?  If only part of
+the data is bad, is there a pattern to the data?  Do you recognize the
+data?  Sometimes there is a problem with addressing data on the disk -
+a request to read or write one record results in the wrong record being
+transferred without any hardware indications.  This will cause a RIBERR
+or SATERR without incrementing the hardware error counts.  This can
+happen because the monitor keeps a count of free pages in all the sats
+in the STT tables, and the SATs are checked for consistency using these
+counts.  The RIB has RIBCOD, RIBSLF, and the RIBNAM,PPN,EXT data that
+are used for consistency checking.
+
+Another problem to watch out for is a hardware undetected channel failure.
+If the channel transfers the data to the wrong place in memory, it is
+possible to get RIBERR and SATERR problems.
+
+Another failure mode sometimes seen is many soft or hard device or data
+errors on all the drives on a particular controller.  This usually
+indicates a controller problem.  After maintainence fixes the problem,
+the system will probably run normally (unless lots of garbage data has
+been written out as aresult of the problem.)
+
+If after you collect all this data you determine that in your judgement
+the disk hardware is endangering the file system, tell operations and
+maintainence this and have them run tests on the disk subsystem.  (Make
+sure they don't write on the file system packs!).  Continuing to run
+under conditions like this can be very risky.  The model to use to
+scare yourself into recommending that the system be taken down to fix
+the problem is to imagine that all data being written to the disk is
+scrambled before it gets to the disk.  Under those conditions almost
+anyone would take the system down and fix the problem right away.  Of
+course, the problem is usually not that severe, but the situation can
+sometimes be quite similar.
+
+If on the other hand, it looks like there aren't really many distinct
+failures, and the hardware looks relatively safe, the system should
+remain up and the file with the bad data or RIB should be deleted and
+restored.  The (MPL)DELBAD program will delete bad RIBS (a LOOKUP which
+fails with error code 6, bad rib, followed by a deleting RENAME will
+get rid of a file with a bad RIB).
+
+Even a few hard device errors can be chalked up to an intermittent
+failure and are no cause for alarm as long as there is no evidence that
+the problem will reoccur often enough to cause real problems.  That is
+usually the question you should ask yourself:  why are these errors
+happening and what is to keep more of them from happening, eventually
+becoming a serious threat to file system integrity?
+
+Errors reading UFD ribs and UFD data pages usually cause error code 1 to be
+returned.  These errors are more serious, since they imply the loss of many
+files, or if the UFD involved is the MFD, many directories.  A special
+effort should be made to make sure the data which appears to be lost could
+not be read again if the hardware was fixed.  ATTEMPTS TO REBUILD A FILE
+SYSTEM WHEN THE HARDWARE IS UNRELIABLE CAN BE DISASTROUS!
+
+In summary, one must first convince onesself that the hardware that the file
+system is running on is in good shape, and that the errors seen can be
+attributed to bad spots on the medium itself.  If that is the case, then
+the file with the RIB error can be safely deleted and restored.  For SATs,
+a full DSKCLN run will usually rebuild the SAT correctly and successfully
+write it out to the medium, since most read errors are due to bad data and
+not the inability to write good data back out to that record of the disk.
+
+$TEXT PACKID;Inconsistent Pack Set ID handling.
+If the system crashes while in the middle of the once only code,
+the new value of HOMRAN may have been written out to some units
+and not to others. The next time the monitor checks the HOM blocks,
+it will complain about "MISSING OR INCONSISTENT PACK SET ID" and
+refuse to come up. The way to handle this situation is to nullify
+the instruction that checks HOMRAN in ONCDSK, after making sure
+the operator doesn't have one or more packs that don't belong
+to the real pack set mounted. This will result in the monitor
+writing out a new random number to all the units, and the system
+will be able to come up again.
+
+ONCE>DDT
+ONCDSK$:
+OLDST5-2/  CAIN T1,(T2)  JFCL
+140$G
+ONCE>FULL
+$TEXT BADFOR;Recovery from disk packs with bad format.
+Occasionally, the format information on a disk pack can become unreadable
+for one or more tracks on the pack. This shows up as various errors -
+the "no record found" bit in sense byte 1, uncorrectable data check
+with "no sync byte found" or "no address mark detection on retry".
+Sometimes a disk drive equipment check is generated because of bad
+format information on a pack, although this is theoretically not
+supposed to happen.
+
+An address mark consists of 3 bytes of no flux change, and is found
+exclusively in G3 (gap 3), which is the gap that precedes all
+record headers for all records except R0, which is preceded by a G2.
+G3 is used by the storage control to identify the beginning of
+records without having to wait for the index marks to come back around.
+
+A sync byte consists of a series of 12 "9F" bytes in a gap.
+
+Neither an address mark or a sync byte can be read directly by the
+channel program. They are part of the inter-record gap on the disk.
+Failure to detect these marks will cause the errors discussed above.
+
+The normal procedure to recover a pack whose format information is
+damaged is to run PAKCOP with the sense switch that says to procede
+on read errors. The data in the bad blocks is lost, since it cannot be read,
+but if any blocks on the same track are good they will be copied.
+However, if the channel does not present unit check on the bad transfer
+ending status, or if it does and both data check and no record found
+are off (happens when get equipment checks), the copy will abort
+regardless of sense switch settings, since PAKCOP believes the hardware is broken.
+Since bad format can cause equipment checks, this can prevent the pack
+from being copied.
+
+PAKCOP can be used to reformat individual tracks in this situation.
+First, all good data from the tracks should be copied out to a file
+somewhere. Then, PAKCOP should be run. Using the ASSIGN command
+(it will say "type help . . .", and you need to say "DOIT" to get it
+to run) assign an alternate track for the tracks that are bad.
+Then using the DEASSIGN command, deallocate the alternate tracks.
+PAKCOP will automatically reformat the tracks specified when
+deassigning the alternate tracks. Now, bring up the system and read
+all the tracks that have just been reformatted. Hopefully, this will
+result in no errors. If there are still errors, the pack itself
+is probably damaged. Notify field service. If they believe it is still
+safe to run the pack, use PAKCOP to assign alternate tracks for the
+damaged tracks. Next, bring up the system and copy all the saved good
+data from the bad tracks back to the same place it came from.
+
+This procedure will cause the blocks of the files which formerly
+got the errors to come up with zeroes and no errors. Make sure DSKCLN
+runs so that it will detect if this zeroing has happened to a RIB,
+because if the monitor sees a zeroed rib and doesn't see
+any I/ors, it will crash.
+
+Don't use this procedure unless 1) the pack cannot be copied to a good pack;
+2) there are few enough tracks bad such that not too many users
+will get their data zeroed.
+
+An extra step in the above procedure would be to get a copy of DSKCLN
+with DDT loaded, and search for the files whose pages got zeroed
+by the procedure. Then notify operations that those files have
+had data lossage.
+
+$Text UUOCHANGES;Making modifications to "UUOs".
+  1)  Decide what UUOs are to be affected.
+
+  2)  Check the YAMM or the sources for the format of the UUOs so
+      that you are familiar with what it is supposed to look like.
+
+  3)  Lookup on the current microfiche (or the sources) what areas
+      are to be affected:
+	  a)  AUXCALs  see SCNSER.MAC
+	  b)  CALLs    see UUOCON.MAC
+	  c)  CALLIs   see UUOCON.MAC
+	  d)  CHANIOs  see IOCSS.MAC
+	  e)  FRMOPs   see FRMSER.MAC
+	  f)  TTCALLs  see SCNSER.MAC
+	  g)  UUOs     see IOCSS.MAC
+
+  4)  Figure out how the particular UUO works now and what needs to
+      be changed to make it work the way you want it to work.
+
+  5)  Make and test your changes.
+$TEXT OPERTIME;Changing time zone for OPER.
+NONAME will not allow anyone to change the OPER's time zone.  Too many
+programs depend on it to allow the time zone to be changed at whim.
+Therefore, as systems move from Cupertino, California to Dallas, Texas,
+the time zone for OPER needs to be changed.  The following shows how to
+do it using DEC's FILDDT.     /Joe Smith
+
+
+[LONSTD 19-Dec-86 13:10:11 Frame: 20 on TTY141 Network: 6657-0]
+[LONCNF C35-P034/P37 Apr# 1386 M01782 KL-10 6143 pages 127 frames 204 ports]
+.O$
+!DIR (SYS)LUD.*
+LUD     SYS     223  19-DEC-86 1310    ALL RD  RD    113536
+
+!COPY (SYS)LUD.SYS,(SYS)LUD.C35
+
+!R NONAME
+USER VALIDATION PROGRAM - VERSION 41
+: CHANGE
+ENTER USER NAME: JMS
+7. PACIFIC TIME ZONE.   SUBJECT TO DAYLIGHT SAVINGS.
+CHANGE WHICH ITEM - TYPE NUMBER:  7
+ENTER TIME ZONE: CENTRAL
+SUBJECT TO DAYLIGHT SAVING? Y
+7. CENTRAL TIME ZONE.   SUBJECT TO DAYLIGHT SAVINGS.
+OKAY? Y
+CHANGE COMPLETED.
+ANOTHER? N
+: QUIT
+E.O.J.
+
+!DIFFER (SYS)LUD.C35,(SYS)LUD.SYS
+301435  120177 360177   124177 360177   004000 000000
+Files are different
+
+!PPN OPER
+1,21
+!PPN JMS
+3,431116
+
+!R DECDDT
+File: SYS:LUD.SYS/D/P
+$$C
+301435/   124177,,360177   ^            ;Changind time zone changed this word
+301434/   270000,,414   ^
+301433/   3   ^
+301432/   3,,431116                     ;Timezone is 3rd after PPN
+
+1,,21$W                                 ;Search for OPER's PPN
+277030/   1,,21
+
+277030/   1,,21                         ;Go change 3rd word after OPER's PPN
+277031/   0
+277032/   413
+277033/   120177,,60177   124177,,60177
+^Z                                      ;Control-Z to update file and exit
+
+!TAUX OPER:35
+[network passthrough created OPER:35]
+;
+tymshare  1515  19-dec-1986
+message on console teletype
+IS THE OPR: TERMINAL ASSIGNED TO AN OPER?
+
+.DAYTIME                                ;Verify that it is Central Standard
+19-DEC-1986 15:16:02 CST
+
+.EXIT
+[network passthrough deleted OPER:35]
+Now back to JMS at C35-P034/P37
+
+!SEND @(UTIL)CRALST
+TYPE LETTER:
+The time zone for username OPER has been changed from Pacific to Central.
+This was done in preparation of C35 becoming D35.  /Joe Smith.
+^Z
+mail waiting
+!BYE
+
+   Z #t

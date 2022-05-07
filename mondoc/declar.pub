@@ -1,0 +1,28 @@
+.library man.dfs
+.synopsis
+Set protection for a file.
+.syntax
+DECLARE uprot gprot oprot filespec
+.description
+The protection for the files specified by filespec is set to allow
+.begin nofill;
+	uprot access for the user matching the directory
+	gprot access for for the GAN matching the directory
+	oprot access for all others
+.end;
+
+The valid protection codes are listed below.
+Each level includes the access granted by all levels appearing
+above it:
+.begin table(6); preface 0; skip;
+NO\no access permitted
+LK\the file can be looked up
+RUN\the file can be executed
+RD\the file can be read
+AP\the file can be appended to
+UPD\the file can be written on
+CP\the file protection can be changed
+ALL\the file can be deleted
+.end;
+.caveats
+Append access does not behave well.

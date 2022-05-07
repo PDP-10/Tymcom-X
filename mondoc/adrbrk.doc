@@ -1,0 +1,59 @@
+   ADRBRK                          Tymcom-X                           ADRBRK
+
+
+   SYNOPSIS
+
+           Setup an address break condition for a KL-10.
+
+   SYNTAX
+
+           ADRBRK
+           ADRBRK address args
+
+   DESCRIPTION
+
+           Manipulate  the  hardware  address  break  feature  of  the KL-10
+           processor.   The  address  break  is  only  effective  while  the
+           requesting frame is  running thereby allowing multiple  frames to
+           effectively have address breaks specified at the same time.
+
+           In  the form  with  no address  or  args, the  current  status is
+           reported.
+
+           Setting a new address break clears any previous address breaks in
+           effect.  When a memory reference of one of the types specified in
+           the args is made to the location specified by address,  the frame
+           is  stopped  and a  message  is printed  indicating  the  type of
+           reference made.
+
+           READ      Break on any read which is not an instruction fetch.
+           WRITE     Break on any write operation.
+           FETCH     Break on an instruction fetch.
+           ALL       Break on any reference.
+           NONE      Clear the address break.
+           MONITOR   Indicates address is in the monitor's virtual memory.
+                     This requires Write Core license.
+           <null>    If no args are specified, ALL is assumed.
+
+   CAVEATS
+
+           Only  available  on KL-10  processors.   Setting  monitor address
+           breaks is very dangerous.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                March 18, 1986                             1
+

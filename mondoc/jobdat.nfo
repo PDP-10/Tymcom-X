@@ -1,0 +1,305 @@
+$menu JOBDAT;Special locations in low memory.
+*(MONDOC)JOBDAT.NFO:TJOBDAT;User JOBDAT for TYMCOM-X P034.
+*(MONDOC)JOBDAT.NFO:XJOBDAT;Exec JOBDAT for TYMCOM-X P034.
+*(MONDOC)JOBDAT.NFO:UJOBDAT;User JOBDAT for TOPS-10 702.
+*(MONDOC)KLXEPT.TXT:KLCORE;Locations on a KL in TYMCOM-X P034.
+*(MONDOC)KIXEPT.TXT:KICORE;Locations on a KI in TYMCOM-X P034.
+*(MONDOC)KSXEPT.TXT:KSCORE;Locations on a KS in TYMCOM-X P034.
+*(MONDOC)F3XEPT.TXT:F3CORE;Locations on a F3 in TYMCOM-X P034.
+$menu JOBDAT1;Special locations in TOPS-10 low core.
+*(MONDOC)JOBDAT.NFO:UJOBDAT;User JOBDAT for TOPS-10 702.
+*(MONDOC)JOBDAT.NFO:EJOBDAT;Exec JOBDAT and locations in the UPT for 702.
+*(MONDOC)KL2EPT.TXT:KL2EPT;Exec low memory, KL paging, TOPS-10 702.
+*(MONDOC)KS2EPT.TXT:KS2EPT;Exec low memory, KS with KI paging, TOPS-10 702.
+*(MONDOC)KL3EPT.TXT:KL3EPT;Exec low memory, KL paging, TOPS-10 703.
+*(MONDOC)KS3EPT.TXT:KS3EPT;Exec low memory, KS with KL paging, TOPS-10 703.
+$text TJOBDAT;User JOBDAT for TYMCOM-X P034.
+The following locations in TYMCOM-X are different from TOPS-10:
+
+JOBMUU=66   Trapped UUO stored here when trapping UUOs.
+JOBHCU=72   Highest channel in use, sign bit set on SAVE/GET.
+JOBPC =73   User PC when not running.
+JOBJDA=75   Job device assignments, pointer to DDB of open channel.
+       75   OPEN/INIT Channel 0, not JOBHSO.
+       76   OPEN/INIT Channel 1, not JOBBPT.
+JOBCHK=102  Eight words used by CHAIN (F40 overlay releases channels 05-14).
+JOBCH6=106  Six words used by CHAIN (F40 overlay releases channels 11-16).
+JOBPFI=114  ACs, KA EXEC PDL, all JOBJDA protected from I/O.
+JOBEXM=123  Address of last word Examined or Deposited (instead of 113).
+
+000-017 JOBAC   User mode accumulators.
+020-037 JOBDAC  Exec mode accumulators when other job is scheduled.
+040     JOBUUO  Used by hardware in processing LUUOs (opcodes 001-037).
+041     JOB41   Usually a HALT, JSR, or PUSHJ instruction.
+042     JOBERR  Count of compiler errors.  LINK aborts if RH is not zero.
+043     JOBAPR  APR trap bits currently enabled.
+044     JOBREL  LH reserved, RH is highest legal address in the lowseg.
+045     JOBBLT  LOADER: BLT  17,17      LINK:   BLT  17,17      FOROTS: pointer
+046     JOBBLT+1        CALL 1,047              EXIT 1,                 0
+047     JOBBLT+2        SIXBIT /EXIT/           0                       0
+050-065         unused (previously used by KA-10 for EXEC Push Down List).
+066     JOBMUU  Attempted MUUO stored here when trapping MUUOs.
+076-071         unused.
+072     JOBHCU  Highest software I/O channel in use.
+073     JOBPC   Program counter when job is not active.
+074     JOBDDT  Right half is start address of DDT or other debugger.
+075-114 JOBJDA  Job Device Assignments, RH points to DDB of open channel.
+114     JOBSDD  Saved JOBDDT in *.SAV files (in channel 17's slot).
+114     JOBPFI  Locations 000-114 are protected from input.
+115     JOBHRL  LH=first free loc in hiseg, RH=highest legal hiseg address.
+116     JOBSYM  <-length,,address> of DDT symbol table in RADIX-50 format.
+117     JOBUSY  Pointer to undefined symbols.
+120     JOBSA   LH=initial JOBFF, RH=starting address.
+121     JOBFF   First free address.
+122     JOBS41  Copy of JOB41 in *.SAV files, otherwise unused.
+123     JOBEXM  Last addr used by E or D command, LH negative if E.
+124     JOBREE  Alternate starting address, used by REENTER command.  (LH=0)
+125     JOBAPR  Address to call on a KA-style APR trap.
+126     JOBCNI  Simulation of KA-style CONI APR stored here on an APR trap.
+127     JOBTPC  PC flags and user-mode program counter at time of APR trap.
+130     JOBOPC  PC flags and previous program counter, for DDT and REENTER.
+131     JOBCHN  Pointer used by LOADER.SHR and F40 for FORTRAN-IV overlays.
+132     JOBFDV  Used by FINISH command, used by UUO exit if ^C was typed.
+133     JOBCOR  LH=higest location loaded, RH=user requested CORE argument.
+134             unused (JOBINT=Address of error intercepting block).
+135             unused (JOBOPS=Reserved for Object Time Systems: FOROTS,LIBOL).
+136     JOBCST  Reserved for definition by customers.
+137     JOBVER  Version number.  BYTE(3)WHO(9)MAJOR(6)MINOR(18)EDIT.
+140     JOBDA   First location available for user data.
+
+400000  JOBHGH          Normal high segment origin.
+400000  JOBHGH+JOBHSA   Copy of JOBSA (starting address).
+400001  JOBHGH+JOBH41   Copy of JOB41 (LUUO handler).
+400002  JOBHGH+JOBHCR   Copy of JOBCOR (amount of core needed).
+400003  JOBHGH+JOBHRN   LH = copy of LH of JOBREL, RH = copy of RH of JOBREN.
+400004  JOBHVR+JOBHGH   Copy of JOBVER (version number).
+400005  (JOBHNM)        unused (hiseg name, so DDT knows GETSEG has occured).
+400006  (JOBHSM)        unused (hiseg symbol table, re-read when GETSEG done).
+400007  (JOBHGA)        unused (page number of hiseg, RH reserved in TOPS-10).
+400010  JOBHDA+JOBHGH   First location avaliable for user data.
+$text UJOBDAT;User JOBDAT for TOPS-10 702.
+First 140 locations of user-mode programs.
+
+000-017         User mode accumulators.
+
+020-037         Exec mode accumulators when other job is scheduled.
+
+040     .JBUUO  Used by hardware in processing LUUOs (opcodes 001-037).
+                The entire instruction is stored here after the effective
+                address is calculated.
+
+041     .JB41   Instruction to be executed by the hardware when processing
+                an LUUO.  Usually a HALT, JSR, or PUSHJ instruction.
+
+042     .JBERR  Count of compiler errors.  This word is set to zero by the
+                COMPIL program, incremented by compiler/assembler whenever
+                a "fatal" error is detected.  LINK aborts if RH is not zero.
+
+043             reserved for use by the Monitor.  (JOBAPR)
+
+044     .JBREL  LH reserved, RH is highest legal address in the lowseg.
+                Changed by CORE UUO, set to RH of .JBCOR on RESET UUO.
+
+045     .JBBLT  3 words used by LOADER, LINK, or FOROTS(FUNCT./overlay).
+                LOADER: BLT  17,17      LINK:   BLT  17,17      FOROTS: pointer
+046     .JBBLT+1        CALL 1,047              EXIT 1,                 0
+047     .JBBLT+2        SIXBIT /EXIT/           0                       0
+
+050-073         unused (KA used 45-71 for Exec PDL, 72=JOBHCU, 73=JOBPC).
+
+074     .JBDDT  Left half is last address of DDT, if DDT is loaded.
+                Right half is start address of DDT or other debugger.
+
+074     .JBPFI  Locations 000-074 are protected from input, dump mode I/O not
+                allowed to write into these protected locations.
+
+075     .JBHSO  High segment origin.  Hiseg usually starts on page 400 or 600.
+
+076     .JBBPT  Address of DDT's unsolicited breakpoint.  If enabled, Monitor
+                simulates a JSR @.JBBPT when Control-D is received.
+
+077-111         Used by Monitor for MUUOs on behalf of user job (JOBUAL).
+                (KA used 75-114 to keep track of open I/O channels.)
+
+112     .JBEDV  Entry Data Vector - 30-bit address pointing to a block with the
+                30-bit start address, 30-bit reenter address, 36-bit version
+                number, etc.  For SYSTEM.EXE and CRASH.EXE, the EDV has the
+                address of the EPT and the SPT.
+
+113             (JOBEXM) Used by E (examine) and D (deposit) commands.
+114             (JOBSDD) Copy of .JBDDT in *.SAV files, otherwise unused.
+
+115     .JBHRL  Left half has length of high segment, right half has highest
+                legal address in the high segment (=LH+(HSO*512))
+                Nonzero if job has a hiseg.
+
+116     .JBSYM  <-length,,address> of DDT symbol table in RADIX-50 format.
+
+117     .JBUSY  Pointer to undefined symbols, DDT can be used to define
+                these symbols after program is loaded.
+
+120     .JBSA   Right half has starting address (18-bit address), left half
+                has initial value for .JBFF (may be greater than LH of .JBCOR
+                if program ends with BLOCK pseudo-op.
+
+121     .JBFF   First free address.  Set to LH of .JBSA on RESET.  Used by the
+                monitor as address to build buffers for I/O.
+
+122             (JOBS41) Copy of .JB41 in *.SAV files, otherwise unused.
+
+123     .JBPFI  Right half has start address of page fault handler, left half
+                has end address.  SYS:PFH.EXE merged in if .JBPFI is zero when
+                a legitimate page fault occurs.
+
+124     .JBREE  Alternate starting address, used by REENTER command.  (LH=0)
+
+125     .JBAPR  Address to call on a KA-style APR trap.
+126     .JBCNI  Simulation of KA-style CONI APR stored here on an APR trap.
+127     .JBTPC  PC flags and user-mode program counter at time of APR trap.
+
+130     .JBOPC  PC flags and previous program counter.  Set by the Monitor
+                by a START, CONTINUE, REENTER, or DDT command.
+
+131     .JBOVL  Pointer used by LINK.EXE and OVRLAY.REL for overlays.
+131     .JBCHN  Pointer used by LOADER.SHR and F40 for FORTRAN-IV overlays.
+
+132             reserved for use by the Monitor (JOBFDV).
+
+133     .JBCOR  Right half has amount of lowseg core requested by a GET or
+                SAVE command.  Left half has highest address explicitly
+                set by LINK.  (If less than 140, old SAVE command would not
+                generate a LOW file.)
+
+134     .JBINT  Address of error intercepting block (for trapping software
+                events such as disk full or Control-C).
+
+135     .JBOPS  Reserved for Object Time Systems (such as FOROTS, LIBOL, 1022).
+
+136     .JBCST  Reserved for definition by customers.
+
+137     .JBVER  Version number.  BYTE(3)WHO(9)MAJOR(6)MINOR(18)EDIT.
+
+140     .JBDA   First location available for user data.
+
+400000  .JBHGH          Normal high segment origin.
+400000  .JBHGH+.JBHSA   Copy of .JBSA (starting address).
+400001  .JBHGH+.JBH41   Copy of .JB41 (LUUO handler).
+400002  .JBHGH+.JBHCR   Copy of .JBCOR (amount of core needed).
+400003  .JBHGH+.JBHRN   LH = copy of LH of .JBREL, RH = copy of RH of .JBREN
+400004  .JBHVR+.JBHGH   Copy of .JBVER (version number).
+400005  .JBHNM+.JBHGH   Name of hiseg (so that DDT knows of new .JBHSM).
+400006  .JBHSM+.JBHGH   Pointer to RADIX-50 symbol table in the high segment.
+400007  .JBHGA+.JBHGH   Get address, left half has page number of hiseg origin.
+400010  .JBHDA+.JBHGH   First location avaliable for user data.
+
+The first 9 bits of .JBHGA are reserved, the right half is reserved for use as
+a pointer to a secondary JOBDAT.
+$text XJOBDAT;Exec JOBDAT for TYMCOM-X P034.
+Page    KL                      KI                KS              F3
+0   Console, Base, SA   Console, Base, SA   Console           Console
+1   EPT, interrupts     EPT, interrupts     EPT, interrupts   EPT
+2   UPT, null stack     UPT, null stack     UPT, null stack   IRING, ORING
+3        (unused)       IRING, ORING             (unused)     UPT, null stack
+4   IRING, ORING        (COMMON)            LPT data               (unused)
+5   (COMMON)            (COMMON)            IRING,ORING       (COMMON)
+    UPYPSR=4600         UPYPSR=3600         UPYPSR=5600       UPYPSR=5000
+    UNUSED=3000-3777    UNUSED=none         UNUSED=3000-3777  UNUSED=4000-4777
+
+$text EJOBDAT;Exec JOBDAT and locations in the UPT for 702.
+367000  .UPMAP  Page map for section 0 (KL only)
+370000  .UPMP   User process table (UPT) (has section map on KL)
+371000  .JDAT   JOBDAT (user's section 0 page 0)
+372000  .VJDT   Vestigial JOBDAT (first page of user's hiseg)
+373000  .TEMP   Scratch page
+374000  .JBPK   Used by JOBPEK UUO
+375000  .JBPK1    "       "
+376000  .JBPK2    "       "
+377000  .UUPMP  Cached pointer to .JDAT (.UPMP uncached for KL-SMP)
+
+Note that the UPT and JDAT are contiguous.  EJBDAT defines the EXEC PDL
+as a negative offset into JDAT.  Because the user's page 0 is mapped
+into EXEC addresses, PXCT is not needed to access JOBDAT.  TOPS-10 never
+pages out the user's page 0 unless the whole job is swapped out.
+Information not stored in the UPT or JOBDAT is stored in the PDB,
+Process Data Block.  PDBs are created dynamically, and are not stored in
+fixed locations in EXEC address space.
+
+
+Locations in the UPT
+
+370000--370377  KS: User page map, 2 mappings per word (KI-style paging)
+367777  JOBPDL  KL: RH of Exec P starts out pointing to JOBPD1-1
+370000  JOBPD1  KL: First location of EXEC PDL  (PDLLEN=154 on KL)
+370154  JOBLPD  KL: Last location of EXEC PDL
+370155  JOBEPL  KL: Pointer to extention to EXEC PDL
+370156  JOBHCU  KL: Highest channel in use
+370157  JOBPC   KL: User's program counter
+370160  JBMDDT  KL: This value copied to .JBDDT every clock tick
+370161  JOBJDA  KL: Job device assignments, one for each of 80 channels
+370201--370300  KL: Extended FILOP. channel pointers
+370301--370333  KL: unused
+370340--370377  KL: Mapping for EXEC virtual pages 340--377
+370400--370417  KL: unused
+370400--370417  KS: Mapping for EXEC virtual pages 340--377
+370420          KI: User page failure trap instruction
+370421          User arithmetic overflow trap instruction
+370422          User stack overflow trap instruction
+370423          User TRAP3 instruction
+370424          KS: MUUO stored here
+370425          KS: PC and flags at time of MUUO
+370426          KS: MUUO context word, like RDAPR, shows AC blocks in use
+370427          KS: unused
+        370424  KL: PC flags, MUUO opcode, MUUO AC field
+        370425  KL: 30-bit PC at time of MUUO
+        370426  KL: 30-bit effective address of MUUO
+        370427  KL: MUUO context word, like DATAI APR, shows AC blocks in use
+370430          New PC for normal MUUO in kernel mode
+370431          New PC for MUUO caused by a trap in kernel mode (exec PDL OV)
+370432          New PC for normal MUUO in supervisor mode
+370433          New PC for MUUO caused by a trap in supervisor mode
+370434          New PC for normal MUUO in concealed mode
+370435          New PC for MUUO caused by a trap in concealed mode
+370436          New PC for normal MUUO in public mode
+370437          New PC for MUUO caused by a trap in public mode (user PDL OV)
+370440--370477  unused
+370500          Page fail word
+370501          KS: Old PC and flags, points to failing instruction
+370502          KS: New PC and flags, address of page fault handler
+370503          KS: unused
+        370501  KL: PC flags at time of page failure
+        370502  KL: 30-bit old PC, points to failing instruction
+        370503  KL: 30-bit new PC, address of page fault handler
+370504--370505  User process execution time (E-BOX counter)
+370506--370507  User memory reference count
+370510--370537  KL: 27 unused words
+370540--370577  KL: Pointers to 37 section maps (7.02 allows only section 0)
+370600--370777  KL: 100 unused words
+370510  JOBPD1  KS: First location of EXEC PDL
+370650  JOBLPD  KS: Last location of EXEC PDL   (PDLLEN=140 on KS)
+370651  JOBEPL  KS: Pointer to extention to EXEC PDL
+370652  JOBHCU  KS: Highest channel in use
+370653  JOBPC   KS: User's program counter
+370654  JBMDDT  KS: This value copied to .JBDDT every clock tick
+370655  JOBJDA  KS: Job device assignments, one for each of 80 channels
+370675          KS: First extended FILOP. channel pointer
+370774          KS: Last extended FILOP. channel pointer
+370775--370777  KS: 3 unused words
+
+JOBDAT locations for monitor use only (ones without a .JBxxx name)
+
+371000  JOBAC   User's ACs
+371020  JOBDAC  Exec ACs, stored here by CLOCK1 before switching to new user
+371043  JOBENB  APR enable bits, simulating KA style CONI APR,43(R)
+   045          (KA monitors used 045-072 as EXEC PDL, overlapping JOBBLT)
+371050--371073  Not used on monitors with paging hardware
+371073  JOBSAV=JOBDDT-1 Address minus one for creating *.SAV file
+371077  JOBUAL  16 words for User Argument List, MUUOs done on behalf of user
+371100  JOBSV   Kludge to allow reading ancient *.SAV files from DECtape
+371103  JOBSV3  Word which is zero on an obsolete *.SAV file on a DECtape
+371113  JOBEXM  Last address for E and D commands (was 123 before VM & PFH)
+371114  JOBSDD  Saved copy of .JBDDT when processing *.SAV files
+371122  JOBS41  Saved copy of .JB41 when processing *.SAV files
+371132  JOBFDV  Finish device PC, holds start PC if REENTER in middle of MUUO
+371140  JOBDA   User data - locations 140 to 777 are not part of JOBDAT.
+
+      

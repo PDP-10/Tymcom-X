@@ -1,0 +1,296 @@
+P035/B
+------
+
+Start of development on the P035/B monitor.
+
+/A
+--
+
+This nonblank line is here to make MONED1 use P035/A as default version.
+
+
+/A01
+----
+
+LPTSER:	Remove the KS LP20 driver from LPTSER and put it in LP2SER.MAC.
+	All MONxx.CMD files for KS systems updated.  /JMS 11-6-86
+
+CPXKON:	Handle CUEND (Control-Unit end) for 3674 disk controllers.
+	When CUEND comes in on unit 300, check all Kontroller blocks for
+	waiting devices.  (Right now, there is a KON for every 16 disks,
+	which makes 3652+3674 look like 4 logical kontrollers on a single
+	physical controller.  /JMS 11-6-86
+
+COMMOD:	Define UNIOLV, Other Logical Volume for 3652 disks.  If nonzero, this
+	word points to UNISTS of the other half of the spindle.  /JMS 11-6-86
+
+FILIO:	Don't start I/O if the OLV is busy.  /JMS 11-6-86
+
+FILRIB:	Add 2 INFO stopcodes, RIBHRE = RIB error - hardware read error,
+	RIBERR = RIB error - software detected.  /JMS 11-7-86
+
+/A02
+----
+
+FILIO:	Add more to making OLV work for 3652 disks.  Disable the cylinder
+	fairness count when system is SHUT to make ASP and TITO all-files
+	RESTORE go faster.  /JMS 11-7-86
+
+COMMOD:	Change number of RIB PCBs from 7 or 14 to RPCBN=JOBS/3 with a maximum
+	of 20.  Change number of SAT PCBs from 15 or 30 to SPCBN=DISKS*3 with
+	a maximum of 63-RPCBN (PCBIO has a limit of 64).  /JMS 11-9-86
+
+SWAMP:	Output new stopcode REDSAT when SAT read errors occur.  Make BADSAT
+	come out only when SAT fails count test.  /JMS 11-10-86
+
+/A03
+----
+
+COMMOD:	Make sure that RPCBN+SPCBN does not exceed 64.  /JMS 11-12-86
+
+ONCDSK:	Don't special case capacity test for SA10 disks in ONCDSK.
+FILIO:	Put special case for capacity test here where it belongs. /JMS 11-17-86
+
+COMMOD:	A block of 1000 words was wasted in COMMOD to make sure that the
+	unit data blocks are not in the same page as anything that is
+	cached on a KL.  Define this block on all CPUs to be a circular
+	buffer of all output to the CTY.  /JMS 11-19-86
+
+UUOCON:	Fix bug in SETUUO function 10 (.STTLK not returning byte count).
+SCNSER:	Define CTYLOG to log all CTY output into CTYBUF using CTYPTR.
+	Fix bug in STTLK to use right LDB for checking IFROOM.  /JMS 11-19-86
+
+CPXKON:	Keep J pointing to original kontroller when starting 3rd or 4th string
+	on 3674 controller.  Now able to access both halves of 3652 disk,
+	successfully defined 2-pack DSKB on BPA0 AND BPC0.  /JMS 11-20-86
+
+/A04
+----
+
+COMMON:	Added to the CONFIG table (GETTAB table #11) the following:
+	127,,11 = CTYPTR,,CTYBUF - Pointer to log of all CTY output
+	131,,11 = BTSTR - address of BOOTS string
+	136,,11 = system uptime (table #12 has CPU0 uptime)
+	154,,11 = LDBSTR,,LDBDCH - offsets in LDB for aux string and DCH
+	163,,11 = -PTYN,,PTYTAB - LH has negative number of PTY ports
+	All other entries in this table up thru 163 given nonzero values
+	where appropriate.  See the TOPS-10 Monitor Calls Manual for a
+	description of these entries.  /JMS 11-26-86
+
+COMMOD:	Make global certain symbols needed by expanding GETTAB table 11.
+	126,,11 = Pointer from KDB to CDB for magtapes
+	132,,11 = Offset of DDB pointers in TUB
+	133,,11 = First MTA KDB
+	 47,,11 = Address of first CDB in LH
+	100,,11 = Pointer to first MTA DDB and offset for error logging
+SCNSER:	Make LDBSTR global for LH of GETTAB item 154 table 11.  /JMS 11-26-86
+
+UUOCON:	Add SETUUO function 14.  RH of the AC is sign-extended and stored as
+	KSYS value.  The KSYS timer decrements every minute if nonzero, and
+	warns intellegent programs that the system is going down in the
+	very near future.  The KSYS timer is stored in GETTAB table 12,
+	item 6.  Zero means the system is not going down.  /JMS 11-26-86
+
+CLOCK1:	Copy UPTIME to SYSUPT (GETTAB table 11 item 136) at clock level.
+	If channel 7 is delayed but channel 1 is still active, then these
+	two values will be different.  Normally they are the same.  /JMS 11-26-86
+
+SCHED1:	Define a name for the NONAME stopcode in SCHED1 at NAILI2+3.
+	STOPCD(.,JOB,NAILI3,,<Counts and CFRLST don't agree in NAILIT>);NAILI2+3
+/JMS 11-26-86
+
+COMCON:	Add SET KSYS nn command.  Modify DAYTIM command to output the message
+	"Timesharing ceases in nn minutes" if KSYS is set.  /JMS 11-28-86
+
+ONCDSK:	Output "=B0" for unit with DSKB0, "=B1" for DSKB1, etc.  /JMS 11-28-86
+
+/A05
+----
+
+COMMON:	Disable KAF (Keep Alive Failure) when DEBUG command is typed
+	in ONCE dialog.  /JMS 12-2-86
+
+SCNSER:	Change the default terminal width for aux circuits from 72 to 80
+	columns.  All TID's for "A" now 80 for all speeds.  /JMS 12-3-86
+
+COMMOD:	Change MFDRIB::0 to "MFDRIB::BLOCK MFDSZ" and "SYSRIB::BLOCK SYSSZ".
+	MFDSIZ is 29 to handle 1 RIB + 4 sets of 7 pages, SYSSZ = 15.
+	Add SPUFDS, a list of special UFDs to watch out for.
+ONCDSK:	Set SYSRIB when MFDRIB is set from the HOM pages.
+FILRIB:	When reading UFD, if its RIB matches any one in SPUFDS, then copy
+	the pointers to the UFD data pages.  /JMS 12-4-86
+
+COMMOD:	Could not run a monitor with 8 strings of disks defined because the
+	symbol %SYS100 was stored as %SYS10.  Shortened prefix to "%SY" to
+	handle 64 disks and pointer to nonexistant 65th.  /JMS 12-4-86
+
+MAPIO:	Add STOPCD(.+1,DEBUG,MAPFAL,,<Map failure - 2nd bad SAT referenced>)
+	MAPIO can run with 1 bad SAT, but not 2.  /JMS 12-8-86
+
+FILFND:	Move GETCBR to before GETATB at DECRMV to stop FILAMO crashes.
+	Add PRTATB to print ATB on FILAMO, FILAUO, FILAUU, and FILAUS
+	crashes (F was not pointing to the DDB)  /JMS 12-9-86
+
+SWAMP:	Call PRTDDB on BADSAT (not usually output for INFO stopcodes).
+COMCON:	Output block in decimal and page in octal in PRTDDB.  /JMS 12-10-86
+
+MONBTS:	Zap the F3's base on a 146 restart.  /JMS 12-10-86
+
+/A06
+----
+
+CORE1,MAPIO,PCBIO,SWAMP: Change "%SAT(AC)" to "%SAT+FBITS(AC)" and
+	"%SAT+400(AC)" to "%SAT+MBITS(AC)" so it will show up in CREF.
+MAPIO:	Make sure STTFPC is correct when mapping a private age. /JMS 12-11-86
+
+CORE1:	Add EVENT stopcode BADPAG to notify CTY when releasing a bad page
+	that is not already marked in the BAT pages.  /JMS 12-11-86
+
+UUOCON:	Fixed bug in SETMAI, calli -145 to reference JOBN with CAIL instead
+	of CAML.    /WRS 12-12-86
+
+ONCDSK:	Rewrite self pointer in BAT page after reading them.  Now the BAT
+	pages work again (probably broken way back when the RIBs went from
+	blocks to pages).  /JMS 12-12-86
+
+/A07
+----
+
+COMMOD,FILRIB: Change SPUFDS table to use negative LH.
+SWAMP:	Put in check to make sure the pages of [1,1].UFD and [1,4].UFD
+	are never returned on GETPAG/GETAPG.  This is to catch when the
+	SAT bits for those pages are wrongly cleared.  /JMS 12-12-86
+
+SWAMP:	Define new entry point GETUPG to get a page on the unit with the
+	most space (even if it hast to read in a new SAT).
+FILUUO:	Call GETUPG when createing a RIB on ENTER uuo.  /JMS 12-12-86
+
+MONBTS:	Output extra CRLF before and after "BOOTS loaded".  /JMS 12-15-86
+
+/A08
+----
+
+FRMSER:	Define JBYNIC:: and .IANIC as frame interrupt cause (02) to mean
+	Notice-to-quit In Child frame.  The parent frame will receive an
+	interrupt if the child frame is evicted.
+
+CLOCK1:	In the inactivity timeout code, just prior to checking for any
+	activity by the child, check for .IANIC for the frame and cause
+	the interrupt, otherwise if the run bit is set, check for .IANTQ
+	as before and kill the job.
+
+PICON:	Modify the EVICT uuo to understand bit 16 to ignore .IANIC and
+	perform as before.  The parent must issue this EVICT to actually
+	interrupt the child.  If bit 16 is clear, first check for .IANIC
+	and interrupt the parent (if any), then check .IANTQ to kill the
+	job.  As before, bit 17 says really kill/interrupt the job rather
+	than just return the interrupt channel.  /CARL 12-18-86
+
+/A09
+----
+
+CLOCK1,UUOCON:	Make sure day of week is correct when date/time are set
+	manually.  /JMS 12-19-86
+
+FTASER:	Define STOPCD(.,JOB,FTACFC,,<FTA error - Cannot Find Command> at
+	SGPREV+3.  All the KAF(KEYSET+14) stopcodes on 28 pointed to this
+	area.  If T1 did not have the expected value, the routine would
+	search all 256K of virtual core looking for it, SCNSER complained
+	that it hadn't run for over 60 seconds.  This does not solve the
+	problem though - it seems to be caused by attempting to recover
+	from a read error at 1600 bpi.  /JMS 12-19-86
+
+
+CORE1:	Check primary BAT page first, secondary BAT page second.
+	Add name to STOPCD at CORE1+3354, PCBFL1 at PCBFLT+4.  /JMS 1-2-87
+
+SWAMP:	Add name to STOPCD at SWAMP+460, GTSAP1 at GTSAP0+7.  /JMS 1-2-87
+
+ERRCON:	Store PC in JBTPC(J) on user-mode page failures.  /JMS 1-2-87
+
+FILRIB:	Fix bug from /A05 that would cause stopcode after REFRESH.  Data for
+	SPUFDS was in %RB2 instead of %RIB.  /JMS 1-7-87
+
+F3TSER:	Use %MTA and %MTE instead of %ONC when addressing physical memory.
+	This bug caused random context pages (%UPS) to get wiped out if a
+	single dump-mode transfer was more than 15 pages.  /JMS 1-10-87
+
+/A10
+----
+
+REFSTR:	In SPGCRE and FEFILE creation code fixed the RIBALP addition that
+	was overwriting index 36 (=RIBALP) in the spare rib with erroneous
+	information.  Also modified ADDPAK code for same.  /CARL 1-17-87
+
+/A11
+----
+
+REFSTR:	Fix code for SPAGES and FEFILE to get the allocated page counts
+	right.  (Forgot to add 1 for prime rib)  /CARL 1-18-87
+
+/A12
+----
+
+CPXKON:	Add table of contents, add comments.  /JMS 1-27-87
+
+BP5KON:	Add code from CPXKON to restart all units on kontroller (a 3674
+	with 4 strings acts like 8 logical strings).  /JMS 1-27-87
+
+MAPIO:	Fix off-by-one bug which occurs only when trying to super-map a
+	bunch of pages, and the request gets split between two units.
+	CAMG M,UNIPPU(M) is now CAMGE M,UNIPPU(M).  /JMS 1-27-87
+
+/A13
+----
+
+FILIO:	Watch out for OLV (3652) in SEEK uuo.  /JMS 1-29-87
+
+COMMOD:	Define SAXBUF in the other 1000 word filler block.  /JMS 1-30-87
+
+BP5KON+CPXKON:	Store SA10 status in SAXBUF.  Make BPXHRD and BPXSFT labels
+	for two different POPJs so that DDT breakpoints can be hung on them.
+	Set bits 1-8 of UNICHR to 1 record per block when formatted in blocks,
+	or 4 records per block when formatted in pages.  /JMS 1-31-87
+BPXKON:	Same, except no store in SAXBUF.  /JMS 1-31-87
+
+/A14
+----
+
+CPXKON+BP5KON:	Add test for device busy (3652 contention problem).  It is
+	not an error to get BUSY alone; just restart the transfer when
+	DEVEND comes in without CHEND.  /JMS 2-3-87
+
+/A15            (OSP) now contains sources for P035/B
+----
+
+Renamed the following files.
+CLOCK1.MAC => CLOCK1.A14,  CLOCK1.A03 => CLOCK1.MAC
+COMCON.MAC => COMCON.A14,  COMCON.A03 => COMCON.MAC
+COMMOD.MAC changes kept for /B01 (UNIOLV for 3652 disks)
+COMMON.MAC => COMMON.A14,  (OSP)COMMON.MAC copied (for CTYLOG)
+CORE1.MAC => CORE1.A14,  CORE1.A05 => CORE1.MAC
+CPXKON.MAC changes kept for /B01 (same as in OSP)
+ERRCON.MAC => ERRCON.A14,  ERRCON.A03 => ERRCON.MAC
+F3TSER.MAC changes kept for /B01 (affects F3 only)
+FILFND.MAC changes kept for /B01 (FILAMO fix)
+FILIO.MAC changes kept for /B01 (UNIOLV for 3652 disks)
+FILRIB.MAC => FILRIB.A14,  FILRIB.A00 => FILRIB.MAC
+FILUUO.MAC => FILUUO.A14,  FILUUO.A06 => FILUUO.MAC
+FRMSER.MAC => FRMSER.A14,  FRMSER.A07 => FRMSER.MAC
+FTASER.MAC => FTASER.A14,  FTASER.A08 => FTASER.MAC
+LPTSER.MAC no changes (LP2SER was extracted from it)
+MAPIO.MAC => MAPIO.A14,  (OSP)MAPIO.MAC copied over (off-by-one bug)
+MONBTS.MAC changes affect F3 and KS only
+ONCDSK.MAC => ONCDSK.A14, kept only code to type DSKB logical names
+PICON.MAC => PICON.A14,  PICON.A07 => PICON.MAC
+REFSTR.MAC changes kept for /B01 (SPAGES fix)
+S.MAC changes kept for /B01
+SCHED1.MAC kept (noname stopcode was given a name)
+SCNSER.MAC => SCNSER.A14,  SCNSER.A02 => SCNSER.MAC
+SWAMP.MAC => SWAMP.A14,  SWAMP.A01 => SWAMP.MAC
+UUOCON.MAC => UUOCON.A14,  UUOCON.A02 => UUOCON.MAC
+/JMS 2-6-87
+
+
+
+    

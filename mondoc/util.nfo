@@ -1,0 +1,385 @@
+$menu UTILITY;Utility programs.
+*(MONDOC)ASP.DOC:ASP;Absolute Structuresaving Program.
+*(MONDOC)UTIL.NFO:ASSHOL;Lists AssHoles (SCHPRV).
+*(MONDOC)UTIL.NFO:AUXDDT;AUX circuit Dynamic Debugging Tool.
+*(MONDOC)AUXIO.DOC:AUXIO;Aux Circuit and dialout utility.
+*(MONDOC)ERRCHK.INF:ERRCHK;Disk Error Reporting Program.
+*(MONDOC)FRMDDT.DOC:FRMDDT;Frame DDT special features.
+*(MONDOC)UTIL.NFO:MASQUE;Masquerade as another user.
+*(MONDOC)MHX.DOC:MHX;Do commands on many systems.
+*(MONDOC)READST.HLP:READST;Read statistics from CHKPNT DAT files.
+*(MONDOC)UTIL.NFO:SCAN;Scan stream accounting files.
+*(MONDOC)UTIL.NFO:SNARF;Snarfs job from another terminal.
+*(MONDOC)UTIL.NFO:SPOOL;A better way to spool files.
+*(MONDOC)UTIL.NFO:TAPE;Scan TITO tape directories.
+*(MONDOC)UTIL.NFO:X1200;Xerox 1200 tape writer.
+
+$text snarf;Snarfs jobs from another terminal.
+The SNARF program will perform the following functions:
+
+	Poke JBTPRV of other job to Continue on Disconnect
+	do a Hang uuo to detach the other job
+	Poke JBTPRV back to what it was
+	do an ATTACH uuo to attach to the other job
+	log out the old job
+
+It requires WC,RC,SY,JL licenses.
+
+
+$text masque;Masquerade as another user.
+Those with WC,RC, and SY set may give the command
+    R(MPL)MASQUE;<username>
+and immediately become that user.  It will appear to
+the system that you had logged out and logged back in
+under that user name.  Your current directory will 
+remain the same (ie if you were logged in as WRS and not
+GFD'd anywhere, then said R(MPL)MASQUE;OPER, you would
+appear to be logged in as OPER and GFD'd to WRS).
+All .TMP files and TMPCOR files are preserved.  In fact
+you are never logged out at all.  The program pokes
+into JBTUNM,JBTUN1 and JBTAUN.  No stream accounting
+records are written.
+
+
+$text luddy;Make changes to LUD and DUL.
+This program actually does some hacking to make you look like
+user CUD10 and then runs SYS:UPDLUD at start address MINUS 1.
+This is the debugging address and will cause the program which
+normally talks in binary to another program over an aux circuit
+to talk in english.  The program may not be run if you are GFD'd
+somewhere.  When you ^C out of UPDLUD, the next command you
+give will cause LUDDY to run again and put back the things it
+hacked up about you.  Your command will then be reexecuted for
+real.  The only difference is an extraneous prompt (.).
+The next page shows the options currently available in UPDLUD
+from a non-accounting host.  Be careful - it's deadly!
+
+
+.r(mpl)luddy
+*?
+YOU HAVE THE FOLLOWING OPTIONS:
+1       DELETE A USER FROM LUD,DUL
+2       ADD A USER TO LUD,DUL
+3       CHANGE A USER NAME IN LUD,DUL
+4       CHANGE PRIVILEGE BITS IN LUD,DUL
+5       CHANGE QUOTA
+6       LIST USER MAILING ADDRESS (370 SLAVE ONLY)
+7       LIST ALL USERS IN THE LUD
+10      CHANGE DISTRICT IN LUD
+11      CHANGE TIME ZONE IN LUD
+20      LIST LUD ENTRY
+21      LIST ALL USERS FOR A GAN (LUD ENTRY)
+22      CHECK NAME IN LUD,DUL
+23      MOVE USERS - LIST LUD INFORMATION
+24      MOVE USERS - INPUT LUD INFORMATION
+25      DELETE ALL USERS FOR AN ACCOUNT
+26      LIST ALL USERS FOR A GAN
+*0
+.
+
+
+$text DIRED;Directory editor for ADM3's.
+The DIRED program will display a subset of the current directory
+on the screen and allow you to move around within the directory
+and optionally mark or unmark files and type files.  When a file
+is typed, your place in the directory is remembered and when you
+have seen enough of the file, you are returned to it intact.
+
+When you exit from the program, a file will be written called
+DIRED.CMD (it is a temp file).  The file will have the names of
+all the files which were selected or marked durring the session.
+One to a line.  You may then say DEL @DIRED or use it with the 
+COPY program or any such thing.  The DIRED.CMD file will disappear 
+when you GFD anywhere or logout.
+
+
+While, DIRED is running, files are selected and deselected by
+combinations of the following single character commands:
+  +;    Named files will be selected (default)
+  -     Named files will be deselected
+  :     Names all files from cursor to next file named
+  [     View top page of directory
+  ]     View bottom page of directory
+  ^     View next page of directory
+  .     ReView the current page of the directory
+  =_    Peek at the file named next
+  <lf>  View previous page of directory
+  <esc><ctrl-D><ctrl-C>  Exits from DIRED and writes command file
+A file is 'named' by typeing the single letter shown in the left
+margin.  A range of files may be named by typeing <letter>:<letter>.
+
+
+$text tape;Finds files in TITO tape directories.
+(MPL)TAPE.sav may be used to search for any number of wild-carded
+file names on any number of TITO format tapes.  The files ######.TID
+must exist in the current directory where ###### is the TID assigned
+by the tape librarian for the tape.  These files should contain a
+TITO written directory of the tape they are named after.  The program
+will take "*" and "#" wild cards in file names seperated by commas.
+
+Note that all copies of a given file are shown in the order in which
+they appear on the tape.  It is up to the user to find the one he
+wants if they are different.  When submitting a batch request, it is
+helpful to the operators (and recommended) to give the tape position
+of the file you want restored.
+
+
+.dir *.tid
+7385    TID     131  23-APR-79
+23360   TID       6  12-APR-79
+18288   TID       7  26-SEP-78
+
+.r(mpl)tape
+Targets: pager.*,edit##.*
+TID     CREATION DATE    CHKSUM POSITN  FILENM EXT 
+7385    15:37 24-OCT-77  VAXVIC    721  EDITOR.MAC
+7385    15:36 24-OCT-77  RIXSOX   1053  EDITOR.CMD
+7385    17:44 10-AUG-77  GEVVOD   2001  EDITOR.OLD
+7385    09:04 08-NOV-77  REYFUN   2020  EDITOR.MIC
+7385    13:54 28-JAN-77  WIQLUS   2123  EDIT  .SAI
+7385    10:04 03-MAY-78  TENVIQ   2204  EDIT  .COD
+7385    10:35 08-MAY-78  SEMSEF   2205  EDIT  .MOD
+7385    10:35 08-MAY-78  YENLUR   2206  EDIT  .CMN
+7385    10:35 08-MAY-78  MAJDOQ   2207  EDIT  .SDM
+7385    10:36 08-MAY-78  REQNIM   2210  EDIT  .CMT
+7385    10:54 11-NOV-77  DIGNIY   3002  EDIT10.SHR
+7385    10:51 11-NOV-77  YONCAG   3003  EDIT10.MAC
+7385    10:54 11-NOV-77  JAMFEK   3004  EDIT10.MEM
+7385    12:30 28-JUL-78  FITKON   4166  EDIT10.SAI
+7385    11:25 03-OCT-78  HIBTAQ   5143  PAGER .SAI
+7385    11:26 03-OCT-78  ZIYWUN   5144  PAGER .SAV
+7385    01:10 12-DEC-78  BIFCIT   5431  EDIT10.INI
+7385    21:10 19-SEP-78  XUXPAS   7122  EDIT10.LRC
+7385    13:55 05-DEC-78  VAGMON   7125  EDIT10.MAC
+7385    13:58 05-DEC-78  KOFGOX   7127  EDIT10.BUG
+End of SAIL execution
+
+
+$text X1200;Xerox 1200 tape writter.
+This program will write a X1200 formatted EBCDIC tape for use
+on the X1200 printer.  The format of the tape is documented 
+elsewhere.  The program asks for a tape drive name and sets the
+density to 1600 bpi (no choice).  It then will accept file names
+to be written to the tape.  The first page of each file contains
+the file name overlaid on the first page of whatever is in
+X1200.CVR (the cover page).  No formatting is done by the
+program except that it allows a variable left and top page margin.
+It is recommended that the left margin be a multiple of 8 for
+the sake of tabs.  The top margin works out good at about 3 or 4.
+The pages are printed by the X1200 in landscape format (sideways)
+on 8.5x11 inch bond.  66 lines of 132 characters (same as big
+LPT paper) may be put on a page (less margins).
+The program will accept command files containing the files to
+be storred on the tape.
+
+
+$text LKBDDT;Lookup BlocK Dynamic Debugging Tool.
+The program LKBDDT is loaded with user DDT and has several
+symbols defined as well as some UUOs to aid in hacking Lookup blocks.
+When the program is first run, it asks for a file name.  This may
+be simply answered with a <cr>.  If a filename is given, it is
+parsed and placed in the lookup block but nothing else is done.
+Below are some of the goddies shown in an example run.  The H uuo
+is executed with <escape>X to get help.
+
+.r(mpl)lkbddt
+FILE: 
+h$x
+OPERATIONS ARE PERFORMED BY EXECUTING SPECIAL UUO'S:
+L$X     - LOOKUP FILE
+R$X     - RENAME FILE
+E$X     - ENTER FILE
+C$X     - CLOSE FILE
+S$X     - SCAN TERMINAL FOR FILENAME
+Q$X     - RETURN TO MONITOR
+q$x
+EXIT
+.
+
+
+$text ASSHOL;Lists AssHoles (SCHPRV).
+The ASSHOLe program will print the following information about
+any job currently logged in with SCHPRV set in JBTSTS...
+    Job number
+    User name
+    Program name
+    Run state
+
+
+$text MDDT;Monitor DDT.
+This quick hack actually gettabs the name of the running system
+and decides which FileDDT it should run and runs it on either
+(M33) (OSCURRENT) or () whichever it is found on first.  This
+is useful for pokeing around in core without worring about
+getting the right filddt.
+
+
+$text AUXDDT;AUX circuit Dynamic Debugging Tool.
+The AUXDDT program allows debugging programs which expect to
+be a slave to a master over an auxilary circuit.  Such programs
+as KLDCP (APT10 protocal) and UPDLUD, etc.  The program first
+asks for a username to build the circuit to (prompt is "*").
+It then builds the circuit and enters conversational mode.
+The following commands then work:
+
+"<string>       Sends string as is
+'<string>       Same as " but with parity
+^<string>       Sends the string as control chars (subtracts
+                '100 from them)
+.<decimal#>     Sends character with given ascii code
+!<decimal#>     Same as . but with parity
+#<octal#>       Breaks # into 4 bytes (high order 1st)
+#n:<octal#>     Breaks # into n bytes (high order 1st)
+=<octal#>,<octal#> ... <octal#>
+                Displays value of given bytes packed into
+                an integer (all in octal) - opposite of #
+$               Zaps circuit and returns to monitor
+(<string>)      Sends string in 4 byte words, last word has
+                the sign bit on (parity)
+<octal#>        Sends character with given ascii code
+?               Types this message
+B<decimal#>     Sets the value of BYTE!SIZE to given number
+                defining the number of bits in a byte for
+                # and = commands only.
+W<decimal#>     Sets the value of WORD!SIZE to given number
+                defining the number of bytes in a word for
+                # command only
+
+Note: this program doesn't work very well...
+1) It screws up echoing
+2) It ill mem ref's because it does bad things in SAIL immediate
+	interrupts.  
+
+
+$text scan;Scan stream accounting files.
+SCAN allows the stream files to be scaned selectively extracting
+only wanted events.  The following criteria may be used to select
+events to be listed:
+    User name logged in to
+    Program run from given directory
+    Program run of given name
+    User logged in to given node
+    User logged in to given port on node
+    Accesses to programs not in AUN directory
+    Accesses to programs other than (SYS)RPG
+    All of a given type (or group of types) of records
+
+All querys accept a <cr> to mean all.
+The program may be detached if output is routed to a file.
+Below is an example:
+
+
+.r(mpl)scan
+Version 2
+Output to (File,Term or Both): T
+Username to watch (or <cr>): GBLOOD
+Program to watch ([(user)][file]): 
+Exclude owner? 
+Exclude SYS:RPG? 
+Node to watch (or <cr>): 
+Port to watch (or <cr>): 
+Start date (mon,day,yr): 4,16,79
+Number of days: 1
+Include record types (type list, "?" or <cr>): ?
+  RUN? y
+  EXIT? y
+  NEXIT? y
+  SETNAM? y
+  START? y
+  REENTER? y
+  DDT? y
+  PJC? y
+  XCHARGE? y
+  INIT? y
+  PUTLSA? y
+  SETLIC? y
+  SETE? y
+  RUNLIC? y
+  LOGIN? y
+  LOGOUT? y
+
+Reading file 041679.SAT
+APR 15,79 17:23:54 #4(GBLOOD) LOGIN WCO6E:3 TID=E
+APR 15,79 17:23:54 #4(GBLOOD)  PJC=GBB,VFY=0
+APR 15,79 17:23:54 #4(GBLOOD) SETLIC (SYS)LOGINN LIC=0,,0
+APR 15,79 17:23:54 #4(GBLOOD) NEXIT (SYS)LOGINN
+APR 15,79 17:23:56 #4(GBLOOD) RUN (SYS)SETE
+APR 15,79 17:23:56 #4(GBLOOD) PUTLSA (SYS)SETE03 LIC=0,,0
+APR 15,79 17:23:59 #4(GBLOOD) NEXIT (SYS)SETE
+APR 15,79 17:24:06 #4(GBLOOD) RUN (SYS)SETE
+APR 15,79 17:24:06 #4(GBLOOD) PUTLSA (SYS)SETE03 LIC=0,,0
+APR 15,79 17:24:09 #4(GBLOOD) SETE (SYS)SETE LIC=0,,775617
+APR 15,79 17:24:09 #4(GBLOOD) NEXIT (SYS)SETE
+APR 15,79 17:24:15 #4(GBLOOD) RUN (SYS)NONAME LIC=777617,,775617
+APR 15,79 17:27:35 #4(GBLOOD) NEXIT (SYS)NONAME
+APR 15,79 17:27:37 #4(GBLOOD) RUN (SYS)LOGOUT LIC=777617,,775617
+APR 15,79 17:27:37 #4(GBLOOD) SETLIC (SYS)LOGOUT LIC=775617,,775617
+APR 15,79 17:27:37 #4(GBLOOD) SETLIC (SYS)LOGOUT LIC=777617,,775617
+APR 15,79 17:27:38 #4(GBLOOD) LOGOUT
+End of SAIL execution
+
+
+$text spool;A better way to spool files.
+Tired of the cretinous SPOOL program?  Use (MPL)SPOOL!
+This allows abbreviated commands to be entered to SPOOL.
+(MPL)SPOOL actually builds a command file and runs the
+real spool (on SYS).  The program expects to find a file
+SPOOL.DEF on your AUN directory which contains your default
+options (such as your name and extension).  These are only
+defaults and are used only if the are not overriden by the
+commands entered at run-time.
+
+
+Below is the syntax for a command to SPOOL.  The SPOOL.DEF file
+should contain only a <switch-list>.
+
+<command-line> ::= <file-list>[/<switch-list>]
+<file-list> ::= <file> [,<file-list>]
+<switch-list> ::= <switch> [/<switch-list>]
+<switch> ::= NAme=<requestor's-name>  |
+        PHone=<requestor's-phone>  |
+        PRoject=<project-code>  |
+        PAper=<type-of-paper> [-<number-of-parts>]  |
+        Tty  |  Big  |  Small  |
+        Head  |  NOHead  |  Lines=<lines-per-page>  |
+        Fortran  |  NOFortran  |
+        Indent=<margin> 
+        NODe=<node-number>  |  Center  |  Remote  |
+        Deliver=<delivery-method>  |
+        Address=<delivery-address>  |
+        INStructions=<additional-delivery-instructions>  |
+<delivery-method> ::= Mail | Officemail | Courier | Pickup
+
+
+An example of running SPOOL.  Notice that it returns all of the
+information normally returned by SPOOL.  For canceling and so
+forth, you must use the real SPOOL.
+
+.r(mpl)spool
+Version 3
+*(mpl)copy.sai/pap=tty
+    5  PAGES        (MPL)COPY.SAI
+Total of 1 files, 5 pages: request # 37654
+*q
+.
+
+$text PIP;DEC Peripheral Interchange Program.
+A note about rewinding magtapes using PIP:  I don't remember how
+I found out about this command, but it was useful when I was
+debugging magtape SAVEGET:
+.r pip
+*FTA#:(MW)_
+*^C
+rewinds FTA#.
+.
+Also of interest is the /V switch:
+.r pip
+*TTY:_filename.MAC/V
+*^C
+will show all lines containing a < or > character and will print
+the nesting depth in the left margin...for example...
+01 hello testing <
+02 this goes down < another level
+03 < and another
+01 and here >> goes all but one
+00 and here is the last > one

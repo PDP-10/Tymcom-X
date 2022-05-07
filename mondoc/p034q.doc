@@ -1,0 +1,248 @@
+
+STOPCD mechanism:
+    Don't check core blocks while translating PPN to username.  [FILAUS]
+    Add DSKCLN routine to set needs-full-DSKCLN and continue.  [SIMUUX,WRTSAT]
+    Fix JOB STOPCDs to not reload the system when typeout was specified.
+    Change definition.  Add "STOPCD(,ENTRY,module)" at module start.
+    .CPLOG contains hardware designation in LH, PDP-10 base number in RH.
+    Add UPTUUO to remember original user-mode UUO just before UPTPDL.
+    Output UPTUUO if the UUO return address does not match UPTMUP.  [EXEC UUO]
+    Don't initiate a channel 7 (clock interrupt) during typeout.
+    Output to CTYLDB for EVENT and INFO stopcodes
+    Translate [1,4]=(SYS) without scanning core blocks.
+    Output more info on NONAME stopcodes.
+    Allow HALT,JOB,CPU,DEBUG,DISK to interrupt INFO,EVENT without recursion.
+    Set DEBUGF on non-F3 to reload on JOB and DEBUG stopcodes.
+    Make INFO and EVENT do PUSHJ P,NODIE to be processed differently.
+    Add type PATCH, format:  %% PATCH stopcode FOOBAR at 25-Jun-86 17:11
+    Never execute self modifying code (CRSDEV,CRSMAP) more than once.
+    Add label DIEDDT at a JFCL that is executed when a serious stopcode
+	occurs (not for INFO, EVENT, or PATCH stopcodes).
+    Change 1 Control-B to use DIEDDT instead of DIE+3 as breakpoint.
+    JRST CTYBRK on ^Z B while in CONSOLE mode, or ^Z on CTY in NETWORK mode.
+    Fix code in CPUSTS to work properly on KL.
+    Record CPU status block for all but EVENT/INFO/PATCH stopcodes.
+    Never enable channel 1 interrupts anymore.  CTYTYO updates the key.
+    Update the KEY via JSP T1,UPDKEY.
+    Nonzero in 30 always checks to see if it is base initiated.
+    Keep track of IRING/ORING/CLOCK timing for EVENT BASEOK/NOBASE.
+    Fix INFO on KI, definition of IG.LLH is (1B0) not 1B0.
+    Always output contents of KEY620 when nonzero in 30.
+    Use different RDERA and SBUS diag locs on parity error, STOPCDs and BOOTS.
+    Decode the APR error bits on any fatal APR error.
+
+
+STOPCDs changed:
+    WRTSAT from INFO to DSKCLN
+    Make SIMUUX call DSKCLN and output more data on which uuo failed.
+    Make WRTSAT call DSKCLN and output unit # and page #.
+    Make INFO/JOB in modules COMMON,FILIO,FILUUO,SWAMP use DSKCLN.
+    Make SIMUUF [FCR.E+4] output PC and number of free pages.
+    Don't output long message from DEPOSIT-NONZERO-IN-30.  [DM30.1]
+    Fix ILLINS when supervisor tried to kill a job without license.  [EVICT]
+    Add STOPCD(.,STOP,PGEUOR,PRTPGU,<Paging error: Unit out of Range>).
+    Add STOPCD(.,STOP,PFLJB0,,<Page fault in the null job>) at USRFLT+1.
+    Add STOPCD(.,STOP,PFLJB0,,<Page fault in the null job>) at PAGFLU+15.
+    Add STOPCD(.,INFO,BASE,,<Base crashed>) if nonzero in 30 = base, key # 4
+    Add STOPCD(.,STOP,BASE04,,<Base detected bad message from 10>) if key = 4
+    Add NOWRIT if all the disks are write-protected at CTLFN1+7.
+    Output ORING and IRING pointers on CTYBMT stopcode.
+    Add DDBCNE(DDB Chain has No End) to prevent loop in DDB chain.
+    Add KAF if SCNTIC not run at channel 7 for more than a minute.
+    Die with DDBCNE if DDB chain is garbaged while removing a TTY DDB.
+    Make BADSAT output more information.
+    Fix MAPAL1 caused by a bad sat.
+    Output more info from the MAP instruction on an IME.
+    Output both J and JOB on PAGZER stopcodes (UPT is zero).
+    TTYBMT and TTYBPN output more information about ring and message pointers.
+    Output disk unit and page number when SWPZER occurs (alias PGEZER).
+
+
+3650 Disk support:
+    All disk I/O is done in pages, except low-level RM03, RP06 and 3330 code.
+    Determine type of disk by trying to SEEK to cylinder 600.
+    Determine format of disk by reading the COUNT field of record 1.
+	0: 3650 in blocks,   103875 pages total (used to be 3330-I in blocks)
+	1: 3330-II in blocks, 68680 pages total (old standard)
+	2: 3650 in pages,    116550 pages total (new)
+	3: 3330-II in pages,  76760 pages total (new)
+    New module MONBTS with disk-independent BOOTS code.
+    Add DSKTYP=^D<3330> or ^D<3650> to configuration files.
+    Don't put pages in OHT if running READONLY, to get ASP working.
+    Make LODBTS understand 3650 formatted in pages.
+    Rename 3650 device driver to CPXKON, restore old BPXKON from (OSP).
+    Add FTDPAG feature test, nonzero if FILIO requests pages.
+    Add FTDPAG feature test so KI/KL can run with old BPXKON.
+    Allow FTDPAG=0 for block-by-block recovery of bad spots on disks formatted
+	in blocks.
+    Fix bug where read error on first block of a page would cause PGEZER.
+
+
+Commands changed:
+    Change PJOB to output more information. 
+    Equate TERMINal command with TTY command.
+    Add SUBMIT to run SYS:SUBMIT.
+    Add WHERIS to run RPG (add WHE to still run SYSTAT for WHERE).
+    Add .DSKCL and FINISH to forced command table.
+    Allow "!" in addition to ";" for comments at command level.
+    Output reminder to set date and time every prompt until it is set.
+    Add TYMVAL command to run (SYS)TYMVAL.  ("TYM" is still valid for TYMEX).
+    Fix TALK JOB 0 to not crash.
+    Output prompt if ^T (USESTA) typed in command mode.
+    Output bell in TALK message.
+    New VERSION command to use either Tymshare or DEC version formats.
+	DEC: byte(3) WHO (9) MAJOR (6) MINOR (18) EDIT  MAJ MIN (EDIT)-WHO
+	TYM: byte(18) VERSION (18) RELEASE              VER.REL
+    VERSION command also prints program name before version.
+    Add MOVE, DUPLIC, and ZAP to commands which run programs from SYS:.
+    Make TTY TYPE 1 do SET TTY D 15 for MAGNUM and SET TTY KATAKANA on TYMSAT.
+    Make TTY TYPE VT100 same as TTY CLASS VT100 for text arguments.
+    Add DISABLE command to save frame license then turn off license.
+    Add ENABLE to set frame license back to what was DISABLEd.
+
+
+Configuration info:
+    Add TIMZON=^D<-8> to configuration files for Pacific Standard Time.
+    Allow SETE passwords and licenses to be specified at config time.
+    Complain if the APR serial number does not match configuration.
+    .CPLOG contains hardware designation in LH, PDP-10 base number in RH.
+    Add FTDPAG feature test, nonzero if FILIO requests pages.
+    Add FTDPAG feature test so KI/KL can run with old BPXKON.
+    Allow FTDPAG=0 for block-by-block recovery of bad spots on disks formatted
+	in blocks.
+    Add DSKTYP=^D<3330> or ^D<3650> to configuration files.
+
+
+Homogenious disks:
+    Add pointer to front-end file for KS to the home page.
+    All disk units have 3 [NBOOTP] boot pages starting at page 3 [FBOOTB].
+    First SAT page is now 10 [LPNSAT] on all processors.
+    KS-10s have conditionals for FEFILE.SYS and pointers in HOMFEP, UNIFEP.
+    HOMSPG points at rib for SPAGES.SYS spare pages file on all disks.
+    DSKCHR returns UNIFEP as word ^O<12>.
+    Output the physical unit name and pack-id on all disks.
+
+
+
+Partitioned disks:
+    HOMSPS contains system structure pack set id and system number.
+    DSKCHR returns STRSID as word ^O<17>.
+    DSKCHR uuo tests for STRucture using presence of a DDB pointer.
+    All STRDDB references loop through all structures using STRNXT.
+    Check space on all structures during once-a-minute code and CORE.
+    Changed MOVE/MOVEM which act on HOMP4C and STRP4C to HRRZ/HRRM.
+    Modified the SYSSTR UUO to really work for multiple structures.
+
+
+New Base:
+    When nonzero is detected in 30, check if KEY620 is 0 or 633751506262.
+    If neither, then STOPCD(.,STOP,BASE,PRTCRS,<BASE initiated crash>).
+    Add STOPCD(.,INFO,BASE,,<Base crashed>) if nonzero in 30 = base, key # 4
+    Add STOPCD(.,STOP,BASE04,,<Base detected bad message from 10>) if key = 4
+    Add STOPCD (.,STOP,BASE04,PRTCRS,<Bad message type from host>) or
+    Add STOPCD (.+1,INFO,BASE,PRTCRS,<BASE has crashed - bad KEY620>).
+    Nonzero in 30 always checks to see if it is base initiated.
+    Don't crash base with bad address when BIO port zapper sneeks by.
+    New handling for message types 3 and 4 from the EBUS base.
+    The 2020 still uses type 3 to determine how many DR11s are on the KMC-11.
+    Store BASVER as gettab location NSWTBL+4.
+    Change %CHRMX to ^D30 to match what the [TYMNET] EBUS base uses.
+    Change terminal characteristic #15 from TYP to parameter D "PD".
+    Add "KAT" for #16, 1 bit for mode Katakana (was used by #15:Magnum).
+    Add AUXCAL set parameter 102 for Katakana.
+    Resync with base at clock level.
+    Never enable channel 1 interrupts anymore.  CTYTYO updates the key.
+    Update the KEY via JSP T1,UPDKEY.
+    Keep track of IRING/ORING/CLOCK timing for EVENT BASEOK/NOBASE.
+    Update time whenever we get a date-time message from supervisor printing
+	the new date-time on the CTY whenever it is more than 10 seconds.
+    Define SYSUDT time system came up to be in the nonswapping table, item 5.
+	value = -1 if not set, 0 if not implemented.
+    SHUT the system and ding the CTY's bell whenever the date/time is
+	adjusted by more than 60 minutes.
+
+
+Change LOGIN and FRMOP:.FOCFM arguments.
+    The first 5 are still the same: PPN,PRV,AUN,UNM,UN1
+    The new optional arguments are: NET,PJC1-PJC2-PJC3.
+    Add CF.PLI=1B15 to .FOCFM to run LOGINN in child frame and have it
+	prompt "please log in", to get username and password.
+
+License changes:
+    ENABLE and DISABLE commands restore and save status license set by OPER.
+    Add LICQM=1B11 for license to manipulate the XEXEC queue.
+    New gettab tables with license names, bits and masks.
+    SETLIC UUO may set new saved frame license with WC or copy enabled frame
+	license and disable active frame license.
+	(LOGINN reduces passed license using SETLIC).
+
+
+Store address of CTYLDB in LINTAB+0 so TTY0:=CTY:.  [CTYDDB=SCNDDB]
+Don't put CTYLDB in LINTAB until further testing is done.
+Keep a copy of the aux-circuit string for each circuit in the LDB.
+Clean up OPR and CTY output routines.
+Wake a job when the input buffer contains 132 characters instead of 72.
+Fix message types 3 and 4 in CONSOLE mode.  Don't timeout in CONSOLE mode.
+Make sure the initial messages in the ORING are in KMC format on the 2020.
+Set LDBLOG whenever command port is given to a job using RETACH uuo.
+Increase CTY width from 72 to 80 columns.
+Fix left-over character gobbler problem by clearing LDBOUT on a ZAPPER.
+
+
+Change DSKCHR to match on 5 character names.  DSKB10 does not match DSKB1.
+Simulate ADJSP instruction on the KI.
+Give "?Address check for device ..." if the three-word buffer header
+    is in JOBDAT or the ACs.  Using the ACs is a no-no at interrupt level.
+BIGBEN outputs CNFNAM, time and free disk space on the CTY.
+Check for page fault while in user mode when running the null job.
+Add gettab tables 31 and 32 for GFD username.  [CHGPPN,LOGIN,FRMOP:.FOCFM]
+Set GETTAB values so that local time can be used for CTY timestamps.
+Removed SYS:[proj,prog] = DSKB:[1,4] kludge, except SYS:[1,1] = DSKB:[1,1].
+Change the DATUUO to return time in UDT and TDT formats.
+Find the RIB to SAT.SYS by reading the HOM page, instead of using LPNSAT.
+Fix .CHUFD with PUSH/POP T4 around call to DATCOM.
+Change location 146 to JRST BOTLOD (loading boots).
+
+
+Homogenious memory usage:
+    Put IRING/ORING in page 2 on all processors.
+    Put null job UPT in pages 3,4,5 using 3 pages on all processors.
+    Add save area for IRING,ORING,SA10, etc in page 6.
+
+
+
+Extend SETUUO .STTLK function:
+    Allow SAIL string pointer format: count,,job; pointer.
+    Job 0 indicates both OPR: and CTY.
+
+
+Frame interrupts:
+    Add FINASS [Calli -151] to set frame interrupt assignments.
+    Add FRMOP .FOCSI [function 44] to Cause Software Interrupt
+	.iaLCF =  0, Logout in Child Frame
+	.iaECF =  1, Exit in Child Frame
+	.iaSIP =  6, Software Interrupt from Parent frame
+	.iaSIC =  7, Software Interrupt from Child frame
+	.iaSIS = 10, Software Interrupt from Sibling frame
+	.iaSIA = 11, Software Interrupt from Any frame
+
+Information gathering:
+    Added table CNTFRM which is AOSed once for each FRMOP function executed.
+    Save locations 150-167 (base pointers) in BASAVE.
+    Save locations 300-337 (SA-10 pointers) into SASAVE.
+
+
+Operator changes:
+    Add DEBUG command to ONCE to set debugging flags.
+    Don't ask OPR if DSKCLN mode is null, use FAST.
+    Force OPR to CHANGE SYSTEM if SYSNUM is zero, such as "KL00-P034/P32".
+    Allow the size of CRASH.SAV to be 8192+1 pages for CRASH.EXE.
+
+
+Revise scheduler algorithm:
+    Put jobs that come out of I/O wait into PQ2 instead of PQ1.
+    Initially put jobs that are up to 32 K into PQ1 instead of PQ3.
+    Change PQ2 <-> PQ3 transition from 1 second to 1/2 second.
+    Give interactive jobs a longer quantum (QQYTTY in ONCE).
+
+    

@@ -1,0 +1,1066 @@
+Pages 0-5 of CSM's TOPS-10 7.02 Monitor for the KS-2020
+
+Page 0 is the EPT
+0020 CURJOB/   x		;Currently running job
+31/   10000,,141000                     CHNQUL/   PTP PHYI24#+41
+0041 JOB41/    JSR LUUOPC	;LUUO handler
+42/   264000,,15004                     JOBERR/   JSR FETMXL#+4
+43/   264000,,30654                     LDBLOC/   JSR ILLEGAL.INTERRUPT
+44/   264000,,15242                     JOBREL/   JSR C1PD1+107
+45/   264000,,30654                     JOBBLT/   JSR ILLEGAL.INTERRUPT
+46/   264000,,15472                     JOBBLT+1/   JSR C2PD1+107
+47/   264000,,30654                     JOBBLT+2/   JSR ILLEGAL.INTERRUPT
+50/   264000,,15722                     HOMUN1/   JSR C3PD1+107
+51/   264000,,30654                     HOMUN1+1/   JSR ILLEGAL.INTERRUPT
+52/   264000,,16152                     HOMUN1+2/   JSR C4PD1+107
+53/   264000,,30654                     HOMUN1+3/   JSR ILLEGAL.INTERRUPT
+54/   264000,,16154                     HOMUN1+4/   JSR C4PD1+111
+55/   264000,,30654                     HOMUN1+5/   JSR ILLEGAL.INTERRUPT
+56/   264000,,16156                     .PDHZF/   JSR C4PD1+113
+57/   264000,,30654                     .PDPST/   JSR ILLEGAL.INTERRUPT
+0070=ARSLOC/   HALT %ENQLT
+0071 KAFLOC/   JSR @.CPKAF	;Executed by 8080 for Keep-Alive Failure
+74/   53032,,34376                      JOBDDT/   SCVAL#+22,,SWPINI#+6
+0075 JOBHSO/   444		;Higseg origin is page 444
+76/   51230                             JOBBPT/   TTYLE8#+350
+101/   3006                             .E0VIT/   VECTB1
+103/   3206                             .E0VIT+2/   VECTB3
+112/   4137                             .JBEDV/   .C0EDV
+115/   206000,,651777                   JOBHRL/   MOVSM VMEND#+271
+116/   652474,,212474                   JOBSYM/   TDCE T4,@212474(P1)
+120/   220501,,13553                    JOBSA/   IMUL W,HSHTAB+105(P)
+121/   220501                           JOBFF/   220501
+133/   220500,,220777                   JOBCOR/   IMUL W,220777
+136/   270237,,26                       .JBCST/   ADD F,@CRSWHY+1(P4)
+0137 JOBVER/   270200,,25527	;Version 702(25527)-2
+0140 COMORG/   ASCIZ "THIS SOFTWARE IS FURNISHED UNDER LICENSE AND MAY ONLY
+		BE USED OR COPIED IN ACCORDANCE WITH THE TERMS OF SUCH LICENSE.
+		COPYRIGHT (C) 1984 DIGITAL EQUIPTMENT CORPORATION."
+200/   520365,,500252                   .E0PM/   HLLO P2,@DSKFND#+1(T3)
+201/   520004,,520005                   .E0PM+1/   HLLO TSTDS1#+17(F)
+202/   521562,,521563                   .E0PM+2/   HLLOI M,@SPTSO2#(J)
+203/   500317,,500626                   .E0PM+3/   HLL T1,RMVSTR+13(P4)
+212/   521560,,521561                   .E0PM+12/   HLLOI M,@SPTSO1#+25
+222/   421572,,421573                   .E0PM+22/   ANDCMI M,@421573(W)
+223/   421574,,421575                   .E0PM+23/   ANDCMI M,@421575(P1)
+224/   421576,,421577                   .E0PM+24/   ANDCMI M,@421577(P3)
+225/   421600,,421601                   .E0PM+25/   ANDCMI P1,421601
+226/   421602,,421603                   .E0PM+26/   ANDCMI P1,421603(J)
+227/   421604,,421605                   .E0PM+27/   ANDCMI P1,421605(F)
+230/   421606,,421607                   .E0PM+30/   ANDCMI P1,421607(T1)
+231/   421610,,421611                   .E0PM+31/   ANDCMI P1,421611(T3)
+232/   421612,,421613                   .E0PM+32/   ANDCMI P1,421613(W)
+233/   421614,,421615                   .E0PM+33/   ANDCMI P1,421615(P1)
+234/   421616,,421617                   .E0PM+34/   ANDCMI P1,421617(P3)
+235/   421620,,421621                   .E0PM+35/   ANDCMI P1,@421621
+236/   421622,,421623                   .E0PM+36/   ANDCMI P1,@421623(J)
+237/   421624,,421625                   .E0PM+37/   ANDCMI P1,@421625(F)
+240/   421626,,421627                   .E0PM+40/   ANDCMI P1,@421627(T1)
+241/   421630,,421631                   .E0PM+41/   ANDCMI P1,@421631(T3)
+242/   421632,,421633                   .E0PM+42/   ANDCMI P1,@421633(W)
+243/   421634,,421635                   .E0PM+43/   ANDCMI P1,@421635(P1)
+244/   421636,,421637                   .E0PM+44/   ANDCMI P1,@421637(P3)
+245/   421640,,421641                   .E0PM+45/   ANDCMI P2,421641
+246/   421642,,421643                   .E0PM+46/   ANDCMI P2,421643(J)
+247/   421644,,421645                   .E0PM+47/   ANDCMI P2,421645(F)
+250/   421646,,421647                   .E0PM+50/   ANDCMI P2,421647(T1)
+251/   421650,,421651                   .E0PM+51/   ANDCMI P2,421651(T3)
+252/   421652,,421653                   .E0PM+52/   ANDCMI P2,421653(W)
+253/   421654,,421655                   .E0PM+53/   ANDCMI P2,421655(P1)
+254/   421656,,421657                   .E0PM+54/   ANDCMI P2,421657(P3)
+255/   421660,,421661                   .E0PM+55/   ANDCMI P2,@421661
+256/   421662,,421663                   .E0PM+56/   ANDCMI P2,@421663(J)
+257/   421664,,421665                   .E0PM+57/   ANDCMI P2,@421665(F)
+260/   421666,,421667                   .E0PM+60/   ANDCMI P2,@421667(T1)
+261/   421670,,421671                   .E0PM+61/   ANDCMI P2,@421671(T3)
+262/   421672,,421673                   .E0PM+62/   ANDCMI P2,@421673(W)
+263/   421674,,421675                   .E0PM+63/   ANDCMI P2,@421675(P1)
+264/   421676,,421677                   .E0PM+64/   ANDCMI P2,@421677(P3)
+265/   421700,,421701                   .E0PM+65/   ANDCMI P3,421701
+266/   421702,,421703                   .E0PM+66/   ANDCMI P3,421703(J)
+267/   421704,,421705                   .E0PM+67/   ANDCMI P3,421705(F)
+270/   421706,,421707                   .E0PM+70/   ANDCMI P3,421707(T1)
+271/   421710,,421711                   .E0PM+71/   ANDCMI P3,421711(T3)
+272/   421712,,421713                   .E0PM+72/   ANDCMI P3,421713(W)
+273/   421714,,421715                   .E0PM+73/   ANDCMI P3,421715(P1)
+274/   421716,,421717                   .E0PM+74/   ANDCMI P3,421717(P3)
+275/   421720,,421721                   .E0PM+75/   ANDCMI P3,@421721
+276/   421722,,421723                   .E0PM+76/   ANDCMI P3,@421723(J)
+277/   421724,,421725                   .E0PM+77/   ANDCMI P3,@421725(F)
+300/   421726,,421727                   .E0PM+100/   ANDCMI P3,@421727(T1)
+301/   421730,,421731                   .E0PM+101/   ANDCMI P3,@421731(T3)
+302/   421732,,421733                   .E0PM+102/   ANDCMI P3,@421733(W)
+303/   421734,,421735                   .E0PM+103/   ANDCMI P3,@421735(P1)
+304/   421736,,421737                   .E0PM+104/   ANDCMI P3,@421737(P3)
+305/   421740,,421741                   .E0PM+105/   ANDCMI P4,421741
+306/   421742,,421743                   .E0PM+106/   ANDCMI P4,421743(J)
+307/   421744,,421745                   .E0PM+107/   ANDCMI P4,421745(F)
+310/   421746,,421747                   TOTLIN#/   ANDCMI P4,421747(T1)
+311/   421750,,421751                   TOTLIN#+1/   ANDCMI P4,421751(T3)
+312/   421752,,421753                   TOTLIN#+2/   ANDCMI P4,421753(W)
+313/   421754,,421755                   TOTLIN#+3/   ANDCMI P4,421755(P1)
+314/   421756,,421757                   TOTLIN#+4/   ANDCMI P4,421757(P3)
+315/   421760,,421761                   TOTLIN#+5/   ANDCMI P4,@421761
+316/   421762,,421763                   TOTLIN#+6/   ANDCMI P4,@421763(J)
+317/   421764,,421765                   TOTLIN#+7/   ANDCMI P4,@421765(F)
+320/   421766,,421767                   TOTLIN#+10/   ANDCMI P4,@421767(T1)
+321/   421770,,421771                   TOTLIN#+11/   ANDCMI P4,@421771(T3)
+322/   421772,,421773                   TOTLIN#+12/   ANDCMI P4,@421773(W)
+323/   421774,,421775                   TOTLIN#+13/   ANDCMI P4,@421775(P1)
+324/   421776,,421777                   TOTLIN#+14/   ANDCMI P4,@421777(P3)
+325/   521564,,521565                   TOTLIN#+15/   HLLOI M,@SPTSO2#+2(F)
+326/   521566,,521567                   TOTLIN#+16/   HLLOI M,@SPTSO2#+4(T1)
+327/   521570,,521571                   TOTLIN#+17/   HLLOI M,@SPTSO2#+6(T3)
+400/   254000,,13553                    SYSDSP/   JRST HSHTAB+105
+401/   300000,,34376                    SYSDDT/   CAI SWPINI#+6
+402/   254200,,402                      SYSDDT+1/   HALT SYSDDT+1
+403/   254200,,403                      SYSDDT+2/   HALT SYSDDT+2
+404/   254000,,14121                    SYSDDT+3/   JRST CDRSTS+4
+405/   254000,,14114                    SYSDDT+4/   JRST LPTST2
+406/   254000,,14122                    SYSDDT+5/   JRST CDRSTS+5
+407/   254000,,14127                    SYSCRH/   JRST DIADSB+1
+410/   31733                            ABSTAB/   MPXDDB+20
+421/   255000,,0                        .E0AOV/   JFCL 0
+422/   537321                           .E0AOV+1/   SETIPQ#+110
+423/   264000,,3004                     .E0AOV+2/   JSR TRP3PC
+600/   500000,,500001                   .E0LM/   HLL SLSR0#+2
+601/   520002,,520003                   .E0LM+1/   HLLO TSTDS1#+15(J)
+602/   520004,,520005                   .E0LM+2/   HLLO TSTDS1#+17(F)
+603/   520006,,520007                   .E0LM+3/   HLLO TSTDS1#+21(T1)
+604/   520010,,520011                   .E0LM+4/   HLLO TSTDS2#(T3)
+605/   520012,,520013                   .E0LM+5/   HLLO TSTDS2#+2(W)
+606/   520014,,520015                   .E0LM+6/   HLLO TSTDS2#+4(P1)
+607/   520016,,520017                   .E0LM+7/   HLLO TSTDS2#+6(P3)
+610/   520020,,520021                   .E0LM+10/   HLLO @TSTDS3#
+611/   520022,,520023                   .E0LM+11/   HLLO @TSTDS3#+2(J)
+612/   520024,,520025                   .E0LM+12/   HLLO @TSTDS4#+1(F)
+613/   520026,,520027                   .E0LM+13/   HLLO @TSTDS4#+3(T1)
+614/   520030,,520031                   .E0LM+14/   HLLO @TSTDS5#+1(T3)
+615/   520032,,520033                   .E0LM+15/   HLLO @TSTDS6#+1(W)
+616/   520034,,520035                   .E0LM+16/   HLLO @TSTDS7#(P1)
+617/   520036,,520037                   .E0LM+17/   HLLO @TSTDS7#+2(P3)
+620/   520040,,520041                   .E0LM+20/   HLLO P,RIBSAT+1
+621/   520042,,520043                   .E0LM+21/   HLLO P,RIBSAT+3(J)
+622/   520044,,520045                   .E0LM+22/   HLLO P,RIBSA9#(F)
+623/   520046,,520047                   .E0LM+23/   HLLO P,RIBSA9#+2(T1)
+624/   520050,,520051                   .E0LM+24/   HLLO P,RIBSA9#+4(T3)
+625/   520052,,520053                   .E0LM+25/   HLLO P,RIBSA1#(W)
+626/   520054,,520055                   .E0LM+26/   HLLO P,RIBSA1#+2(P1)
+627/   520056,,520057                   .E0LM+27/   HLLO P,RIBSA1#+4(P3)
+630/   520060,,520061                   .E0LM+30/   HLLO P,@RIBSA2#+1
+631/   520062,,520063                   .E0LM+31/   HLLO P,@RIBSA2#+3(J)
+632/   520064,,520065                   .E0LM+32/   HLLO P,@RIBSA2#+5(F)
+633/   520066,,520067                   .E0LM+33/   HLLO P,@RIBSA2#+7(T1)
+634/   520070,,520071                   .E0LM+34/   HLLO P,@RIBSA2#+11(T3)
+635/   520072,,520073                   .E0LM+35/   HLLO P,@RIBSA3#+1(W)
+636/   520074,,520075                   .E0LM+36/   HLLO P,@WTUSAT+1(P1)
+637/   520076,,520077                   .E0LM+37/   HLLO P,@WTUSAT+3(P3)
+640/   520100,,520101                   .E0LM+40/   HLLO J,WTUSA1#
+641/   520102,,520103                   .E0LM+41/   HLLO J,WTUSA1#+2(J)
+642/   520104,,520105                   .E0LM+42/   HLLO J,WTUSA2#(F)
+643/   520106,,520107                   .E0LM+43/   HLLO J,ONCWAT(T1)
+644/   520110,,520111                   .E0LM+44/   HLLO J,ONCWA1#+1(T3)
+645/   520112,,520113                   .E0LM+45/   HLLO J,ONCWA1#+3(W)
+646/   520114,,520115                   .E0LM+46/   HLLO J,ONCWA1#+5(P1)
+647/   520116,,520117                   .E0LM+47/   HLLO J,ONCWA1#+7(P3)
+650/   520120,,520121                   .E0LM+50/   HLLO J,@ONCWA1#+11
+651/   520122,,520123                   .E0LM+51/   HLLO J,@ONCWA1#+13(J)
+652/   520124,,520125                   .E0LM+52/   HLLO J,@ONCWA1#+15(F)
+653/   520126,,520127                   .E0LM+53/   HLLO J,@DSKLGO+1(T1)
+654/   520130,,520131                   .E0LM+54/   HLLO J,@DSKLGO+3(T3)
+655/   520132,,520133                   .E0LM+55/   HLLO J,@DSKLGO+5(W)
+656/   500134,,500135                   .E0LM+56/   HLL J,@SLSR9#+10(P1)
+657/   500136,,500137                   .E0LM+57/   HLL J,@SLNOTF#+1(P3)
+660/   500140,,500141                   .E0LM+60/   HLL R,SLNOTF#+3
+661/   500142,,500143                   .E0LM+61/   HLL R,SLNOTF#+5(J)
+662/   500144,,500145                   .E0LM+62/   HLL R,SLNOTF#+7(F)
+663/   500146,,500147                   .E0LM+63/   HLL R,SLNOTF#+11(T1)
+664/   500150,,500151                   .E0LM+64/   HLL R,SLNOTF#+13(T3)
+665/   500152,,500153                   .E0LM+65/   HLL R,SLNOTF#+15(W)
+666/   500154,,500155                   .E0LM+66/   HLL R,SLNOT1#+1(P1)
+667/   500156,,500157                   .E0LM+67/   HLL R,SLNOT1#+3(P3)
+670/   500160,,500161                   .E0LM+70/   HLL R,@SLNOT1#+5
+671/   500162,,500163                   .E0LM+71/   HLL R,@SLNOT1#+7(J)
+672/   500164,,500165                   .E0LM+72/   HLL R,@SLNOT2#+1(F)
+673/   500166,,500167                   .E0LM+73/   HLL R,@SLNOT2#+3(T1)
+674/   500170,,500171                   .E0LM+74/   HLL R,@RSLSTR#(T3)
+675/   500172,,500173                   .E0LM+75/   HLL R,@RSLSTR#+2(W)
+676/   500174,,500175                   .E0LM+76/   HLL R,@RSLSTR#+4(P1)
+677/   500176,,500177                   .E0LM+77/   HLL R,@RSLSTR#+6(P3)
+700/   500200,,500201                   .E0LM+100/   HLL F,RSLSTR#+10
+701/   500202,,500203                   .E0LM+101/   HLL F,RSLSTR#+12(J)
+702/   500204,,500205                   .E0LM+102/   HLL F,RSLSTR#+14(F)
+703/   500206,,500207                   .E0LM+103/   HLL F,RSLSTR#+16(T1)
+704/   500210,,500211                   .E0LM+104/   HLL F,RSLSTR#+20(T3)
+705/   500212,,500213                   .E0LM+105/   HLL F,DEFSTR#(W)
+706/   500214,,500215                   .E0LM+106/   HLL F,DEFSTR#+2(P1)
+707/   500216,,500217                   .E0LM+107/   HLL F,DEFSTR#+4(P3)
+710/   500220,,500221                   .E0LM+110/   HLL F,@DEFSTR#+6
+711/   500222,,500223                   .E0LM+111/   HLL F,@DEFSTR#+10(J)
+712/   500224,,500225                   .E0LM+112/   HLL F,@DEFSTR#+12(F)
+713/   500226,,500227                   .E0LM+113/   HLL F,@DEFST1#+1(T1)
+714/   500230,,500231                   .E0LM+114/   HLL F,@DEFST1#+3(T3)
+715/   500232,,500233                   .E0LM+115/   HLL F,@DEFST2#(W)
+716/   500234,,500235                   .E0LM+116/   HLL F,@DEFST2#+2(P1)
+717/   500236,,500237                   .E0LM+117/   HLL F,@DEFST2#+4(P3)
+720/   500240,,500241                   .E0LM+120/   HLL U,DEFST3#
+721/   500242,,500243                   .E0LM+121/   HLL U,DEFST3#+2(J)
+722/   500244,,500245                   .E0LM+122/   HLL U,DEFST3#+4(F)
+723/   500246,,500247                   .E0LM+123/   HLL U,DEFST3#+6(T1)
+724/   500250,,500251                   .E0LM+124/   HLL U,DEFST3#+10(T3)
+725/   500252,,500253                   .E0LM+125/   HLL U,DEFST3#+12(W)
+726/   500254,,500255                   .E0LM+126/   HLL U,DEFST3#+14(P1)
+727/   500256,,500257                   .E0LM+127/   HLL U,DEFST3#+16(P3)
+730/   500260,,500261                   .E0LM+130/   HLL U,@DEFST4#+1
+731/   500262,,500263                   .E0LM+131/   HLL U,@DEFST4#+3(J)
+732/   500264,,500265                   .E0LM+132/   HLL U,@DEFST4#+5(F)
+733/   500266,,500267                   .E0LM+133/   HLL U,@DEFST4#+7(T1)
+734/   500270,,500271                   .E0LM+134/   HLL U,@DEFST4#+11(T3)
+735/   500272,,500273                   .E0LM+135/   HLL U,@DEFST4#+13(W)
+736/   500274,,500275                   .E0LM+136/   HLL U,@DEFST4#+15(P1)
+737/   500276,,500277                   .E0LM+137/   HLL U,@DEFST4#+17(P3)
+740/   500300,,500301                   .E0LM+140/   HLL T1,DEFST4#+21
+741/   500302,,500303                   .E0LM+141/   HLL T1,DEFST4#+23(J)
+742/   500304,,500305                   .E0LM+142/   HLL T1,DEFST4#+25(F)
+743/   500306,,500307                   .E0LM+143/   HLL T1,DEFST4#+27(T1)
+744/   500310,,500311                   .E0LM+144/   HLL T1,DEFST5#(T3)
+745/   500312,,500313                   .E0LM+145/   HLL T1,DEFST6#+1(W)
+746/   500314,,500315                   .E0LM+146/   HLL T1,DEFST7#+1(P1)
+747/   500316,,500317                   .E0LM+147/   HLL T1,DEFST7#+3(P3)
+750/   500320,,500321                   .E0LM+150/   HLL T1,@DEFST8#
+751/   500322,,500323                   .E0LM+151/   HLL T1,@DEFST8#+2(J)
+752/   500324,,500325                   .E0LM+152/   HLL T1,@DEFST8#+4(F)
+753/   500326,,500327                   .E0LM+153/   HLL T1,@DEFST8#+6(T1)
+754/   500330,,500331                   .E0LM+154/   HLL T1,@DEFST8#+10(T3)
+755/   500332,,500333                   .E0LM+155/   HLL T1,@DEFS10#+1(W)
+756/   500334,,500335                   .E0LM+156/   HLL T1,@DEFS11#+1(P1)
+757/   500336,,500337                   .E0LM+157/   HLL T1,@DEFS12#+1(P3)
+1001/   35,,770707                      IOSCON#+1/   LDBREM+2,,770707
+1002/   344731,,654100                  IOSCON#+2/   AOJA P3,@654100(T4)
+1004/   35,,270707                      IOSCON#+4/   LDBREM+2,,270707
+1005/   344725,,664742                  IOSCON#+5/   AOJA P3,@664742(U)
+1006/   60071                           IOSCON#+6/   K4SOK#+30
+1007/   23,,520707                      IOSCON#+7/   QUEFCH#,,PRIUU2#+1
+1010/   344726,,254102                  IOSCON#+10/   AOJA P3,@254102(T1)
+1011/   10000,,0                        IOSCON#+11/   PTP
+1012/   10704                           IOSCON#+12/   JBTPID+16
+1013/   377660,,634116                  IOSCON#+13/   SOSG P2,@UINITB#+6
+1014/   100000,,20000                   IOSCON#+14/   100000,,MONBTS
+1015/   35,,320707                      IOSCON#+15/   LDBREM+2,,320707
+1016/   333720,,637300                  IOSCON#+16/   SKIPLE P3,@DDSRC3#+36
+1017/   2,,154000                       IOSCON#+17/   J,,154000
+1020/   14,,707                         IOSCON#+20/   P1,,.E0LM+107
+1021/   377660,,634116                  IOSCON#+21/   SOSG P2,@UINITB#+6
+1022/   100000,,20000                   IOSCON#+22/   100000,,MONBTS
+1023/   35,,340707                      IOSCON#+23/   LDBREM+2,,340707
+1024/   333720,,637300                  IOSCON#+24/   SKIPLE P3,@DDSRC3#+36
+1025/   2,,164000                       IOSCON#+25/   J,,164000
+1026/   14,,707                         IOSCON#+26/   P1,,.E0LM+107
+1027/   377660,,634116                  IOSCON#+27OSG P2,@UINITB#+6
+1030/   500000,,20000                   IOSCON#+30/   HLL MONBTS
+1031/   35,,360707                      IOSCON#+31/   LDBREM+2,,360707
+1032/   333720,,637300                  IOSCON#+32/   SKIPLE P3,@DDSRC3#+36
+1033/   2,,204000                       IOSCON#+33/   J,,204000
+1034/   14,,707                         IOSCON#+34/   P1,,.E0LM+107
+1035/   377660,,634116                  IOSCON#+35/   SOSG P2,@UINITB#+6
+1036/   100000,,20000                   IOSCON#+36/   100000,,MONBTS
+1037/   35,,400707                      IOSCON#+37/   LDBREM+2,,400707
+1040/   333720,,637302                  IOSCON#+40/   SKIPLE P3,@DDSRC3#+40
+1041/   2,,174000                       IOSCON#+41/   J,,174000
+1042/   14,,707                         IOSCON#+42/   P1,,.E0LM+107
+1043/   377660,,634116                  IOSCON#+43/   SOSG P2,@UINITB#+6
+1044/   500000,,20000                   IOSCON#+44/   HLL MONBTS
+1045/   35,,420707                      IOSCON#+45/   LDBREM+2,,420707
+1046/   333720,,637302                  IOSCON#+46/   SKIPLE P3,@DDSRC3#+40
+1047/   2,,274000                       IOSCON#+47/   J,,274000
+1050/   14,,707                         IOSCON#+50/   P1,,.E0LM+107
+1051/   475772,,654100                  IOSCON#+51/   SETOI P4,@654100(W)
+1052/   1                               IOSCON#+52/   P
+1053/   35,,440707                      IOSCON#+53/   LDBREM+2,,440707
+1054/   11725,,634100                   IOSCON#+54/   CDP P3,@UINI2C(U)
+1055/   400000,,0                       IOSCON#+55/   SETZ 0
+1056/   35,,450707                      IOSCON#+56/   LDBREM+2,,USCHD2#+1
+1057/   377723,,434000                  IOSCON#+57/   SOSG P3,@434000(R)
+1060/   200,,0                          IOSCON#+60/   .E0PM,,0
+1061/   23,,540507                      IOSCON#+61/   QUEFCH#,,SVEUB+3
+1062/   377740,,637100                  IOSCON#+62/   SOSG P4,CVTOCT+4
+1063/   400003,,30000                   IOSCON#+63/   SETZ CBHSHT+111(R)
+1064/   35,,472707                      IOSCON#+64/   LDBREM+2,,GETTAC
+1065/   111725,,634102                  IOSCON#+65/   DFSB P3,@UINI2C#+2(U)
+1066/   200200,,0                       IOSCON#+66/   MOVE F,0
+1067/   23,,562407                      IOSCON#+67/   QUEFCH#,,GEND.1#+5
+1070/   377060,,654100                  IOSCON#+70/   SOSG P,@654100
+1072/   35,,512707                      IOSCON#+72/   LDBREM+2,,OUTGR5#+2
+1073/   355765,,654100                  IOSCON#+73/   AOSGE P4,@654100(U)
+1074/   400000,,400000                  IOSCON#+74/   SETZ 400000
+1075/   35,,520707                      IOSCON#+75/   LDBREM+2,,PRIUU2#+1
+1076/   333720,,654302                  IOSCON#+76/   SKIPLE P3,@654302
+1077/   3000,,0                         IOSCON#+77/   LUUOPC,,0
+1100/   23,,560727                      IOSCON#+100/   QUEFCH#,,NTDILO+323
+1101/   377660,,634116                  IOSCON#+101/   SOSG P2,@UINITB#+6
+1102/   500000,,20000                   IOSCON#+102/   HLL MONBTS
+1103/   11,,140707                      IOSCON#+103/   T4,,140707
+1104/   333720,,637300                  IOSCON#+104/   SKIPLE P3,@DDSRC3#+36
+1105/   10003,,4000                     IOSCON#+105/   PTP .C0CDB(R)
+1106/   20704                           IOSCON#+106/   MONBTS+704
+1107/   445272,,644100                  IOSCON#+107/   EQVI U,@VIRCHK+5(W)
+1111/   35,,600707                      IOSCON#+111/   LDBREM+2,,NWCKO3#+3
+1112/   455762,,424100                  IOSCON#+112/   ORCAI P4,@424100(J)
+1113/   400077,,400077                  IOSCON#+113/   SETZ P,@400077(P4)
+1114/   27,,320707                      IOSCON#+114/   CPNDDT,,320707
+1115/   444720,,604300                  IOSCON#+115/   EQV P3,@TTYCM0#+2
+1116/   10000,,0                        IOSCON#+116/   PTP
+1117/   40704                           IOSCON#+117/   IPOPJ#+3
+1120/   445272,,664102                  IOSCON#+120/   EQVI U,@664102(W)
+1121/   400000,,0                       IOSCON#+121/   SETZ 0
+1122/   35,,610707                      IOSCON#+122/   LDBREM+2,,INPSEG#+16
+1123/   611724,,654300                  IOSCON#+123/   TSN P3,@654300(F)
+1124/   400200,,0                       IOSCON#+124/   SETZ F,0
+1125/   23,,642607                      IOSCON#+125/   QUEFCH#,,SETIMT#+10
+1126/   55744,,647102                   IOSCON#+126/   RENAME P4,PAGOM1#+1(F)
+1127/   703,,10000                      IOSCON#+127/   .E0LM+103,,IOSUSI#
+1130/   11,,202607                      IOSCON#+130/   T4,,202607
+1131/   333720,,654314                  IOSCON#+131/   SKIPLE P3,@654314
+1132/   500000,,20000                   IOSCON#+132/   HLL MONBTS
+1133/   35,,642707                      IOSCON#+133/   LDBREM+2,,NXTFR1#
+1134/   11727,,224102                   IOSCON#+134/   CDP P3,@224102(T2)
+1135/   500000,,120003                  IOSCON#+135/   HLL 120003
+1136/   35,,650707                      IOSCON#+136/   LDBREM+2,,TSWST+7
+1137/   333720,,644316                  IOSCON#+137/   SKIPLE P3,@VIRC12#+10
+1140/   100000,,20000                   IOSCON#+140/   100000,,MONBTS
+1141/   14,,2707                        IOSCON#+141/   P1,,IOSZAP#+707
+1142/   377660,,634116                  IOSCON#+142/   SOSG P2,@UINITB#+6
+1143/   100000,,20000                   IOSCON#+143/   100000,,MONBTS
+1144/   35,,670707                      IOSCON#+144/   LDBREM+2,,670707
+1145/   333720,,637302                  IOSCON#+145/   SKIPLE P3,@DDSRC3#+40
+1146/   400003,,24000                   IOSCON#+146/   SETZ 24000(R)
+1147/   35,,700707                      IOSCON#+147/   LDBREM+2,,700707
+1150/   333720,,637300                  IOSCON#+150/   SKIPLE P3,@DDSRC3#+36
+1151/   3,,34000                        IOSCON#+151/   R,,NETIN1#+2
+1152/   14,,707                         IOSCON#+152/   P1,,.E0LM+107
+1153/   377465,,454002                  IOSCON#+153/   SOSG T4,@WSYNC+3(U)
+1155/   35,,720707                      IOSCON#+155/   LDBREM+2,,720707
+1156/   455763,,604300                  IOSCON#+156/   ORCAI P4,@TTYCM0#+2(R)
+1157/   400300,,2                       IOSCON#+157/   SETZ T1,J
+1160/   23,,722307                      IOSCON#+160/   QUEFCH#,,722307
+1161/   377474,,764002                  IOSCON#+161/   SOSG T4,@764002(P1)
+1163/   35,,740707                      IOSCON#+163/   LDBREM+2,,IOERR#+707
+1164/   244727,,364100                  IOSCON#+164/   ASHC P3,@364100(T2)
+1165/   200000,,0                       IOSCON#+165/   MOVE 0
+1166/   35,,750707                      IOSCON#+166/   LDBREM+2,,750707
+1167/   411734,,764100                  IOSCON#+167/   ANDCAI P3,@764100(P1)
+1170/   400000,,0                       IOSCON#+170/   SETZ 0
+1171/   35,,760707                      IOSCON#+171/   LDBREM+2,,760707
+1172/   744736,,604302                  IOSCON#+172/   CONSZ 444,@TTYCM2#(P3)
+1173/   413000,,0                       IOSCON#+173/   ANDCAB 0
+1174/   100744                          IOSCON#+174/   100744
+1175/   344723,,604302                  IOSCON#+175/   AOJA P3,@TTYCM2#(R)
+1176/   500000,,120003                  IOSCON#+176/   HLL 120003
+1177/   36,,707                         IOSCON#+177/   CRSSTS,,.E0LM+107
+1200/   333720,,654314                  IOSCON#+200/   SKIPLE P3,@654314
+1201/   100000,,20000                   IOSCON#+201/   100000,,MONBTS
+1202/   14,,2707                        IOSCON#+202/   P1,,IOSZAP#+707
+1203/   422720,,634102                  IOSCON#+203/   ANDCMM P3,@UINI2C#+2
+1204/   400000,,0                       IOSCON#+204/   SETZ 0
+1205/   24,,40707                       IOSCON#+205/   CRSDTM,,IPOPJ#+6
+1206/   333720,,634300                  IOSCON#+206/   SKIPLE P3,@UOPE54#+1
+1207/   4010,,0                         IOSCON#+207/   .C0RTC,,0
+1210/   24,,60727                       IOSCON#+210/   CRSDTM,,DSTR3#
+1211/   333720,,634300                  IOSCON#+211/   SKIPLE P3,@UOPE54#+1
+1212/   404010,,0                       IOSCON#+212/   AND 0(T3)
+1213/   24,,120737                      IOSCON#+213/   CRSDTM,,120737
+1214/   422720,,607302                  IOSCON#+214/   ANDCMM P3,@UCORHI+14
+1215/   4,,234000                       IOSCON#+215/   F,,234000
+1216/   14,,707                         IOSCON#+216/   P1,,.E0LM+107
+1217/   444720,,604340                  IOSCON#+217/   EQV P3,@TTYCM7#
+1220/   10003,,750071                   IOSCON#+220/   PTP 750071(R)
+1221/   10704                           IOSCON#+221/   JBTPID+16
+1222/   475772,,664100                  IOSCON#+222/   SETOI P4,@664100(W)
+1223/   400000,,10000                   IOSCON#+223/   SETZ IOSUSI#
+1224/   36,,150707                      IOSCON#+224/   CRSSTS,,150707
+1225/   475772,,664100                  IOSCON#+225/   SETOI P4,@664100(W)
+1226/   400000,,20000                   IOSCON#+226/   SETZ MONBTS
+1227/   36,,150707                      IOSCON#+227/   CRSSTS,,150707
+1230/   475772,,664102                  IOSCON#+230/   SETOI P4,@664102(W)
+1231/   400000,,30000                   IOSCON#+231/   SETZ CBHSHT+111
+1232/   36,,150707                      IOSCON#+232/   CRSSTS,,150707
+1233/   475772,,664100                  IOSCON#+233/   SETOI P4,@664100(W)
+1234/   400000,,40000                   IOSCON#+234/   SETZ BPS2#+3
+1235/   36,,150707                      IOSCON#+235/   CRSSTS,,150707
+1236/   475772,,664102                  IOSCON#+236/   SETOI P4,@664102(W)
+1237/   400000,,50000                   IOSCON#+237/   SETZ TTYCLR#
+1240/   36,,150707                      IOSCON#+240/   CRSSTS,,150707
+1241/   475772,,664102                  IOSCON#+241/   SETOI P4,@664102(W)
+1242/   400000,,60000                   IOSCON#+242/   SETZ CK4SO#
+1243/   36,,150707                      IOSCON#+243/   CRSSTS,,150707
+1244/   475772,,664100                  IOSCON#+244/   SETOI P4,@664100(W)
+1245/   400000,,70000                   IOSCON#+245/   SETZ DEBUG
+1246/   36,,150707                      IOSCON#+246/   CRSSTS,,150707
+1247/   425774,,634102                  IOSCON#+247/   SETAI P4,@UINI2C#+2(P1)
+1250/   400075,,770007                  IOSCON#+250/   SETZ P,@770007(P2)
+1251/   36,,160707                      IOSCON#+251/   CRSSTS,,160707
+1252/   744723,,604300                  IOSCON#+252/   CONSZ 444,@TTYCM0#+2(R)
+1253/   403000,,0                       IOSCON#+253/   SETZ
+1254/   36,,170747                      IOSCON#+254/
+1255/   422660,,604302                  IOSCOM#+255/
+1256/   507000,,100000                  IOSCON#+256/
+1257/   24,,140727                      IOSCON#+257/
+1260/   55763,,234102                   IOSCON#+260/   RENAME P4,@234102(R)
+1261/   400000,,400000                  IOSCON#+261/   SETZ 400000
+1262/   36,,212707                      IOSCON#+262/   CRSSTS,,212707
+1263/   11730,,634102                   IOSCON#+263/   CDP P3,@UINI2C#+2(T3)
+1265/   36,,220707                      IOSCON#+265/   CRSSTS,,220707
+1266/   344723,,604302                  IOSCON#+266/   AOJA P3,@TTYCM2#(R)
+1267/   100010,,160024                  IOSCON#+267/   100010,,160024
+1270/   36,,230707                      IOSCON#+270/   CRSSTS,,230707
+1271/   377660,,634116                  IOSCON#+271/   SOSG P2,@UINITB#+6
+1272/   100000,,120020                  IOSCON#+272/   100000,,120020
+1273/   36,,242707                      IOSCON#+273/   CRSSTS,,242707
+1274/   655763,,604302                  IOSCON#+274/   TSCA P4,@TTYCM2#(R)
+1275/   243,,400025                     IOSCON#+275/   .E0PM+43,,400025
+1276/   24,,202307                      IOSCON#+276/   CRSDTM,,202307
+1277/   422720,,604302                  IOSCON#+277/   ANDCMM P3,@TTYCM2#
+1300/   406000,,40000                   IOSCON#+300/   ANDM BPS2#+3
+1301/   600747                          IOSCON#+301/   RCCTST#+12
+1302/   344723,,634502                  IOSCON#+302/   AOJA P3,@UDREN(R)
+1303/   400300,,0                       IOSCON#+303/   SETZ T1,0
+1304/   24,,240507                      IOSCON#+304/   CRSDTM,,240507
+1305/   377660,,654116                  IOSCON#+305/   SOSG P2,@654116
+1306/   100300,,20000                   IOSCON#+306/   100300,,MONBTS
+1307/   24,,322307                      IOSCON#+307/   CRSDTM,,322307
+1310/   344726,,664700                  IOSCON#+310/   AOJA P3,@664700(T1)
+1311/   400000,,0                       IOSCON#+311/   SETZ 0
+1312/   36,,310707                      IOSCON#+312/   CRSSTS,,310707
+1313/   11726,,654100                   IOSCON#+313/   CDP P3,@654100(T1)
+1314/   100000,,120024                  IOSCON#+314/   100000,,120024
+1315/   36,,230707                      IOSCON#+315/   CRSSTS,,230707
+1316/   411725,,744300                  IOSCON#+316/   ANDCAI P3,@744300(U)
+1317/   400300,,0                       IOSCON#+317/   SETZ T1,0
+1320/   24,,360307                      IOSCON#+320/   CRSDTM,,360307
+1321/   344726,,634100                  IOSCON#+321/   AOJA P3,@UINI2C#(T1)
+1323/   24,,500707                      IOSCON#+323/   CRSDTM,,LOKPPB#+1
+1324/   311723,,644300                  IOSCON#+324/   CAML P3,@VIRC11#+3(R)
+1325/   500000,,360000                  IOSCON#+325/   HLL 360000
+1326/   24,,522707                      IOSCON#+326/   CRSDTM,,CLSOU5#+10
+1327/   455766,,604300                  IOSCON#+327/   ORCAI P4,@TTYCM0#+2(T1)
+1330/   200,,70                         IOSCON#+330/   .E0PM,,ARSLOC
+1331/   24,,622307                      IOSCON#+331/   CRSDTM,,INTRD#+21
+1332/   333720,,624300                  IOSCON#+332/   SKIPLE P3,@REDNPD#+20
+1333/   401000,,0                       IOSCON#+333/   SETZI 0
+1334/   36,,370727                      IOSCON#+334/   CRSSTS,,JOBPDO#+217
+1335/   455762,,604300                  IOSCON#+335/   ORCAI P4,@TTYCM0#+2(J)
+1336/   400200,,170000                  IOSCON#+336/   SETZ F,170000
+1337/   24,,662307                      IOSCON#+337/   CRSDTM,,662307
+1340/   377660,,634116                  IOSCON#+340/   SOSG P2,@UINITB#+6
+1341/   512000,,20000                   IOSCON#+341/   HLLZM MONBTS
+1342/   10714                           IOSCON#+342/   JBTPID+26
+1343/   422720,,434100                  IOSCON#+343/   ANDCMM P3,@434100
+1344/   12000,,0                        IOSCON#+344/   TTY
+1345/   10714                           IOSCON#+345/   JBTPID+26
+1346/   377560,,764142                  IOSCON#+346/   SOSG M,@764142
+1347/   400502,,71                      IOSCON#+347/   SETZ W,KAFLOC(J)
+1350/   11,,240607                      IOSCON#+350/   T4,,240607
+1351/   444720,,604340                  IOSCON#+351/   EQV P3,@TTYCM7#
+1352/   400507,,770071                  IOSCON#+352/   SETZ W,770071(T2)
+1353/   24,,720607                      IOSCON#+353/   CRSDTM,,720607
+1354/   377660,,634116                  IOSCON#+354/   SOSG P2,@UINITB#+6
+1355/   510000,,20000                   IOSCON#+355/   HLLZ MONBTS
+1356/   10704                           IOSCON#+356/   JBTPID+16
+1357/   377660,,644114                  IOSCON#+357/   SOSG P2,@VIRCHK+21
+1360/   510000,,20000                   IOSCON#+360/   HLLZ MONBTS
+1361/   10704                           IOSCON#+361/   JBTPID+16
+1362/   377660,,604216                  IOSCON#+362/   SOSG P2,@COMSET+1
+1363/   510000,,20000                   IOSCON#+363/   HLLZ MONBTS
+1364/   10704                           IOSCON#+364/   JBTPID+16
+1365/   422720,,444102                  IOSCON#+365/   ANDCMM P3,@BITTBL+11
+1366/   10000,,0                        IOSCON#+366/   PTP
+1367/   10704                           IOSCON#+367/   JBTPID+16
+1370/   11727,,634102                   IOSCON#+370/   CDP P3,@UINI2C#+2(T2)
+1371/   10000,,0                        IOSCON#+371/   PTP
+1372/   10704                           IOSCON#+372/   JBTPID+16
+1373/   344725,,654502                  IOSCON#+373/   AOJA P3,@654502(U)
+1374/   10000,,0                        ONCTSZ#/   PTP
+1375/   10704                           ONCTSZ#+1/   JBTPID+16
+1376/   344723,,604302                  ONCTSZ#+2/   AOJA P3,@TTYCM2#(R)
+1377/   110000,,360000                  ONCTSZ#+3/   DFAD 360000
+1400/   12704                           ONCTSZ#+4/   LOCDAY
+1401/   333720,,654314                  ONCTSZ#+5/   SKIPLE P3,@654314
+1402/   110000,,20000                   ONCTSZ#+6/   DFAD MONBTS
+1403/   42704                           ONCTSZ#+7/   SWAPG#+1
+1404/   333720,,614316                  ONCTSZ#+10/   SKIPLE P3,@CPURQH+2
+1405/   110000,,20000                   ONCTSZ#+11/   DFAD MONBTS
+1406/   12704                           ONCTSZ#+12/   LOCDAY
+1407/   344724,,640002                  ONCTSZ#+13/   AOJA P3,@IOALL2#+3(F)
+1410/   10000,,4000                     ONCTSZ#+14/   PTP .C0CDB
+1411/   10704                           ONCTSZ#+15/   JBTPID+16
+1412/   377660,,634116                  ONCTSZ#+16/   SOSG P2,@UINITB#+6
+1413/   500000,,20000                   ONCTSZ#+17/   HLL MONBTS
+1414/   15,,150707                      ONCTSZ#+20/   P2,,150707
+1415/   377740,,630102                  ONCTSZ#+21/   SOSG P4,DEVLN0#+3
+1416/   1400                            ONCTSZ#+22/   ONCTSZ#+4
+1417/   15,,160707                      ONCTSZ#+23/   P2,,160707
+1420/   333720,,774314                  ONCTSZ#+24/   SKIPLE P3,@774314
+1421/   500000,,20000                   ONCTSZ#+25/   HLL MONBTS
+1422/   24,,762707                      ONCTSZ#+26/   CRSDTM,,762707
+1423/   377740,,647100                  ONCTSZ#+27/   SOSG P4,PAGOMT#+1
+1424/   202,,270000                     ONCTSZ#+30/   .E0PM+2,,270000
+1425/   25,,44407                       ONCTSZ#+31/   CRSWHY,,LOOK2#+27
+1426/   377560,,644102                  ONCTSZ#+32/   SOSG M,@VIRCHK+7
+1430/   36,,630707                      ONCTSZ#+34/   CRSSTS,,GETTB1#+7
+1431/   333720,,647302                  ONCTSZ#+35/   SKIPLE P3,@CHGPG2#+5
+1432/   10002,,104000                   ONCTSZ#+36/   PTP 104000(J)
+1433/   100704                          ONCTSZ#+37/   100704
+1434/   333720,,644300                  ONCTSZ#+40/   SKIPLE P3,@VIRC11#+3
+1435/   500010,,160021                  ONCTSZ#+41/   HLL 160021(T3)
+1436/   23,,610707                      ONCTSZ#+42/   QUEFCH#,,INPSEG#+16
+1437/   11727,,244100                   ONCTSZ#+43/   CDP P3,@244100(T2)
+1440/   500010,,160023                  ONCTSZ#+44/   HLL 160023(T3)
+1441/   25,,100707                      ONCTSZ#+45/   CRSWHY,,100707
+1442/   11727,,244100                   ONCTSZ#+46/   CDP P3,@244100(T2)
+1443/   500010,,160023                  ONCTSZ#+47/   HLL 160023(T3)
+1444/   25,,150707                      ONCTSZ#+50/   CRSWHY,,150707
+1445/   11727,,244100                   ONCTSZ#+51/   CDP P3,@244100(T2)
+1446/   500010,,160023                  ONCTSZ#+52/   HLL 160023(T3)
+1447/   25,,200707                      ONCTSZ#+53/   CRSWHY,,200707
+1450/   11727,,244100                   ONCTSZ#+54/   CDP P3,@244100(T2)
+1451/   100010,,160023                  ONCTSZ#+55/   100010,,160023
+1452/   25,,210707                      ONCTSZ#+56/   CRSWHY,,210707
+1453/   11727,,244100                   ONCTSZ#+57/   CDP P3,@244100(T2)
+1454/   100010,,160023                  ONCTSZ#+60/   100010,,160023
+1455/   25,,240707                      ONCTSZ#+61/   CRSWHY,,240707
+1456/   11727,,244100                   ONCTSZ#+62/   CDP P3,@244100(T2)
+1457/   500010,,160023                  ONCTSZ#+63/   HLL 160023(T3)
+1460/   25,,250707                      ONCTSZ#+64/   CRSWHY,,250707
+1461/   377740,,637102                  ONCTSZ#+65/   SOSG P4,CVTOCT+6
+1462/   400002,,110000                  ONCTSZ#+66/   SETZ 110000(J)
+1463/   36,,742707                      ONCTSZ#+67/   CRSSTS,,742707
+1464/   377740,,647102                  ONCTSZ#+70/   SOSG P4,PAGOM1#+1
+1465/   2,,100000                       ONCTSZ#+71/   J,,100000
+1466/   36,,752707                      ONCTSZ#+72/   CRSSTS,,RLDMO4#+35
+1467/   344724,,604302                  ONCTSZ#+73/   AOJA P3,@TTYCM2#(F)
+1470/   100000,,100000                  ONCTSZ#+74/   100000,,100000
+1471/   36,,760707                      ONCTSZ#+75/   CRSSTS,,760707
+1472/   377740,,647100                  ONCTSZ#+76/   SOSG P4,PAGOMT#+1
+1473/   10002,,120000                   ONCTSZ#+77/   PTP 120000(J)
+1474/   62704                           ONCTSZ#+100/   MONBUF#+131
+1475/   377560,,664100                  ONCTSZ#+101/   SOSG M,@664100
+1476/   400000,,0                       ONCTSZ#+102/   SETZ 0
+1477/   37,,707                         ONCTSZ#+103/   SYSSNP,,.E0LM+107
+1500/   455766,,464100                  ONCTSZ#+104/   ORCAI P4,@CLSCOM+24(T1)
+1501/   40                              ONCTSZ#+105/   FORTY
+1502/   37,,10707                       ONCTSZ#+106/   SYSSNP,,JBTPID+21
+1503/   333720,,667300                  ONCTSZ#+107/   SKIPLE P3,@667300
+1504/   2,,104000                       ONCTSZ#+110/   J,,104000
+1505/   37,,20707                       ONCTSZ#+111/   SYSSNP,,MONBTS+707
+1506/   377740,,657102                  ONCTSZ#+112/   SOSG P4,657102
+1507/   2,,300000                       ONCTSZ#+113/   J,,300000
+1510/   37,,32707                       ONCTSZ#+114/   SYSSNP,,SIX101#
+1511/   455765,,604302                  ONCTSZ#+115/   ORCAI P4,@TTYCM2#(U)
+1512/   400300,,3                       ONCTSZ#+116/   SETZ T1,R
+1513/   25,,62307                       ONCTSZ#+117/   CRSWHY,,VOLDN1#+2
+1514/   333720,,667302                  ONCTSZ#+120/   SKIPLE P3,@667302
+1515/   400002,,144000                  ONCTSZ#+121/   SETZ 144000(J)
+1516/   37,,50707                       ONCTSZ#+122/   SYSSNP,,TTYLE8#+27
+1517/   377560,,664100                  ONCTSZ#+123/   SOSG M,@664100
+1520/   400000,,0                       ONCTSZ#+124/   SETZ 0
+1521/   37,,60707                       ONCTSZ#+125/   SYSSNP,,PARSET#+15
+1522/   333720,,667300                  ONCTSZ#+126/   SKIPLE P3,@667300
+1523/   2,,104000                       ONCTSZ#+127/   J,,104000
+1524/   37,,70707                       ONCTSZ#+130/   SYSSNP,,WHYMS2#+50
+1525/   333720,,647300                  ONCTSZ#+131/   SKIPLE P3,@CHGPG2#+3
+1526/   400702,,124000                  ONCTSZ#+132/   SETZ P3,124000(J)
+1527/   10,,600307                      ONCTSZ#+133/   T3,,SCNBOL#+3
+1530/   333720,,667302                  ONCTSZ#+134/   SKIPLE P3,@667302
+1531/   400001,,604000                  ONCTSZ#+135/   SETZ TYICCZ#(P)
+1532/   37,,110707                      ONCTSZ#+136/   SYSSNP,,110707
+1533/   333720,,667300                  ONCTSZ#+137/   SKIPLE P3,@667300
+1534/   400001,,614000                  ONCTSZ#+140/   SETZ TPSCH3#+7(P)
+1535/   37,,120707                      ONCTSZ#+141/   SYSSNP,,120707
+1536/   457772,,664102                  ONCTSZ#+142/   ORCAB P4,@664102(W)
+1537/   400000,,36                      ONCTSZ#+143/   SETZ CRSSTS
+1540/   37,,650707                      ONCTSZ#+144/   SYSSNP,,TSWST+7
+1541/   422660,,604302                  ONCTSZ#+145/   ANDCMM P2,@TTYCM2#
+1542/   107000,,100000                  ONCTSZ#+146/   GFDV 100000
+1543/   37,,140727                      ONCTSZ#+147/   SYSSNP,,140727
+1544/   355773,,534100                  ONCTSZ#+150/   AOSGE P4,@IPFR4#+6(M)
+1545/   40,,2                           ONCTSZ#+151/   FORTY,,J
+1546/   37,,150707                      ONCTSZ#+152/   SYSSNP,,150707
+1547/   455766,,604300                  ONCTSZ#+153/   ORCAI P4,@TTYCM0#+2(T1)
+1550/   400200,,2                       ONCTSZ#+154/   SETZ F,J
+1551/   25,,342307                      ONCTSZ#+155/   CRSWHY,,342307
+1552/   655766,,464102                  ONCTSZ#+156/   TSCA P4,@CLSCOM+26(T1)
+1553/   400010,,0                       ONCTSZ#+157/   SETZ 0(T3)
+1554/   37,,170707                      ONCTSZ#+160/   SYSSNP,,170707
+1555/   344726,,654140                  ONCTSZ#+161/   AOJA P3,@654140(T1)
+1556/   400000,,70071                   ONCTSZ#+162/   SETZ BOOTO1#+3
+1557/   25,,360707                      ONCTSZ#+163/   CRSWHY,,360707
+1560/   455770,,604302                  ONCTSZ#+164/   ORCAI P4,@TTYCM2#(T3)
+1561/   400200,,400000                  ONCTSZ#+165/   SETZ F,400000
+1562/   25,,402307                      ONCTSZ#+166/   CRSWHY,,.CPPPI
+1563/   344723,,604302                  ONCTSZ#+167/   AOJA P3,@TTYCM2#(R)
+1564/   100010,,160024                  ONCTSZ#+170/   100010,,160024
+1565/   37,,220707                      ONCTSZ#+171/   SYSSNP,,220707
+1566/   377660,,634116                  ONCTSZ#+172/   SOSG P2,@UINITB#+6
+1567/   100000,,20000                   ONCTSZ#+173/   100000,,MONBTS
+1570/   10,,707                         ONCTSZ#+174/   T3,,.E0LM+107
+1571/   455773,,604302                  ONCTSZ#+175/   ORCAI P4,@TTYCM2#(M)
+1572/   200,,2                          ONCTSZ#+176/   .E0PM,,J
+1573/   25,,662307                      ONCTSZ#+177/   CRSWHY,,662307
+1574/   455766,,604300                  ONCTSZ#+200/   ORCAI P4,@TTYCM0#+2(T1)
+1575/   200,,1                          ONCTSZ#+201/   .E0PM,,P
+1576/   25,,722307                      ONCTSZ#+202/   CRSWHY,,722307
+1577/   422720,,334102                  ONCTSZ#+203/   ANDCMM P3,@334102
+1601/   37,,260707                      ONCTSZ#+205/   SYSSNP,,260707
+1602/   355766,,464102                  ONCTSZ#+206/   AOSGE P4,@CLSCOM+26(T1)
+1603/   400000,,10                      ONCTSZ#+207/   SETZ T3
+1604/   37,,270707                      ONCTSZ#+210/   SYSSNP,,270707
+1605/   455773,,604302                  ONCTSZ#+211/   ORCAI P4,@TTYCM2#(M)
+1606/   240,,0                          ONCTSZ#+212/   .E0PM+40,,0
+1607/   26,,122307                      ONCTSZ#+213/   CRSWHY+1,,122307
+1610/   311726,,634102                  ONCTSZ#+214/   CAML P3,@UINI2C#+2(T1)
+1611/   170000,,10003                   ONCTSZ#+215/   FDV IOSUSI#+3
+1612/   15,,703                         ONCTSZ#+216/   P2,,.E0LM+103
+1613/   344723,,654100                  ONCTSZ#+217/   AOJA P3,@654100(R)
+1615/   37,,320707                      ONCTSZ#+221/   SYSSNP,,320707
+1616/   555763,,454102                  ONCTSZ#+222/   HLRZI P4,@WSYNC2#+52(R)
+1617/   400000,,7                       ONCTSZ#+223/   SETZ T2
+1620/   37,,330707                      ONCTSZ#+224/   SYSSNP,,330707
+1621/   344725,,604302                  ONCTSZ#+225/   AOJA P3,@TTYCM2#(U)
+1622/   100000,,300000                  ONCTSZ#+226/   100000,,300000
+1623/   37,,342707                      ONCTSZ#+227/   SYSSNP,,342707
+1624/   425764,,644100                  ONCTSZ#+230/   SETAI P4,@VIRCHK+5(F)
+1625/   400037,,770000                  ONCTSZ#+231/   SETZ @770000(P4)
+1626/   37,,350707                      ONCTSZ#+232/   SYSSNP,,350707
+1627/   355764,,664102                  ONCTSZ#+233/   AOSGE P4,@664102(F)
+1630/   400000,,40                      ONCTSZ#+234/   SETZ FORTY
+1631/   37,,360707                      ONCTSZ#+235/   SYSSNP,,360707
+1632/   455773,,604302                  ONCTSZ#+236/   ORCAI P4,@TTYCM2#(M)
+1633/   200,,2                          ONCTSZ#+237/   .E0PM,,J
+1634/   26,,142307                      ONCTSZ#+240/   CRSWHY+1,,142307
+1635/   377740,,647100                  ONCTSZ#+241/   SOSG P4,PAGOMT#+1
+1636/   400002,,120000                  ONCTSZ#+242/   SETZ 120000(J)
+1637/   37,,452707                      ONCTSZ#+243/   SYSSNP,,SAVCT2#+22
+1640/   377740,,641100                  ONCTSZ#+244/   SOSG P4,SWPS11#+3
+1641/   14,,431400                      ONCTSZ#+245/   P1,,431400
+1642/   21,,102707                      ONCTSZ#+246/   CLKDDT,,102707
+1643/   11727,,234102                   ONCTSZ#+247/   CDP P3,@234102(T2)
+1644/   100000,,120004                  ONCTSZ#+250/   100000,,120004
+1645/   34,,431707                      ONCTSZ#+251/   LDBREM+1,,431707
+1646/   457772,,634102                  ONCTSZ#+252/   ORCAB P4,@UINI2C#+2(W)
+1647/   77,,770077                      ONCTSZ#+253/   LIGHTS,,770077
+1650/   33,,120707                      ONCTSZ#+254/   LDBREM,,120707
+1651/   377740,,661102                  ONCTSZ#+255/   SOSG P4,661102
+1652/   514,,431400                     ONCTSZ#+256/   DTEMTI#+36,,431400
+1653/   21,,502307                      ONCTSZ#+257/   CLKDDT,,STRLP9#+3
+1654/   11727,,634100                   ONCTSZ#+260/   CDP P3,@UINI2C(T2)
+1655/   100000,,120004                  ONCTSZ#+261/   100000,,120004
+1656/   34,,431707                      ONCTSZ#+262/   LDBREM+1,,431707
+1657/   377740,,657100                  ONCTSZ#+263/   SOSG P4,657100
+1660/   400002,,130000                  ONCTSZ#+264/   SETZ 130000(J)
+1661/   37,,462707                      ONCTSZ#+265/   SYSSNP,,SENDHD#+3
+1662/   377740,,667102                  ONCTSZ#+266/   SOSG P4,667102
+1663/   2,,140000                       ONCTSZ#+267/   J,,140000
+1664/   37,,472707                      ONCTSZ#+270/   SYSSNP,,GETTAC
+1665/   344723,,604300                  ONCTSZ#+271/   AOJA P3,@TTYCM0#+2(R)
+1666/   500000,,320000                  ONCTSZ#+272/   HLL 320000
+1667/   37,,502707                      ONCTSZ#+273/   SYSSNP,,SCNUF2#+7
+1670/   377740,,637102                  ONCTSZ#+274/   SOSG P4,CVTOCT+6
+1671/   10002,,110000                   ONCTSZ#+275/   PTP 110000(J)
+1672/   2704                            ONCTSZ#+276/   IOSZAP#+704
+1673/   377740,,660102                  ONCTSZ#+277/   SOSG P4,660102
+1674/   1400                            ONCTSZ#+300/   ONCTSZ#+4
+1675/   22,,220707                      ONCTSZ#+301/   BOOTWD,,220707
+1676/   355763,,644100                  ONCTSZ#+302/   AOSGE P4,@VIRCHK+5(R)
+1677/   400037,,770075                  ONCTSZ#+303/   SETZ @770075(P4)
+1700/   37,,530707                      ONCTSZ#+304/   SYSSNP,,SETPT4#+12
+1701/   411724,,534100                  ONCTSZ#+305/   ANDCAI P3,@IPFR4#+6(F)
+1702/   400000,,0                       ONCTSZ#+306/   SETZ 0
+1703/   37,,550707                      ONCTSZ#+307/   SYSSNP,,VTMDA1#+11
+1704/   377740,,651102                  ONCTSZ#+310/   SOSG P4,SETHSA#+11
+1705/   400014,,431400                  ONCTSZ#+311/   SETZ 431400(P1)
+1706/   20,,612707                      ONCTSZ#+312/   CURJOB,,FNDSGU#+21
+1707/   333720,,634302                  ONCTSZ#+313/   SKIPLE P3,@UINIT6#+1
+1710/   400200,,0                       ONCTSZ#+314/   SETZ F,0
+1711/   26,,220507                      ONCTSZ#+315/   CRSWHY+1,,220507
+1712/   344723,,604302                  ONCTSZ#+316/   AOJA P3,@TTYCM2#(R)
+1713/   500710,,160024                  ONCTSZ#+317/   HLL P3,160024(T3)
+1714/   26,,320307                      ONCTSZ#+320/   CRSWHY+1,,320307
+1715/   455763,,604302                  ONCTSZ#+321/   ORCAI P4,@TTYCM2#(R)
+1716/   240,,2                          ONCTSZ#+322/   .E0PM+40,,J
+1717/   26,,362307                      ONCTSZ#+323/   CRSWHY+1,,362307
+1720/   333720,,664302                  ONCTSZ#+324/   SKIPLE P3,@664302
+1721/   200,,0                          ONCTSZ#+325/   .E0PM,,0
+1722/   26,,400507                      ONCTSZ#+326/   CRSWHY+1,,400507
+1723/   377660,,644114                  ONCTSZ#+327/   SOSG P2,@VIRCHK+21
+1724/   500000,,20000                   ONCTSZ#+330/   HLL MONBTS
+1725/   37,,620707                      ONCTSZ#+331/   SYSSNP,,ERRX4#+5
+1726/   455765,,604300                  ONCTSZ#+332/   ORCAI P4,@TTYCM0#+2(U)
+1727/   300,,10000                      ONCTSZ#+333/   .E0PM+100,,IOSUSI#
+1730/   26,,462307                      ONCTSZ#+334/   CRSWHY+1,,DATIME+2
+1731/   455764,,604302                  ONCTSZ#+335/   ORCAI P4,@TTYCM2#(F)
+1732/   300,,2                          ONCTSZ#+336/   .E0PM+100,,J
+1733/   26,,522307                      ONCTSZ#+337/   CRSWHY+1,,TSTBAD#+22
+1734/   355766,,664100                  ONCTSZ#+340/   AOSGE P4,@664100(T1)
+1735/   400000,,4                       ONCTSZ#+341/   SETZ F
+1736/   26,,60707                       ONCTSZ#+342/   CRSWHY+1,,PARSET#+15
+1737/   333720,,657300                  ONCTSZ#+343/   SKIPLE P3,@657300
+1740/   2,,134000                       ONCTSZ#+344/   J,,134000
+1741/   26,,620707                      ONCTSZ#+345/   CRSWHY+1,,ERRX4#+5
+1742/   311725,,664100                  ONCTSZ#+346/   CAML P3,@664100(U)
+1743/   400000,,0                       ONCTSZ#+347/   SETZ 0
+1744/   26,,500707                      ONCTSZ#+350/   CRSWHY+1,,LOKPPB#+1
+1745/   444720,,604300                  ONCTSZ#+351/   EQV P3,@TTYCM0#+2
+1746/   400700,,0                       ONCTSZ#+352/   SETZ P3,0
+1747/   11,,400307                      ONCTSZ#+353/   T4,,400307
+1750/   377740,,637100                  ONCTSZ#+354/   SOSG P4,CVTOCT+4
+1751/   400002,,100000                  ONCTSZ#+355/   SETZ 100000(J)
+1752/   37,,372707                      ONCTSZ#+356/   SYSSNP,,372707
+1753/   422660,,604302                  ONCTSZ#+357/   ANDCMM P2,@TTYCM2#
+1754/   517000,,100000                  ONCTSZ#+360/   HRLZS 100000
+1755/   10724                           ONCTSZ#+361/   JBTPID+36
+1756/   333720,,634300                  ONCTSZ#+362/   SKIPLE P3,@UOPE54#+1
+1757/   6000,,40000                     ONCTSZ#+363/   DLB BPS2#+3
+1760/   26,,720747                      ONCTSZ#+364/   CRSWHY+1,,720747
+1761/   344723,,604302                  ONCTSZ#+365/   AOJA P3,@TTYCM2#(R)
+1762/   500010,,160021                  ONCTSZ#+366/   HLL 160021(T3)
+1763/   26,,760707                      ONCTSZ#+367/   CRSWHY+1,,760707
+1764/   333720,,654314                  ONCTSZ#+370/   SKIPLE P3,@654314
+1765/   100000,,20000                   ONCTSZ#+371/   100000,,MONBTS
+1766/   37,,762707                      ONCTSZ#+372/   SYSSNP,,762707
+1767/   422720,,334102                  ONCTSZ#+373/   ANDCMM P3,@334102
+1770/   400700,,0                       ONCTSZ#+374/   SETZ P3,0
+1771/   27,,20307                       ONCTSZ#+375/   CPNDDT,,MONBTS+307
+1772/   11727,,634102                   ONCTSZ#+376/   CDP P3,@UINI2C#+2(T2)
+1773/   500010,,160024                  ONCTSZ#+377/   HLL 160024(T3)
+1774/   27,,360707                      ONCTSZ#+400/   CPNDDT,,360707
+1775/   333720,,637302                  ONCTSZ#+401/   SKIPLE P3,@DDSRC3#+40
+1776/   2,,114000                       ONCTSZ#+402/   J,,114000
+1777/   37,,40707                       ONCTSZ#+403/   SYSSNP,,IPOPJ#+6
+2004/   600011                          IOSZAP#+4/   SCNSIL#+7
+2414/   500002,,500371                  IOSZAP#+414/   HLL NCSDEF#+3(J)
+2415/   500372,,521104                  IOSZAP#+415/   HLL T2,@INPSW7#+3(W)
+2416/   500374,,500375                  IOSZAP#+416/   HLL T2,@MVARG#(P1)
+2417/   500376,,500002                  IOSZAP#+417/   HLL T2,@SLSR0#+3(P3)
+2421/   255000,,537251                  IOSZAP#+421/   JFCL SETIPQ#+40
+2422/   537321                          IOSZAP#+422/   SETIPQ#+110
+2423/   255000,,0                       IOSZAP#+423/   JFCL 0
+2430/   4000,,445207                    IOSZAP#+430/   .C0CDB,,DAASTH+2
+2431/   4000,,444010                    IOSZAP#+431/   .C0CDB,,KTUUO
+2432/   4000,,444011                    IOSZAP#+432/   .C0CDB,,SNTUUO
+2433/   4000,,444012                    IOSZAP#+433/   .C0CDB,,STUUO
+2434/   4000,,445207                    IOSZAP#+434/   .C0CDB,,DAASTH+2
+2435/   4000,,444013                    IOSZAP#+435/   .C0CDB,,CTUUO
+2436/   4000,,445207                    IOSZAP#+436/   .C0CDB,,DAASTH+2
+2437/   4000,,444013                    IOSZAP#+437/   .C0CDB,,CTUUO
+2500/   370000,,400000                  IOSZAP#+500/   SOS 400000
+2501/   304000,,14410                   IOSZAP#+501/   CAIA SVSETS
+2502/   4000,,537340                    IOSZAP#+502/   .C0CDB,,SETIPQ#+127
+2503/   537340                          IOSZAP#+503/   SETIPQ#+127
+2766/   72665,,0                        IOSZAP#+766/   MTAPE P2,@0(U)
+3001/   250300,,3000                    LUUOPC+1/   EXCH T1,LUUOPC
+3002/   202300,,370425                  LUUOPC+2/   MOVEM T1,370425
+3003/   254000,,475535                  LUUOPC+3/   JRST CONTAB#+6
+3005/   254200,,3005                    TRP3PC+1/   HALT TRP3PC+1
+3061/   264000,,27113                   VECTB1+53/   JSR SWPBLK+4
+3246/   264000,,25277                   VECTB3+40/   JSR 25277
+3253/   264000,,25164                   VECTB3+45/   JSR 25164
+3276/   264000,,24574                   VECTB3+70/   JSR 24574
+3277/   264000,,24603                   VECTB3+71/   JSR 24603
+3300/   264000,,24612                   VECTB3+72/   JSR 24612
+3301/   264000,,24621                   VECTB3+73/   JSR 24621
+3302/   264000,,24630                   VECTB3+74/   JSR 24630
+3303/   264000,,24637                   VECTB3+75/   JSR 24637
+3304/   264000,,24646                   VECTB3+76/   JSR 24646
+3305/   264000,,24655                   VECTB3+77/   JSR 24655
+3306/   264000,,24664                   VECTB3+100/   JSR 24664
+3307/   264000,,24673                   VECTB3+101/   JSR 24673
+3310/   264000,,24702                   VECTB3+102/   JSR 24702
+3311/   264000,,24711                   VECTB3+103/   JSR 24711
+3312/   264000,,24720                   VECTB3+104/   JSR 24720
+3313/   264000,,24727                   VECTB3+105/   JSR 24727
+3406/   777770,,3451                    EVMPTR/   -10,,EVBTAB
+3407/   1064                            PAGPTR/   ONCTSZ#+107
+3411/   777777,,777777                  SCNCNT/   -1
+3414/   777776,,653324                  VMTOTL/   -2,,653137
+3415/   1,,130454                       VMCMAX/   P,,130641
+3416/   1                               VMRMAX/   P
+3417/   1                               VMCNST/   P
+3421/   23420                           JBRMAX/   SETUP#+515
+3422/   2115,,761443                    LSFTIM/   IOSZAP#+116,,235332
+3423/   47113,,51622                    SYSVCT/   CALLI U,YBFBUF#(P2)
+3424/   6201                            SYSVCT+1/   JBTCHG+62
+3425/   6347                            SYSVCT+2/   SWPLST+54
+3426/   6515                            SYSVCT+3/   SW2LST+54
+3427/   12                              VMCEXP/   W
+3430/   11                              VMCDIF/   T4
+3431/   777777                          MAXINT/   777777
+3433/   734                             IPCCNT+1/   .E0LM+134
+3434/   730                             IPCCNT+2/   .E0LM+130
+3435/   766                             IPCCNT+3/   .E0LM+166
+3436/   370000                          IPCCNT+4/   370000
+3437/   772                             IPCCNT+5/   .E0LM+172
+3441/   337777                          SINCNT+1/   337777
+3442/   340000                          SINCNT+2/   340000
+3443/   400000                          SINCNT+3/   400000
+3444/   371000                          SINCNT+4/   JOBPDO#+270
+3445/   767                             SINCNT+5/   .E0LM+167
+3446/   773                             SINCNT+6/   .E0LM+173
+3447/   370655                          SINCNT+7/   JOBPDO#+145
+3450/   120                             EVBMAX/   JOBSA
+3451/   770000,,140000                  EVBTAB/   770000,,140000
+3452/   777777,,777777                  EVBTAB+1/   -1
+3453/   777777,,777777                  EVBTAB+2/   -1
+3454/   777777,,777777                  EVBTAB+3/   -1
+3455/   777777,,777760                  EVBTAB+4/   -20
+3460/   37777,,777777                   EVBTAB+7/   BPS2#+2,,-1
+3461/   2,,0                            FLG256/   J,,0
+3502/   777777,,777777                  FLG256+21/   -1
+4001/   10263                           .C0ASN/   JBTHSA+142
+4002/   777777,,777777                  .C0OK/   -1
+4004/   436065,,200000                  .C0LOG/   IORM P,@200000(U)
+4005/   436063,,200000                  .C0PHY/   IORM P,@200000(R)
+4006/   5                               .C0TYP/   U
+4007/   11000,,205                      .C0MPT/   CDP .E0PM+5
+4012/   11000,,173                      .C0PAR/   CDP DTEDRW#+24
+4013/   34000,,136                      .C0RSP/   TMC .JBCST
+4017/   7000,,217                       .C0NMT/   CLK .E0PM+17
+4020/   141000,,227                     .C0CSB/   FADL .E0PM+27
+4021/   13000,,371                      .C0DSB/   DIS TOTLIN#+61
+4026/   304000,,0                       .C0SK0/   CAIA 0
+4027/   300000,,0                       .C0SK1/   CAI 0
+4030/   4002                            .C0OK1/   .C0OK
+4031/   4000                            .C0SLF/   .C0CDB
+4032/   16654                           .C0SCN/   JBTRTD+46
+4033/   16714                           .C0SST/   D1USER
+4034/   777620,,14624                   .C0NPD/   -160,,ERPTBK+115
+4035/   777736,,14561                   .C0EPD/   -42,,ERPTBK+52
+4036/   14521                           .C0NJD/   ERPTBK+12
+4037/   446262                          .C0STO/   LINTAB+102
+4040/   446267                          .C0ISR/   LINTAB+107
+4041/   16466                           .C0KAF/   .RNTXT+14
+4042/   37400                           .C0NAP/   PTCHB4#+23
+4043/   40000                           .C0APP/   BPS2#+3
+4044/   1                               .C0API/   P
+4045/   100                             .C0ACO/   LIGHTS+1
+4046/   15004                           .C0CHL/   FETMXL#+4
+4047/   16156                           .C0CKL/   C4PD1+113
+4050/   1060                            .C0CON/   IOSCON#+60
+4051/   1060                            .C0EEB/   IOSCON#+60
+4052/   21600                           .C0IEF/   SDLTBV
+4053/   402000,,402656                  .C0CCF/   SETZM .CPTIM
+4054/   336000,,402656                  .C0HCT/   SKIPN .CPTIM
+4055/   540603                          .C0MPI/   MAPIO2#+7
+4056/   600000,,540564                  .C0MPS/   NOP 540564
+4057/   20400                           .C0NXM/   MONBTS+400
+4060/   20200                           .C0MPE/   MONBTS+200
+4062/   400000,,0                       .C0SCC/   SETZ 0
+4064/   200000,,0                       .C0QPC/   MOVE 0
+4065/   600000,,0                       .C0DBM/   NOP
+4066/   20000                           .C0EBR/   MONBTS
+4070/   73                              .C0CTN/   .PDCMD+1
+4071/   10060,,20000                    .C0CA0/   PTP P,@MONBTS
+4072/   777641,,370512                  .C0CA0+1/   -137,,JOBPDO#+2
+4073/   37                              .C0CA0+2/   SYSSNP
+4074/   33777,,371000                   .C0CA0+3/   NETIN1#+1,,JOBPDO#+270
+4075/   564200,,340000                  .C0CA0+4/   HLRO F,340000
+4076/   2                               .C0CA0+5/   J
+4077/   210000,,0                       .C0CA0+6/   MOVN 0
+4100/   710000,,10770                   .C0CA0+7/   TIOE JBTAD2+17
+4101/   2                               .C0CA0+10/   J
+4102/   517407                          .C0CA0+11/   CSSETU#+12
+4103/   100660                          .C0CA0+12/   100660
+4104/   47040,,0                        .C0CA0+13/   CALLI P,0
+4105/   1                               .C0CA0+14/   P
+4106/   15                              .C0CA0+15/   P2
+4107/   15,,617675                      .C0CA0+16/   P2,,TPMSM2#
+4110/   55440                           .C0CA0+17/   TAPCIC#+3
+4111/   440004,,400000                  .C0STT/   ANDCB 400000(F)
+4112/   440004,,400000                  .C0ST1/   ANDCB 400000(F)
+4113/   632220                          .C0ST2/   653104
+4115/   401000,,122001                  .C0EJ2/   SETZI 122001
+4116/   304000,,635606                  .C0EJ3/   CAIA ADVBFO+3
+4117/   320700,,645447                  .C0EJ4/   ERJMP XRNGE+2
+4120/   2177                            CRSHPI/   IOSZAP#+177
+4121/   304000,,475002                  .C0SVA/   CAIA CPINX1#+3
+4122/   254000,,14316                   .C0SVB/   JRST BOOTSP+22
+4123/   47040,,202                      .C0TRP/   CALLI P,.E0PM+2
+4126/   13,,256023                      .C0TML/   M,,ONLYTS#+4
+4127/   777777,,777777                  .C0OCB/   -1
+4131/   777777,,777777                  .C0DWD/   -1
+4132/   653254                          .C0CML/   653206
+4133/   15242                           .C0TCH/   C1PD1+107
+4134/   605075                          .C0TOA/   TTYSTC+4
+4135/   603677                          .C0TIV/   FRCSET
+4136/   600000,,0                       .C0DDT/   NOP
+4137/   454466,,11                      .C0EDV/   ORCA T4,@T4(T1)
+4143/   402150                          .C0ED4/   .CPHSF
+4144/   5                               .C0ED5/   U
+4151/   5                               .C0SYB/   U
+4153/   222                             .C0SY2/   .E0PM+22
+4154/   12132                           .C0SY3/   CIPWT+77
+4155/   12332                           .C0SY4/   SYMBK1+106
+4156/   1,,0                            CORMAX/   P,,0
+4157/   405777                          CORLST/   405777
+4160/   167                             CORTAL/   .PDLBS
+4163/   2115,,774435                    .C0UPT/   IOSZAP#+116,,250071
+4166/   27                              HIGHJB/   CRSHWD
+4167/   13773,,367315                   CLRWRD/   DIS P4,@TPMCL1#+17(P3)
+4170/   4,,424014                       LSTWRD/   F,,424264
+4171/   2,,0                            MEMSIZ/   J,,0
+4202/   1,,424000                       MAXMAX/   P,,424000
+4204/   1,,0                            CORMIN/   P,,0
+4207/   20                              .C0LJR/   U
+4210/   110,,17102                      .C0ODA/   LIN,,MONBTS+642
+4211/   10,,623071                      .C0ODA+1/   T3,,T.CON1#+7
+4215/   1246,,715554                    .C0NUL/   PAG U,DTEDCM#+2(T2)
+4217/   24                              .C0JOB/   CRSDTM
+4220/   244,,565276                     .C0OHT/   .E0PM+44,,TAPRSQ#+5
+4221/   174                             .C0EVM/   DTEDRW#+25
+4224/   1061,,722510                    .C0TUC/   PAG P,@160557(J)
+4225/   172,,503066                     .C0TJC/   DTEDRW#+23,,CLSR12#+22
+4247/   401000,,4040                    .C0PFW/   SETZI JBTOLS+45
+4253/   145,,315600                     .C0CSN/   DTEERW#,,322604
+4265/   3                               .C0SBR/   R
+4267/   116,,606524                     .C0FBI/   JOBSYM,,SWPIN2#
+4270/   33,,334733                      .C0FBO/   LDBREM,,336075
+4271/   243,,50520                      .C0SBI/   .E0PM+43,,63770
+4272/   16,,620400                      .C0SBO/   P3,,TMPDI1#+7
+4274/   1                               .C0SND/   P
+4276/   37                              .C0SJN/   SYSSNP
+4277/   435127,,0                       .C0SNM/   IORI J,@0(T2)
+4300/   424143,,536560                  .C0SPN/   SETA R,ATTMPA+2(R)
+4301/   1,,2                            .C0SPP/   P,,J
+4302/   646471,,212020                  .C0STN/   TRCN T4,@212020(T4)
+4303/   710000,,10770                   .C0SUP/   TIOE JBTAD2+17
+4304/   47040,,202                      .C0SUU/   CALLI P,.E0PM+2
+4310/   377                             .C0TPI/   TOTLIN#+67
+4312/   1316,,612653                    .C0TFI/   PAG T1,USPY1#+2(P3)
+4313/   34221,,114573                   .C0TFO/   TMC F,@114573(P)
+4314/   424,,7327                       .C0AOR/   .E0HSB,,SWTVLV#+125
+4315/   10,,106766                      .C0NOR/   T3,,107333
+4316/   57225                           .C0HOR/   INTBAT#+12
+4317/   237600,,72765                   .C0LOR/   DIVB P1,666720(P)
+4320/   312,,375633                     .C0AIR/   TOTLIN#+3,,441643
+4321/   10,,577003                      .C0NIR/   T3,,FILLP2#+2
+4322/   17273                           .C0HIR/   PSQTAB+256
+4323/   277177,,704745                  .C0LIR/   SOSLE P2,BISLST+5(T4)
+4324/   220,,150724                     .C0ARR/   .E0PM+20,,165431
+4325/   517113                          .C0NRR/   CSHINS#+10
+4326/   17200                           .C0HRR/   PSQTAB+161
+4327/   37635,,362                      .C0LRR/   SETSEC#+1,,PAGE11#+3
+4330/   117,,441473                     .C0AXR/   JOBUSY,,TVT220#+1
+4331/   10,,612566                      .C0NXR/   T3,,MRKALC#+11
+4332/   15450                           .C0HXR/   C2PD1+65
+4333/   260712,,736557                  .C0LXR/   PUSHJ P3,222207(M)
+4334/   110,,17102                      .C0ACR/   LIN#,,MONBTS+665
+4335/   10,,623071                      .C0NCR/   T3,,T.DAPI#+10
+4336/   15450                           .C0SCR/   C2PD1+65
+4337/   255457,,166220                  .C0SCL/   JFCL 11,212301(P4)
+4346/   114,,410531                     .C0NRI/   .JBEDV+2,,416551
+4347/   1322,,67634                     .C0NXI/   PAG T1,@372123(J)
+4350/   51,,704123                      .C0NEI/   HOMUN1+1,,711065
+4405/   117,,10263                      VERSTS/   JOBUSY,,JBTHSA+142
+4406/   1060,,101                       APRSTS/   PAG P,@.E0VIT
+4407/   200                             PISTS/   .E0PM
+4410/   500100,,1257                    UPTSTS/   HLL J,IOSCON#+257
+4411/   20000                           EPTSTS/   MONBTS
+4412/   47040,,202                      .C0UP0/   CALLI P,.E0PM+2
+4413/   710000,,10770                   .C0UP0+1/   TIOE JBTAD2+17
+4414/   501101,,1257                    .C0UP0+2/   XHLLI J,IOSCON#+257(P)
+4533/   370000,,400000                  .C0UP1/   SOS 400000
+4534/   304000,,14410                   .C0UP1+1/   CAIA SVSETS
+4535/   4000,,537340                    .C0UP1+2/   .C0CDB,,SETIPQ#+127
+4536/   537340                          .C0UP1+3/   SETIPQ#+127
+4547/   200000                          .C0DVS/   200000
+4550/   1,,640057                       .C0TMB/   P,,DEVCK1#+3
+4551/   246660,,516574                  .C0TMB+1/   LSHC P2,@TWQLP2#+6
+4552/   230                             .C0UB1/   .E0PM+30
+4553/   222                             .C0UB3/   .E0PM+22
+4554/   4305                            .C0RH1/   .C0EJN
+4555/   101                             .C0RH1+1/   .E0VIT
+4556/   4300                            .C0RH3/   .C0SPN
+4557/   100                             .C0RH3+1/   LIGHTS+1
+4560/   200                             .C0LPT/   .E0PM
+4563/   170777,,371000                  JOBADR/   FDV P4,@JOBPDO#+270(P4)
+4564/   170777                          .C0REL/   170777
+4565/   304000,,624635                  .C0PC/   CAIA MATCHF#+61
+4566/   47245,,413300                   .C0XTM/   OPEN T1,@421636(P3)
+4567/   234654                          .C0LS2/   231624
+4570/   106620                          .C0NL2/   256110
+4571/   174254                          .C0OH2/   ONCEND+540
+4572/   156                             .C0TNT/   BOOTWD
+4573/   21                              .C0HTM/   LDBREM+1
+4574/   16                              .C0SEC/   CRSHWD
+4603/   16654                           .C0SUD/   JBTRTD+46
+4607/   20000                           .C0SAC/   MONBTS
+4610/   710000,,0                       .C0APC/   TIOE
+4611/   6131                            .C0APC+1/   .C0ISR
+4617/   6                               .C0SQF/   -1
+4624/   777637,,14431                   .C0SP/   -134,,JOBPDO#+5
+4625/   0                               .C0S17/   0
+4654/   501100,,405                     .C0TCX/   XHLLI J,IOSCON#+271
+4655/   0                               .C0TCT/   0
+4660/   777777,,777777                  .C0PTF/   -1
+4661/   777777,,776410                  .C0LMC/   -1767
+4662/   240001,,200400                  .C0CA1/   ASH 200400(P)
+4663/   2,,0                            .C0CA1+1/   J,,0
+4664/   24525                           .C0CA1+2/   24525
+4665/   440700,,23511                   .C0CA1+3/   ANDCB P3,SETUP#+606
+4666/   260700,,23510                   .C0CA1+4/   PUSHJ P3,SETUP#+605
+4670/   200000,,20312                   .C0CA1+6/   MOVE MONBTS+312
+4671/   20312                           .C0CA1+7/   MONBTS+312
+4672/   777777,,777777                  .C0CA1+10/   -1
+4674/   17607                           .C0CA1+12/   PSQTAB+570
+4676/   27166                           .C0CA1+14/   JBTSFD+16
+4677/   23465                           .C0CA1+15/   SETUP#+562
+4701/   777640,,241                     .C0CA1+17/   -140,,.E0PM+41
+4703/   777577,,15270                   .C0CA2+1/   -201,,C1PD1+135
+4704/   23                              .C0CA2+2/   QUEFCH#
+4706/   42033                           .C0CA2+4/   MASK#+7
+4707/   11                              .C0CA2+5/   T4
+4710/   40140                           .C0CA2+6/   XEC2#+7
+4711/   2                               .C0CA2+7/   J
+4713/   777777,,777777                  .C0CA2+11/   -1
+4714/   25172                           .C0CA2+12/   25172
+4716/   3,,760020                       .C0CA2+14/   R,,760020
+4721/   400100,,762                     .C0CA2+17/   SETZ J,.E0LM+162
+4722/   1000,,0                         .C0CA3/   PAG
+4723/   777577,,15520                   .C0CA3+1/   -201,,C2PD1+135
+4724/   4000,,27121                     .C0CA3+2/   .C0CDB,,SWPBLK+12
+4725/   4777,,371000                    .C0CA3+3/   .C0QTS+12,,JOBPDO#+270
+4727/   27352                           .C0CA3+5/   JBTWCT+34
+4730/   12                              .C0CA3+6/   W
+4731/   777777,,777777                  .C0CA3+7/   -1
+4732/   10700                           .C0CA3+10/   JBTPID+12
+4735/   4                               .C0CA3+13/   F
+4741/   400100,,1257                    .C0CA3+17/   SETZ J,IOSCON#+257
+4763/   2116,,6064                      .C0IUT/   IOSZAP#+116,,265040
+4766/   600000,,2                       .C0QTS+1/   NOP 2
+4767/   577777,,777774                  .C0QTS+2/   HLRES P4,@-4(P4)
+4773/   3                               .C0QTS+6/   R
+4774/   2                               .C0QTS+7/   J
+4775/   2                               .C0QTS+10/   J
+4776/   777777,,0                       .C0QTS+11/   -1,,0
+4777/   1                               .C0QTS+12/   P
+5000/   47100,,2                        .C0QTS+13/   CALLI J,J
+                                        .C0QTS+14/   J,,J
+X                                       .C0QTS+20/   J
+                                        .C0QTS+21/   100420
+X                                       .C0QTS+22/   100434
+                                        .C0CPG/   HLL J,IOSCON#+257
+X                                       .C0ACA/   .CPCAC
+                                        CLSRTM/   .E0PM+55,,307623
+X                                       JBTSTS+1/   ANDCB T1,400000(F)
+                                        JBTSTS+2/   ANDCB T1,400000(F)
+X                                       JBTSTS+3/   PHYI26#,,0
+                                        JBTSTS+4/   ANDCB T1,400000(U)
+X                                       JBTSTS+5/   SETSTS 0(F)
+                                        JBTSTS+6/   ANDCB T1,0(F)
+X                                       JBTSTS+7/   BPS2#+10,,0
+                                        JBTSTS+10/   ANDCB T1,400000(F)
+X                                       JBTSTS+11/   ANDCB T1,400000(F)
+                                        JBTSTS+12/   EQVM T1,0(F)
+X                                       JBTSTS+13/   ANDCB T1,400000(F)
+                                        JBTSTS+14/   ANDCB T1,0(F)
+X                                       JBTSTS+15/   ANDCB T1,400000(F)
+     f G‡

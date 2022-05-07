@@ -1,0 +1,612 @@
+  ;Page 0 has special locations for console processor (30,70,71,72) and
+  ;user-mode JOBDAT for ".GET SYS:SYSTEM.EXE" and ".DDT" to patch Monitor
+ 20/   31                 CURJOB/   ^D25            ;Current job number
+ 22/   640336,,364605     BOOTWD/   TRC T1,@364605(P3)
+ 30/   0                  CRSHWD/   0               ;Crash if this is nonzero
+ 40/   411240             FORTY/    NETDSP
+ 41/   264000,,4000       JOB41/    JSR LUUOPC      ;LUUO handler
+ 44/   256777             JOBREL/   256777          ;Size of LOSEG
+ 70/   254000,,24754      ARSLOC/   JRST APRRES     ;Reset
+ 71/   254360,,402047     KAFLOC/   XPCW @.CPKAF    ;Keep Alive
+ 72/   254000,,31243      WRSLOC/   JRST APRWRS     ;Warm start
+ 74/   70746,,52312       .JBDDT/   DDTEND,,DDT     ;DDT
+ 75/   404                JOBHSO/   404             ;Hiseg origin
+ 76/   67144              .JBBPT/   BPT$B#+7        ;DDT breakpoint 0
+112/   6174               .JBEDV/   .C0EDV          ;Exec Data Vector
+115/   241000,,644777     JOBHRL/   240100,,644777  ;Hiseg length
+116/   632700,,172700     JOBSYM/   -145100,,PAT..  ;Symbol table
+120/   256603,,24660      JOBSA/    256603,,SYSTRT  ;Start address
+121/   256603             JOBFF/    256603          ;First free
+133/   256602,,256777     JOBCOR/   256602,,256777  ;Size of LOSEG
+136/   270240,,26         .JBCST/   Customer version, load 26
+137/   270200,,25527      JOBVER/   702(25527)-2    ;Version number
+140/   522211,,151500     JOBDA/    ASCIZ /Copyright 1984 by DEC.../
+205/   270000,,0          JOBDA+45/   (end of copyright notice)
+  ;Locations 206-377 unused
+400/   254000,,24660      SYSDSP/   JRST SYSTRT
+401/   300000,,52312      SYSDDT/   CAI ENDSYS = DDT
+402/   254200,,402        SYSDDT+1/ HALT SYSDDT+1
+403/   254200,,403        SYSDDT+2/ HALT SYSDDT+2
+404/   254000,,25624      SYSDDT+3/ JRST STPALL ;Stop ALL
+405/   254000,,25617      SYSDDT+4/ JRST STPCPU ;Stop CPU
+406/   254000,,25625      SYSDDT+5/ JRST STPLDB ;Break locks
+407/   254000,,25632      SYSCRH/   JRST SYSTOP ;Goto MONBTS
+410/   47251              ABSTAB/   NUMTAB      ;Pointer to table of GETTABs
+  ;The EPT is page 1, the page map for section 0 is page 2
+1000/   200000,,430       RH20+0/ initial channel command
+1001/   500000,,432       RH20+1/ channel status word
+1002/   600002,,434000    RH20+2/ last updated command
+1003/   0                 RH20+3/ reserved
+1004/   200000,,430       RH21+0/
+1005/   500000,,431       RH21+1/
+1006/   600002,,56000     RH21+2/
+1007/   0                 RH21+3/
+1010/   200000,,1         RH22+0/
+1011/   500000,,0         RH22+1/
+1012/   400002,,16152     RH22+2/
+1013/   254340,,646207    RH22+3/   XPCW 646207
+1014/   200000,,444       RH23+0/
+1015/   500000,,445       RH23+1/
+1016/   600002,,433677    RH23+2/
+1017/   0                 RH23+3/
+1020-1037/  0             RH24-RH27/  ;This CPU has only 4 RH20's
+1040/   202000,,404000    .E0IL+00/   MOVEM ILLMEMREF
+1041/   260000,,4000      .E0IL+01/   PUSHJ LUUOPC
+1042/   254340,,26566     .E0IL+02/   XPCW CH1
+1043/   202000,,404000    .E0IL+03/   MOVEM ILLMEMREF  ;Causes a page fault
+1044/   254340,,27064     .E0IL+04/   XPCW CH2
+1045/   202000,,404000    .E0IL+05/   MOVEM ILLMEMREF
+1046/   254340,,27362     .E0IL+06/   XPCW CH3
+1047/   202000,,404000    .E0IL+07/   MOVEM ILLMEMREF
+1050/   254340,,27651     .E0IL+10/   XPCW CH4
+1051/   202000,,404000    .E0IL+11/   MOVEM ILLMEMREF
+1052/   254340,,30140     .E0IL+12/   XPCW CH5
+1053/   202000,,404000    .E0IL+13/   MOVEM ILLMEMREF
+1054/   254340,,30427     .E0IL+14/   XPCW CH6
+1055/   202000,,404000    .E0IL+15/   MOVEM ILLMEMREF
+1056/   254340,,30725     .E0IL+16/   XPCW CH7
+1057/   202000,,404000    .E0IL+17/   MOVEM ILLMEMREF
+  ;EPT+060 to EPT+137 unused
+1140/DT0EBP: POINT 8,.CP20B+3,23;To-11 byte pointer
+1141/DT0TBP: POINT 8,104214,15  ;To-10 byte pointer
+1142/DT0II:  XPCW ETCEND	;Extended JSR interrupt instruction
+1143/		0		;unused
+1144/DT0EPW: 62			;Examine protection, 40777-41061 are valid
+1145/DT0ERW: ETCHED		;Examine relocation, 40777 is for DTE0
+1146/DT0DPW: 30			;Deposit protection, 41031-41061 are valid
+1147/DT0DRW: ETCRGN+30		;Deposit relocation, starts at 41031
+1150-1157			;DTE1 locations, it would use 40776
+1160-1167			;DTE2 locations, it would use 40775
+1170-1177			;DTE3 locations, it would use 40774
+  ;EPT+200 to EPT+417 unused
+1420/   0                 EPT+420/  0
+1421/   255000,,0         .E0AOV/   JFCL 0     ;Arithmetic overflo
+1422/   516734            .E0AOV+1/ SEPDLO     ;Stack overflow
+1423/   264000,,4004      .E0AOV+2/ JSR TRP3PC ;Trap 3
+  ;EPT+424 to EPT+437 unused
+1440/   254000,,105213    .E0STD/   JRST DEBUG
+1441/   256000,,401       .E0DDT/   XCT SYSDDT
+1442/   256000,,407       .E0STL/   XCT SYSCRH
+1443/   256000,,400       .E0STM/   XCT SYSDSP
+  ;EPT+444 to EPT+456 used for secondary protocol
+1444/DT0FLG: 200000,,377777	;Command complete flag
+1445/		0		;unused
+1446/		0		;unused
+1447/		0		;unused
+1450/DT0F11: ascii code for CR	;From-11 data
+1451/DT0CMD:	0		;Command word
+1452/		0		;unused
+1453/		0		;unused
+1454/		0		;unused
+1455/DT0MTD:	0		;Output done flag
+1456/DT0MTI:	0		;Input ready flag
+  ;EPT+457 to EPT+507 unused
+1510/   3423,,466277      .E0HTB/   high-order time base
+1511/   45404,,60000      .E0LTB/   low-order time-base
+1514/   254340,,31326     .E0TII/   XPCW TM0INT ;Timer interrupt
+  ;Section pointers at EPT+540 thru EPT+577
+1540/   124000,,2         .E0STB/     Section 0 @ 2, write, cache
+1541/   124000,,2         .E0STB+1/   Section 1 @ 2, write, cache
+1542/   124000,,2536      .E0STB+2/   Section 2 @ 2536, write, cac
+1543/   124000,,2535      .E0STB+3/   Section 3 @ 2535, write, cac
+  ;EPT+600 to EPT+777 unused
+1777/   0                 EPT+777/0
+  ;Exec section 0 and section 1 use the same page map
+2000/   120000,,0         .E0MAP+000/ write, no cache, page 0
+2001/   124000,,1         .E0MAP+001/ write, cache          1
+2002/   124000,,2         .E0MAP+002/ write, cache          2
+2003/   124000,,3         .E0MAP+003/ write, cache          3
+2004/   120000,,4         .E0MAP+004/ write, no cache       4
+2005/   120000,,5         .E0MAP+005/ write, no cache       5
+2006/   124000,,6         .E0MAP+006/ .C0CDB (CPU0 Data Block)
+2007/   124000,,7         .E0MAP+007/ .C0CDB and JBT tables 7
+2010/   124000,,10        .E0MAP+010/ tables in COMMON     10
+  ;More of the same, cached lowseg
+2077/   124000,,77        .E0MAP+077/ write, cache
+2100/   120000,,100       .E0MAP+100/ write, nocache
+2101/   124000,,101       .E0MAP+101/ write, cache
+  ;More of the same, cached lowseg
+2151/   124000,,151       .E0MAP+151/ write, cache
+2152/   120000,,152       .E0MAP+152/ write, nocache
+  ;More of the same, uncached lowseg
+2336/   120000,,336       .E0MAP+336/ write, nocache
+2337/   120000,,337       .E0MAP+337/ write, nocache
+  ; Start of FUNNYSPACE, Exec virtual addresses 340000 to 377777
+2340/   324340,,0         .E0MAP+340/   Funnyspace (pages 340-377)
+2341/   324341,,0         .E0MAP+341/   are mapped indirect thru
+2342/   324342,,0         .E0MAP+342/   the UPT.  On a KI, this is
+2343/   324343,,0         .E0MAP+343/   thru words 400-417 of the
+2344/   324344,,0         .E0MAP+344/   UPT.  On a KL, this is
+2345/   324345,,0         .E0MAP+345/   thru words 340-377 of the
+2346/   324346,,0         .E0MAP+346/   UPT.  On a Tri-SMP system,
+2347/   324347,,0         .E0MAP+347/   the hardware SPT is 3
+2350/   324350,,0         .E0MAP+350/   words long, one for each
+2351/   324351,,0         .E0MAP+351/   CPU.  For each CPU, the
+2352/   324352,,0         .E0MAP+352/   SPT base address (in AC 3,
+2353/   324353,,0         .E0MAP+353/   block 6) is different so
+2354/   324354,,0         .E0MAP+354/   that SPT+0 is a word that
+2355/   324355,,0         .E0MAP+355/   matches the UBR for that
+2356/   324356,,0         .E0MAP+356/   CPU.  Therefore 324340,,0
+2357/   324357,,0         .E0MAP+357/   means "Indirect, writeable
+2360/   324360,,0         .E0MAP+360/   cacheable, using word 340
+2361/   324361,,0         .E0MAP+361/   of the page that SPT+0
+2362/   324362,,0         .E0MAP+362/   points to".
+2363/   324363,,0         .E0MAP+363/
+2364/   324364,,0         .E0MAP+364/   Words 000-337 of the UPT are used as
+2365/   324365,,0         .E0MAP+365/   Exec PDL thru virtual addresses
+2366/   324366,,0         .E0MAP+366/   377000-377337 (cached references).
+2367/   324367,,0         .E0MAP+367/   ...
+2370/   324370,,0         .E0MAP+370/   ...
+2371/   324371,,0         .E0MAP+371/   ...
+2372/   324372,,0         .E0MAP+372/   ...
+2373/   324373,,0         .E0MAP+373/   ...
+2374/   324374,,0         .E0MAP+374/   ...
+2375/   324375,,0         .E0MAP+375/   ...
+2376/   324376,,0         .E0MAP+376/   ...
+2377/   324377,,0         .E0MAP+377/   ...
+  ;Pages 400-403 are used for building UPTs and the CDB (CPU Data Block)
+  ;These 4 pages are different on each CPU
+2400/   124000,,1647      .E0MAP+400/   Write, cache, UPT
+2401/   120000,,166       .E0MAP+401/   Write, nocache, TEMP
+2402/   120000,,6         .E0MAP+402/   Write, nocache, CDB page 0
+2403/   120000,,7         .E0MAP+403/   Write, nocache, CDB page 1
+  ;Pages 404-664 are the Monitor's HISEG and are write protected.
+  ;BOOT loads the HISEG into physical pages 340-620, ONCE blt's them higher.
+  ;This particular 1091 has 768K of MOS memory, physical pages 0000-2777.
+  ;The last page in the Exec's HISEG is page 644 at physical page 2777
+  ;The first page in the Exec's HISEG is page 404 at physical page 2537
+2404/   104000,,2537      .E0MAP+404/   Read, cache
+2405/   104000,,2540      .E0MAP+405/   Read, cache
+  ;More of the same, write-protected mapping
+2641/   104000,,2774      .E0MAP+641/   The last page of the HISEG
+2642/   104000,,2775      .E0MAP+642/   is in the last page of
+2643/   104000,,2776      .E0MAP+643/   physical memory
+2644/   104000,,2777      .E0MAP+644/   Read, Cache, end of HISEG
+  ;The section 2 map is in page 2536
+  ;The section 3 map is in page 2535
+2645/   120000,,2534      .E0MAP+645/   LDB and other data struc-
+2646/   120000,,2533      .E0MAP+646/   tures, built by ONCE and
+2647/   120000,,2532      .E0MAP+647/   AUTO-CONFIG.
+2650/   120000,,2531      .E0MAP+650/   ...
+2651/   120000,,2501      .E0MAP+651/   (13 pages allocated as
+2652/   120000,,2502      .E0MAP+652/    a group)
+2653/   120000,,2503      .E0MAP+653/   ...
+2654/   120000,,2504      .E0MAP+654/   ...
+2655/   120000,,2505      .E0MAP+655/   ...
+2656/   120000,,2506      .E0MAP+656/   ...
+2657/   120000,,2507      .E0MAP+657/   ...
+2660/   120000,,2510      .E0MAP+660/   ...
+2661/   120000,,2511      .E0MAP+661/   ...
+2662/   120000,,2512      .E0MAP+662/   ...
+2663/   120000,,2513      .E0MAP+663/   ...
+2664/   120000,,1113      .E0MAP+664/   Virtual pages allocated after startup
+2665/   120000,,1765      .E0MAP+665/   ...
+2666/   120000,,1175      .E0MAP+666/   ...
+2667/   120000,,515       .E0MAP+667/   ...
+2670/   0                 .E0MAP+670/ inaccessable
+  ;The NULL JOB's UPT is in page 3
+3000/   0                 UPT+0/  0
+  ;UPT+340 to UPT+377 are used for mapping funnyspace
+3367/   120000,,3         3367/   .UPMAP = section 0 page map
+3370/   120000,,3         3370/   .UPMP = UPT (uncached for SMP)
+3371/   120000,,371       3371/   .JDAT = JOBDAT = user's page 0
+3372/   120000,,372       3372/   .VJDT = vestigual jobdat HISEG
+3373/   120000,,1752      3373/   .TEMP
+3374/   120000,,374       3374/   .JBPK  for JOBPEK uuo
+3375/   120000,,375       3375/   .JBPK1 for JOBPEK uuo
+3376/   120000,,376       3376/   .JBPK2 for JOBPEK uuo
+3377/   120000,,3         3377/   .UUPMP = PDL (cached UPT)
+  ;UPT+400 to UPT+417 unused
+3420/   0                 3420/   Addr of LUUO block
+3421/   255000,,516663    3421/   JFCL KLSER ;Arithmetic overflow
+3422/   516734            3422/   SEPDLO     ;MUUO for PDL-OV
+3423/   255000,,0         3423/   JFCL 0     ;TRAP3
+3430/   405467            3430/   MUUO    ;Kernel no trap
+3431/   404010            3431/   KTUUO   ;Kernel MUUO during trap
+3432/   404011            3432/   SNTUUO  ;Supervisor no trap
+3433/   404012            3433/   STUUO   ;Supervisor trap
+3434/   405467            3434/   MUUO    ;Concealed no trap
+3435/   404013            3435/   CTUUO   ;Concealed trap
+3436/   405467            3436/   MUUO    ;Public no trap
+3437/   404013            3437/   CTUUO   ;Public trap
+  ;UPT+440 to UPT+477 unused
+3500/   0                 3500/   0       ;Page fail word
+3501/   300000,,0         3501/   CAI 0   ;Page fail flags
+3502/   516754            3502/   SEILM   ;Page fail old PC
+3503/   516754            3503/   SEILM   ;Page fail new PC
+3540/   160000,,3         3540/   Section 0 map at page 3
+  ;COMMON starts at page 4, interrupt handlers and swapping parameters
+4000/   0                 LUUOPC/   0
+4001/   250300,,4000      LUUOPC+1/   EXCH T1,LUUOPC
+4002/   202300,,370425    LUUOPC+2/   MOVEM T1,.UTMP+425
+4003/   254000,,451403    LUUOPC+3/   JRST UUOERR
+4004/   0                 TRP3PC/   0
+4005/   254200,,4005      TRP3PC+1/   HALT TRP3PC+1
+4006/   777770,,4051      EVMPTR/   -10,,EVBTAB
+4007/   2440              PAGPTR/   LOCOCW+10
+4010/   0                 4010/   0
+4011/   777777,,777777    SCNCNT/   -1
+4014/   777777,,714626    VMTOTL/   -63266
+4015/   77152             VMCMAX/   VOLPPN+10
+4016/   1                 VMRMAX/   P
+4017/   1                 VMCNST/   P
+4021/   23420             JBRMAX/   NXMTAB+211
+4022/   107,,57172        LSFTIM/   LIGHTS+10,,155571
+4023/   153233,,31172     SYSVCT/   FSBB T2,NL0FEK+3(T4)
+4024/   12305             SYSVCT+1/   SWPLST
+4025/   12677             SYSVCT+2/   SW2LST
+4026/   13271             SYSVCT+3/   SW3LST
+4027/   12                VMCEXP/   W
+4030/   11                VMCDIF/   T4
+4031/   777777            MAXINT/   777777
+4033/   241               IPCCNT+1/   LIN+22
+4034/   235               IPCCNT+2/   LIN+16
+4035/   273               IPCCNT+3/   DXCNUM+3
+4036/   370000            IPCCNT+4/   370000
+4037/   277               IPCCNT+5/   DTSCNI
+4041/   337777            SINCNT+1/   337777
+4042/   340000            SINCNT+2/   340000
+4043/   400000            SINCNT+3/   400000
+4044/   371000            SINCNT+4/   371000
+4045/   274               SINCNT+5/   DXCNUM+4
+4046/   300               SINCNT+6/   DTSCNI+1
+4047/   370162            SINCNT+7/   370162
+4050/   114               EVBMAX/   .JBEDV+2
+4051/   777777,,777777    EVBTAB/   -1
+4052/   777777,,777777    EVBTAB+1/   -1
+4053/   777777,,777777    EVBTAB+2/   -1
+4054/   777777,,777777    EVBTAB+3/   -1
+4055/   777777,,777777    EVBTAB+4/   -1
+4056/   600000,,0         EVBTAB+5/   NOP
+4057/   0                 EVBTAB+6/   0
+4060/   37777,,777777     EVBTAB+7/   37777,,-1
+4061/   13,,430           LTINIT/   M,,LOCOCW+10
+4062/   165,,4064         LTINIT+1/   DTEDRW+16,,LTINIT+3
+4063/   0                 LTINIT+2/   0
+4064/   420001,,201000    LTINIT+3/   TRZ 726000(P)
+4065/   420002,,375000    LTINIT+2/   0
+4066/   420002,,134000    LTINIT+5/   ANDCM 134000(J)
+4067/   420001,,127000    LTINIT+2/   0
+4070/   420001,,622000    LTINIT+7/   ANDCM SWPSPC+2(P)
+4071/   420002,,111000    LTINIT+10/   ANDCM 223000(J)
+4072/   620001,,422000    LTINIT+11/   ANDCM 663000(P)
+4073/   0                 LTINIT+12/   ANDCAM M,.C0BPV+23(J)
+4074/   420002,,233000    LTINIT+2/   0
+4075/   420000,,157000    LTINIT+14/   ANDCM 157000
+4076/   420001,,245000    LTINIT+15/   ANDCM 245000(P)
+4077/   420000,,525000    LTINIT+2/   0
+4100/   420002,,124000    LTINIT+17/   ANDCM 124000(J)
+4101/   420002,,114000    LTINIT+20/   ANDCM 114000(J)
+4102/   620001,,247000    LTINIT+21/   TRZ 247000(P)
+4104/   604001,,203204    LTINIT+23/   TRNA 203204(P)
+4106/   401500,,664000    LTINIT+25/   SETZI W,664000
+4110/   404000,,664272    LTINIT+27/   AND 664272
+4111/   404000,,664475    LTINIT+30/   AND 664475
+4112/   402000,,664700    LTINIT+31/   SETZM 664700
+4113/   402002,,253000    LTINIT+32/   SETZM 253000(J)
+4114/   404002,,253103    LTINIT+33/   AND 253103(J)
+4115/   404002,,253306    LTINIT+34/   AND 253306(J)
+4116/   404002,,253511    LTINIT+35/   AND 253511(J)
+4117/   401502,,253714    LTINIT+36/   SETZI W,253714(J)
+4120/   402301,,726000    LTINIT+37/   SETZM T1,726000(P)
+4121/   404001,,726117    LTINIT+40/   AND 726117(P)
+4122/   404001,,726322    LTINIT+41/   AND 726322(P)
+4123/   404001,,726525    LTINIT+42/   AND 726525(P)
+4124/   401201,,726730    LTINIT+43/   SETZI F,726730(P)
+4125/   602601,,262000    LTINIT+44/   TRNE P1,262000(P)
+4130/   420000,,715000    LTINIT+47/   ANDCM 715000
+4131/   620002,,415000    LTINIT+50/   TRZ 415000(J)
+4134/   420002,,246000    LTINIT+53/   ANDCM 246000(J)
+4135/   420002,,150000    LTINIT+54/   ANDCM 150000(J)
+4136/   420001,,125000    LTINIT+55/   ANDCM 125000(P)
+4137/   420002,,274000    LTINIT+56/   ANDCM 274000(J)
+4140/   420001,,175000    LTINIT+57/   ANDCM 175000(P)
+4141/   420001,,232000    LTINIT+60/   ANDCM 232000(P)
+4142/   420002,,433000    LTINIT+61/   ANDCM POPCTX+1(J)
+4143/   420002,,134000    LTINIT+62/   ANDCM 134000(J)
+4144/   420002,,165000    LTINIT+63/   ANDCM 165000(J)
+4145/   420000,,213000    LTINIT+64/   ANDCM 213000
+4146/   420002,,123000    LTINIT+65/   ANDCM 123000(J)
+4147/   420001,,370000    LTINIT+66/   ANDCM 370000(P)
+4150/   420001,,442000    LTINIT+67/   ANDCM TURN+1(P)
+4151/   420002,,127000    LTINIT+70/   ANDCM 127000(J)
+4152/   420001,,413000    LTINIT+71/   ANDCM SETNM1#(P)
+4153/   420001,,334000    LTINIT+72/   ANDCM 334000(P)
+4154/   420001,,533000    LTINIT+73/   ANDCM VTMSSS+5(P)
+4155/   420001,,425000    LTINIT+74/   ANDCM ASSG3#(P)
+4156/   420002,,423000    LTINIT+75/   ANDCM SETBR2+2(J)
+4157/   420000,,327000    LTINIT+76/   ANDCM 327000
+4160/   420001,,672000    LTINIT+77/   ANDCM 672000(P)
+4161/   420001,,311000    LTINIT+100/   ANDCM 311000(P)
+4162/   420000,,500000    LTINIT+101/   ANDCM DUUTBL+10
+4163/   420000,,620000    LTINIT+102/   ANDCM RCNSP1+6
+4164/   420000,,611000    LTINIT+103/   ANDCM TD2CF2#
+4165/   420002,,30000     LTINIT+104/   ANDCM C4PD1+41(J)
+4166/   420000,,363000  NIT+105/   ANDCM 363000
+4167/   420001,,375000    LTINIT+106/   ANDCM 375000(P)
+4170/   420002,,202000    LTINIT+107/   ANDCM 202000(J)
+4171/   420001,,534000    LTINIT+110/   ANDCM VTMJI1+12(P)
+4172/   420002,,221000    LTINIT+111/   ANDCM 221000(J)
+4173/   420000,,750000    LTINIT+112/   ANDCM 750000
+4174/   420001,,151000    LTINIT+113/   ANDCM 151000(P)
+4175/   420000,,762000    LTINIT+114/   ANDCM 762000
+4176/   420000,,634000    LTINIT+115/   ANDCM THIS8C+3
+4177/   420001,,662000    LTINIT+116/   ANDCM 662000(P)
+4200/   420001,,76000     LTINIT+117/   ANDCM FNDUT1+4(P)
+4201/   620001,,174000    LTINIT+120/   TRZ 174000(P)
+4204/   420001,,234000    LTINIT+123/   ANDCM 234000(P)
+4205/   620000,,215000    LTINIT+124/   TRZ 215000
+4210/   420000,,437000    LTINIT+127/   ANDCM GETWRU#
+4211/   420000,,504000    LTINIT+130/   ANDCM UFDCM4+3
+4212/   420001,,204000    LTINIT+131/   ANDCM 204000(P)
+4213/   420001,,634000    LTINIT+132/   ANDCM THIS8C+3(P)
+4214/   620000,,472000    LTINIT+133/   TRZ 472000
+4216/   420001,,155000    LTINIT+135/   ANDCM 155000(P)
+4220/   420002,,217000    LTINIT+137/   ANDCM 217000(J)
+4221/   420001,,676000    LTINIT+140/   ANDCM 676000(P)
+4222/   420001,,157000    LTINIT+141/   ANDCM 157000(P)
+4223/   420002,,243000    LTINIT+142/   ANDCM 243000(J)
+4224/   420000,,201000    LTINIT+143/   ANDCM 201000
+4225/   420001,,147000    LTINIT+144/   ANDCM 147000(P)
+4226/   420001,,717000    LTINIT+145/   ANDCM 717000(P)
+4227/   420002,,53000     LTINIT+146/   ANDCM PERIOD+5(J)
+4230/   420001,,325000    LTINIT+147/   ANDCM SDYPUN#(P)
+4231/   420002,,10000     LTINIT+150/   ANDCM IOSUSI#(J)
+4232/   420002,,406000    LTINIT+151/   ANDCM AP0RES+2(J)
+4233/   620001,,675000    LTINIT+152/   TRZ 675000(P)
+4777/   0                 4777/  0
+  ;Page 5 is ?
+5000/   0                 5000/  0
+5010/   154               NOIOWD/   GTTBLN+2
+5011/   3,,0              FLG256/   R,,0
+5047/   626370,,222046    DS00BS+1/   TRZN T2,@222046(T3)
+5050/   255000,,0         DS00BS+2/   JFCL 0
+5051/   255000,,0         DS00BS+3/   JFCL 0
+5052/   10,,442203        DS00BS+4/   T3,,DTESER
+5054/   255000,,0         DS00BS+6/   JFCL 0
+5055/   5                 DS00BS+7/   U
+5057/   255000,,0         DS00BS+11/   JFCL 0
+5073/   1                 DS01BS/   P
+5075/   255000,,0         DS01BS+2/   JFCL 0
+5076/   255000,,0         DS01BS+3/   JFCL 0
+5101/   255000,,0         DS01BS+6/   JFCL 0
+5104/   255000,,0         DS01BS+11/   JFCL 0
+5120/   2                 DS02BS/   J
+5122/   255000,,0         DS02BS+2/   JFCL 0
+5123/   255000,,0         DS02BS+3/   JFCL 0
+5126/   255000,,0         DS02BS+6/   JFCL 0
+5131/   255000,,0         DS02BS+11/   JFCL 0
+5145/   3                 DS03BS/   R
+5147/   255000,,0         DS03BS+2/   JFCL 0
+5150/   255000,,0         DS03BS+3/   JFCL 0
+5153/   255000,,0         DS03BS+6/   JFCL 0
+5156/   255000,,0         DS03BS+11/   JFCL 0
+5173/   6,,404000         DLXLST/   T1,,.CPPAT+376
+5174/   6,,405000         DLXLST+1/   T1,,DEYCPS
+5175/   6,,406000         DLXLST+2/   T1,,AP0RES+2
+5176/   6,,407000         DLXLST+3/   T1,,LINTAB+35
+  ;CDB for CPU 0 starts at physical page 0, virtual page 402
+6000/   0                 6000/     0
+6001/   4605              .C0ASN/   MDTRNG+202
+6002/   777777,,777706    .C0OK/    -72
+6003/   1000              .C0EPT/   IOSCON#
+6004/   436065,,200000    .C0LOG/   IORM P,@200000(U)
+6005/   436054,,200000    .C0PHY/   IORM P,200000(P1)
+6006/   4                 .C0TYP/   F
+6007/   11000,,205        .C0MPT/   CDP GTTBLN+10
+6012/   11000,,173        .C0PAR/   CDP DTEDRW+24
+6013/   34000,,136        .C0RSP/   TMC .JBCST
+6015/   71,,160700        .C0EBS/   KAFLOC,,160700
+6016/   54,,503440        .C0MBS/   HOMUN1+4,,CLRST0+24
+6017/   7000,,217         .C0NMT/   CLK LIN
+6020/   211000,,227       .C0CSB/   MOVNI LIN+10
+6021/   100000,,441       .C0DSB/   DI.UIO LOCOCW+21
+6022/   47000,,371        .C0SDP/   CALLI BUF+42
+6023/   100000,,542       .C0BPA/   DI.UIO DTXDMP+3
+6024/   2000              .C0MAP/   .E0MAP
+6025/   2032              .C0SPT/   .E0MAP+32
+6026/   3                 .C0XPT/   R
+6030/   304000,,0         .C0SK0/   CAIA 0      ;Skip if CPU0 (true)
+6031/   300000,,0         .C0SK1/   CAI 0       ;Skip if CPU1 (false)
+6032/   6002              .C0OK1/   .C0OK
+6033/   6000              .C0SLF/   .C0CDB      ;Address if CDB
+6034/   32067             .C0SCN/   SSCAN
+6035/   32131             .C0SST/   SSSCAN
+6036/   777620,,26406     .C0NPD/   -160,,NU0PDL
+6037/   777736,,26343     .C0EPD/   -42,,ER0PDL
+6040/   26303             .C0NJD/   ERPTBK+104
+6041/   407162            .C0STO/   SC0TIC
+6042/   407167            .C0ISR/   SC0SEC
+6043/   777777,,777777    .C0DLK/   -1
+6044/   777777,,777777    .C0SCD/   -1
+6045/   254200,,405776    .C0RES/   HALT AP0RES
+6047/   31332             .C0KAF/   AP0KAF
+6050/   57400             .C0NAP/   SAVEG
+6051/   20000             .C0APP/   IOSUSO
+6052/   2                 .C0API/   J
+6053/   40                .C0ACO/   FORTY
+6054/   27064             .C0CHL/   CH2
+6055/   30725             .C0CKL/   CH7
+6056/   7760              .C0CON/   DDBLN1+23
+6057/   7760              .C0EEB/   DDBLN1+23
+6060/   27740             .C0IEF/   C4PD1+1
+6061/   402000,,403212    .C0CCF/   SETZM .CPTIM
+6062/   336000,,403212    .C0HCT/   SKIPN .CPTIM
+6063/   521313            .C0MPI/   CPLMPI
+6064/   600000,,521271    .C0MPS/   NOP 521271
+6065/   22000             .C0NXM/   SWAPIN
+6066/   20400             .C0MPE/   JBTJRQ+121
+6070/   400000,,0         .C0SCC/   SETZ 0
+6072/   200000,,0         .C0QPC/   MOVE 0
+6073/   600000,,0         .C0DBM/   NOP
+6074/   660001            .C0EBR/   660001
+6075/   202               .C0CTN/   GTTBLN+5
+6076/   1                 .C0DTN/   P
+6117/   440004,,400000    .C0STT/   DTE J,J(P2)
+6120/   440004,,400000    .C0ST1/   SETZ J,0(P2)
+6121/   635054            .C0ST2/   -1,,FORTY
+6123/   401000,,42001     .C0EJ2/   SETZI DTADDB+106
+6124/   304000,,627515    .C0EJ3/   CAIA UADRCK+4
+6125/   320700,,640243    .C0EJ4/   ERJMP UUOFLT
+6126/   26566             .C0RCT/   CH1
+6127/   27064             .C0RCT+1/   CH2
+6130/   27362             .C0RCT+2/   CH3
+6131/   27651             .C0RCT+3/   CH4
+6132/   30140             .C0RCT+4/   CH5
+6133/   400001,,30427     .C0RCT+5/   SETZ CH6(P)
+6134/   26624,,26616      .C0RDT/   GFIXR P1,@CHND1(F)
+6135/   27122,,27114      .C0RDT+1/   RTSV2,,CHND2
+6136/   27411,,27403      .C0RDT+2/   RTSV3,,CHND3
+6137/   27700,,27672      .C0RDT+3/   RTSV4,,CHND4
+6140/   30167,,30161      .C0RDT+4/   DCSA R,@CHND5(T2)
+6141/   30465,,30457      .C0RDT+5/   DCSA T4,@CHND6(U)
+6144/   254000,,26076     .C0SVB/   JRST SVSETS#
+6150/   15,,113027        .C0TML/   P2,,TTYSAV+16
+6151/   777777,,777777    .C0OCB/   -1
+6152/   777777,,777777    .C0AID/   -1
+6153/   777777,,777777    .C0DWD/   -1
+6154/   27367,,27656      .C0SAV/   SAV3,,SAV4
+6156/   23605             .C0TIL/   INTL3#
+6160/   651116            .C0CML/   660474
+6161/   27362             .C0TCH/   CH3
+6162/   700200,,10402     .C0SPR/   WRAPR JBTADR+45
+6163/   700200,,24402     .C0CPR/   WRAPR HSHTAB+67
+6164/   100000,,0         .C0SB0/   DI.UIO
+6166/   100000,,1         .C0SB1/   DI.UIO P
+6170/   571467            .C0TOA/   CCTYO
+6171/   570266            .C0TIV/   COMTIV
+6173/   600000,,0         .C0DDT/   NOP
+6174/   454466,,11        .C0EDV/   ORCA T4,@T4(T1)
+6200/   402205            .C0ED4/   .CPHSF
+6201/   600000,,4         .C0ED5/   NOP 4
+6202/   1000              .C0ED6/   IOSCON
+6203/   6025              .C0ED7/   .C0SPT
+6206/   5                 .C0SYB/   U
+6210/   2404              .C0SY2/   .E0MAP+404
+6211/   22357             .C0SY3/   SYMBK1
+6212/   22557             .C0SY4/   SYMBK2
+6213/   1,,0              CORMAX/   P,,0
+6214/   3,,2777           CORLST/   R,,.E0MAP+777
+6220/   123,,722043       .C0UPT/   .JBPFH,,IPCDEL
+6223/   64                HIGHJB/   .PDOBI
+6224/   5276,,70666       CLRWRD/   DLXLST+75,,PADS1+1
+6225/   1,,131513         LSTWRD/   P,,127712
+6226/   3,,0              MEMSIZ/   R,,0
+6237/   2,,267000         MAXMAX/   J,,267000
+6241/   1,,0              CORMIN/   P,,0
+6244/   27                .C0LJR/   R
+6245/   3,,540027         .C0ODA/   R,,VTMST3+4
+6246/   3,,277530         .C0ODA+1/   R,,275202
+6252/   46,,364246        .C0NUL/   LDBSMT,,342762
+6254/   56                .C0JOB/   HOMUN1+6
+6255/   12,,602206        .C0OHT/   W,,APCSET+100
+6256/   174               .C0EVM/   DTEDRW+25
+6261/   354,,256550       .C0TUC/   BUF+25,,SW3LST+215
+6262/   61,,756140        .C0TJC/   SIXTY+1,,723124
+6267/   7502,,200000      .C0EBJ/   CLK W,200000(J)
+6270/   5746,,700000      .C0MBJ/   DLXLST+553,,700000
+6304/   411000,,676345    .C0PFW/   SETZI RPXUPA+3
+6310/   31                .C0CSN/   CHNQUL
+6323/   123,,722764       .C0BPF/   .JBPFH,,TPMOV1#
+6324/   32,,303341        .C0FBI/   CHNTCW,,263555
+6325/   6,,342022         .C0FBO/   T1,,334756
+6326/   55,,62530         .C0SBI/   HOMUN1+4,,672414
+6327/   7,,574070         .C0SBO/   T2,,SETIPQ+123
+6345/   377               .C0TPI/   BUF+50
+6347/   7006,,210050      .C0TFI/   CLK 210050(T1)
+6350/   12123,,540124     .C0TFO/   TTY J,@NTSC.O+3(R)
+6351/   30,,655147        .C0AOR/   CRSHWD,,DVS2+1
+6352/   2,,756272         .C0NOR/   J,,754301
+6353/   1                 .C0HOR/   P
+6354/   172205,,30513     .C0LOR/   FDVM R,@656773(P3)
+6355/   44,,511053        .C0AIR/   JOBREL,,TELOP1+20
+6356/   3,,260377         .C0NIR/   R,,256167
+6357/   431               .C0HIR/   LOCOCW+11
+6360/   272744,,272423    .C0LIR/   ADDM P4,723257
+6361/   34,,140106        .C0ARR/   LDBREM+1,,LINBUF+62
+6362/   122611            .C0NRR/   122475
+6363/   13                .C0HRR/   M
+6364/   77775,,165202     .C0LRR/   ENTER P3,230260(P2)
+6365/   7,,6606           .C0AXR/   T1,,774344
+6366/   3,,270142         .C0NXR/   R,,265757
+6370/   77777,,100546     .C0LXR/   ENTER P4,@DDSRC3+14(P1)
+6371/   3,,540120         .C0ACR/   R,,VTMEND+55
+6372/   3,,277564         .C0NCR/   R,,275425
+6374/   102701,,612002    .C0SCL/   GFAD P3,UFDCMC+4(P)
+6403/   30,,171103        .C0NRI/   CRSHWD,,157160
+6404/   575,,602307       .C0NXI/   DTXDTI+24,,161477
+6405/   20,,175676        .C0NEI/   CURJOB,,162764
+6777/   0                 6777/     0
+  ;More of CPU0's CDB
+7000/   0                 7000/     0
+7055/   207777,,371000    7055/     MOVSS P4,@371000(P4)
+7056/   207777            .C0REL/   207777
+7057/   312000,,0         .C0PC/   CAIA 0
+7060/   7453              .C0PC+1/   DLXLST+423
+7061/   53012,,522015     .C0XTM/   UND4+12,,LOGUPE+14
+7062/   176414            .C0LS2/   122020
+7063/   146474            .C0NL2/   263634
+7064/   154314            .C0OH2/   125620
+7065/   24                .C0TNT/   J
+7066/   23                .C0HTM/   LDBLOC
+7067/   46                .C0SEC/   CHNQUL
+7100/   152270            .C0RIT+2/   152270
+7101/   477235            .C0RIT+3/   ONCWA1+3
+7113/   32067             .C0SUD/   SSCAN
+7123/   20000             .C0SAC/   IOSUSO#
+7124/   712040,,0         .C0APC/   CAME 0
+7125/   2007              .C0APC+1/   .E0LM+14
+7133/   2                 .C0SQF/   -1
+7140/   100000,,2032      .C0DTO/   DI.UIO .E0MAP+32
+7141/   777626,,377003    .C0SP/   -135,,JOBPDO+20
+7142/   20                .C0SP+1/   3070
+7143/   17,,371037        .C0S17+1/   3055,,215106
+7144/   400020,,0         7144/
+7173/   701100,,1524      .C0TCX/   CLRPT .E0PM+150
+7174/   777777,,777776    7174/     -2
+7202/   777777,,777777    .C0PRQ/   -1
+7204/   106177            .C0MM0/   WHYMS2+33
+7205/   354770,,20000     .C0MM1/   AOJLE P,SEILMA+16(J)
+7213/   6                 .C0ETM/   T1
+7223/   400000,,0         .C020F/   SETZ 0
+7224/   22600,,113000     .C020S/   MTC P1,113000
+7225/   600000,,0         .C020S+1/   NOP
+7226/   673064,,124320    .C020B/   TLZE F,637020(R)
+7227/   24272,,611400     .C020B+1/   CONO 544,@DMPADV+11(T2)
+7230/   141262,,625560    .C020B+2/   HRRO T1,150240(J)
+7231/   556314,,665440    .C020B+3/   XORM P,REF1C+1(T4)
+7234/   777777,,777777    .C0PTF/   -1
+7344/   200,,0            .C0CHX/   GTTBLN+3,,0
+7351/   123,,727751       .C0IUT/   .JBPFH,,650661
+7363/   2                 .C0QTS+10/   J
+7365/   1                 .C0QTS+12/   P
+7366/   47100,,2          .C0QTS+13/   CALLI J,J
+7425/   27,,270675        CLSRTM/   CPNDDT,,255173
+  ;Start of JBT tables
+7432/   0                 JBTSTS+0/   0
+7433/   440274,,0         JBTSTS+1/   ANDCB U,@0(P1)
+7434/   440324,,400000    JBTSTS+2/   EQVM T1,@40000^0(F)
+7435/   20350,,0          JBTSTS+3/   ANDCB U,@0(P1)
+7436/   440325,,400000    jbtsts 4/   ANDCB T1,@400000(U)
+  ;End of interesting stuff in KL low-core
+     iA;•

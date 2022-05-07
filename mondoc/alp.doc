@@ -1,0 +1,272 @@
+
+
+
+                                       Alternate Logout Program facility
+                                                           March 6, 1979
+                                                            Wm. R. Soley
+
+
+
+     As of Tymcom-X monitor  version P033/GA and later,  and LOGOUT
+     version 41 and later, a new feature will be available allowing
+     any user  to specify  a program to  be run  immediately before
+     logout.
+
+     The program may be  specified at any time durring  the session
+     by a call to the SETALP uuo.  Once an alternate logout program
+     (ALP)  has been  setup  by this  uuo,  it may  not  be cleared
+     (except  by  logging out),  and  it may  not  be  changed (ie.
+     succesive SETALP uuos will fail).
+
+     The ALP program  will be run by  the LOGOUT program  the first
+     time that logout runs durring a session.  Any subsequent times
+     that LOGOUT runs will not invoke the ALP program.  This  is to
+     prevent a faulty ALP program from preventing a user from being
+     logged out  and thus preventing  the system from  coming down.
+     The standard procedure is  for the ALP program to  perform its
+     task (quickly) and proceed to do a RUN uuo for the real logout
+     program.  The RUN uuo should specify physical only  to prevent
+     any problems from conflicting logical device names.
+
+     The ALP program has the following responsibilities in order to
+     insure integrity:
+
+          1) The  program should never  do terminal I/O  if it
+          was  called at  entry point  plus one.   This  is to
+          prevent the job  from hanging should it  be detached
+          (ie. logout on disconnect).
+
+          2)  The program  should  be prepared  to  handle any
+          errors  which may  be encountered  without aborting.
+          (ie. lookup errors, quota exceeded, etc.)
+
+          3)  When finished  with its  task, or  when  a fatal
+          error  is  encountered,  the  program  should  do  a
+          physical  only  RUN  uuo  giving  the   device  name
+          obtained  from  GETTAB  [7,,11]  (SYSTAP),  the  ppn
+          obtained from  GETTAB [1,,16] (SYSPPN),  the program
+          name obtained from GETTAB [25,,11] (LGONAM),  and an
+          extension and core size of zero.
+
+          4)  The  program  must  not  require  any  input  or
+          response from the user.  In the case of the operator
+          taking  the  system   down,  this  might   cause  an
+          unreasonable  delay   thus  preventing   an  orderly
+          takedown.
+March 6, 1979      Alternate Logout Program facility              Page 2
+
+
+          5) The program should complete in a short  period of
+          time and should use only a small number of TRUs.
+
+          6) The program should be very throughly debuged!!
+
+     It should also be noted that just because a  program specified
+     as the ALP is run, does not mean that the user is really being
+     logged out.   That is,  anyone can run  the program,  not just
+     LOGOUT.  If this is of any consequence, the ALP program may do
+     a gettab to obtain the jobs JBTSTS word.  If KJOB Pending (KJP
+     - bit 29) is set, this indicates that the job has  commited to
+     logout and that the LOGOUT program has been run.  If  this bit
+     is not set, the program does not need to run the  real logout.
+     (ie. the program may abort if this bit is off)
+
+     The usual method of setting  up the ALP program is to  have an
+     init program  do a SETALP  uuo.  It should  be noted  that the
+     INIT program may specify itself as the ALP program.   It could
+     look at  the KJP  bit to  determine if  it is  being run  as a
+     result of login or logout.  Containing both tasks in  the same
+     program would save disk space as well as add aesthetic appeal.
+
+     A variation on this method would provide greater security from
+     the possibility  of the  user defeating  the ALP  program (ie.
+     logging  out without  it  being run).   An  account supervisor
+     could setup  a project code  validation program (which  may or
+     may not validate project codes) that would do the  SETALP uuo.
+     In this way the user would be unable to do any useful  work in
+     a session in which the SETALP had not been done.
+
+     Below is  an example  written in MACRO-10  of a  program which
+     serves as both  the init and alp  program.  It must be  set up
+     with NONAME as the user's init program.  When run at login, it
+     will set itself  up as the user's  alp program.  Merely  as an
+     indication of the  fact that it is  working, it will  type the
+     message  "Hello there  <pjc>" when  the user  logs in  and the
+     message  "See ya  later <pjc>"  when the  user logs  out (this
+     assumes  that the  user logs  in using  his first  name  for a
+     project  code).   If  the  user  logs  out  with  EXIT,  or is
+     detached, it will not print any message.
+March 6, 1979      Alternate Logout Program facility              Page 3
+
+
+title   ALP     Alternate Logout Program (example)
+
+; ac definitions
+
+a=1
+b=2
+c=3
+d=4
+f=6
+t1=10
+t2=11
+t3=12
+t4=13
+q=16
+p=17
+
+; uuo definitions
+
+phonly==200000          ; bit to compliment to make physical only calli
+
+opdef PHRUN [calli 35!phonly]   ; define physical only run uuo
+opdef SETALP [calli -127]       ; not in MACRO yet
+opdef CHPJC [calli -61]
+
+ .gtsts==0              ; gettab for jbtsts
+    kjp==1b29               ; KJOB Pending bit in jbtsts
+ .gtfpn==-25            ; gettab for jbtfpn (program ppn)
+ .gtnam==3              ; gettab for jbtnam (program name)
+ .gtcnf==11             ; gettab table for sys configuration
+    systap==7               ; index for system device
+    lgonam==25              ; index for logout program name
+ .gtdsk==16             ; gettab table for dsk system info
+    sysppn==1               ; index for ppn of system files
+
+; storrage definitions
+
+PJC:            ; place to put project code from system (ASCIZ)
+        block 3
+
+ALP:            ; place to put name of this program (for SETALP)
+alpdev: sixbit "DSK"    ; can't gettab device - assume disk for now
+alpppn: z               ; ppn
+alpnam: z               ; name
+
+LOG:            ; place to put run block for logout program
+logdev: z               ; device
+lognam: z               ; name
+        z               ; extension
+        z               ; unused
+logppn: z               ; ppn
+        z               ; license/core
+
+comment ;
+March 6, 1979      Alternate Logout Program facility              Page 4
+
+
+subttl  main program
+
+start:  tdza f,f        ; f = 0 if normal start
+         seto f,        ; f = -1 if start+1
+
+        hrroi a,.gtsts  ; get jbtsts word for me
+        gettab a,
+          halt .        ; see note 1
+
+        trne a,kjp      ; see if logging in or out
+          jrst logout   ;   logging out (KJP = 1)
+        jrst login
+
+comment ;
+March 6, 1979      Alternate Logout Program facility              Page 5
+
+
+subttl  login   code to handle logging in
+
+login:  hrroi a,.gtfpn  ; get ppn of this program
+        gettab a,
+          halt .
+        movem a,alpppn
+
+        hrroi a,.gtnam  ; get name of this program
+        gettab a,
+          halt .
+        movem a,alpnam
+
+        movei a,alp
+        setalp a,       ; set the alp program
+          jfcl          ; somebody ran me twice - ignore this
+
+        ; here may be inserted anything else that one may
+        ; wish one's init program to do, ie. setup tty, etc.
+
+        movei a,pjc
+        chpjc a,        ; get project code for kicks
+          halt .
+
+        outstr [asciz "Hello there "] ;say hello
+        outstr pjc      ; print pjc
+
+        exit 1,         ; nice pretty exit
+        jrst .+1        ; in case he types "cont"
+
+comment ;
+March 6, 1979      Alternate Logout Program facility              Page 6
+
+
+subttl  logout  code to handle logging out
+
+logout: 
+
+        ; here may be inserted anything that is to be done
+        ; regardless of start address used, (ie. accounting,
+        ; file cleanup, etc.) ***Remember: all errors must
+        ; be handled gracefully, (ie. jrst die).
+
+        jumpn f,die     ; if user doesn't want anything said
+                        ; because we were run at start+1
+
+        ; here may be inserted anything that is to be done
+        ; only if start address +0 was used, (ie. a message,
+        ; etc.) ***Remember: all errors must be handled
+        ; just as gracefully here, (ie. jrst die).
+
+        movei a,pjc
+        chpjc a,        ; get project code (just an example)
+          jrst die      ; see note 2
+
+        outstr [asciz "See ya later "] ; say goodbye
+        outstr pjc      ; type out project code
+        outstr [byte(7)15,12] ; crlf
+
+        ; come here to handle an error or just beacuse we're done
+
+die:    move a,[systap,,.gtcnf]
+        gettab a,       ; get system device name
+          movsi a,(sixbit "SYS") ; assume "SYS:" if error
+        movem a,logdev
+
+        move a,[sysppn,,.gtdsk]
+        gettab a,       ; get system directory ppn
+          move a,[1,,4] ; assume [1,4] if error
+        movem a,logppn
+
+        move a,[lgonam,,.gtcnf]
+        gettab a,       ; get system logout program name
+          move a,[sixbit "LOGOUT"] ; assume "LOGOUT" if error
+        movem a,lognam
+
+        movei a,log
+        skipe f         ; if run at start+1 do same to logout
+          hrli a,1
+        phrun a,        ; physical only run 
+          halt .
+
+
+comment @
+March 6, 1979      Alternate Logout Program facility              Page 7
+
+
+
+Note 1: note here that the HALT instruction after the GETTAB is
+        acceptable since this particular GETTAB could never fail.
+
+Note 2: note that the HALT after the RUN uuo is acceptable and
+        desirable since it will cause the monitor to type the
+        appropriate error message should it be unable to run the
+        LOGOUT program.
+
+@
+        end start
+ 

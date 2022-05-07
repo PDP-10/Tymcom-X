@@ -1,0 +1,463 @@
+$menu COMMANDS;Operating System Commands, CSM 702.
+*(MONDOC)CMD702.NFO:T10CMD;Summary of commands at CSM.
+*(MONDOC)CMD702.NFO:T10COMMANDS;One-line descriptions of commands at CSM.
+*(MONDOC)CMD702.NFO:T10TTY;SET TTY commands for TOPS-10.
+*(MONDOC)CMD702.NFO:T10TERMINAL;Names of CSM supported terminal types.
+*(MONDOC)CMD702.NFO:T10TRMTYP;Terminal types and their parameters.
+*(MONDOC)CMD702.NFO:CSMCMD;CSM feature to run programs from SYS:.
+$text T10CMD;Summary of commands at CSM.
+The Monitor has the following commands:
+ACCOUN	ALLOCA	ASSIGN	ATTACH	BACKSP	BACKTO	BYE	CANCEL	CCONTI	CHKPNT
+CLOSE	COJOB	COMPIL	CONTIN	COPY	CORE	CPUNCH	CREATE	CREF	CSTART
+CTEST	D	DAYTIM	DDBDPY	DDT	DEALLO	DEASSI	DEBUG	DECLAR	DELETE
+DETACH	DIRECT	DISABL	DISMOU	DO	DSK	DUPLIC	E	EDIT	ENABLE
+EOF	ERROR	ESC	EXECUT	FILE	FINISH	FUDGE	GET	GIGI	GOTO
+HALT	HELP	IF	INFO	INITIA	JCONTI	JOBDPY	KERMIT	KILL	KJOB
+LABEL	LET	LIST	LOAD	LOCATE	LOGIN	MAIL	MAKE	MERGE	MIC
+MODIFY	MOUNT	MOVE	MUNG	NETWOR	NODE	NOERRO	NOOPER	OK	ON
+OPERAT	PATH	PJOB	PLEASE	PLOT	PRESER	PRINT	PROTEC	PUNCH	QMAIL
+QUEUE	R	REASSI	REENTE	REM	RENAME	REPLAC	REQUEU	RESOUR	REVIVE
+REWIND	RUN	SAVE	SCHEDU	SED	SEND	SESSIO	SET	SHOW	SILENC
+SKIP	SOS	SSAVE	START	SUBMIT	SYSTAT	TECO	TERMIN	TIME	TPUNCH
+TTY	TYPE	UNLOAD	USESTA	USRNAM	VERSIO	WHENEV	WHERE	WHO	XCHNGE
+ZAP	ZERO	
+
+The Monitor has the following SET commands:
+BLOCKS	BREAK	CDR	COMMAN	CORMAX	CORMIN	CPU	CTEST	DATE	DAYTIM
+DDT	DEFAUL	DEFER	DENSIT	DSKFUL	DSKPRI	EDDT	FLOATI	FORMAT	HOSTES
+HPQ	MEMORY	NODEFE	NOMESS	OPR	PHYSIC	RETRY	SCHEDU	SPOOL	TERMIN
+TIME	TTY	VIRTUA	VMMAX	WATCH	
+
+The Monitor has the following SET DEFAULT commands:
+ACCOUN	BIGBUF	BUFFER	PROTEC	
+
+The Monitor has the following SET TTY commands:
+ALTMOD	BLANKS	COPY	CRLF	DEBREA	DEFER	DISPLA	ECHO	ELEMEN	FILL
+FORM	GAG	HOLD	IGNORE	LC	LENGTH	NO	PAGE	REMOTE	RTCOMP
+SBELL	SLAVE	SPEED	SSTOP	STOP	TABS	TAPE	TIDY	TYPE	UC
+WIDTH	XONXOF	
+
+The monitor supports the following terminal types:
+ADM3	ADM3A	ADM5	APPLE	APPLE8	BATCH	CHROMA	CONCEP	CRT	D200
+DAS21	DIABLO	DM1521	GENCOM	GIGI	H19	H19A	H2000A	HDS108	HDSAVT
+HDSGVT	HP2621	HZ1420	IBMPC	IDEAL	LA100	LA12	LA120	LA30	LA34
+LA36	LA38	LA50	LA80	LQP01	LQP02	LQP8F	MINIBE	PRINTR	PTY
+TI700	TIPRO	TK4006	TK4010	TK4012	TK4014	TK4025	TTY	TTY33	TTY35
+TTY37	TVI910	TVI950	VIS200	VIS550	VK100	VT05	VT06	VT100	VT101
+VT102	VT103	VT105	VT110	VT125	VT131	VT132	VT180	VT185	VT220
+VT240	VT241	VT278	VT2TI	VT50	VT52	VT55	VT61	VT71T	VT72T
+VT78	VT80	2741	
+
+The Monitor has the following SET WATCH commands:
+DAY	FILES	MTA	READS	RUN	VERSIO	WAIT	WRITES	
+
+This is a TAB test
+12345678901234567890123456789012345678901234567890123456789012345678901234567890
+Tab	Tab	Tab	Tab	Tab	Tab	Tab	Tab	Tab	Tab
+.2345678.2345678.2345678.2345678.2345678.2345678.2345678.2345678.2345678.2345678
+
+
+$text T10COMMANDS;One-line descriptions of commands at CSM.
+COMANDS		1 line descriptions of 7.02 Monitor Commands       20-Sep-83
+
+The monitor has the following commands:
+ACCOUNT			Show current account string (default is blank)
+ALLOCATE MTA:		Put dibs on a tape drive, use MOUNT to actually get it
+ASSIGN DSK 6		Assign logical name "6:" to device "DSK:"
+ATTACH 6[11,10]		Reconnect to a detached job
+BACKSPACE MTA:1 FILE	Position a tape drive
+BACKTO LOOP1		MIC - Go back to "LOOP1::" in the MIC file
+BYE/I			Like KJOB, but allows checking of individual files
+CANCEL PRINT FOR06	Cancels a request in the QUEUE
+CCONTINUE		Continue but leave terminal in Monitor mode
+CHKPNT			MIC - Dummy command to run batch CTL files under MIC
+CLOSE			Close all files, used after 2 Control-C's
+COJOB LOG=TEMP.MIC	MIC - Starts a COJOB, similar to SUBMIT
+COMPILE LAB03.FOR	Compile programs if they need it
+CONTINUE		Continue after a Control-C
+COPY NEW.FIL=OLD.FIL	Make a duplicate of a file with PIP
+CORE			Show amount of core (memory) currently being used
+CPUNCH MAY01.CDP	Send a file to the Card Punch queue
+CREATE LAB03.SIT	Create a new file using the SOS editor
+CREF			Generate cross-reference listings after COMPILE/CREF
+CSTART			Start program but leave terminal in Monitor mode
+CTEST			Spare command for testing by Systems Programmer
+D 1 2 3			Deposit 000001,,000002 in memory location 000003
+DAYTIME			Show current date and time
+DDBDPY			Display DDBs of files open in your directory
+DDT			Invoke the debugging program
+DEALLOCATE MTA:		Opposite of ALLOCATE
+DEASSIGN 6		Removes logical name
+DEBUG TEST.FOR/DEBUG	Compile program and load it with the debugger
+DECLARE DIR=SYS:DIR	Define your own Monitor commands
+DELETE *.BAK		Erases files from the directory
+DETACH			Breaks control over a job by releasing terminal
+DIRECT *.*		Lists the directory
+DISABLE			Used only by Systems Programmers
+DISMOUNT DSKU:		Opposite of MOUNT for disks and tapes
+DO HELLO.MIC		MIC - Start executing commands at terminal from file
+DSK			Show amount of disk blocks read/written by job
+DUPLICATE NEW=OLD	Copy file using DSKCPY
+E 120			Examine memory location 120
+EDIT FILE.DAT		Edit file using SOS editor
+ENABLE			Used only by Systems Programmers
+EOF MTA:		Force writing an End-Of-File marker on the tape
+ERROR ?			MIC - Interpret questionmark in column 1 as an error
+ESC SCREEN:JUMP		Change terminal characteristics thru use of ESC sequence
+EXECUTE LAB05.SIT	Compile, load, and start a program
+FILE			Obsolete DEC-tape command
+FINISH			Combination of CLOSE and DEASSIGN
+FUDGE			Obsolete command, replaced by MAKLIB program
+GET SYS:BAK.EXE		Brings program into memory, use R or RUN instead
+GIGI SHOW GGL:SHUTTL	Displays a picture on the GIGI graphics terminal
+GOTO LOOP2		MIC - Jump to "LOOP2::" in MIC file
+HALT			Two Control-C's are translated into this command
+HELP COMANDS		Type a HELP file on the terminal
+IF(ERROR).;IGNORE	MIC - Test if ERROR was detected
+INFO			Display info about system status
+INITIA			Initialize terminal characteristics (automatic dial-up)
+JCONTINUE 5		Operator-privileged command
+JOBDPY			Display job status in compressed format
+KERMIT SERVER		Used for sending/getting files to/from a microcomputer
+KILL			Allows you to kill other jobs logged in with your PPN
+KJOB			Usual method of logging off the computer
+LABEL DTA1:"MINE"	Obsolete DEC-tape command
+LET $A="ABC"		MIC - Assign values to variables
+LIST LAB01.SIT		Send file to printer (only in Room 271 of Green Center)
+LOAD FINAL.FOR		Compiles and loads program into memory (for SAVE)
+LOCATE			Non-functional network command
+LOGIN 12345,123456	Starts a job under your account
+MAIL			Program for sending/reading messages
+MAKE			Create a file using TECO editor
+MERGE SYS:RMS.EXE	Adds EXE file to your core image
+MIC STATUS		MIC - Show status of MIC
+MODIFY			Not yet implemented
+MOUNT DSKU:		Mounts disks or tapes
+MOVE DSKB:NEW=DSKU:OLD	Copys file to new area and deletes the original
+MUNG TECFIL,DATA	Starts TECO executing TECFIL.TEC with DATA in buffer
+NETWORK			Show status of network
+NODE			Show status of network
+NOERROR			MIC - Don't check for ERROR character in column 1
+NOOPERATOR		MIC - Cancel OPERATOR command
+OK			Dummy command for the GIGI
+ON ERROR:ABORT		MIC - Declare condition:action
+OPERATOR $		MIC - Ask for OPR assistance when $ in column 1
+PATH [,,MIC]		Change default path or define logical name
+PJOB			Checks to see if terminal is in use, types job and name
+PLEASE message		Starts a dialog with the OPERATOR
+PLOT *.PLT		Sends files to the plotter
+PRESERVE *.FOR		Same as PROTECT <177>
+PRINT DOC:MIC.DOC	Sends file to the printer
+PROTECT <155>*.*	Changes protection code on files
+PUNCH			Same as CPUNCH
+QDPY			Displays queues on VT52 or VIS200 terminals
+QMAIL 1234,5670		Checks if MAIL is waiting for [*,1234] or [*,5670]
+QUEUE			Displays all queues, MOUNT+BATCH+CPUNCH+PRINT+PLOT
+R QUOLST		Run a program from SYS:
+REASSIGN		Obsolete command
+REENTER			Resume program at alternate starting point after ^C
+REM OLD NONAME.BAS	Commands for GIGI-BASIC
+RENAME NEW=OLD		Change a file's name
+REPLACE NEW=OLD		Delete existing NEW then rename OLD to be NEW
+REQUEUE			MIC - Dummy command for batch CTL running under MIC
+RESOURCES		Display list of available devices
+REVIVE			MIC - Cancel effect of SILENCE
+REWIND MTA:		Rewinds tape
+RUN PROGRA.EXE		Runs a program stored in an EXE file
+SAVE PROGRA.EXE		Saves current memory image into an EXE file
+SCHEDULE		Show current schedule bits, INFO SCHED has more details
+SED SWITCH.INI		Edit file using SED editor
+SEND 122 Is Joe there?	Sends message to a terminal (122=Systems Programmer)
+SESSION			Accounting system pretends you did KJOB then LOGIN
+SET **			See description of SET commands, below
+SHOW ALLOCATION		Shows which disks and tapes are allocated to job
+SILENCE			MIC - Continue executing but don't show it on terminal
+SKIP MTA:2 FILES	Position mag-tape
+SOS TEMP.DAT		Invoke SOS editor
+SSAVE PROGRA.EXE	Create a sharable EXE file
+START			Start or restart program currently in memory
+SUBMIT DAYACT.CTL	Sends file to batch queue for execution
+SYSTAT			Show SYStem STATus, see also INFO command
+TECO FILE.DAT		Edit existing file using TECO editor
+TERMINAL TYPE VT100	See description of TERMINAL commands, below
+TIME			Show amount of CPU time used by job
+TPUNCH			Obsolete command (CSM has no paper-tape punch)
+TTY			TTY and SET TTY are synonyms for TERMINAL command
+TYPE FOR01.DAT		Display file on terminal
+UNLOAD DTA2:		Rewinds and unloads DECtapes
+USESTAT			Control-T translated to this, shows status of job
+USRNAM SYSTEMS JOE	Changes user name, faculty and staff only
+VERSIO			Show version number of program or set it
+WHENEVER ERROR:ABORT	MIC - Same as ON command
+WHERE			Non-functional network command
+WHO			Displays info about jobs, like INFO and SYSTAT
+XCHNGE			Operator-privileged command
+ZAP *.BAK		Lower protection and then delete files
+ZERO DSKU:		Same as DELETE *.* and just as deadly
+The monitor has the following SET commands:
+SET BLOCKSIZE MTA: 4000	Change blocksize for tape
+SET BREAK 140 WRITE	Stop program if it writes to location 140
+SET CDR XYZ		Next input from CDR: will read DSK:XYZ.CDR
+SET COMMAND OFF		Disable automatic running of programs from SYS
+SET CORMAX 150K		Operator privileged command
+SET CORMIN 60K		Operator privileged command
+SET CPU 0		Non-functional command
+SET CTEST		Spare for testing by Systems Programmer
+SET DATE 20-Sep-83	Operator privileged command
+SET DAYTIME 1159	Operator privileged command
+SET DDT BREAKPOINT ON	Enable Control-D to invoke DDT
+SET DEFAULT **		See description of SET DEFAULT commands, below
+SET DEFER		Defer printing of files sent to device LPT:
+SET DENSITY MTA: 1600	Change density used on unlabelled tapes
+SET DSKFUL PAUSE	Change action Monitor takes when disk fills up
+SET DSKPRI 2		Operator privileged command
+SET EDDT BREAKPOINT ON	Used by Systems Programmer for debugging Monitor
+SET FORMAT MTA: ANSI	Change default mode for reading magtape
+SET HOST KL1091		Non-functional network command
+SET HPQ 2		Operator privileged command
+SET MEMORY OFFLINE	Operator privileged command
+SET NODEFER		Cancel SET DEFER, CREF listing go immediately to print
+SET NOMESSAGE MTA	Operator privileged command
+SET OPR TTY120		Operator privileged command
+SET PHYSICAL LIMIT 99K	Change limit or guideline for physical/virtual memory
+SET RETRY MTA:		Let Monitor re-try on tape errors
+SET SCHEDULE 400	Operator privileged command
+SET SPOOL NONE		Operator privileged command
+SET TERMINAL **		See list of TERMINAL commands, below
+SET TIME 300		Set a limit of 300 seconds (5 minutes) of CPU time
+SET TTY **		See list of TERMINAL commands, below
+SET VIRTUAL 200K	Change limit for physical/virtual memory
+SET VMMAX		Operator privileged command
+SET WATCH **		See description of SET WATCH commands, below
+
+The monitor has the following SET DEFAULT commands:
+SET DEFAULT ACCOUNT OPERATIONS	Operator privileged command
+SET DEFAULT BIGBUF 5		Make each DSK buffer be 5 blocks
+SET DEFAULT BUFFERS 4		Build rings of 4 buffers each
+SET DEFAULT PROTECTION 457	New files will be created with this protection
+
+The monitor has the following SET WATCH commands:
+SET WATCH ALL		Output DAY+RUN+WAIT+READ+WRITE, VERSION, MTA, FILES
+SET WATCH DAY		Output the time of day when command starts
+SET WATCH FILES		Output name of each file as it is openned
+SET WATCH MTA		Output magtape summary when tape is DISMOUNTed
+SET WATCH NONE		Don't output anything
+SET WATCH READS		Output number of disk blocks read when command finishes
+SET WATCH TIME		Output CPU time when each command finishs
+SET WATCH VERSION	Output version number when program changes
+SET WATCH WAIT		Output the time spent waiting for commands to start
+SET WATCH WRITE		Output number of disk blocks written when done
+$text T10TTY;SET TTY commands for TOPS-10.
+SETTRM								28-Feb-84
+
+The commands ".SET TTY xxx", ".SET TERMINAL xxx", ".TTY xxx", and
+".TERMINAL xxx" are all the same.  The Monitor has the following SET TTY
+commands:
+
+Command 	Description      (* means default setting)
+-------		------------------------------------------
+ALTMOD		Convert ALTMODE to ESCAPE, mandatory for the TEKTRONIX 4006
+NO ALTMOD  *	Treat "~" and "}" as normal lowercase characters
+BLANKS	   *	Print blank lines
+NO BLANKS	Suppress multiple blank lines
+COPY		Trigger the COPY option on VT52
+NO COPY	   *	Turn off the COPY option on VT52
+CRLF	   *	Send a CRLF for lines longer than the WIDTH setting
+NO CRLF		Never automatically start a new line when WIDTH is exceeded
+DEBREAK		(Does nothing, CSM does not support IBM 2741 Selectrics)
+DEFER	   *	Echo characters when the computer is ready (looks prettier)
+NO DEFER	Echo characters when they are typed in
+DISPLAY    *	Eat characters off the screen when rubout is typed (for VIS200)
+NO DISPLAY *	Echo rubbed out characters between backslashes on DECwriters
+ECHO	   *	Characters need to be echoed by the computer, full duplex
+NO ECHO		Terminal echos characters typed in, the computer does not
+ELEMENT		(Does nothing, CSM does not support IBM 2741 terminals)
+FILL 1		Delay after CR and LF, for Teletypes and TI Silent 700s
+NO FILL	   *	Do not delay after CR or LF
+FORM	   *	Terminal does understand formfeeds (assumed for dial-ups)
+NO FORM	   *	Type 8 linefeeds instead of a formfeed (for VIS200, LA36, LA34)
+GAG		SEND messages can be received only at monitor mode
+NO GAG	   *	SEND messages can be received any time
+HOLD		Triggers the HOLD option on VT52 (No scroll mode)
+NO HOLD	   *	Turns off the HOLD option on VT52
+IGNORE		Operator privileged command
+LC	   *	Allow lower case characters to be type in
+NO LC		Convert all lowercase characters to uppercase when typed in
+LENGTH 24	Number of lines on the screen
+PAGE		Replaced by XONXOFF
+STOP 24		Computer will wait for Control-Q after every 24 line of output
+REMOTE		Operator privileged command
+RTCOMP		Control-R and Control-T are normal control characters
+NO RTCOMP  *	Control-R retypes the line, Control-T shows program status
+SBELL	   *	Output a bell when waiting for Control-Q (TTY STOP 24)
+SLAVE		Terminal becomes dead, Control-C and other commands are ignored
+TTYn:NO SLAVE	Cancels SLAVE command if the other TTY is assigned to you
+SPEED 1200	Changes speed (if less than 1200 baud)
+SSTOP 24	Stop every 24 lines regardless of ^Q from VT100
+STOP 24		Stop every 24 lines and wait for Control-Q to be typed
+TABS	   *	Terminal has tabs every 8 positions (VIS200)
+NO TABS	   *	Send multiple spaces instead of the tab character (LA36)
+TAPE		Special mode for reading paper tapes on ASR33 Teletypes
+NO TAPE	   *	Normal mode
+TIDY		(Does nothing, CSM does not support 2741 terminals)
+TYPE xxx   *	See .HELP TTY for list of allowable terminal types
+UC		Same as NO LC, uppercase only
+NO UC	   *	Same as LC, lowercase characters are not converted to upper
+WIDTH 80   *	Number of characters in a line on the screen
+XONXOFF	   *	Control-S and Control-Q will pause and resume output to CRT
+
+
+To see which values are in effect for your terminal, use the command
+	.INITIA TTY
+$text T10TERMINAL;Names of CSM supported terminal types.
+TTY								28-Feb-84
+
+If you have a terminal that is not recognized by the system, INITIA will
+set the terminal type to be "TTY" with lowercase, formfeeds, and 80 columns.
+If you have a video terminal, or a Personal Computer in terminal mode, you
+should set "TERMINAL TYPE CRT" to make the DELETE or RUBOUT key erase
+characters from the screen.  Use "LA36" if you have a hardcopy terminal that
+does not understand formfeeds, or "PRINTR" if it does.
+
+The CSM monitor supports the following terminal types:
+
+ADM3	Lear Seagler "Dumb Terminal"
+ADM3A	With cursor control and lowercase
+APPLE	24 lines by 40 columns
+APPLE8	//e with 80 column card enabled
+CONCEP	Concept-100 from HDS
+CRT	Generic video terminal, works for most Personal Computers
+DAS21	DEC terminal (not supported at CSM
+DIABLO	Diablo letter-quality printer
+DM1521	Data Media Elite 1521
+GENCOM	Gencom letter-quality printer
+GIGI	VK100 graphics terminal from DEC
+H19	Heathkit's VT52 look-alike
+H19A	H19 in ANSI mode
+H2000A	Hazeltine 2000 A
+HP2621	Hewlett Packard
+IDEAL	With tabs, lowercase, formfeed, 132 columns, no fill
+LA12	New portable DECwriter
+LA120	DECwriter, fancy 1200 baud printer
+LA30	DECwriter I, 300 baud
+LA34	DECwriter IV, fancy 300 baud printer
+LA36	DECwriter II, standard 300 baud printer
+LA38	DECwriter IV, an LA34 with numeric keypad
+MINIBE	Beehive's Minibee, acts like VT52
+PRINTR	Generic hardcopy terminal
+TI700	Texas Instruments Silent-700
+TK4006	Tektronix 4006 graphics terminal
+TK4010	Tektronix 4010 graphics terminal with crosshairs
+TK4012	Tektronix 4012 graphics terminal with crosshairs and lowercase
+TK4025	Tektronix 4025 video graphics terminal
+TTY	Generic teletype, 72 columns unless you say ".TERMINAL WIDTH 80"
+TTY33	ASR-33, no lowercase, no tabs, no formfeed
+TTY35	Teletype 35, no lowercase
+TTY37	Teletype 37, no lowercase
+TVI910	TeleVideo Inc 910
+TVI950	TeleVideo Inc 950
+VIS200	Visual-200 in VT52 mode, see ".HELP VIS200" for description
+VK100	DEC's official name for the GIGI
+VT05	DECscope
+VT06	DECscope
+VT50	DECscope, 12 lines of 80 columns
+VT52	DECscope, see ".HELP VT52" for description
+VT100	DECscope, see ".HELP VT100" for description
+VT102	VT100 with Advanced Video Option (and Printer Port)
+VT105	VT100 with minor graphics capability
+VT125	VT100 with full bit-map graphics capability
+VT132	VT100 wn-screen editing and block mode transmission
+VT180	VT180 with Z80 running CP/M
+$text T10TRMTYP;Terminal types and their parameters.
+TRMTYP	  Parameters for the types of terminals in TOPS-10	28-Feb-84
+
+  The first 2 numbers are the terminal width and length.
+  FF=terminal has formfeeds, TAB=terminal has tabs every 8 spaces,
+  LC=terminal has lower case, ALT=Convert ~ to ALTmode (mandatory for TK4006),
+  DIS=backspace-space-backspace erases character, CRLF=send CR after 80 chars,
+  XON=^S/^Q work, last number is FILL setting (0 except for Silent 700),
+  VTXXEP=erase line like a VT52, V100EP=erase line like VT100.
+
+      Wid Len                                   Fill Erase
+ADM3,  80,24,NOFF,NOTAB,NOLC,ALT,  DIS,CRLF,  XON,0,  0,   ;Lear Seigler
+ADM3A, 80,24,  FF,NOTAB,LC,NOALT,  DIS,CRLF,  XON,0,  0,   ; with cursor
+ADM5,  80,24,  FF,NOTAB,LC,NOALT,  DIS,CRLF,  XON,0,  0,   ;LSI-ADM5
+APPLE, 40,24,NOFF,NOTAB,NOLC,ALT,  DIS,CRLF,  XON,0,APPLEP ;APPLE ][
+APPLE8,80,24,NOFF,NOTAB,LC,NOALT,  DIS,CRLF,  XON,0,APPLEP ;APPLE //e
+CONCEP,80,24,NOFF,TAB,  LC,NOALT,  DIS,CRLF,  XON,0,C100EP ;concept-100
+CRT,   80,24,NOFF,NOTAB,LC,NOALT,  DIS,CRLF,  XON,0,  0,   ;Generic video
+DIABLO,132,0,  FF,NOTAB,LC,NOALT,NODIS,CRLF,NOXON,0,  0,   ;Hardcopy
+DM1521,80,24,  FF,TAB,  LC,NOALT,  DIS,CRLF,  XON,0,DM15EP ;Datamedia Elite
+GENCOM,132,0,  FF,NOTAB,LC,NOALT,NODIS,CRLF,NOXON,0,  0,   ;Hardcopy
+GIGI,  84,24,  FF,TAB,  LC,NOALT,  DIS,CRLF,  XON,0,V100EP ;VK100 graphics
+H19,   80,24,NOFF,TAB,  LC,NOALT,  DIS,CRLF,  XON,0,VTXXEP ;Heathkit H19
+H19A,  80,24,NOFF,TAB,  LC,NOALT,  DIS,CRLF,  XON,0,V100EP ;H19 in ANSI
+H2000A,79,24,NOFF,TAB,  NOLC,ALT,  DIS,CRLF,  XON,0,  0,   ;Hazeline 2000A
+HDS108,80,24,NOFF,TAB,  LC,NOALT,  DIS,CRLF,  XON,0,V100EP ;Human Design Systems
+HDSAVT,80,24,NOFF,TAB,  LC,NOALT,  DIS,CRLF,  XON,0,V100EP ;HDS Alpha Video Term
+HDSGVT,80,24,NOFF,TAB,  LC,NOALT,  DIS,CRLF,  XON,0,V100EP ;HDS Graphics Video
+HP2621,80,24,NOFF,NOTAB,LC,NOALT,  DIS,CRLF,  XON,0,VTXXEP ;Hewlett Packard
+HZ1420, **                                                 ;Hazeline 1420
+IDEAL, **
+LA12,  80, 0,NOFF,TAB,  LC,NOALT,NODIS,  CRLF,XON,0,  0,   ;Correspondent
+LA30,  80, 0,NOFF,NOTAB,LC,NOALT,NODIS,NOCRLF,NOXON,0,0,   ;DECwriter I
+LA34,  132,0,NOFF,TAB,  LC,NOALT,NODIS,NOCRLF,XON,0,  0,   ;DECwriter IV
+LA36,  132,0,NOFF,NOTAB,LC,NOALT,NODIS,NOCRLF,NOXON,0,0,   ;DECwriter II
+LA38,  132,0,NOFF,TAB,  LC,NOALT,NODIS,NOCRLF,XON,0,  0,   ;LA34 with keypad
+LA50, **
+LA80, **
+LA100, **
+LA120, 132,0,  FF,TAB,  LC,NOALT,NODIS,NOCRLF,XON,0,  0,   ;1200 baud DECwriter
+MINIBE,79,24,NOFF,NOTAB,NOLC,ALT,  DIS,CRLF,  XON,0,VTXXEP ;Minibee
+PRINTR,132,0,  FF,NOTAB,LC,NOALT,NODIS,CRLF,  XON,0,  0,   ;Generic hardcopy
+TI700, 72, 0,NOFF,NOTAB,LC,NOALT,NODIS,CRLF,NOXON,3,  0,   ;TI Silent 700
+TK4006,74,35,  FF,NOTAB,NOLC,ALT,NODIS,CRLF,  XON,0,  0,   ;Tek 4006
+TK4010,74,35,  FF,NOTAB,LC,NOALT,NODIS,NOCRLF,XON,0,  0,   ;Tek 4010
+TK4012,74,35,  FF,NOTAB,LC,NOALT,NODIS,NOCRLF,XON,0,  0,   ;Tek 4012
+TK4014,74,35,  FF,NOTAB,LC,NOALT,NODIS,NOCRLF,XON,0,  0,   ;Tek 4014
+TK4025,80,24,  FF,TAB,  LC,NOALT,  DIS,NOCRLF,XON,0,  0,   ;Tek 4025
+TTY,   72, 0,NOFF,NOTAB,NOLC,ALT,NODIS,CRLF,NOXON,1,  0,   ;Generic TTY
+TTY33, 72, 0,NOFF,NOTAB,NOLC,ALT,NODIS,CRLF,NOXON,1,  0,   ;Teletype ASR-33
+TTY35, 72, 0,  FF,TAB,  NOLC,ALT,NODIS,CRLF,NOXON,1,  0,   ;Teletype ASR-35
+TTY37, 72, 0,  FF,TAB,  LC,  ALT,NODIS,CRLF,NOXON,1,  0,   ;Teletype ASR-37
+TVI910,80,24,  FF,NOTAB,LC,NOALT,  DIS,CRLF,  XON,0,  0,   ;Televideo 910
+TVI950,80,24,  FF,NOTAB,LC,NOALT,  DIS,CRLF,  XON,0,  0,   ;Televideo 950
+VIS200,80,24,NOFF,TAB,  LC,NOALT,  DIS,CRLF,  XON,0,VTXXEP ;Visual 200
+VK100, 80,24,NOFF,TAB,  LC,NOALT,  DIS,CRLF,  XON,0,V100EP ;Alias GIGI
+VT05,  72,20,NOFF,TAB,NOLC,NOALT,  DIS,CRLF,  XON,2,VT06EP ;Ancient DECscope
+VT06,  72,25,NOFF,NOTAB,NOLC,NOALT,DIS,CRLF,  XON,1,VT06EP ;  "        "
+VT50,  80,12,NOFF,TAB,NOLC,NOALT,  DIS,CRLF,  XON,0,VTXXEP ;VT52 with 12 lines
+VT52,  80,24,NOFF,TAB,  LC,NOALT,  DIS,CRLF,  XON,0,VTXXEP ;Standard VT52
+VT100, 80,24,NOFF,TAB,  LC,NOALT,  DIS,CRLF,  XON,0,V100EP ;Standard VT100
+VT101, 80,24,NOFF,TAB,  LC,NOALT,  DIS,CRLF,  XON,0,V100EP ;Economy VT100
+VT102, 80,24,  FF,TAB,  LC,NOALT,  DIS,CRLF,  XON,0,V100EP ;With printer port
+VT103, 80,24,NOFF,TAB,  LC,NOALT,  DIS,CRLF,  XON,0,V100EP
+VT105, 80,24,NOFF,TAB,  LC,NOALT,  DIS,CRLF,  XON,0,V100EP ;Stripchart graphics
+VT110, 80,24,NOFF,TAB,  LC,NOALT,  DIS,CRLF,  XON,0,V100EP
+VT125, 80,24,NOFF,TAB,  LC,NOALT,  DIS,CRLF,  XON,0,V100EP ;ReGIS graphics
+VT131, 80,24,NOFF,TAB,  LC,NOALT,  DIS,CRLF,  XON,0,V100EP ;Block-mode
+VT132, 80,24,NOFF,TAB,  LC,NOALT,  DIS,CRLF,  XON,0,V100EP ; and local edit
+VT180, 80,24,NOFF,TAB,  LC,NOALT,  DIS,CRLF,  XON,0,V100EP ;VT100 + Z80
+VT185, 80,24,NOFF,TAB,  LC,NOALT,  DIS,CRLF,  XON,0,V100EP ;VT125 + Z80
+VT220, 80,24,  FF,TAB,  LC,NOALT,  DIS,CRLF,  XON,0,V100EP ;New VT100
+VT240, 80,24,  FF,TAB,  LC,NOALT,  DIS,CRLF,  XON,0,V100EP ;New VT125
+VT241, 80,24,  FF,TAB,  LC,NOALT,  DIS,CRLF,  XON,0,V100EP ;VT240 with color
+$text CSMCMD;CSM feature to run programs from SYS:.
+The Monitor at CSM has a feature which allows new commands to be defined
+by simply adding a program to SYS:[1,4].  This feature is enabled by default
+by the LOGIN UUO, it can be changed by a SETUUO or SET command.
+
+	SET COMMAND SYS		;Search SYS: for program
+	SET COMMAND ON		;Same as SET COMMAND SYS
+	SET COMMAND OFF		;Disable the feature
+	SET COMMAND NUL		;Same as SET COMMAND OFF
+
+Logical and pathological names are allowed.  For instance:
+
+	PATH MYSYS:=DSK:[,,EXE],RAT:,SYS:
+	SET COMMAND MYSYS
+
+If the user then types FOOBAR, the Monitor will search for FOOBAR.EXE in
+each of the three directories listed above.
+
+4 iœ

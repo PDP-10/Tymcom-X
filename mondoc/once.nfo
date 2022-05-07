@@ -1,0 +1,497 @@
+$menu ONCE;ONCE dialog documentation.
+*(mondoc)once.nfo:INITIALIZATION;Notes about ONCE.
+*(mondoc)once.nfo:ONCDSK;Entering the ONCDSK dialog.
+*(mondoc)once.nfo:ERRORS;Error messages from ONCE.
+*(mondoc)once.nfo:COMMAN;ONCE dialog commands.
+*(mondoc)once.nfo:EXAMPL;Example of ONCE dialog.
+*(mondoc)once.nfo:OTHER;Undocumented commands.
+
+$Text INITIALIZATION;System initialization code.
+
+When a paging monitor first comes up, unless it has been
+brought up manually, a special flag in the str data block
+is set saying that DSKCLN has not run yet. When this flag is
+set, the VCREAT uuo will not attempt to allocate disk pages
+for the virtual pages it creates.  Rather, it sets the disk
+address to a special code (777,,777776). When the page is activated,
+a core page is given to the vp, but there is still not disk page.
+When the vp is removed, the core page in this strange state
+will have its pgyadr set back to 777,,-1. Even context ages
+will not have disk pages allocated when the system is in
+this pre-DSKCLN mode.
+
+ The reason for all this is so that when INITIA and DSKCLN
+run, the pages that get allocated for them will not
+correspond to disk pages that DSKCLN will cause to be
+mapped into core, thinking that the page is a RIB or SAT.
+The "readonly" option to ONCE will bring the system up
+manually with this pre-DSKCLN mode bit set. It is not
+possible to create files, or remove pages from the working
+set, or have program size exceed physical memory space when
+in this mode, since a "disconnected page" can never be
+deactivated and activated again.  Reason it can't: there
+is no way to find the core page once it is deactivated,
+since it is not in the CHT.  Its not in the CHT because
+the disk address for all cp s is 777,,777776.
+
+Restrictions on vps without dps (777,,777776):
+1) cannot deactivate and reactivate (lose core page)
+   (can't have job larger than mws limit run during init).
+2) Can't call remcht, remcht can't deal with funny address
+3) remove can't try to get sat
+4) no "m" bit - always unshared.
+5) Can't be cow
+6) replicate won't work
+7) can't do UUO to check "f" bit
+8) parity error code can't insert into oht
+$TEXT ONCDSK;Entering the ONCDSK dialog.
+
+The "ONCDSK" dialogue is used to examine and change parameters
+of the disk system. There are two ways in which the ONCDSK
+dialogue is entered. The first way is for the operator to set
+sense switch 4 and give the command "FILES" when the prompt
+is typed.  (The prompt is "ONCE>").
+The other method in which the "ONCDSK" dialogue is
+entered is as a result of errors detected in the "home" blocks
+on the disk as the system is brought up. The home blocks store
+information about the configuration of the disk system.
+
+There are three classes of errors which may be detected on
+bringing up the system. The first class is extremely minor
+(i.e. a unit off-line) and the system will just print a
+message telling of the condition. The second class contains
+those errors which may need fixing, but which the system
+can "live with".  This class of errors results in the question
+
+MINOR ERRORS - BRING SYSTEM UP ANYWAY?
+
+A positive answer will result in the system being started.
+A negative answer will cause the message
+
+Entering FILES (ONCDSK) dialogue...
+  Type "GO" to return to ONCE.
+
+and the ONCDSK dialogue will be started.
+
+
+The third class of errors are those which the system can not
+accept (i.e. part of
+a file structure missing). This results in the message
+
+ERRORS WHICH PREVENT BRINGING SYSTEM UP
+Entering FILES (ONCDSK) dialogue...
+  Type "GO" to return to ONCE.
+
+$text ERRORS;ONCE dialog error messages.
+The following is a list of the errors which may be output:
+
+BPA IS OFF-LINE
+DO YOU WANT IT TO BE 1)ON-LINE, OR 2)DOWN? (TYPE #)
+
+(the message may say BPB instead of BPA) this message
+indicates that the controler is off-line (turned off, in local
+etc.) if it should be off-line (for example if the
+drum is sick and the controler turned off) the operator
+should type 2<return>. If the controler should be on-line, turn
+it on-line and type 1<return>. The controler will then be checked
+again to make sure it is really on-line.
+
+
+BPA3 IS OFF-LINE
+
+one of the units is off-line, this may be an expected condition
+and the system will try to come up anyway. (the unit might be a
+spare drive which is turned off)
+
+
+BPA3 IS WRITE PROTECTED
+DO YOU WANT IT TO BE 1)WRITE-ENABLED, OR 2)WRITE-PROTECTED? (TYPE #)
+
+This is much like the controler off-line message. It is never
+normal for a unit to be on-line and write-protected.
+
+
+BPA1 FIRST HOM BLOCK HARDWARE READ ERROR
+BPA1 SECOND HOM BLOCK HARDWARE READ ERROR
+BPA1 FIRST HOM BLOCK CONSISTENCY ERROR
+BPA2 SECOND HOM BLOCK CONSISTENCY ERROR
+
+These are all errors detected while trying to read the home blocks.
+Each unit has two copies of its home blocks. Unless both blocks
+are bad, the good block will be used. In this case simply report
+the problem to operating systems. If both blocks are bad, the
+system will assume that the unit is not in a file structure,
+has no swapping space, etc. this may lead to other error messages
+which will cause you to need the once dialogue but in itself is
+considered a minor error.
+
+
+MORE THAN ONE LAST UNIT IN ACTIVE SWAPPING LIST
+
+More than one unit was found which indicated it was the end of the
+list of units to swap on. This error forces the once dialogue.
+
+
+MORE THAN ONE LAST UNIT IN STR DSKB
+
+Similar to above but for a file structure, this error
+forces the once dialogue.
+
+
+NO UNITS IN ACTIVE SWAPPING LIST
+
+The are no units which indicate they are to be used for swapping.
+This error forces the once dialogue.
+
+LAST UNIT IN ACTIVE SWAPPING LIST NOT FOUND
+
+This error gives the option of using the once dialogue but does
+not force it.
+
+TWO LOGICAL UNIT 2'S FOUND IN ACTIVE SWAPPING LIST
+
+This error gives the option of entering the once dialogue.
+
+LOGICAL UNIT 3 MISSING FROM ACTIVE SWAPPING LIST
+
+Again an error which gives the option of entering the once dialogue.
+
+
+LAST UNIT WASN'T FOUND IN STR DSKB
+TWO LOGICAL UNIT 4'S FOUND IN STR DSKB
+LOGICAL UNIT 1 MISSING FROM STR DSKB
+
+All of the above errors force the once dialogue.
+
+?NO STR'S IN "SYS" SEARCH LIST
+
+The "SYS" search list indicates which STR's to use when trying
+to access SYS (i.e. the R command or when logging in).
+This error forces the once dialogue.
+
+TWO LOGICAL STR 2'S FOUND IN "SYS" SEARCH LIST
+LOGICAL STR # 1 MISSING FROM "SYS" SEARCH LIST
+
+These errors force the once dialogue.
+$menu COMMAN;ONCE dialog commands.
+*(mondoc)once.nfo:TYPE;Typeout commands.
+*(mondoc)once.nfo:CHANGE;Commands to change parameters.
+*(mondoc)once.nfo:REFRES;Refresh a file structure.
+*(mondoc)once.nfo:define;Define a structure.
+*(mondoc)once.nfo:add;Add a pack to a structure.
+*(mondoc)once.nfo:go;Exit ONCE dialog.
+*(mondoc)once.nfo:help;Help information.
+
+$text HELP;Help command.
+The once dialogue will print a * and wait for a command to be
+yiped. You can always type HELP to get a brief description
+of the commands that can be typed. The once dialogue is used
+both to find the current state of the structure information
+and to change things.
+
+
+$menu TYPE;Typeout commands.
+*(mondoc)once.nfo:UNITS;Type Unit parameters.
+*(Mondoc)once.nfo:STRS;Type Structure parameters.
+*(mondoc)once.nfo:SWAP;Type Active swapping list
+*(mondoc)once.nfo:ALL;Type All
+*(mondoc)once.nfo:BAT;Type Bat block information
+*(mondoc)once.nfo:TSPCB;Type number of SAT PCBs.
+*(mondoc)once.nfo:TRPCB;Type number of RIB PCBs.
+*(mondoc)once.nfo:OVERDR;Number of blocks for overdraw.
+*(mondoc)once.nfo:CRASH;Space for CRASH.SAV
+*(mondoc)once.nfo:ID;Type unit ID.
+*(mondoc)once.nfo:SWAP;Swapping space on unit.
+$text STRS;Type structure names.
+TYPE STRS
+
+This command will type the names of all structures in the system
+and the names of the units in them. It will also give the
+unit id's for the units and indicate if the structure needs to
+be refreshed. Examples:
+
+DSKB:BPA0(330100),BPA1(330101)
+
+NEEDS REFRESHING DSKB:BPA0(330100),BPA2(330101)
+
+The unit id is enclosed in ().
+
+
+$text UNITS;Type units not in a file structure.
+TYPE UNITS
+
+This command will type the names of all the units not in a file
+structure with their unit id's. Examples:
+
+UNITS NOT IN A FILE STRUCTURE:
+BPA0(TYD033),BPA3()
+
+In this case, BPA3 does not yet have a unit id.
+
+
+$text SWAP;Type active swapping list information.
+TYPE SWAP
+
+This command will give information about the active swapping
+list along with the swapping class and swapping space for each
+unit in that list, and the units which have swapping space but
+are not in the active swapping list. Examples:
+
+NO UNITS IN ACTIVE SWAPPING LIST
+
+UNITS WITH SWAPPINNG SPACE BUT NOT IN SWAP LIST
+BPA0(334),BPA2(200),BPA1(200)
+
+The numbers in () are the number of K allocated for swapping
+
+UNITS IN ACTIVE SWAPPING LIST
+BPA0(0:334),BPA1(1:200)
+UNITS WITH SWAPPING SPACE BUT NOT IN SWAP LIST
+BPA0(200)
+
+BPA0 is swapping class 0 with 334K and BPA1 is
+class 1 with 200K.
+
+CHANGE SWAP
+
+This command will return with the question
+
+STANDARD ACTIVE SWAPPING LIST?
+
+The answer to this should be YES. This will cause the swapping list
+to be set up in the normal manner.
+
+
+
+$text SYS;Type system search list structures.
+TYPE SYS
+
+This command lists the structures in the system search list.
+Example:
+
+STRS IN "SYS" SEARCH LIST:
+DSKB
+
+
+$text ALL;Type all information.
+TYPE ALL
+
+This command is equivalent to
+TYPE STRS
+TYPE UNITS
+TYPE SWAP
+TYPE SYS
+
+
+$text BAT;Type BAT block information.
+TYPE BAT
+
+This command is used to list the number of bad blocks and regions
+recorded in the BAT blocks on a unit. It responds with
+
+TYPE UNIT NAME
+
+After the unit name is typed, the number of bad blocks and
+regions will be printed. Example:
+
+# BAD BLOCKS = 21
+# BAD REGIONS = 5
+
+$text ID;Type out unit id.
+TYPE BPA0 ID
+
+This prints the unit id as:
+
+UNIT ID IS TYD033
+
+If no unit id currently exists, the command will type
+
+ZERO UNIT ID - NEW ID NEEDED
+
+
+$text overdr;Overdraw.
+TYPE DSKB OVERDRAW
+
+This types the number of blocks by which a user is allowed to
+exceed his quota when doing output
+
+# OF BLOCKS ALLOWED FOR OVERDRAW PER USER = 500
+
+
+$text crash;Space for system crash file.
+TYPE DSKB CRASH
+
+This types out the amount of space reserved for saving a crash.
+
+K FOR CRASH.SAV = 256
+
+
+$text null;Default argument.
+TYPE DSKB
+
+This is equivalent to
+TYPE DSKB BLOCKS
+TYPE DSKB OVERDRAW
+TYPE DSKB CRASH
+TYPE DSKB CLUSTER
+TYPE DSKB OUTPUT
+
+
+
+$text CHANGE;Arguments to the CHANGE command.
+CHANGING PARAMETERS
+
+The once dialogue is set up with a number of standard options.
+In general, the standard options should be used at all times.
+The information below should be sufficient for all but very
+special cases.
+
+When it is necessary for the once dialogue to ask for a parameter
+to be specified, it will print the current value, the minimum
+value the parameter may have, and the maximum value the paramter
+may have. It will then wait for the new value of the paramter to be
+yiped in. If <RETURN> is typed, the value of the paramter remains
+unchanged. If certain parameters are changed for an existing
+structure or a unit in that structure, it may require that the
+structure be refreshed. If this is true, a message will be printed
+
+CHANGE WILL CAUSE STR TO NEED REFRESHING
+
+This is almost always a bad change to make. The best way out is
+to type <RETURN> when the paramter is requested.
+
+
+$text define;Define a file structure.
+DEFINE
+
+This command is used when first bringing up a system with a
+blank set of packs. It asks which packs belong in the
+structure being defined. It will set the parameters for that
+structure and for all the units put into that structure to
+standard values. If the packs are really blank, it may ask for
+unit id's for some of the units, If thhis is necessary, the
+name of the unit will be printed before the question is asked.
+
+DEFINE
+TYPE STR NAME TO BE DEFINED
+DSKB (typed by user)
+TYPE NAMES OF PHYSICAL UNITS IN STR, EXTRA CR WHEN DONE
+BPA0 (these are typed by user)
+BPA1
+BPA2
+
+At this point, you may be asked for some unit id's as noted above.
+
+
+$text add;Add a unit to an existing file structure.
+ADD
+
+This command is used to add a unit to an already existing structure.
+The parameters for the unit to be added will automatically be set
+to standard values. You may be asked for a new id as above.
+
+ADD
+TYPE STR NAME TO ADD A UNIT
+DSKB (typed by user)
+TYPE UNIT NAME TO ADD
+BPA0 (typed by user)
+
+In either of the above cases (DEFINE or ADD), the message
+
+UNIT HAS SWAPPING SPACE, SUGGEST CHANGING SWAPPING LIST
+
+may be printed. This indicates that some swapping space has been
+assigned on that unit and the CHANGE SWAP command should be
+used to put the unit in the active swapping list.
+
+$text UNITNM;Change parameters for a unit.
+CHANGE BPA0
+
+This command is used to put the drum home blocks back after
+diagnostics have been run. The question
+
+STANDARD VALUES?
+
+will be asked. The answer should be yes. The message that the
+unit has swapping space will then be printed and the CHANGE
+SWAP command should be used.
+
+
+$text go;Exit ONCE dialog.
+GO
+
+This command indicates that the once dialogue is to be terminated
+and the system brought up. It will always be the last command
+given to the once dialogue.
+
+When the system is brought up with the once dialogue and a unit
+has bad "BAT" blocks, the following will be asked:
+
+DO YOU WANT TO INITIALIZE THE BAT BLOCKS ON THIS UNIT?
+
+A positive answer will result in
+
+NOT NORMALLY DONE, ARE YOU SURE?
+
+A positive answer to this question also will result in the BAT
+blocks being rewritten to indicate that there are no bad spots
+on the unit.
+
+
+$text EXAMPL;Example of ONCE dialog.
+Below is an example of bringing the system up after diagnostics
+have been run on the drum.
+
+BPA0 FIRST HOM BLOCK CONSISTENCY ERROR
+BPA0 SECOND HOM BLOCK CONSISTENCY ERROR
+
+LOGICAL UNIT 0 MISSING FROM ACTIVE SWAPPING LIST
+
+MINOR ERRORS - BRING SYSTEM UP ANYWAY?
+(The return is typed by the user)
+ENTERING ONCE DIALOGUE
+
+BPA0 FIRST HOM BLOCK CONSISTENCY ERROR
+BPA0 SECOND HOM BLOCK CONSISTENCY ERROR
+
+LOGICAL UNIT 0 MISSING FROM ACTIVE SWAPPING LIST
+
+BPA0 FIRST BAT BLOCK CONSISTENCY ERROR
+BPA0 SECOND BAT BLOCK CONSISTENCY ERROR
+DO YOU WANT TO INITIALIZE THE BAT BLOCKS ON THIS UNIT?
+YES
+NOT NORMALLY DONE, ARE YOU SURE?
+YES
+
+*CHANGE BPA0
+STANDARD VALUES?
+YES
+ZERO UNIT ID - NEW ID NEEDED
+TYD033 (typed by user)
+*CHANGE SWAP
+STANDARD ACTIVE SWAPPING LIST?
+YES
+*GO
+
+(the system will now come up)
+
+
+$text REFRES;Refresh a file structure.
+REFRESH
+
+This command is used to refresh a file structure. It is normally
+only used when a file structure is being built on a fresh set
+of packs. The once dialogue will respond with
+
+TYPE STR NAME TO BE REFRESHED
+
+The user then types the name and that structure is refreshed.
+
+
+
+$text OTHER;Undocumented commands.
+There are a number of other commands which may be used to change
+paramters of the file system. These commands are not detailed here
+since they should be used only on specific instructions from
+the operating systems group.
+      

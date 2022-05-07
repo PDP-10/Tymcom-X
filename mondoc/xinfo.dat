@@ -1,0 +1,282 @@
+1;INFO.NFO;ROOT;395838585;Summary of available monitor documentation.
+2;EXTERN.NFO;EXTERNAL;544474525;External monitor documentation.
+3;(M33)CLUBS.MEM;CLUBS;0;The CLUB subsystem.
+3;EXTERN.NFO;COMMANDS;544474525;Monitor commands in COMCON.
+4;ADRBRK.DOC;ADRBRK;336330779;The ADRBRK command.
+4;SET.DOC;SET;332924317;The SET commands.
+3;FILESP.DOC;FILESPEC;376440147;Standard system file spec definition.
+3;(MONDOC)INITIA.DOC;INITIALIZATION;390595922;System initialization.
+3;(MONDOC)IOIMPM.NFO;IOIMPM;369099805;Events that set IOIMPM.
+3;(MONDOC)ONCE.NFO;ONCE;351010897;ONCE DIALOG DOCUMENTATION.
+4;(MONDOC)ONCE.NFO;ENTER;351010897;Entering the ONCE dialog.
+4;(MONDOC)ONCE.NFO;ERRORS;351010897;Error messages from ONCE.
+4;(MONDOC)ONCE.NFO;COMMAN;351010897;ONCE dialog commands.
+5;(MONDOC)ONCE.NFO;TYPE;351010897;Typeout commands.
+6;(MONDOC)ONCE.NFO;UNITS;351010897;Type Unit parameters.
+6;(MONDOC)ONCE.NFO;STRS;351010897;Type Structure parameters.
+6;(MONDOC)ONCE.NFO;SWAP;351010897;Type Active swapping list.
+6;(MONDOC)ONCE.NFO;ALL;351010897;Type All.
+6;(MONDOC)ONCE.NFO;UNITNM;351010897;Typeout items for units.
+7;(MONDOC)ONCE.NFO;ID;351010897;Type unit ID.
+7;(MONDOC)ONCE.NFO;SWAP;351010897;Swapping space on unit.
+6;(MONDOC)ONCE.NFO;STRNM;351010897;Typeout items for structures.
+7;(MONDOC)ONCE.NFO;OVERDR;351010897;Number of blocks for overdraw.
+7;(MONDOC)ONCE.NFO;CRASH;351010897;Space for CRASH.
+6;(MONDOC)ONCE.NFO;BAT;351010897;Type Bat block information.
+6;(MONDOC)ONCE.NFO;TSPCB;351010897;.
+6;(MONDOC)ONCE.NFO;TRPCB;351010897;.
+5;(MONDOC)ONCE.NFO;CHANGE;351010897;Arguments to the CHANGE command.
+6;(MONDOC)ONCE.NFO;GENRAL;351010897;General notes.
+6;(MONDOC)ONCE.NFO;SWAP;351010897;Change active swapping list.
+5;(MONDOC)ONCE.NFO;REFRES;351010897;Refresh a file structure.
+5;(MONDOC)ONCE.NFO;DEFINE;351010897;Define a structure.
+5;(MONDOC)ONCE.NFO;ADD;351010897;Add a pack to a structure.
+5;(MONDOC)ONCE.NFO;GO;351010897;Exit ONCE dialog.
+5;(MONDOC)ONCE.NFO;HELP;351010897;Help information.
+4;(MONDOC)ONCE.NFO;EXAMPL;351010897;Example of ONCE dialog.
+4;(MONDOC)ONCE.NFO;OTHER;351010897;Undocumented commands.
+3;PID.MEM;PID;340788228;The Processor ID subsystem.
+3;(MONDOC)PTY.DOC;PTYS;544735233;Pseudo terminal mechanism.
+3;(MONDOC)RIBVAL.NFO;RIBVAL;371982413;Using spare words in LOOKUP blocks.
+3;(MONDOC)P33SEG.INF;SEGMENTS;244056066;VM-System segment-handling.
+3;EXTERN.NFO;SYSNO;544474525;System number (name) format.
+3;(MONDOC)TIPS.NFO;TIPS;437781576;Tips for monitor people.
+4;TIPS.NFO;SATDEBUG;437781576;Notes on writing out SATS while debugging.
+4;TIPS.NFO;RIBERR;437781576;Deleting Files with RIB Errors.
+4;TIPS.NFO;PACKID;437781576;Inconsistent Pack Set ID handling.
+4;TIPS.NFO;BADFOR;437781576;Recovery from disk packs with bad format.
+3;(MONDOC)TRUFRM.DOC;TRUFRM;408946000;TRU computation formula.
+3;EXTERN.NFO;UUO;544474525;New UUO documentation.
+3;(MONDOC)PROJ.NFO;PROJECTS;508036246;Monitor Projects currently conceived.
+4;PROJ.NFO;ENVIRONMENT;508036246;Adaptations to Environment.
+4;PROJ.NFO;CAPACITY;508036246;Increased Monitor Capacity.
+4;PROJ.NFO;RELIABILITY;508036246;Projects to increase reliability.
+4;PROJ.NFO;POLICY;508036246;Projects to enhance policy making decisions.
+4;PROJ.NFO;PERFORMANCE;508036246;Performance Enhancements.
+4;PROJ.NFO;STRUCTURE;508036246;Projects to improve internal structure of monitor.
+4;PROJ.NFO;FUNCTION;508036246;Projects to extend functionality of monitor.
+4;PROJ.NFO;SECURITY;508036246;Projects to increase security.
+4;PROJ.NFO;MISCELLANEOUS;508036246;Projects that don't fit clearly into above categories.
+2;IDEAS.NFO;IDEAS;429393239;Ideas for Program Enhancements.
+3;IDEAS.NFO;CRASH;429393239;Idea to speed up crash recovery.
+3;IDEAS.NFO;CUSPS;429393239;Ideas for Cusp Enhancements.
+4;IDEAS.NFO;EDIT10;429393239;EDIT10 Enhancements.
+3;IDEAS.NFO;MONITOR;429393239;Ideas for Monitor Enhancements.
+2;INFO.DOC;INFO;467665030;Using the INFO program.
+3;INFO.DOC;FILES;467665030;The format of the text files.
+3;INFO.DOC;PUB;467665030;Using PUB to prepare formated files.
+3;INFO.DOC;SPCHAR;467665030;Special INFO command characters.
+3;INFO.DOC;PUBLISH;467665030;The PUBLISH command.
+2;INTERN.NFO;INTERNAL;471597240;Internal monitor documentation.
+3;(OSCURRENT)P033.MEM;P033;0;Modification history for P033.
+3;(M33)P034.MEM;P034;552075825;Modification history for P034.
+3;(MONDOC)SCHED.NFO;SCHEDULER;392692826;The Scheduler.
+4;(MONDOC)SCDESC.DOC;DESCRIPTION;392692824;General Scheduler Description.
+5;SCDESC.DOC;STRUCTURE;392692824;General Scheduler Structure.
+5;SCDESC.DOC;CPU;392692824;CPU scheduling.
+5;SCDESC.DOC;CORE;392692824;Core scheduling.
+5;SCDESC.DOC;RESOURCE;392692824;Resource scheduling.
+5;SCDESC.DOC;JOBS;392692824;Characteristics of typical jobs.
+5;SCDESC.DOC;PERFORMANCE;392692824;Software performance packages.
+5;SCDESC.DOC;TUNING;392692824;System tuning.
+4;(MONDOC)SCHEDQ.DOC;QUEUE;392692826;Queue transitions.
+3;(MONDOC)MONINF.NFO;MONINF;477102115;Notes on monitor internals.
+4;(MONDOC)MONINF.NFO;GENERAL;477102115;General information.
+4;(MONDOC)MONINF.NFO;PAGING;477102115;Paging.
+4;(MONDOC)MONINF.NFO;TAPE;477102115;Magnetic tape.
+4;(MONDOC)MONINF.NFO;SCHEDULER;477102115;Scheduler notes.
+4;(MONDOC)MONINF.NFO;SCNSER;477102115;Tymshare network interface.
+4;(MONDOC)MONINF.NFO;ONCE;477102115;System initialization code.
+4;(MONDOC)MONINF.NFO;ACCOUNTING;477102115;Accounting system.
+4;(MONDOC)DSKCLN.NFO;DSKCLN;477102112;The DSKCLN Program.
+5;(MONDOC)DSKCLN.NFO;DSKCLNBUGS;477102112;DSKCLN known bugs and deficiencies.
+5;(MONDOC)DSKCLN.DOC;DSKCLNSTRUCTURES;181404825;DSKCLN Data Structures.
+4;(MONDOC)MONINF.NFO;KL10;477102115;KL10 information.
+4;(MONDOC)FILSYS.NFO;FILES;540803181;File system.
+5;(MONDOC)FILSYS.NFO;DEVRIB;540803181;DEVRIB facts.
+5;(MONDOC)DEVFLO.NFO;DEVFLO;391906633;DEVFLO facts.
+5;(MONDOC)FILSYS.NFO;FBITS;540803181;Bits in LH of AC F.
+5;(MONDOC)FILSYS.NFO;DISKIO;540803181;Notes on physical disk I/O.
+5;(MONDOC)FILSYS.NFO;PCBS;540803181;PCB information.
+6;(MONDOC)FILSYS.NFO;ORDER;540803181;Order in which to ask for PCBs.
+6;(MONDOC)FILSYS.NFO;DDBPTR;540803181;DDB pointer information.
+7;(MONDOC)DDBPTR.NFO;RULES;441712774;DDB Pointer rules.
+8;(MONDOC)DDBPTR.NFO;NOTES;441712774;The generalized rules.
+8;(MONDOC)DDBPTR.NFO;DEMO;441712774;Demonstrations of DDB pointer rules.
+9;(MONDOC)DDBPTR.NFO;READ;441712774;Read pointers into DDB.
+9;(MONDOC)DDBPTR.NFO;CREATE;441712774;Create 1 file page.
+9;(MONDOC)DDBPTR.NFO;DELETE;441712774;Delete 1 file page.
+9;(MONDOC)DDBPTR.NFO;TRUNCA;441712774;Truncate a file.
+7;(MONDOC)FILSYS.NFO;FLOCK;540803181;Atomic File Lock Queue.
+8;(MONDOC)FILSYS.NFO;GENERAL;540803181;General description.
+8;(MONDOC)DDBPTR.HND;DESIGN;191104155;Original design memo.
+6;(MONDOC)FILSYS.NFO;STDBIT;540803181;PCB interrupt level bits.
+5;(MONDOC)SAFETY.NFO;SAFETY;377488686;Safety factor used in UNITAL computation.
+5;(MONDOC)SIMUPD.NFO;SIMUPD;487326810;Simultaneous Update Internal Notes.
+5;(MONDOC)FASCLN.NFO;FASTDSKCLN;481558552;Notes on addition to file system for fast DSKCLN.
+4;(MONDOC)MONINF.NFO;PI;477102115;Software Interrupt System.
+5;(MONDOC)MONINF.NFO;DATABS;477102115;Data base for software interrupt system.
+4;(MONDOC)UUOCON.NFO;UUOCON;359924874;Notes on UUOCON Programming.
+5;(MONDOC)UUOCON.NFO;BUFMOD;359924874;Notes on buffered mode code.
+5;(MONDOC)UUOCON.NFO;AC;359924874;Notes on AC conventions in UUOCON.
+4;(MONDOC)MONINF.NFO;AC;477102115;General AC conventions.
+3;(MONDOC)CRSNOT.MEM;CRSNOT;397411650;Notes on Crash Analysis Techniques.
+3;(MONDOC)XFRRAT.MEM;XFRRAT;401605725;Disk transfer rate Calculations.
+3;(MONDOC)STREAM.DOC;STREAM;410256721;Stream Accounting System Record Formats.
+3;(MONDOC)ARCHIV.NFO;ARCHIV;410256728;Old memos.
+4;(MONDOC)PROJEC.DOC;PROJEC;165152145;Project code user guide.
+4;(MONDOC)CHANEL.MEM;CHANEL;150733981;Obsolete >16 channel proposal.
+4;(MONDOC)FILSPC.MEM;FILSPC;150733977;New RIB format spec.
+4;(MONDOC)FILES.MEM;FILES;150733968;File system structure (incomp).
+4;(MONDOC)PAGE.MEM;PAGE;150733835;Old paging memo.
+4;(MONDOC)USE.10;USE;69207419;USE.
+4;(MONDOC)FILMEM.MEM;FILMEM;54527253;HOME-BAT blocks (oct 4,75).
+4;(MONDOC)FILNAM.MEM;FILNAM;19924022;Experimental monitor names.
+4;(MONDOC)INTR.MEM;INTR;263142;Pseudo interrupt system.
+4;(MONDOC)UNHAP.MEM;UNHAP;263127;Explanation of ALR620 bits.
+4;(MONDOC)INDIR.MEM;INDIR;263124;Spec for indirect files.
+4;(MONDOC)PDLANL.MEM;PDLANL;263121;LISP program to guess PDL space.
+4;(MONDOC)ASSLOA.MEM;ASSLOA;263114;Assembler/Loader wish list.
+4;(MONDOC)SUDS.MEM;SUDS;263080;Spec for wonderful SUDS mode.
+4;(MONDOC)SLEEP.MEM;SLEEP;263079;Clock queue efficiency proposal.
+4;(MONDOC)BIO10.MEM;BIO10;263076;Functional spec for block I/O.
+4;(MONDOC)BITS.TXT;BITS;154402844;P033 swapper bit descriptions.
+3;(MONDOC)PHILOS.NFO;PHILOSOPY;493618324;Architectural Notes for Tymcom-X.
+4;(MONDOC)PHILOS.NFO;GENERAL;493618324;General Notes about this node.
+4;(MONDOC)PHILOS.NFO;NETWORK;493618324;Network Design philosophy.
+4;(MONDOC)PHILOS.NFO;INTERRUPT;493618324;Interrupts and Sleeping philosophy.
+4;(MONDOC)PHILOS.NFO;UUOFORMAT;493618324;Monitor Call Format Design philosophy.
+4;(MONDOC)PHILOS.NFO;FRAMECTL;493618324;Frame Control philosopy.
+4;(MONDOC)PAGOBS.TXT;PAGING;493618311;Paging philosopy.
+4;(MONDOC)PHILOS.NFO;FILESYSTEM;493618324;File System philosophy.
+4;(MONDOC)PHILOS.NFO;DEVICES;493618324;Adding New Devices and Device drivers.
+4;(MONDOC)PHILOS.NFO;ACCONVENTIONS;493618324;AC conventions.
+4;(MONDOC)PHILOS.NFO;CODING;493618324;Coding Guidelines.
+4;(MONDOC)PHILOS.NFO;CONDITIONALS;493618324;Guidelines for conditional assemblies, etc.
+2;PEOPLE.NFO;PEOPLE;366216290;Monitor people.
+3;(M33)PHONES;PHONES;543424854;Home and office telephone numbers.
+3;(M33)TERMS.TXT;TERMINV;419431728;Terminal inventory.
+2;MONPRO.NFO;PROCEDURES;513802363;Monitor Group Procedures.
+3;(M33)XMIT.MEM;XMIT;392430703;Monitor transmittal Instructions.
+3;(M33)RELMON.MEM;MONREL;392168654;Major monitor release instructions.
+3;(M33)RELMON.MEM;NEWSYS;392168654;Adding or deleting a system.
+3;(M33)UPGRAD.DOC;UPGRADE;367001638;Upgrading a KI to a KL.
+3;(M33)PATMON.MEM;PATCH;467404110;Monitor Patch Procedures.
+3;(MONDOC)CRSNOT.MEM;CRASH;397411650;Notes on looking at monitor crashes.
+3;(MONDOC)CRALOG.MEM;CRALOG;393741641;Procedures for logging crashes.
+3;(MONDOC)UUOFRM.MEM;UUOFORMAT;390595766;Design considerations for UUO formats.
+3;(M33)TAPES.MEM;TAPE-BACKUP;501481551;Procedures for backup of monitor files to tape.
+3;(MONDOC)BADRIB.MEM;BADRIB;429655292;Procedure for zapping file with rib error.
+3;(MONDOC)MODIFY.MEM;MODIFY;457179164;Procedures for modifying monitor sources.
+3;(MONDOC)MONNAM.MEM;MONITOR-NAME;457179207;Conventions regarding monitor names.
+3;(MONDOC)INTERN.MEM;INTERNAL-RELEASE;509871295;Making an experimental monitor.
+3;(MONDOC)MEMFIL.DOC;MEMFILE;509871285;Pxxx'MEM file format.
+3;(INFO)LICENS.MEM;LICENSE;513802355;Policy on programs that grant license.
+2;STANDA.NFO;STANDALONE;390595982;Stand alone programs.
+3;(MONDOC)FTALOD.INF;FTALOD;16778389;Magnetic Tape Bootstrap Program.
+3;(MONDOC)230COP.INF;PAKCOP;263128;Stand Alone Disk Pack Copy Program.
+2;TYMNET.NFO;TYMNET;351010900;Tymnet documentation.
+3;ECHO.DOC;ECHOING;335283228;The deffered echo algorithm.
+3;BASEH.DOC;BASE;335283232;The Base-Host communication interface.
+3;BALLL.DOC;BALLS;335283230;The character ball protocol.
+3;E.DOC;MUD;335544658;Master User Directory information.
+4;E.DOC;FORMAT;335544658;Mud file format.
+4;E.DOC;CHARACTERS;335544658;MUD character set.
+4;E.DOC;CPARW;335544658;CPARW bit definitions.
+3;(MONDOC)BIO.MEM;BLKIO;263074;Base-Host block I/O protocol.
+2;USER.NFO;USER;457966069;User mode software.
+3;CUSPS.NFO;CUSPS;507774170;Commonly Used System Programs.
+4;CUSPS.NFO;DEFINITION;507774170;Definition of a CUSP.
+4;CUSPS.NFO;DDT;507774170;DDT program.
+5;(M33)DDT.INF;HISTORY;330564815;Modification history.
+5;(MONDOC)DDT.DOC;FEATURES;467665012;Tymshare DDT Features.
+4;CUSPS.NFO;GFD;507774170;GFD program.
+5;GFD.MEM;CALLING;332660864;Calling GFD from a program.
+5;(M33)GFD.INF;HISTORY;348128473;Modification history.
+5;(MONDOC)GFDACC.NFO;ACCESS;428606528;Creating GFD access lists.
+4;CUSPS.NFO;LOGINN;507774170;LOGINN program.
+5;(M33)LOGINN.INF;HISTORY;544736535;Modification history.
+4;CUSPS.NFO;LOGOUT;507774170;LOGOUT program.
+5;(M33)LOGOUT.INF;HISTORY;0;Modification history.
+5;(MONDOC)ALP.NFO;ALP;378536150;Alternate Logout Program facility.
+6;(MONDOC)ALP.DOC;DESC;379323556;Description.
+6;(MONDOC)ALP.MAC;EXAMPLE;378536144;Example (MACRO-10).
+4;MAIL.DOC;MAIL;342885570;The MAIL program.
+5;(MPL)MAIL.INF;HISTORY;383779982;Modification history.
+5;MAIL.DOC;USEAGE;342885570;Using the MAIL program.
+4;CUSPS.NFO;RPG;507774170;RPG program.
+5;(M33)RPG.INF;HISTORY;0;Modification history.
+5;RPG.MEM;SETMAIL;332660864;The SETMAIL command.
+5;RPG.DO;DO;368051567;The DO, SETDOLIST and ADDDOLIST commands.
+4;PROJEC.DOC;PROJEC;165152145;The project-code verifying program.
+4;VALID.DOC;VALID;177734800;Project-code validator for Acct.
+3;EDITOR.NFO;EDITORS;379322437;Editor documentation.
+4;EDIT10.NFO;EDIT10;365428890;The stopgap editor.
+3;LANG.NFO;LANGUAGES;473694271;Language documentation.
+4;(XEXEC)XEXEC.NFO;XEXEC;473695480;Preliminary XEXEC user manual.
+5;(XEXEC)XEXEC.NFO;CCL;473695480;Running XEXEC from another program.
+5;(XEXEC)XEXEC.NFO;RUNTIMES;473695480;User callable runtime procedures.
+6;(XEXEC)XEXEC.NFO;CLEAR;473695480;Make a variable false.
+6;(XEXEC)XEXEC.NFO;SET;473695480;Make a variable true.
+6;(XEXEC)XEXEC.NFO;TYPE;473695480;Print values on standard output.
+6;(XEXEC)XEXEC.NFO;QUIT;473695480;Terminate the EXEC.
+4;(MONDOC)MACRO.NFO;MACRO;481296776;MACRO bugs.
+3;(MONDOC)ROYAL.NFO;ROYALTY;370933787;Information on Royalty Accounting.
+3;UTIL.NFO;UTILITY;549192855;Utility programs.
+4;ASP.DOC;ASP;447741962;Absolute Structuresaving Program.
+4;UTIL.NFO;ASSHOL;549192855;Lists AssHoles (SCHPRV).
+4;(EMACS)ATSIGN.NFO;ATSIGN;457179430;Program to make cref listings.
+5;(EMACS)ATSIGN.NFO;INTRO;457179430;The basic idea behind @.
+5;(EMACS)ATSIGN.NFO;BASIC;457179430;Simplest usage of @, for programs.
+5;(EMACS)ATSIGN.NFO;OUTPUT;457179430;What @ output looks like, for programs.
+5;(EMACS)ATSIGN.NFO;TEXT;457179430;Simplest usage of @, for papers.
+5;(EMACS)ATSIGN.NFO;ASSEMBLER;457179430;What @ understands about assembler language.
+5;(EMACS)ATSIGN.NFO;LISP;457179430;What @ understands about Lisp.
+5;(EMACS)ATSIGN.NFO;MUDDLE;457179430;What @ understands about Muddle.
+5;(EMACS)ATSIGN.NFO;QUOTES;457179430;Quotes (') control whether files are listed.
+5;(EMACS)ATSIGN.NFO;SWITCHES;457179430;What you can do with command line switches.
+5;(EMACS)ATSIGN.NFO;FILES;457179430;What files are used, and their default names.
+5;(EMACS)ATSIGN.NFO;SUBSTITUTIONS;457179430;What to do when you move your source files.
+4;UTIL.NFO;AUXDDT;549192855;AUX circuit Dynamic Debugging Tool.
+4;(MONDOC)AUXIO.DOC;AUXIO;392167532;Aux Circuit and dialout utility.
+4;CACHE.DOC;CACHE;334233820;Program to change cache strategy.
+4;(MPL)COPY.DOC;COPY;457966727;Copy N files to N systems detached.
+4;(MONDOC)CRASUM.NFO;CRASUM;393741635;Extract data from CRALOG.
+4;(MONDOC)CRSHID.DOC;CRSHID;392167474;Program to analize crashes.
+4;CUSPS.NFO;DDT;507774170;DDT program.
+5;(M33)DDT.INF;HISTORY;330564815;Modification history.
+5;(MONDOC)DDT.DOC;FEATURES;467665012;Tymshare DDT Features.
+4;UTIL.NFO;DIRED;549192855;Directory editor for ADM3's.
+4;(MONDOC)ERRCHK.INF;ERRCHK;263343;Disk Error Reporting Program.
+4;(MONDOC)FRMDDT.DOC;FRMDDT;467927468;Frame DDT special features.
+4;(MONDOC)FSHSPL.NFO;FSHSPL;351010976;Microfiche Generation System.
+5;(MONDOC)FYSH.INF;RUN;263511;How to run FSHSPL.
+5;(MONDOC)FSHSPL.MEM;PROG;60556473;How to write programs in FSHSPL language.
+5;(MONDOC)FSHTAP.MAN;FSHTAP;252969896;Operator instructions for FSHTAP.
+4;ICP.DOC;ICP;335806553;Program to monitor system use.
+4;(MONDOC)INFRED.NFO;INFRED;376440129;Program to display PDP-10 system status.
+4;(MPL)KAFIX.MEM;KAFIX;549192856;Patches Fortran-IV SAV files to run on F3.
+4;UTIL.NFO;MASQUE;549192855;Masquerade as another user.
+4;UTIL.NFO;MDDT;549192855;Monitor DDT.
+4;(M33)MONED.DOC;MONED;531628433;Runs MONED1 for all monitors.
+4;(M33)MONED1.DOC;MONED1;530579540;Generate an experimental monitor.
+4;MHX.DOC;MHX;408159599;Do commands on many systems.
+4;(MONDOC)PATLOG.DOC;PATLOG;392953988;Logs monitor patches easily.
+4;RUB.DOC;RUB;335807837;Set/Clear Restricted User Bit in LUD.
+4;UTIL.NFO;SCAN;549192855;Scan stream accounting files.
+4;(MPL)SCRIPT.MEM;SCRIPT;544473169;Print U W SCRIPT files.
+4;UTIL.NFO;SNARF;549192855;Snarfs job from another terminal.
+4;(*6NEWS)SPELL.DOC;SPELL;463733890;Checks and corrects spelling.
+4;UTIL.NFO;SPOOL;549192855;A better way to spool files.
+4;(MONDOC)SWEET.INF;SWEET;263487;Master Cref Program.
+4;(MONDOC)SYMLOK.INF;SYMLOK;155452799;Microfiche Location Program.
+4;UTIL.NFO;TAPE;549192855;Scan TITO tape directories.
+4;UTIL.NFO;X1200;549192855;Xerox 1200 tape writer.
+4;UTIL.NFO;PIP;549192855;DEC Peripheral Interchange Program.
+2;(MONDOC)FORMAT.NFO;FORMAT;395838629;System file formats.
+3;(MONDOC)LUD.10;LUD;379585838;Format of LUD.
+3;(MONDOC)DUL.DOC;DUL;395838597;Format of DUL.
+3;(MONDOC)STREAM.DOC;STREAM;410256721;Format of stream accounting files.
+3;(MONDOC)STFILE.NFO;STFILE;370935165;Format of system statistics files.
+3;(MONDOC)SYMTAB.MEM;SYMTAB;396100920;Format of macro/fail/loader symbol tables.
+    

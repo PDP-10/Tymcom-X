@@ -1,0 +1,205 @@
+$menu SCHEDULER;The Scheduler.
+*(MONDOC)SCHED.NFO:STRUCTURE;General Scheduler Structure.
+*(MONDOC)SCHED.NFO:CPU;CPU scheduling.
+*(MONDOC)SCHED.NFO:CORE;Core scheduling.
+*(MONDOC)SCHED.NFO:RESOURCE;Resource scheduling.
+*(MONDOC)SCHED.NFO:JOBS;Characteristics of typical jobs.
+*(MONDOC)SCHED.NFO:PERFORMANCE;Software performance packages.
+*(MONDOC)SCHED.NFO:TUNING;System tuning.
+*(MONDOC)SCHED.NFO:SWT;Notes on SWT flag.
+*(MONDOC)SCHED.NFO:QUEUE;Queue transitions.
+
+$Text SWT;Notes on the SWT flag.
+
+What SWT is for: (MRKSWT, CHKSWT, CBSWT, etc) if a resource
+is given away to someone who later gets swapped out
+or is already swapped out (resources givers try not to
+give resource to swapped out jobs) and that someone
+has not run with the resource yet, the SWT flag is set.
+If that someone then gets a swap error, the scheduler
+knows that its ok to give the resource to someone else,
+since the someone hasn't had a chance to do anything bad
+with it yet.
+
+Note - if job goes into swap wait, can get into situations
+where incore protect is setup non-zero again by swaper,
+then job immediately goes into sw, and when it comes out of
+sw into ss, scheduler puts job into beginning of pq1 since
+incore time is still non-zero (at ckjb10). /Evs (6/1/78).
+
+$text STRUCTURE;General Scheduler Structure.
+
+A job in the TYMCOM-X operating system has a state associated with it.
+This state corresponds to its current activity as the monitor sees it.
+Examples of states are: running, waiting for teletype input, waiting for
+teletype output to complete, waiting for disk i/o to complete, waiting for
+a system interlock.  The disk system has its own scheduling of disk I/O
+requests based on the position of the heads on the serving unit in
+relation to the desired position of the heads for each request.  The job
+is often seen to be in disk wait state while this disk transfer scheduling
+takes place, but not always, as the monitor allows overlap of CPU usage
+and disk usage.
+
+Each job state has one queue associated with it, except for the run state,
+which has four queues.  When a job enters a new state, the scheduler takes
+the job out of the queue for the old state and enters the job into the
+queue for the new state.  Certain states are transitory states that inform
+the scheduler where in the queue structure to put the job. These states
+are called "satisfied" states, since a job is put into them when a certain
+event that it has been waiting for has occurred.  These "satisfied" states
+allow the scheduler to select a new queue for the job based on the wait
+state it has just come from.  (If the job's state went directly to run
+state, the scheduler would not know what the job's prievious state was.)
+Examples of these "satisfied" states are disk I/O satisfied, teletype I/O
+satisfied, CB satisfied (CB is an internal operating system interlock).
+The scheduler makes use of these satisfied states by looking up the
+required queue transition in a table and putting the job in a new queue.
+In fact, all queue transitions that occur except those that the job
+specifically causes (e.g. sleep, disk I/O) are handled by table driven
+code. This makes it easy to change the scheduling algorithm; one needs
+only to patch a table to effect a change in the scheduler's behavior.
+
+$text CPU;CPU scheduling.
+The scheduler has four run queues, called PQ0, PQ1, PQ2, and PQ3. PQ0 is
+the highest priority run queue, and PQ3 is the lowest.  Each time a job
+voluntarily blocks (for I/O or some other event) or at each 1/60th of a
+second, whichever comes first, the scheduler is called. If the current job
+is still runnable, the scheduler decrements its run queue quantum, which
+is first assigned when the job entered the run state.  If the run queue
+quantum has not expired, the job remains in its current position in the
+run queue. If the quantum has expired, the scheduler puts the job in a new
+run queue and assigns a new run quantum using a table which is indexed by
+the job's old run queue. Currently, a job will go from PQ0 to the back of
+PQ1, PQ1 to the back of PQ2, PQ2 to the back of PQ3, and then from PQ3
+back to the back of PQ2 again.  PQ0 is used only for jobs that have just
+been given system interlocks or resources. PQ1 is used for jobs coming out
+of long term wait states, such as teletype I/O wait, so that they get good
+response. Moderately compute bound jobs are usually found in PQ2, and
+heavily compute bound jobs are found in PQ3.
+
+After a job has come out of a wait state (one in which it is not using the
+CPU) it is placed in the run queues as a function of the wait state it was
+in and possibly its size.  Jobs coming out of teletype I/O wait are always
+put in the front of PQ1. Jobs which have just become runnable after being
+stopped (totally inactive) are put into the back of PQ1 if they are less
+than 5K, the back of PQ2 if they are less than 16K, and the back of PQ3
+otherwise.  Jobs coming out of disk I/O wait go into the front of PQ1 if
+their in-core protect time has not expired (see section on core
+scheduling), and if their in-core protect time has expired, disk I/O wait
+jobs go into the back of PQ1 if they are less than 6K, and the back of PQ2
+if they are not less than 6K.  Jobs coming out of SLEEP or HIBER are
+treated the same as jobs that have just become runnable after being
+totally dormant.  Jobs coming out of a sharable resource wait (the job
+then has the resource or interlock that it was waiting for) are put at the
+end of PQ0 to facilitate the release of the resource.
+
+ After the quantum run time check for the current job, the scheduler
+checks all jobs in the system to see if their state has changed, and
+places them in their new queues if so. Next, the scheduler sees if any
+system resources have been freed, and if so, wakes the next job in the
+queue for the now available resource.
+
+ The scheduler then scans the run queues in priority order beginning with
+PQ0 for a new job to run. This scan is independent of the state of the
+currently running job; if a job of higher priority than the currently
+running job is found, the scheduler will pick that job to run even if the
+current job's time slice has not expired.  That is to say, the scheduler
+is preemptive.
+
+$text CORE;Core scheduling.
+Core scheduling is done by a routine called the swapper.  The swapper
+attempts to keep those jobs that have the highest CPU scheduler priority
+in core. It actually scans the queues that the CPU scheduler uses to do
+this. The run queues appear first in the swapper's list of queues for swap
+in, then the first job in each sharable resource wait queue. The list that
+the swapper uses to scan for jobs to swap out begins with the states that
+imply the job is totally dormant (sleep, stop), has has the sharable
+resource queues (except for the first job waiting for the resource) next,
+then teletype I/O wait jobs, then the first job on each sharable resource
+wait queue, and finally the run queues. All these queues are scanned
+backward by the swapper (except for teletype I/O) when scanning to swap
+out, and forward when scanning for jobs to swap in.  When a job is brought
+into core, it is given an in-core protect time.  This time is decremented
+periodically, and as long as it has not expired, the swapper will not
+consider the job for swap out.
+
+$text RESOURCE;Resource scheduling.
+The resource allocation code is designed so that the scheduler need not
+become involved unless the resource is not free when the requester asks
+for it. If a job asks for a resource (system interlock or real resource,
+such as dynamic core space, file system bufferu or file system buffer) and
+it is not available, its state code is changed to the wait state for the
+particular resource.  When the job owning the resource relinquishes it,
+the scheduler will notice and scan the wait queue for the resource for the
+next waiter who is in core. It will then change the waiters state to run
+and put him in the back of PQ0. This minimized contention for the
+resources by allowing the job with a resource to run at highest CPU
+priority, thus relinquishing the resource at the earliest possible time.
+Deadly embrace is avoided in the monitor by always allocating resources in
+a certain order.
+
+$text JOBS;Characteristics of typical jobs.
+Each program run under the TYMCOM-X operating system is treated
+identically by the scheduling algorithms.  The program that does login is
+moderately compute bound, and probably does not go beyond PQ2 often.
+Editing is seen as a teletype I/O bound task, and is given fairly high
+priority by the scheduler because of going into and out of teletype I/O
+wait often. Compilation is generally heavily compute bound, and a job
+doing compiling is almost certain to occupy PQ3 often. The execution of a
+program that is disk I/O bound will proceed at a fairly high priority due
+to the scheduler's policy of putting disk I/O satisfied jobs into PQ1.
+
+$text PERFORMANCE;Software performance packages.
+The following packages are currently in use by the operating systems
+group:
+SYSTAT - prints out various system statistics related to system usage.
+SNOOPY - tool used by operating systems group to obtain historgrams of
+     monitor execution and other variables
+ICP - program used by operating systems group to gather detailed
+     information related to paging algorithms.
+READST - gathers long term system usage statistics
+
+The above programs, aside from SYSTAT, are not generally provided to users
+outside the PDP-10 operating systems group.  The appearance of the above
+list of programs does not imply any intent to provide these programs to
+any outside agency.
+
+$text TUNING;System tuning.
+Aside from the aformentioned performance analysis programs, there are
+facilities to statically and dynamically change internal operating system
+performance parameters. Changing these parameters and noting the resultant
+change with the performance monitoring programs is the method by which
+Tymshare tunes PDP-10 systems.
+
+$TEXT QUEUE;Queue transitions.
+The following is a summary of the scheduler queue transitions:
+
+Source	Condition	Dest		Quantum
+-------------------------------------------------------------
+
+PQ0	Quantum exc.	end PQ1		5
+PQ1	Quantum exc.	end PQ2		5
+PQ2	Quantum exc.	end PQ3		60
+PQ3	Quantum exc.	end PQ2		60
+
+STOP	RUN, <=4K	end PQ1		5
+	RUN, <=16K	end PQ2		60
+	RUN, <=256k	end PQ3		60
+
+IOW
+TIOW	Wait done	beg PQ1		6
+
+SRW	Get resource	end PQ0		1
+
+SW	Disk I/O done
+	  ICPT expired:
+	    <=5k	end PQ1		5
+	    <=256K	end PQ2		5
+	  ICPT >0:	beg PQ1		6
+
+SRW is Sharable Resource Wait.
+
+ICPT is In core protect time.
+
+ICPT is zeroed whenever a job goes into TI wait, or does a HIBER
+or SLEEP for more than its current value of ICPT time.

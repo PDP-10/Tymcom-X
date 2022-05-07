@@ -1,0 +1,79 @@
+************************************************************************
+* NOTE: the following information is classified "Tymshare Proprietary" *
+* and must not be disclosed to other than Tymshare employees having a  *
+* bonafide requirement for the information.                            *
+************************************************************************
+
+The following is the current TRU formula (as of 22-OCT-82)
+
+TRU=	  MCY * .000009004   	    	 ;first compute the
+	+ SOK * .001         		 ;sum of the kilocore
+	+ CHR * .000856      		 ;size independent values
+	+ BET * .004
+	+ BIO * .0004
+	+ MPC * .000168
+	+ PWS * .02696
+	+ ((4 * ERN + LKP) * 3 + DRD + DWR) * .00674
+	  SC1 = 0? If yes, goto CLKTRX   ;is a scaling factor to be applied?
+	  PRSM = PRSM * SFTR 		 ;yes, multiply it times PRSM
+CLKTRX:	+ KCT * .0000003371		 ;now compute the sums
+	+ PWL * .000000154	  	 ;of the kilocore size
+	+ ELP * .00016		 	 ;dependent values
+	+ BCS * .00535
+	+ ((4 * ERS + LKS) * 3 + DRS + DWS) * .00674
+
+where
+
+KCT is working set size in K times microcycles
+MCY is microcycles (EBOX/2^18 + MBOX/2^15)
+EBOX is execution time in clock cycles/2 (excluding memory access time)
+MBOX is number of memory references (excluding fast memory references)
+PWL is (WSK * PADD * (CHGF + 1) * 10000)/(PADD + CHGF) where  
+	WSK is 2 * size of working set in pages after PADD
+		pages have been added to working set.
+	PADD is number of pages just added to working set
+		via WSCTL or page fault.
+	CHGF is charge factor, currently = 100.
+		Only WSCTL and page fault increment the PWL counts
+		(no charge for CORE UUO, RUN UUO, etc. adding pages)
+SOK is number of units added to premium cell by TYMCHG UUOs * 1000.
+ELP is elapsed time  *  working set size
+BCS is break characters  *  working set size
+CHR is non-block I/O terminal characters in  +  out
+BET is elapsed seconds that ports for a job were in block I/O mode
+BIO is block I/O characters input and output.
+	(There is a minimum charge of 80. characters for block output)
+MPC is VCR + 4 * MAP + HS where
+	VCR is number of VCREATs done to user address space, including
+		CORE UUO
+	MAP is number of MAP operations done by user
+	HS is number of pages mapped by monitor while creating high
+		segments EXCEPT those mapped while job had XC license.
+PWS is pages added to UWS by user via WSCTL or page fault
+	(doesn't include those added by CORE UUO, RUN, etc.)
+	(Also doesn't include virgin private pages.)
+ERS is ENTERs and RENAMES  *  working set size in K
+LKS is LOOKUPs times working set size in K
+DRS is disk blocks (128 words) read times working set size in K
+	The UFD reading CHANIO charges 1 block per UFD page read.
+DWS is disk blocks (128 words) written times working set size in K
+	VALPAG, FCREAT charge 4 blocks for each page.
+ERN is ENTERs and RENAMEs done
+LKP is LOOKUPs done
+DRD is disk blocks (128 words) read
+	The UFD reading CHANIO charges 1 block per UFD page read.
+DWR is disk blocks (128 words) written
+	VALPAG, FCREAT charge 4 blocks for each page.
+
+1K = 1024 words = 2 pages.
+SC1 is the value contained in bits 0-8 of JBTSCA(J). If it is non-
+    zero, then it is the numerator of the scaling factor that will
+    be applied to PRSM. The denominator is kept in bits 9-17 of
+    JBTSCA(J).
+    JBTSCA is a JBT table entry that can be set by function 7 of 
+    XCHARG UUO.
+    J is the current job.
+PRSM is the total tru count that has been accumulated so far.
+SFTR is a charge factor (function 7 of UUO XCHARG). The numerator is
+      stored in the first 8 bits of JBTSCA(J), and the denominator is
+      stored in bits 9-17 of JBTSCA(J).

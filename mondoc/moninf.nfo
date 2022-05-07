@@ -1,0 +1,327 @@
+$menu moninf;Notes on monitor internals.
+*(mondoc)moninf.nfo:general;General information.
+*(M33)CLUBS.MEM:CLUBS;The CLUB subsystem.
+*(mondoc)moninf.nfo:paging;Paging.
+*(mondoc)moninf.nfo:tape;Magnetic tape.
+*(mondoc)moninf.nfo:SCNSER;Tymshare network interface.
+*(mondoc)moninf.nfo:accounting;Accounting system.
+*(mondoc)dskcln.nfo:DSKCLN;The DSKCLN program.
+*(mondoc)moninf.nfo:KL10;KL10 information.
+*(mondoc)filsys.nfo:FILES;File system notes.
+*(MONDOC)ONCE.NFO:ONCE;ONCE dialog operating instructions.
+*(mondoc)moninf.nfo:PI;Software Interrupt System Notes.
+*(MONDOC)SCHED.NFO:SCHEDULER;The scheduler.
+*(mondoc)uuocon.nfo:UUOCON;Notes on UUOCON Programming.
+              
+
+$Text moninf;Internal monitor documentation rules.
+
+The following are general warnings and advice to be used
+when writing monitor code. Please limit additions to
+this information to non-obvious information that may be
+helpful to monitor coders.  Please do not include detailed
+explanations of specific code, obvious data base structure, etc.
+Just things that are difficult to discover or realize
+from the actual code need be included here.
+
+Note - nothing should ever be deleted from this file
+once it is entered in its final form. If an item becomes
+obsolete, add text to mark it clearly as such.
+              
+
+$Text general;General information.
+Customers have been told that the sequence "-p0" at chars
+4,5, and 6 of CONFIG is a method of recognizing tymshare
+systems.
+
+              
+
+$Text paging;Paging.
+
+When writing UUOs that do executive XCTs to reference
+user space, make sure code does the right thing if an ill mem ref
+or page I/O error or disk full during copy on write occurs.
+Under no circumstances write into user space when UUO code
+owns a disk resource (PCB, CB, etc.) unless it is certain
+that the page is not a copy on write page. Copy on
+write code does UUOs that try to get those resources.
+
+Do not reschedule if an lmap slot is contained in p3 and p4
+unless the slot is inactive. Special procedure must be
+followed if rescheduling is done with lmap slot in p3 and
+P4 in any case; see references to UPTLDC.
+Beware - if code is holding a sat PCB, and gets a RIB PCB,
+the sat PCB will be released.
+
+There is a safety factor which is subtracted from the actual number
+of free pages in a structure which results in the STRTAL that
+the system finally stores. The routines to allocate disk space
+never check STRTAL - the callers of the routines do. Therefore,
+it is still possible to create private pages and context pages
+when STRTAL is zero, but file page creates will not occur since
+the file page creation routines do not check STRTAL. It is also
+rumored that certain routines in the monitor count on getting
+free space all the time, but it is not known which routines these
+are. /EVS 12-12-78
+
+I/O error theory: in monitors after and including p033/n,
+page I/O errors on pages other than the context pages
+are identical to other page failures (ill mem ref, etc)
+except for one important feature - an I/O
+error can occur even after the page has been referenced
+once, whereas the other failures always occur
+under the same conditions. Therefore, the only code that
+has to worry specifically about I/O errors is code
+that "pre-references" the user page and assumes that
+no failures will occur later. Do not do pre-referencing
+to checkout user space unless its absolutely necessary.
+Lookup/enter/rename is one place that has to pre-reference.
+For this case there is a special mechanism in I/O error code
+that temporarily ignores the error and sets a bit in UPTSTS
+(upsswe) that causes the error to get handled
+after the UUO completes. This can present a problem
+in that it looks just as if the user program passed the
+monitor garbage. This could be bad if the program had license,
+because the system could be threatened. (Maybe take
+away license when this happens would be
+a godd solution.)
+
+more I/O error theory: this applies to ill mem refs and the
+like too. JBTABT is a job table that has an address setup
+which is called if any page related error is detected,
+(memory violations, etc, including address checks)
+and for context page swap errors. If the address is zero,
+no routine is called (normal case). Usually, the recovery
+routine just releases the resource and cleans up.
+See ERRCON for places that call JBTABT routines, and the end
+of SCHED1. Also, DSKCHR UUO is an example of use of JBTABT.
+Another example is in actser.
+
+          
+
+
+Note on paging memory: It is not permissible to assume that
+a map slot will not be dragged back into the paging memory
+after a clear page table operation (one or all pages).
+That is, it is not ok to clear the page memory and then
+store a page map pointer into a map and assume that
+the old contents didn't get dragged back into the paging
+memory before the new pointer was stored. This is because
+the machines are free to fetch as many page map pointers as
+they want to, and instruction and data fetches occurring
+after the clear page table operation may drag the
+target page map slot back into the paging memory
+before the routine stores the new slot into the map.
+
+$text tape;Magnetic tape.
+
+Magtape I/O for dump mode and dump records mode is done one
+IOWD at a time. WAIT1 is called after starting each IOWD.
+The maximum count that can be used in an IOWD for
+magtape is 37777 octal. Each IOWD is broken up into pieces,
+one piece for each virtual page the IOWD covers.
+(This is done by routine BLDLST in UUOCON). In the case of
+dump records mode the monitor forces record size to 200 words,
+so on input BLDLST is allowed to break an IOWD up into 200 word
+pieces if it has to.  This does not happen on output, ftaser
+breaks up the IOWDs itself. In dump records mode,
+ftaser is allowed to stop building the channel command
+at 200 word intervals and continue at the end of
+the preceding channel command.
+
+The devcls list for buffered mode is different than that for
+dump mode in that more than one request (for more than one buffer)
+can appear in the list. Each request is separated by a zero, and
+two zeroes ends the list.
+
+Dio counts must be decremented at interrupt level. Two reasons:
+devcls list gets overwritten by ftaser to return info to UUOCON,
+so UUOCON couldn't know which pages to decrement dio for, and
+the fact that a job can control-c out of io wait would allow
+the job to tie up core pages indefinitely if dio were decremented
+at UUO level.
+              
+
+$Text SCNSER;Tymshare network interface.
+------
+              
+
+$text accounting;Accounting system.
+The accounting system on the 10 consists of the monitor updating
+individual per process cells which correspond to TRU components
+(Tymshare Resource Unit). At CLKTRU in UUOCON, there are a series
+of macro calls that determine the weighting factors
+which determine how the components combine to make the TRU unit.
+
+In addition, certain events cause the monitor to store records
+of fixed format into an accounting buffer. The program CHKPNT
+reads the buffer via the ACT device, which has its own device
+service routine, ACTSER. If CHKPNT does not read the buffer
+often enough to keep free space, jobs will go into wait for
+the buffer space, and the system will soon grind to a halt.
+For this reason, CHKPNT empties the buffer on a high
+software PI level and processes it and writes it on a lower level.
+The data from the ACT device is written into files, one for each
+GMT day, in (UN1) into a file of the format MMDDYY.SAT, where MMDDYY
+is the current month, day and year with leading zeroes.
+
+The microcycle clock (accounting meters on the KL10) is used to
+compute the CPU usage component. The monitor code is responsible
+for turning this clock off in UUO code that has a wide enough
+variation in CPU usage soas to endanger the reproducibility of
+the TRU, which is one of the main goals for a TRU. In these
+cases, one must charge via a seperate component. An example
+of this is the LOOKUP UUO, which takes greatly different amounts
+of CPU time depending on whether the RIB is in core, the file
+already has an ATB in core, etc.
+          
+
+              
+
+$Text KL10;KL10 information.
+
+Sometimes one has occasion to reference user space
+in code that is running as a result of nested UUOs/page faults.
+On the KI10, all one had to do to have executive XCTs
+refer to user space was to turn on PC.UIO. On the KL10,
+it is not as easy as that, since turning on PC.UIO
+does not give you the correct ac block for the user.
+It does not give the correct block because the hardware
+does not keep track of which block is the user ac block
+like the KI10 did. It is totally a function of
+the software. There is a previous context ac block field
+in datai and datao pag which unconditionally specifies
+which ac block to use when referencing the acs
+under an executive XCT (PXCT on the KL). Therefore, for
+one instruction references to user space where efficiency
+is not important (macros call a subroutine).
+The macros to use for this purpose are
+UXCTFU, UXCTTU, and UXCTBU.
+It is permissible just to turn on user iot if and only
+if no executive XCTs will refer to the acs. However,
+this will screw up the previous context ac block setting
+if a reschedule occurs.
+
+Note that cache bit in map slot only controls whether or not
+to load data if its not in the cache if the data is already
+there, the bit has no effect. In particular, one must be
+very careful that if a certain physical page is not to be
+cached (because of some dma device using it), no map slot
+that points to that page should have the cache bit on.
+For example, the peek UUO does not turn the cache bit on in
+the map slot it uses for looking at core in case the looker
+is looking at an uncached page. Another interesting effect,
+which should be watched for - the KL10 microcode used to
+drag stuff into the cache when it updated its meters, fetched
+ept and/or UPT relative instructions, etc. This could
+mask out data deposited in the same 4 word block by a dma
+device.
+
+Aaa 11 aug 78
+note about looking at KL crashes:  when the KL gets a page-
+fault, it does not "execute a trap instruction" as does the KI.
+
+04300	Instead, the kl deposits a pagefault word in %upt+uptpfw,
+a pagefault PC in %UPT+UPTOPP, and takes a new PC word from
+%UPT+UPTNPP. This means %UPT+UPTMUU and MUP are irrelevant
+on KL EXCMPE crashes whereas on KI EXCMPE's MUU and MUP
+tell you where the monitor was when it faulted. /Aa
+
+note that the trick of refering to four other cached pages
+to force a four word chunk out of the cache will not work
+if the cache refill algorithm ram is not loaded correctly or
+is bad. There is no parity on the refill algorithm ram.
+This is because the trick assumes the refill algorithm ram
+will replace the oldest cache chunks. /Evs 9/13/78
+
+in KL10 NXM crashes, ERASTS shows physical address that caused
+the NXM, making it easier to pin it on hardware or software.
+/Evs 9/13/78
+
+$menu PI;Software Interrupt System
+*(mondoc)moninf.nfo:DATABS;Data base for software interrupt system.
+
+$text SYSNO;System number (name) format.
+
+Note: the following is subject to change without warning, if there
+	is a need to extract any field there is (will be) a gettab
+	to provide the necessary field which should be used rather
+	than scanning the system-name string.
+
+<system-name>	::= <site><host-no>"-"<mon-version>
+
+<site> 		::= alphabetic site code (any length)
+<host-no> 	::= decimal host number within network (any length)
+<mon-version> 	::= "P"<major>"/"<minor>[<internal>]["-"<patch>]
+
+<major> 	::= numeric version number (decimal)
+<minor> 	::= release sequence letter
+<internal>	::= experimental internal release number (decimal)
+<patch> 	::= patch level count (decimal)
+
+
+-- Notes --
+
+The <minor> release sequence letter begins with /A for each <major>
+version.  It is incremented to /B, /C, ... /Z, and to double letters
+from /AA, /BA, ... /ZA, /BA, /BB, ... /ZZ, and to triple letters from
+/AAA, /BAA, ... /ZAA, /ABA, /BBA, ... /ZZZ.
+
+For the monitor development system, we have in addition "internal"
+monitor releases.  Between any two monitors which are released to
+customer machines, such as P034/B and P034/C, we release internally
+monitors P034/B01, P034/B02, etc.  The proper way to make an internal
+release is to use MONED1.
+
+<patch level> is never compiled into a monitor, but is appended in the
+monitor save file at CONFIG+2 according to the procedures for patching.
+
+$text DATABS;Data base for software interrupt system.
+UPTENB - Left half: Using new interrupt system, contains interrupt
+	table address. Using old (APRENB) system, contains UUO
+	trap address.
+	Right half:  If using APRENB, contains enable bits.
+
+JBTPIP - PI channels in progress. Bit 0 set means old system (APRENB)
+	in use. (Bit 0 and Bit 1 set togehter in old system means trap
+	in progress.)
+	Bit 0 clear means rest of word says which channels (1-35)
+	are in progress.
+
+JBTAWQ - Bit 0 says some other bit in the word is set (attention).
+	Other bits = interrupt request on channel (1-35).
+
+JBTENB - Channels enabled. Bit 0 set means system enabled, clear
+	means system disabled. Bits 1-35 correspond to channels
+	1-35 enabled/disabled.
+
+UPTTPN - Contains 0 (disabled) or interrupt channel numbers
+	for a variety of conditions:
+	JBYUUO - uuo trap channel
+	JBYCLK - Clock ticks
+	JBYPGT - page fault traps
+	JBYHNG - hung device traps
+	JBYERR - device error
+	Timer and wake channels are in LH of JBTIOA.
+
+$text AC;General AC conventions.
+
+Top level UUO routines (those called by UUO dispatch) are called
+with M containing the UUO, W containing AC number from UUO
+(channel number), F set to zero if called from user UUO
+(so address check/ill mem ref from exec comes out right).
+J is not setup for non-CALLI UUOs.
+
+CALLI UUO routines (those dispatched to by CALLI or CALL dispatch)
+have T1 containing contents of user's AC, W and RH(M) contain
+user AC number for storing return args, J contains
+job number, lh(W) has 1b0 set if its a physical only CALLI
+(those with 1b18 and 1b19 different).
+
+All top level UUO routines can destroy all ACs except P, including
+J.
+
+All device dependent dispatch routines (see dispatch table in UUO
+routines) are theoretically allowed to destroy T1-T4 and
+P1-P4, but must preserve U,F,S (except to change device status word)
+ 

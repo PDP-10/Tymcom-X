@@ -1,0 +1,21 @@
+.library man.dfs
+.synopsis
+Continue a halted process in a frame.
+.syntax
+CONTINUE
+CCONTINUE
+.description
+A process which was interrupted by the HALT command or by a continuable
+error may be resumed at exactly the point it was suspended by use of
+this command.
+The CCONTINUE form leaves the terminal in monitor mode, although the
+process is still running,
+usually so the terminal may be detached.
+
+If the JERR bit is set in the frame status word,
+the frame is not continuable and these commands will result in
+
+	?can't continue
+.see also
+DETACH
+HALT

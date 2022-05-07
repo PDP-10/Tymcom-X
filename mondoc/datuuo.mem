@@ -1,0 +1,354 @@
+SUBTTL	Date/Time uuos
+
+;Get universal date/time GMT
+;	MOVE	ac,[%CNDTM]	;53,,11
+;	GETTAB	ac,
+;	  MOVEI	ac,0		;Always skips if after P034/P
+;	MOVEM	ac,UDT		;Days since 18-Nov-1858,,fraction of a day
+;				;Note: Day 0 (17-Nov-1858) was a Wednesday
+;
+;Get universal date/time local to the CTY
+;	MOVE	ac,[%CNGMT]	;64,,11
+;	GETTAB  ac,
+;	  MOVEI	ac,0		;Always skips if after P034/P
+;	ADD	ac,UDT		;Offset from GMT to CTY local time
+
+
+;Get the date in DEC format of (YEARS-1964)*12*31 + (MONTH-1)*31 + DAY-1
+;	DATE	ac,		;CALLI +14
+;	 <only return>
+
+DATEU:	PUSHJ	P,GETULT	;Get user local time and date in DEC format
+	  MOVEI	T2,0		;Date not set, return 1-Jan-1964
+	UMOVEM	T2,(M)		;Days since 1-Jan-1964 in DEC format
+	POPJ	P,
+
+
+;Get the time of day in jiffies since local midnight (60 jiffies per second)
+;	TIMER	ac,		;CALLI +22
+;	 <only return>
+
+TIMER:	PUSHJ	P,GETULT	;Get user local time and date in DEC format
+	  MOVEI	T1,0		;Date not set, return midnight
+	UMOVEM	T1,(M)		;Jiffies since midnight local time
+	POPJ	P,
+
+
+;Get the time of day in milliseconds since local midnight
+;	MSTIME	ac,		;CALLI +23
+;	 <only return>
+
+MSTIME:	PUSHJ	P,GETULT	;Get user local time and date in DEC format
+	  MOVEI	T1,0		;Date not set, return midnight
+	IMULI	T1,^D1000	;1000 milliseconds per second
+	IDIV	T1,JFYSEC##	;Convert from JIFFIES*1000 to milliseconds
+	UMOVEM	T1,(M)		;Milliseconds are correct for 50Hz and 60Hz
+	POPJ	P,
+
+
+;Get elapsed time since 1/1/64 00:00 in seconds
+;	MOVEI	ac,time-zone	;0 for user's local time zone
+;	DAYTIM	ac,		;CALLI -143
+;	 <only return>
+
+DAYUUO:	PUSHJ	P,GETGMT	;Get Tymshare date and time in T2 and T1
+	UMOVE	P4,(M)		;Get desired time zone (6 bits)
+	TRO	P4,600000	;Request 1-word Tymshare seconds format
+	HRLI	P4,400020	; from GMT 2-word Tymshare format
+	PUSHJ	P,DATCOM	;Convert the date
+	  MOVEI	T2,0		;Date not set
+	UMOVEM	T2,(M)		;Return seconds since 1-Jan-1964 00:00
+	POPJ	P,
+
+;Return GMT, T1/time, T2/date
+
+GETGMT::MOVE	T2,THSDAT##	;Day 0 was 1-Jan-1964
+	MOVE	T1,TIME##	;Ticks since midnight
+	CAME	T2,THSDAT##	;Watch out for midnight!
+	 JRST	GETGMT
+	POPJ	P,
+
+SUBTTL	DATUUO - Convert date formats
+
+;	MOVEI	ac,LOC		;Point to 3-word block
+;	DATUUO	ac,		;CALLI -55
+;	  <error return>	;Negative dates not allowed
+;	<success return>	;First 2 words of block modified
+;
+;LOC:	DATE		;Or SECONDS or DATE,,TIME or -1 for current time
+;	TIME		;Jiffies since midnight (ignored on 1-word formats)
+;	FROM,,TO	;See bits below
+
+
+DATUUO:	MOVE	M,T1	;Address of 3-word block
+	UMOVE	T1,1(M)	;Time
+	UMOVE	T2,0(M)	;Date or date&time in 1 word
+	UMOVE	P4,2(M)	;Use <400020,,0> to convert TYM-GMT to DEC-local
+	PUSHJ	P,DATCOM
+	  POPJ	P,	;Negative dates other than -1 are not legal
+	UMOVEM	T1,1(M)	;Time
+	UMOVEM	T2,0(M)	;Date or date&time in 1 word
+	JRST	CPOPJ1	;Success
+
+
+;FROM and TO formats:
+;	0000xx	DEC 2-word format;   (YR-64)*372+(MN-1)*31+(DY-1), tics
+;	1000xx	DEC halfword format; days since 11/18/1858,,fraction of day
+;	2000xx	DEC seconds format;  DECdays*86400 + seconds past midnight
+;	4000xx	TYM 2-word format;   days since 1/1/64, tics since midnight
+;	5000xx	TYM halfword format; days since 1/1/1964,,fraction of day
+;	6000xx	TYM seconds format;  seconds since 1/1/64 00:00
+;	    xx	Time zone code, 0 means user local time
+;	    40	Subject to daylight savings, 50=PDT,51=MDT,52=CDT,53=EDT
+;		20=GMT,21=Paris,31=Toyko,    10=PST,11=MST,12=CST,13=EST,14=AST
+
+;Get user local time in T1 and date in DEC format in T2
+;Error return if date has not been received from the supervisor yet
+
+GETULT::PUSHJ	P,GETGMT	;Get THSDAT
+	MOVSI	P4,400020	;From GMT days to DEC format, user's time zone
+	PFALL	DATCOM		;Skip return if the date has been set
+
+
+;Subroutine DATCOM - convert date formats.
+;  T1/time in tics since midnight GMT (2-word formats only)
+;  T2/date or combined date and time
+;  P4/conversion options
+;  J/job number to get user's local time zone
+;Uses T3 and T4
+
+
+DATCOM::CAMN	T2,[-1]		;If -1,
+	 PUSHJ	P,GETGMT	; use current date/time
+	JUMPL	T2,CPOPJ	;Other negative dates not legal
+	LDB	T3,PVYTIM##	;Get user's time zone from JBTPRV(J)
+	SKIPN	T3
+	 MOVEI	T3,50		;If none, set PDT
+	TRNN	P4,37
+	 TRO	P4,(T3)		;Set zones if not specified
+	TLNN	P4,37
+	 TLO	P4,(T3)
+
+	LDB	T3,[POINT 3,P4,2] ;Get format code from LH
+	XCT	DATCNV(T3)	;Convert to days in T2, ticks in T1
+
+;1 day = 24 hours = 1440 minutes = 86400 seconds = 5184000 ticks (60 Hz)
+;octal = 30       = 2640          250600          23615000 (23 bits)
+;The date format in the RIB is 14 bits, from 1-Jan-1964 to 8-Nov-2008
+; 2^14 = 16384 days = 44.85 years, 1964+44.85 = 2008.85 = 8-Nov-2008
+
+	PUSH	P,T2		;Save date on stack, jiffies in T1
+	IDIV	T1,JFYHR##	;T1/hours, T2/ticks since start of hour
+	EXCH	T2,(P)		;T2/date, (P)/min-sec-jif
+	IMULI	T2,^D24		;Convert days to hours
+	ADD	T1,T2		;T1/hours since 1-Jan-1964
+	TLNN	P4,40		;"from" time subject to daylight savings?
+	 JRST	NODST1		;No
+	PUSHJ	P,DSTCHK	;Yes, was daylight savings in effect then?
+	  SUBI	T1,1		;Yes, convert "from" time to standard time
+NODST1:	HLRZ	T2,P4
+	ANDI	T2,37		;Time zone of source
+	SUB	T1,T2		;Convert time to hours GMT
+	MOVE	T2,P4
+	ANDI	T2,37		;Time zone of destination
+	ADD	T1,T2		;Convert to new local standard time
+	TRNN	P4,40		;"to" time subject to daylight savings?
+	 JRST	NODST2		;No
+	PUSHJ	P,DSTCHK	;Yes, will daylight savings be in effect?
+	  ADDI	T1,1		;Yes
+NODST2:	POP	P,T3		;T1/date, T3/tics
+	JUMPL	T1,CPOPJ	;Error if negative hours
+	IDIVI	T1,^D24		;T1/days, T2/hours since midnight
+	IMUL	T2,JFYHR##	;Convert hours to ticks
+	ADD	T2,T3		;Add ticks since start of hour
+	EXCH	T1,T2		;T1/tics, T2/date
+
+	LDB	T3,[POINT 3,P4,18+2] ;Get format code from RH
+	XCT	CNVDAT(T3)	;Convert from TYMSHARE format to other
+
+	JRST	CPOPJ1		;Success
+
+;Table to convert from input format to TYMSHARE format (T1/ticks, T2/days)
+
+DATCNV:	PUSHJ	P,DEC2YR	;0 Adjust T2, DEC 31*12 day year to 365 day year
+	PUSHJ	P,UDT2YR	;1 Convert from UDT to TYM format
+	PUSHJ	P,SEC2YR	;2 Divide by 86400 seconds and then DEC2YR
+	POPJ	P,		;3 Illegal
+	JFCL			;4 Already in TYM 2-word format
+	PUSHJ	P,TDT2YR	;5 Convert from TDT to TYM format
+	PUSHJ	P,SEC2JF	;6 Divide by 86400 seconds per day
+	POPJ	P,		;7 Illegal
+
+;Convert to TYMSHARE format (date in T2, ticks in T1)
+
+SEC2JF:	IDIV	T2,[^D60*^D60*^D24];T2/date T3/secs
+	IMUL	T3,JFYSEC##	;T2/date T3/tics
+	MOVE	T1,T3		;T1/tics T2/date
+	POPJ	P,
+
+UDT2YR:	SUB	T2,GMTUDT##	;Days since 1/1/64 in LH, fraction in RH
+TDT2YR:	HLRZ	T1,T2		;Days in T1
+	HRRZ	T2,T2		;<fraction.of.day>*2^18 in T2
+	MUL	T2,MIDNIT##	;T2&T3/tics*2^18
+	ADDI	T3,400000	;Round up to nearest tic
+	ASHC	T2,^D17		;T2/tics, T3/0  (only 17 bits in LH of T3)
+	EXCH	T1,T2		;T1/tics, T2/date
+	POPJ	P,
+
+SEC2YR:	PUSHJ	P,SEC2JF	;Split seconds in T2 to day in T2 and tic in T1
+DEC2YR:	IDIVI	T2,^D31		;Convert DEC's 12*31 format to consecutive days
+	PUSH	P,T3		;T2/# of 31-day months, (P)/day-1
+	IDIVI	T2,^D12		;T2/year-1964, T3/month-1, (P)/day-1
+	MOVE	T3,MONTB(T3)	;Day corresponding to the first of the month
+	TRNE	T2,3		;Is year a multiple of 4?
+	CAIGE	T3,^D60		;And month is March or later?
+	 SKIPA			;No
+	  SUBI	T3,1		;Yes, compensate for Feb 29th
+	ADDM	T3,(P)		;(P)/days since start of year
+	MOVEI	T3,3(T2)	;Year (rounded up)
+	LSH	T3,-2		;Divide by 4 to get # of leap days since 1964
+	IMULI	T2,^D365	;Convert years to days
+	ADD	T2,T3		;Add in leap days
+	ADDM	T2,(P)		;Add in day of year
+	JRST	T2POPJ		;T2 has consecutive days since 1-1-64, T1/ticks
+
+MONTB:	DEC 0,31,60,91,121,152,182,213,244,274,305,335,366
+
+;Table  to convert from TYMSHARE format (T1/ticks, T2/days) to desired format
+
+CNVDAT:	PUSHJ	P,YR2DEC	;0 Adjust T2, DEC 31*12 day year to 365 day year
+	PUSHJ	P,YR2UDT	;1 Convert from TYM to UDT format
+	PUSHJ	P,YR2SEC	;2 YR2DEC then multiply by 86400 seconds per day
+	POPJ	P,		;3 Illegal
+	JFCL			;4 User wants TYM 2-word format T2/date, T1/time
+	PUSHJ	P,YR2TDT	;5 Convert from TYM to TDT format
+	PUSHJ	P,JF2SEC	;6 Multiply by 86400 seconds per day
+	POPJ	P,		;7 Illegal
+
+;Convert from TYMSHARE format (date in T2, ticks in T1)
+
+YR2UDT::PUSHJ	P,YR2TDT	;First convert to UDT based on 1-Jan-1964
+	ADD	T2,GMTUDT##	;Make LH days since 18-Nov-1858
+	POPJ	P,
+
+YR2TDT:	SETZ	T3,		;Convert to UDT based on 1-Jan-1964
+	PUSH	P,T4
+	MOVE	T4,T1		;Jiffies since midnight
+	ASHC	T3,^D18		;T3&T4/ jiffies * 2^18
+	MOVE	T1,MIDNIT##	;Ticks per day
+	DIV	T3,T1		;T3/ fraction.of.a.day * 2^18, T4/remainder
+	LSH	T1,-1		;Half if a UDT increment
+	CAML	T4,T1		;More than halfway to next 0.32959 second?
+	 ADDI	T3,1		;Yes, round up
+	HRLZ	T2,T2		;Days since 1-JAN-1964 in LH
+	ADD	T2,T3		;T2/ days,,fraction
+	SETZ	T1,		;T1/ 0
+	POP	P,T4
+	POPJ	P,
+
+YR2SEC:	PUSHJ	P,YR2DEC	;First convert to DEC format
+JF2SEC:	IMUL	T2,[^D60*^D60*^D24];T2/seconds (for full days) T1/tics
+	PUSH	P,T2		;Save from IDIV
+	MOVE	T3,JFYSEC##	;Jiffies per second
+	IDIV	T1,T3		;T1/secs T2/fraction.of.a.second
+	LSH	T3,-1		;Jiffies per half second
+	CAML	T2,T3		;More than half way into the next second?
+	 ADDI	T1,1		;Yes, round up
+	ADDM	T1,(P)		;seconds since 1/1/64 00:00
+	SETZ	T1,
+	JRST	T2POPJ		;T2/seconds, T1/0
+
+YR2DEC:	IDIVI	T2,^D<365*4+1>	;Convert to DEC's 12*31 format (ticks in T1)
+	IMULI	T2,4		;T2/years, T3/days into leap-year cycle
+	CAIG	T3,^D366	;In the leap year?
+	 JRST	YR2DC1		;Yes, MONTB is correct, T2 has right year
+	SUBI	T3,1		;Account for day #59 being a leap day
+	PUSH	P,T4
+	IDIVI	T3,^D365	;T3/1..3, T4/day in year
+	ADD	T2,T3		;Combine years
+	CAIL	T4,^D59		;After 28-Feb?
+	 ADDI	T4,1		;Adjust since 29-Feb does not exist this year
+	MOVE	T3,T4		;Get day in year
+YR2DC1:	MOVEI	T4,1		;T2/year, T3/day
+	CAML	T3,MONTB(T4)	;Check month table
+	 AOJA	T4,.-1
+	SUB	T3,MONTB-1(T4)	;Days-1 in T3, months in T4
+	IMULI	T2,^D12		;Years-64*12
+	ADDI	T2,-1(T4)	;+months-1
+	IMULI	T2,^D31		;*31
+	ADD	T2,T3		;+days-1
+	POP	P,T4
+	POPJ	P,		;T2/day-1+<mon-1>*31+<year-1964>*31*12, T1/tics
+
+;DSTCHK - CHECK TO SEE IF TIME IN DAYLIGHT SAVING RANGE
+;CALL:
+;	MOVEI T1,HOURS SINCE 1-JAN-64
+;	PUSHJ P,DSTCHK		;Uses T3, preserves T2
+;	 <YES-DST IN EFFECT>
+;	<NO---DST NOT IN EFFECT>
+;
+DSTCHK::MOVSI	T3,-DLTLEN	;Search entire DAYLIGHT SAVINGS table
+DSTCK1:	CAMGE	T1,DLTTAB(T3)	;IS IT AFTER START TIME
+	 JRST	CPOPJ1		;NO, NOT DAYLIGHT SAVINGS
+	CAMGE	T1,DLTTAB+1(T3)	;AFTER END?
+	 POPJ	P,		;NO, IN CORRECT RANGE
+	ADDI	T3,1		;GET NEXT PAIR IN TABLE
+	AOBJN	T3,DSTCK1
+	JRST	CPOPJ1		;OUT OF TABLE, ASSUME NOT D.S.T
+
+;TABLE FOR DAYLIGHT SAVINGS TIME. ENTRIES ARE IN PAIRS
+;FIRST IS START, SECOND END. NUMBER IS HOURS SINCE JAN 1,1964
+
+DLTTAB:	OCT    5341,  15761	;APR 26-OCT 25 1964
+	OCT   26401,  37271	;APR 25-OCT 31 1965
+	OCT   47441,  60331	;APR 24-OCT 30 1966
+	OCT   70751, 101371	;APR 30-OCT 29 1967
+	OCT  112011, 122431	;APR 28-OCT 27 1968
+	OCT  133051, 143471	;APR 27-OCT 26 1969
+	OCT  154111, 164531	;APR 26-OCT 25 1970
+	OCT  175151, 206041	;APR 25-OCT 31 1971
+	OCT  216461, 227101	;APR 30-COT 29 1972
+	OCT  237521, 250141	;APR 29-OCT 28 1973
+	OCT  253361, 271201	;JAN  6-OCT 27 1974 (Started early in 74)
+	OCT  276651, 312241	;FEB 23-OCT 26 1975
+	OCT  322661, 333551	;APR 25-OCT 31 1976
+	OCT  343721, 354611	;APR 24-OCT 30 1977
+	OCT  365231, 375651	;APR 30-OCT 29 1978
+	OCT  406271, 416711	;APR 29-OCT 28 1979
+	OCT  427331, 437751	;APR 27-OCT 26 1980
+	OCT  450371, 461011	;APR 26-OCT 25 1981
+
+	;     United States; France (Central European Summer time)
+	OCT  471431, 502321;  470220, 500612	;APR 25-OCT 31 1982
+	OCT  512471, 523361;  511231, 521653	;APR 24-OCT 30 1983
+	OCT  534001, 544421;  532272, 542712	;APR 29-OCT 28 1984
+	OCT  555041, 565461;  553603, 563752	;APR 28-OCT 27 1985
+
+	OCT  576101, 606521	;APR 27-OCT 26 1986
+	OCT  617141, 627561	;APR 26-OCT 25 1987
+	OCT  640201, 651071	;APR 24-OCT 30 1988
+	OCT  661511, 672131	;APR 30-OCT 29 1989
+	OCT  702551, 713171	;APR 29-OCT 28 1990
+	OCT  723611, 734231	;APR 28-OCT 27 1991
+	OCT  744651, 755271	;APR 26-OCT 25 1992
+	OCT  765711, 776601	;APR 25-OCT 31 1993
+	OCT 1006751,1017641	;APR 24-OCT 30 1994
+	OCT 1030261,1040701	;APR 30-OCT 29 1995
+	OCT 1051321,1061741	;APR 28-OCT 27 1996
+	OCT 1072361,1103001	;APR 27-OCT 26 1997
+	OCT 1113421,1124041	;APR 26-OCT 25 1998
+	OCT 1134461,1145351	;APR 25-OCT 31 1999
+	OCT 1155771,1166411	;APR 30-OCT 29 2000
+	OCT 1177031,1207451	;APR 29-OCT 28 2001
+	OCT 1220071,1230511	;APR 28-OCT 27 2002
+	OCT 1241131,1251551	;APR 27-OCT 26 2003
+	OCT 1262171,1273061	;APR 25-OCT 31 2004
+	OCT 1303231,1314121	;APR 24-OCT 30 2005
+	OCT 1324541,1335161	;APR 30-OCT 29 2006
+	OCT 1345601,1356221	;APR 29-OCT 28 2007
+	OCT 1366641,1377261	;APR 27-OCT 26 2008 (Last DAYLIGHT SAVINGS time)
+DLTLEN==<.-DLTTAB>/2		;1377777 = 8-Nov-2008
+
+;NOTE: The field which counts the number of days since 1-Jan-1964 will exceed
+;      14 bits on November 8th, 2008.  On that date, TYMCOM-X will die.
+     

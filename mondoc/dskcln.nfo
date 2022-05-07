@@ -1,0 +1,198 @@
+$MENU DSKCLN;The DSKCLN Program.
+*(MONDOC)dskcln.nfo:DSKCLNBUGS;DSKCLN known bugs and deficiencies.
+*(OSU)dskcln.doc:DSKCLNDATA;DSKCLN Data Structures.
+*(MPL)clralc.doc:CLRALC;CLRALC is not needed with DSKCLN 36J(103).
+*(MONDOC)DSKCLN.NFO:FASTMODE;File system changes to support fast DSKCLN.
+$Text DSKCLNBUGS;DSKCLN known bugs and deficiencies.
+Bad things can happen if for some reason a SAT gets into the PCB mechanism
+while DSKCLN is running.  (This has not been observed recently.)
+
+Bugs noted 22-Mar-84, fixed in 36J(103).
+----------------------------------------
+Fixed: DSKCLN does not report if it deletes a UFD entry because of RIB error.
+
+Fixed: DSKCLN does not put entry into RECOV.SYS or report or set "data lost"
+       bit in file's RIBSTS (does set bit in UFD's RIBSTS) if it finds bad
+       retrieval pointer in the file's RIB.  Just sticks a "1" in RIB slot.
+
+Fixed: Right after a TITO all-files restore, DSKCLN runs out of core while
+       building a linked list of fix-ups (all files have RIPALC set).
+
+Bugs not noticed until 1987, fixed in 36J(103).
+-----------------------------------------------
+Fixed: When multiply used page pointer is discovered in the secondary RIB, the
+       "1" gets stored in the file's primary RIB.  The page in question gets
+       marked as "available", causing a triply-used page.  The next time DSKCLN
+       runs, a new file (CRA0##.SAV or an accounting file) gets clobbered.
+
+New features, to be implemented.
+--------------------------------
+Turn off 1B0!1B1 and set 1B2 on multiply used pages.  This turns them into
+holes without losing the old data (so file can be fixed up manually).
+
+Need to be able to set three independent flags:
+ 1) Fix mode when not in autorestart (needs only ONEJOB and supershut)
+ 2) Verbose mode (even while fixing)
+ 3) Don't detach or logout if running fix mode while not autorestart
+
+Do a seperate pass to fix RIPALC on files when core is all used up.
+
+Do a STRUUO to dismount structure before fixing it, and mount it when done.
+This would allow DSKC to be fixed during timesharing (everyone else on DSKB).
+
+Monitor change: Rework PCB dirty counter so that RIPALT can be used to hold
+the universal date/time of last change to the file (internal creation date).
+$text FASTMODE;File system changes to support fast DSKCLN.
+
+       Description of Fast DSKCLN File System Changes
+
+
+1.0  UFPALC
+
+The fast DSKCLN extension depends primarily on seeing a bit,
+UFPALC, set in a file's UFD entry if allocation has happened
+to that file and the corresponding SATs in which  the  pages
+were  allocated  have not all been written out.  Since it is
+difficult to indicate in per-file information exactly  which
+SATs  the newly allocated pages lie, an approximation has to
+be made to know when the SATs are all out so that UFPALC can
+be cleared for the file.
+
+
+
+1.1  Setting UFPALC
+
+UFPALC is set whenever new pages (including  the  allocation
+of  the  prime RIB for create and supercede) are added to or
+old pages are taken from a file.  At first it may seem  like
+only new pages added must set the bit, but one must remember
+that in the case of deallocation if the cleared SAT bits get
+out  before the cleared RIB pointers and the system crashes,
+a "free page" will result, and when that page  is  allocated
+to  a  new  file,  a "multiply used page" will result.  Fast
+DSKCLN algorithm is designed to err in  favor  of  more  and
+more  lost  pages - since it is possible for all the SATs to
+get out onto the disk, and there is no  guarantee  that  the
+corresponding  RIB  has  gone  out when we see the SATs have
+gone out and we clear UFPALC.
+
+Before allocation is made, UFPALC is set in the  UFD  entry,
+the  corresponding rib bit RIPALC is set in the RIBLCW word,
+and a new RIB location RIBALT, which has the PCB dirty clock
+value  of  the  latest completed allocation.  The allocation
+code then makes sure that the changed UFD entry  is  written
+out  (it  doesn't make any difference if the RIB gets out or
+not - RIBALT is only used as long as the system is still  up
+to  dynamically clear UFPALC - DSKCLN always clears UFPALC -
+see the section on DSKCLN).
+
+After the allocation is made, RIBALT is updated  to  be  the
+current value of the PCB dirty clock + 1.
+
+
+1.2  Clearing UFPALC
+
+UFPALC is the bit that indicates to DSKCLN  that  allocation
+has changed on the corresponding file and the monitor didn't
+know whether the SAT and RIB changes involved have  made  it
+out to the disk yet.  Therefore, in order to clear UFPALC on
+a file, it must be known that both the  SATs  and  the  RIBs
+(prime and spare) involved have been written out.  It is not
+enough to wait for the SATs - if a deallocation  occurs  and
+the  system  crashes  after the cleared SAT bits get out but
+the cleared RIB pointer does not  get  out,  a  "free  page"
+results.   Therefore,  the  system  keeps a PCB dirty clock,
+called PCDTIM, which is incremented every time a set of PCBs
+at  a certain point in time is guaranteed to be on the disk.
+If the file's RIBALT is  less  than  the  current  value  of
+PCDTIM,  and  the  file  has  no  other potential allocation
+changers, then UFPALC can be cleared in input CLOSE.
+
+When DSKCLN runs in either fast  or  slow  mode,  it  always
+clears UFPALC.
+
+Note that we are hoping  that  files  whose  allocation  has
+changed  will  be looked up at least once after all the RIBs
+and SATs involved in the change have been  written  out,  in
+order to minimize the population of files with UFPALC on.
+
+
+
+1.2.1  PCDTIM Algorithm - As mentioned above,  in  order  to
+know  when to clear UFPALC, the system needs to know for any
+point in past time whether or not the PCBs that  were  dirty
+as  of that time are now all out on the disk.  The algorithm
+is a cycle.  At certain fixed intervals (long enough to  not
+take  up too much overhead, and short enough to maximize the
+number of UFPALC bits we turn off) a bit called PCPDRF  (PCB
+dirty  flag)  is set for every dirty PCB found at that time.
+A counter named PCDCNT is incremented for every bit set.  As
+the  PCBs  are marked clean, PCPDRF is cleared and PCDCNT is
+decremented.   When  PCDCNT  gets   to   zero,   PCDTIM   is
+incremented  and  the  cycle  starts  over again.  With this
+setup, C(PCDTIM)+1 can be stored into RIBALT, and  when  the
+current  cycle  completes,  plus another one, RIBALT will be
+less than the new c(PCDTIM), and we are sure  all  the  PCBs
+have  gone  out  since  the  original  value was stored into
+RIBALT.
+
+
+
+2.0  DSKCLN
+
+As mentioned above, DSKCLN will always clear  UFPALC,  since
+whichever  mode  it runs in (see below) it will fix the file
+structure up soas not to have any free pages.
+
+DSKCLN will run in either of two modes - fast or slow.  Fast
+mode only considers the files whose UFD entry has UFPALC on.
+Therefore, fast mode should not  run  much  slower  that  it
+would  take  a  stand  alone system to scan all UFD entries.
+Slow mode, which is necessary to recover lost pages and  fix
+inconsistencies  in the file system due to causes other than
+SAT allocation problems, will be run if for any  reason  the
+previous incarnation of the monitor is either unable to tell
+the new monitor that its ok to run fast mode or if the prior
+monitor says specifically to run fast mode.
+
+The  current  behavior  of  the  system   on   RIB   errors,
+mismatching  UFDs,  etc.   will  have  to be loosened a bit,
+since when the system crashes one can get  things  like  UFD
+pointers  pointing to things which are not the RIBs they are
+supposed to be.  Instead of crashing in such situations,  we
+will just return the RIB error file selection error code.
+
+Certain STOPCDs in the file system will  imply  specifically
+that  slow  DSKCLN  should  be  run.  These are STOPCDs that
+imply there is something wrong with the file  system's  data
+base and/or logic.
+
+DSKCLN will ignore the UFPALC bit on UFDs, and process  them
+as normal files, ORing in the pages that belong to them into
+the SATs.
+
+
+
+3.0  EFFECTS ON PERFORMANCE
+
+An extra disk write will have to happen on allocation , plus
+the  time  it  takes to wait for its completion (in order to
+make  sure  UFPALC  is  set  before  we  change  the  file's
+allocation)  for  files  in UPDATE mode.  Files in create or
+supercede mode do not have to wait, since there  is  no  UFD
+entry  to  worry  about.   When the UFD entry is about to be
+created, the UFPALC is set if RIBALT is still >= PCDTIM.  In
+addition,   an  extra  disk  write  (no  need  to  wait  for
+completion) will occur in CLOSE input of a file whose UFPALC
+was  set  and can now be cleared.  Other than this, no extra
+I/O will be incurred.  Because of the use of a new  word  in
+the  RIB and the PCDTIM algorithm, many forced writes of the
+SAT can be avoided (would have to make sure  that  all  SATS
+and  RIBS  went out, then clear UFPALC, which would somewhat
+lessen the population of files  with  UFPALC  on  but  would
+greatly  increase the amount of I/O done on input close.  By
+waiting for the PCBs to go out naturally,  we  increase  the
+UFPALC population somewhat and save the I/O.
+
+[End of FASCLN]
+  

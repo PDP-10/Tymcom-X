@@ -1,0 +1,169 @@
+Page 0 on a KL is used by BASE and SA10, has pointers
+
+22/   773611             BOOTWD/   773611
+36/   720314,,213431     CRSSTS/   CONSZ DC,ONCGO+73(P1)
+41/   264000,,120412     .JB41/    JSR LUUOPC
+114/   213331,,201352    JOBPFI/   MOVNS T1,@DDT(T4)
+116/   720314,,227454    .JBSYM/   CONSZ DC,PAT..+100(P1)
+120/   307140,,213336    .JBSA/    CAIG PG,ONCGO
+121/   307140            .JBFF/    307140
+122/   254200,,0         .JBFF+1/  JRST F,0
+130/   157252            JOBOPC/   GETFRM
+133/   227302,,311777    .JBCOR/   MULB T1,311777(J)
+137/   23150             JOBVER/   CNFTBL
+
+140/   254200,,752246    JOBDA/    JRST F,GETPEV+150
+141/   254200,,201352    SYSDDT/   JRST F,DDT
+142/   254000,,213665    SYSDDT+1/ JRST SYSZRO
+143/   254200,,143       SYSDDT+2/ JRST F,SYSDDT+2
+144/   254200,,144       SYSDDT+3/ JRST F,SYSDDT+3
+145/   254200,,145       SYSDDT+4/ JRST F,SYSDDT+4
+146/   254000,,24771     SYSBTS/   JRST LODBTS
+147/   264000,,24600     S..147/   JSR CRS147
+
+150/   633751,,506262    KEY620/   TSZE P4,506262(T4)   Key, updated each tick
+151/   0                 ALM620/   0                    Alarm bits
+152/   0                 DMP620/   0                    Address for base dump
+153/   100000            DMP620+1/ IRING_4              Location of IRING
+154/   4000              DMP620+2/ ISIZE_4              Size of IRING
+155/   154               IRPPDP/   154                  IRING taker
+156/   154               IRP620/   154                  IRING putter
+157/   104000            IRP620+1/ ORING_4              Location of ORING
+160/   10000             IRP620+2/ OSIZE_4              Size of ORING
+161/   147               ORPPDP/   147                  ORING putter
+162/   135               ORP620/   135                  ORING taker
+163/   0                 D620FN/   0                    620 dump done
+164/   0                 LIVWRD/   0                    10 is alive
+165/   0                 LIVWRD+1/ NUMPRT
+170-207/ 0               BASAVE/   BLOCK 20             Copy of 150-167 in dump
+210-277/ 0               (unused)  BLOCK 70
+
+300/   600000,,35301     SAXBAS/   6B2+SC00CB+10        Block MUX for FTA
+301/   400232,,20000     SAXBAS+1/ BYTE(8)200,46,202    Status report
+302/   33304             SAXBAS+2/ FTA2CB+44            Last successful transfer
+303/   405500,,35301     SAXBAS+3/ 405500035301         Used by MUX
+304/   600000,,43526     SAXBAS+4/ 6B2+SC01CB+10        Block MUX for BPA/BPB
+305/   63,,110000        SAXBAS+5/ BYTE (8)0,3,311      Status report
+306/   41032             SAXBAS+6/ BPA16C+131           Last successful transfer
+307/   43537             SAXBAS+7/ SC01CB+26            Used by MUX
+340-377/ 0               SASAVE/   BLOCK 40             Copy of 300-337 in dump
+
+420/   120131            420       /   USRMPE
+421/   255000,,0         SAXBAS+121/   JFCL 0
+422/   117042            SAXBAS+122/   ERRPOV
+423/   255000,,0         SAXBAS+123/   JFCL 0
+430/   170016            SAXBAS+130/   UUOKNT
+431/   124112            SAXBAS+131/   UUOKTR
+432/   167774            SAXBAS+132/   UUOCON
+433/   124111            SAXBAS+133/   UUOSTR
+434/   167775            SAXBAS+134/   UUOCNT
+435/   124100            SAXBAS+135/   UUOCTR
+436/   4000,,167776      SAXBAS+136/   IRING,,UUOPNT
+437/   4000,,124101      SAXBAS+137/   IRING,,UUOPTR
+502/   4000,,124117      SAXBAS+202/   IRING,,PGFAIL
+
+Page 1 is the EPT
+
+1042/   264000,,26224    EPT+42/   JSR CH1
+1043/   256000,,755563   EPT+43/   XCT OPOUT+207
+1044/   264000,,26007    EPT+44/   JSR CH2
+1045/   256000,,755563   EPT+45/   XCT OPOUT+207
+1046/   264000,,26125    EPT+46/   JSR CH3
+1047/   256000,,755563   EPT+47/   XCT OPOUT+207
+1050/   264000,,26230    EPT+50/   JSR CH4
+1051/   256000,,755563   EPT+51/   XCT OPOUT+207
+1052/   264000,,26240    EPT+52/   JSR CH5
+1053/   256000,,755563   EPT+53/   XCT OPOUT+207
+1054/   264000,,26250    EPT+54/   JSR CH6
+1055/   256000,,755563   EPT+55/   XCT OPOUT+207
+1056/   264000,,26226    EPT+56/   JSR CH7
+1057/   256000,,755563   EPT+57/   XCT OPOUT+207
+1142/   254200,,0        EPT+142/   JRST F,0
+1200/   520340,,520341   EPT+200/   520340,,520341
+ .../         ..             .../         ..
+1364/   520710,,520711   EPT+364/   520710,,520711
+1374/   700001           EPT+374/   700001
+1375/   526666,,526664   EPT+375/   HLLEM P1,532651(P2)
+1377/   520712,,700726   EPT+377/   HLLO P3,700726(M)
+1420/   120160           EPT+420/   EXCMPE
+1421/   255000,,0        EPT+421/   JFCL 0
+1422/   120317           EPT+422/   EXCPDL
+1423/   255000,,0        EPT+423/   JFCL 0
+1444/   777777,,777777   EPT+444/   -1
+1450/   15               EPT+450/   P2
+1451/   4324             EPT+451/   ORING+124
+1455/   777777,,777777   EPT+455/   -1
+1510/   12255            EPT+510/   JBTKCT+131
+1511/   204245,,760000   EPT+511/   CR @560000(PG)
+1514/   264000,,124310   EPT+514/   JSR ITMINT
+1600/   500000,,520001   EPT+600/   500000,,520001  Page 0 not cached
+1601/   520002,,520003   EPT+601/   520002,,520003
+1602/   500004,,520005   EPT+602/   500004,,520005  Page 4 not cached
+1615/   500032,,500033   EPT+615/   500032,,500033  Pages 32-43 not cached
+1621/   500042,,500043   EPT+621/   500042,,500043
+1757/   520336,,520337   EPT+757/   520336,,520337  Pages 0-337 mapped 1-for-1
+1760/   620001           EPT+760/   620001
+
+Page 2 is the UPT on all but the F3
+
+2415/   720002,,0        UPT+415/   BLKI DC,0(J)
+2420/   120131           UPT+420/   USRMPE
+2421/   255000,,0        UPT+421/   JFCL 0
+2422/   117042           UPT+422/   ERRPOV
+2423/   255000,,0        UPT+423/   JFCL 0
+2425/   16000,,1         UPT+425/   JBTCIN+15,,P
+2430/   170016           UPT+430/   UUOKNT
+2431/   124112           UPT+431/   UUOKTR
+2432/   167774           UPT+432/   UUOCON
+2433/   124111           UPT+433/   UUOSTR
+2434/   167775           UPT+434/   UUOCNT
+2435/   124100           UPT+435/   UUOCTR
+2436/   4000,,167776     UPT+436/   IRING,,UUOPNT
+2437/   4000,,124101     UPT+437/   IRING,,UUOPTR
+2502/   4000,,124117     UPT+502/   IRING,,PGFAIL
+2701/   4,,0             UPT+701/   F,,0
+2703/   16000,,1         UPT+703/   JBTCIN+15,,P
+2704/   401000,,372616   UPT+704/   SETZI 372616
+2707/   7                UPT+707/   CAIA CIP6+1
+2710/   304000,,101222   UPT+710/   CAIA SCHED
+2711/   134750           UPT+711/   ISCAN+13
+2713/   304000,,135131   UPT+713/   CAIA PAGWK2+16
+2714/   777777,,777752   UPT+714/   -26
+2715/   304000,,102251   UPT+715/   T2
+2716/   304000,,102251   UPT+716/   CAIA SETIOD+12
+2717/   2002,,122        UPT+717/   CAIA COMTYT+10
+2720/   47440,,11        UPT+720/   CAIA COMTYO+11
+2721/   200007,,354407   UPT+721/   CAIA COMTYO+11
+2723/   20000            UPT+723/   SOSLE T1,@0(T2)
+2724/   1                UPT+724/   LOCOCW+202
+2725/   304000,,136641   UPT+725/   T2
+2726/   304000,,54003    UPT+726/   0
+2727/   40701            UPT+727/   BPXINT+473,,EPT
+2730/   304000,,54173    UPT+730/   CAIA PAGOUT+22
+2731/   304000,,54077    UPT+731/   CAIA PGENDP+41
+2732/   4,,141001        UPT+732/   BPA2CB
+2733/   304000,,100273   UPT+733/   CAIA IOSEL+62
+2734/   304000,,54003    UPT+734/   CAIA DSKAPC+66
+2735/   41515            UPT+735/   743001
+2736/   304000,,54173    UPT+736/   CAIA BPXADD+65
+2737/   304000,,54073    UPT+737/   CAIA DSKAPC+62
+2740/   1,,146001        UPT+740/   J,,CLOSE1+426
+2741/   304000,,100273   UPT+741/   CAIA BPXADD+65
+2742/   304000,,54003    UPT+742/   CAIA PGENDP+41
+2743/   36127            UPT+743/   BPA2CB
+2744/   304000,,54173    UPT+744/   CAIA IOSEL+62
+2745/   304000,,54073    UPT+745/   CAIA DSKAPC+62
+2746/   713001           UPT+746/   713001
+2747/   304000,,100273   UPT+747/   CAIA BPXADD+65
+
+Page 3 is not used in the KL
+
+3000/   0                %3000/     0
+
+Page 4 has IRING, ORING, and common byte pointers
+
+4000/   0                IRING/     BLOCK <ISIZE=200>
+4200/   0                ORING/     BLOCK <OSIZE=400>
+4600/   310300,,372701   UPYPSR/POINT UPSPSR,%UPT+UPTSTS,UPNPSR
+
+    

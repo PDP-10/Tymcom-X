@@ -1,0 +1,305 @@
+
+    23-May-84                                               Page 1
+
+
+                           TYMCOM-X ON THE F3
+
+
+    Most procedures for backup are the same as for Tymcom-X on a KI
+    or KL.  Most of the standard utilities for Tymcom-X perform as
+    expected.
+
+    The restart procedures are different, and involve setting and
+    toggling hardware switches on the machine itself.  (See pages
+    2-4)
+
+    The base for an F3 is a micronode PDP 11/03, similar to the set
+    up for a 2020.  However the F3 will not currently resynch with
+    its base, and therefore if the base crashes, is reloaded, or in
+    some other way drops the connection, the F3 must be reloaded
+    with a warm restart.  In the event that new code is to be loaded
+    into the base, the F3 should be brought down gracefully using
+    TAKEIT, and then be brought up again after the reload.
+
+                                                          Page 2
+
+                      F3 Bootstrap Procedures
+
+
+
+
+    1.0  HOW TO BOOT IF MONITOR WAS RUNNING
+
+         1.  Set all switches to down position except for MI and
+             MEM PAR STOP.
+
+         2.  Switch CONSOLE STOP up and then down.   This  stops
+             the machine.
+
+         3.  Press the momentary CONSOLE RESET up.  This  resets
+             the  machine.   The PROG HALT light should be on at
+             this point.
+
+         4.  Set the address switches to 147 octal.
+
+         5.  Press CONSOLE START up.  This should  initiate  the
+             bootstrap  procedure.   The message "BOOTS:" should
+             appear on the console, and eventually
+             "LOADING (SYS)SYSTEM.SAV"  should appear.  The system 
+             should come up within 5-15 minutes.
+
+
+
+    If the system does not successfully  boot  using  the  above
+    procedure,  use  the  procedure for loading the monitor from
+    tape.  (See also notes on page 5)
+
+
+
+    2.0  LOADING THE MONITOR FROM TAPE
+
+         1.  Mount the current monitor  bootstrap  tape  (marked
+             USE  ME)  on  the  tape  drive,  set the density to
+             1600BPI.
+
+         2.  Make sure all switches are in  the  down  position,
+             including MI and MEM PAR STOP.
+
+         3.  Set 5000 octal in the Address Switches.
+
+         4.  Set the MICRO PROCESSOR STOP switch up.
+
+         5.  Set the MICRO PROCESSOR MI PC FROM SW switch up.
+
+         6.  Press the momentary MICRO PROCESSOR CLR switch up.
+
+         7.  Press the momentary MICRO PROCESSOR CONT switch up.
+                                                          Page 3
+
+
+         8.  Set the MICRO PROCESSOR MI  PC  FROM  SW  and  STOP
+             switches back down.
+
+         9.  Set the MICRO PROCESSOR MI PARITY STOP switch up.
+
+        10.  Press the momentary MICRO PROCESSOR CONT switch up.
+             This  should  start  the tape reading in.  If it is
+             successful, all the lights  under  DATA  should  be
+             off.  The tape takes about 5-10 seconds to read in.
+
+        11.  When the tape stops reading in, clear  the  address
+             switches and set 140 octal in them.
+
+        12.  Press the momentary CONSOLE START switch up.
+
+        13.  Press the momentary CONSOLE RESET switch up.
+
+        14.  Set the MICRO PROCESSOR MEM PARITY STOP switch up.
+
+        15.  Press  the  momentary  CONSOLE  START  switch   up.
+             Output  should  now  appear on the console terminal
+             which includes  the  phrase  MONITOR  JUST  LOADED.
+             After about 5-15 minutes, the system should be back
+             on the air.  If the monitor asks for  DSKCLN  type,
+             type  in  "FULL"  unless  you know that it is OK to
+             give another answer.
+
+
+
+
+    3.0  MICROCODE LOAD PROCEDURE
+
+         1.  Mount current Microcode tape on tape drive (the one
+             marked "use me")
+
+         2.  Set  density  switch  to   density   indicated   on
+             Microcode tape label.
+
+         3.  Make sure all switches are in  the  down  position,
+             including MICRO PROCESSOR MI and MEM PAR STOP.
+
+         4.  Set 10 Octal in the Address switches
+
+         5.  Set the MICRO PROCESSOR STOP switch up.
+
+         6.  Set the MICRO PROCESSOR MI PC FROM SW switch up.
+
+         7.  Press the momentary MICRO PROCESSOR CLR switch up.
+
+         8.  Press the momentary MICRO PROCESSOR CONT switch up.
+
+         9.  Set the MICRO PROCESSOR MI  PC  FROM  SW  and  STOP
+             switches back down.
+                                                           Page 4
+
+
+        10.  Press the momentary MICRO PROCESSOR CONT switch up.
+             This  should  start  the tape reading in.  If it is
+             successful, all the lights  under  DATA  should  be
+             off.  The tape takes about a second to read in.
+
+        11.  Set the MICRO PROCESSOR MI PARITY STOP switch up.
+
+        12.  Remove  the microcode  tape and  mount the  current
+             monitor tape.
+
+        13.  Press the  CONSOLE CONTINUE switch up.  This should
+             start  the tape  reading in.  The tape takes  about
+             5 - 10 seconds to read in.
+
+        14.  When the tape stops reading in, clear  the  address
+             switches and set 140 octal in them.
+
+        15.  Press the momentary CONSOLE START switch up.
+
+        16.  Set the MICRO PROCESSOR MEM PARITY STOP and MICRO
+             PROCESSOR MI PARITY STOP switches up.
+
+        17.  Press  the  momentary  CONSOLE  START  switch   up.
+             Output  should  now  appear on the console terminal
+             which includes  the  phrase  MONITOR  JUST  LOADED.
+             After about 5-15 minutes, the system should be back
+             on the air.  If the monitor asks for  DSKCLN  type,
+             type  in  "FULL"  unless  you know that it is OK to
+             give another answer.
+
+
+
+    4.0  POWER UP PROCEDURE FOR F3
+
+         1.  Turn off main power to disks.  Switches are located
+             in  the  back  of the CDC disk units, on lower left
+             hand side.
+
+         2.  Turn off power to the F3  processor.   The  correct
+             power  switch  is  the silver colored toggle switch
+             located on the power supply panel of  the  F3,  and
+             not the black circuit breaker which is located near
+             the bottom of the machine.
+
+         3.  Power the F3 back up using the silver toggle switch
+
+         4.  Power  up  the  disks  one  at  a  time.   This  is
+             necessary  because all three disks being powered up
+             at once will cause an overload and trip the circuit
+             breaker.   After  powering  up a disk, wait for its
+             ready light to go on before powering  up  the  next
+             one.
+
+         5.  Load  Microcode  and  Monitor  (see  Microcode  and
+             Monitor load procedures)
+                                                              Page 5
+
+    Notes on reloading:
+
+
+    1.  Sometimes the F3 takes several tries to find SYSTEM.SAV.
+        Therefore it is worthwhile if BOOTS comes back with an error
+        such as:
+
+        READ ERROR OR EOF
+
+        or
+
+        NO FILE
+
+        and return to 
+
+        BOOTS:
+
+        to try just a carriage return a few times.
+
+    2.  The F3 cannot presently resynch with its base.  If the base
+        should crash, or somehow stop "talking" to the F3, the F3
+        should be recycled.  This is normally accomplished with a
+        147 restart.  (See page 2)
+
+    3.  If the F3 does not get the date and time from the network 
+        within the software time limit set, a message will appear on
+        the console after the initialization complete message:
+
+            Initialization completed
+        ? Date and time not set
+
+        An operator should log in, set the date and time in the
+        formats given, and "unshut" the system by setting the
+        schedule to 0.  This is done by setting OP license, and then
+        giving the command
+
+        SCH 0
+
+    4.  If you want to do anything different in bringing up an F3
+        that would require you to talk to ONCE, you must set sense
+        switch 4 before bringing up the machine.  This is
+        accomplished by manually setting the switch on the front of
+        the machine.
+
+    5.  In the event of a power failure, the base must be loaded
+        first, then the F3 brought up from tape starting with
+        microcode.
+
+                                                              Page 6
+
+NODE 421 LOADING:
+
+    421 is the base for 897 (Bldg A, Bubb Road Foonly)
+
+    If you notice the node is down or halted, first check the
+    console for 421 to find out which condition it is in.  If it is
+    halted, it may be proceeded, or restarted without reloading (all
+    commands are upper case only):
+
+    @P                                             ; "P" for proceed
+            or
+    @1000G                                         ; "G" for go
+
+    If this does not work, then something must be wrong with the
+    current image of the node in memory, and it must be reloaded.
+
+    ------------
+
+    421 can only be reloaded from the network.  Hit the RESTART
+    button on 421.  The HALT switch should be up.  (Run light should
+    be on after RESTART button is toggled; two lights should be on.)
+
+    NOTE:  only a few usernames are authorized by LOADII to load
+    421.  NETWORK CONTROL (117-5195) can reload.  You will have to
+    give them all the pertinent information as they get rather
+    confused by micronodes.
+
+    Login to :57 or :39  (this cannot be an aux circuit!)
+
+    Set license
+
+    .GF CURR11              ;Current file may be NEW11
+    .R LOADII               ;This will only work for authorized users
+    
+    NODE LOADER VERSION- 2.11
+    ENTER FUNCTION:L
+    ENTER NEIGHBOR NODE:2767
+    ENTER KERNEL HOST ON NODE 2243: 2439
+    ENTER LINE NUMBER:15
+    ENTER OBJECT FILE NAME:ND421.BND
+    <program begins loading sequence>
+    .
+
+    It is normal to have a great many lost packets reported by
+    LOADII.
+
+    If you get a message that the system is unavailable, and will
+    retry in 30 seconds, just be patient; however, if you get SYSTEM
+    UNAVAILABLE LOGIN ERROR, RESPONSE:000000000004 someone at TYMNET
+    has probably shut down all access and pass throughs to node
+    2767,and you will have to wait until it is back up and
+    available.
+
+    ------------
+
+    Order to follow when there is a power hit:
+
+    1.  Reload 421 from 39 or 57
+
+    2.  Reload 897 with full DSKCLN (set sense switch 4 before
+        loading monitor, command FULL to ONCE)
+
+   

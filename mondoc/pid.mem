@@ -1,0 +1,271 @@
+
+
+
+     1.0  PID - PROCESSOR ID MECHANISM
+
+     1.1  Purpose Of PIDs
+
+     PIDs serve two purposes.  First,  they  provide  a  mechanism  by
+     which  to charge file storage to a user other than the one owning
+     the file's directory.   Second,  PIDs  extend  the  current  file
+     protection  scheme  by  allowing a program to place files in disk
+     areas other  than  the  one  it  came  from  which  that  program
+     (processor)  always  has  access  to  regardless  of who runs the
+     program.  The access to all such files is  completely  under  the
+     control  of  the processor, since a file with a PID can only have
+     its protection changed by  a  program  running  under  that  PID.
+     (Normally,  the  owner  of  a  file  can always change the file's
+     protection).  Once a file has a PID placed on it, the  protection
+     can  be  set  to NO NO NO and the processor can implement its own
+     protection mechanism.
+
+     The PID of a file can also be used  as  an  authorization  stamp.
+     The  processor can check the PID, and if any unauthorized program
+     has attempted to modify the file, the PID will not be the PID  of
+     the authorized processor.
+
+
+
+     1.2  Definition Of A PID
+
+     A PID is a 36 bit quantity whose left half is  the  UUN  of  some
+     valid user and whose right half is an index number.  Under normal
+     circumstances, a given user can only manipulate  PIDs  that  have
+     his  UUN  in  the leftmost 18 bits and can arbitrarily select the
+     index in the right half.  This allows the user  to  allocate  his
+     own  PIDs  rather  than  have  some  central  Tymshare  authority
+     allocate them serially.
+
+     The value 0, when specified in a PID argument or  returned  as  a
+     PID in a UUO, represents the absence of a PID.
+
+     PID values 1-777777 are not settable by  a  program  unless  that
+     program  has  WF  or  WA  license.   These  PIDs are reserved for
+     systems use.
+
+
+
+     1.3  How PIDs Are Obtained
+
+     1.3.1  Files - A file  can  be  given  a  PID  by  having  a  job
+     authorized  to give the PID out do an ENTER or RENAME on the file
+     with the new PID in .RBPID.  A PID setting of zero specifies  and
+     indicates  no  PID.  A job is authorized to give out a PID if any
+     of the following are true:
+
+     1.  The job has WF license.  The PID can be any value.
+                                                                Page 2
+
+
+     2.  The UUN of the PID is the UUN of  the  executing  job's  AUN.
+         This  authorization  is  used  mostly when installing PIDs on
+         executable files (the processors).
+
+     3.  The PID to be put onto the file is the same as  that  of  the
+         executing  program  (see  section  on  how  programs get PIDs
+         associated with their execution.) This authorization is  used
+         when  a  processor  wishes to create a data file belonging to
+         that processor.
+
+     4.  The PID is zero.  (Any job can clear a PID on a  file  if  it
+         has at least append access to the file.)
+
+     A job can put a valid PID onto a file if it has WF license or the
+     following are all true:
+
+     1.  The job has ENTER or RENAME access to the file
+
+     2.  The job is authorized to give out the new PID
+
+     The  following  is  the  algorithm  for   PID   handling   during
+     ENTER/RENAME:
+
+
+     For all RENAMEs and ENTERs, the old PID is always cleared.   This
+     forces a processor to always specify the PID directly, preventing
+     the inadvertant spread of the PID.  Clearing the PID  on  RENAMEs
+     and  supercedes also prevents programs from renaming files with a
+     processor's PID to another name or another directory, which would
+     then cause the processor to lose track of the file.  (A processor
+     can have files with its PID and not be able to read the UFD  that
+     the files are in.)
+
+     The new PID for the  file,  if  any,  is  checked.   If  the  PID
+     specified  in .RBPID is zero or -1, the file's PID is set to zero
+     (no PID).  This is allowed because the user can force the  file's
+     PID to zero anyway by doing an updating ENTER.  If the PID is not
+     zero or -1, an authorization check is done to see if the job  can
+     give  the  PID  out.  If not, the file's PID will be set to zero.
+     If the job is authorized the file's PID is set to  the  requested
+     value.
+
+     If .RBPID is unspecified (i.e.  count in  an  extended  ENTER  or
+     RENAME  is less than .RBPID or short ENTER or RENAME is done) the
+     PID argument will be taken to be zero.  This means that any ENTER
+     or RENAME on a file will result in that file's PID getting set to
+     zero unless .RBPID is specifically set to a non-zero value.
+
+
+     It would not make sense to make the ENTER or RENAME fail if a job
+     was  not authorized to give out a file's PID, since the processor
+     could make this happen by protecting the  file  RD  RD  RD.   The
+     owner  cannot  change  the protection of a file with a PID unless
+     the owner is authorized to give out the file's PID himself.
+                                                                Page 3
+
+
+     1.3.2  Programs - A  PID  becomes  associated  with  a  program's
+     execution  if  the file from which the program was run has a PID.
+     As with license, the PID associated with the program's  execution
+     disappears  if  the  user  meddles  with the program (provides an
+     argument to the START command, etc.)
+
+
+
+     1.4  Program PID Manipulation
+
+     A new UUO, PIDSET, will be implemented.   Its  argument  will  be
+     either  0  to  clear  the program's current PID or a non-zero PID
+     value which will be  interpreted  as  a  request  to  change  the
+     program's  current  PID to the specified value.  When a processor
+     changes its PID with this UUO, the old PID is  saved  if  it  was
+     non-zero.  A program can set its PID to be either 0, the original
+     PID of the processor running from the current program, or any PID
+     that  the  username  that  the  processor  is  running  under  is
+     authorized to give out (that is, those PIDs whose UUN matches the
+     user's  AUN UUN).  The original motivation for providing this UUO
+     is to allow processors to turn off their PID during RUN,  RUNSEG,
+     and  GETSEG  UUOs,  which do not provide any extra argument space
+     for a PID access/no PID access argument.
+
+
+
+     1.5  Effect Of PIDs
+
+     1.5.1  On Storage Accounting - Bit 6 in .RBLIC will be set if and
+     only  if  the  PID for the file is non-zero.  This bit appears in
+     the UFD entry for the file, so it will be easy for the accounting
+     group  to  limit their LOOKUPs to only those files that are known
+     to have PIDs.  Since UFDs do not have PIDs, this bit is also used
+     in  .RBLIC  of  the  UFD to indicate that the UFD has special PID
+     storage accounting.  (It could also be used to flag other special
+     accounting  processing,  since  the monitor does not use this bit
+     for PIDs specifically.
+
+
+
+     1.5.2  On File Access - 
+
+     1.  If a file has a PID, only a job authorized to give  out  that
+         PID can change the protection of that file.
+
+     2.  A program running with a given PID can always gain any  level
+         of access to a file which has that exact PID, even if the UFD
+         is protected against LOOKUPs.  It does this by setting bit 20
+         in  the count word of the extended LOOKUP/ENTER/RENAME block.
+         If bit 20 is zero, the processor will be given the access  to
+         the  file  as if the processor did not have a PID.  Thus, the
+         processor  can  selectively  control   its   special   access
+         privilege.
+
+     Note that it is not enough for the job's UUN to match that of the
+                                                                Page 4
+
+
+     file's  PID in order to gain access to the file, even though such
+     a job is authorized to put the PID on files.
+
+
+
+     1.6  PIDs And Other UUOs
+
+     1.6.1  RUN And RUNSEG - The program's old PID remains  until  the
+     new  file  is successfully setup, at which time the program's PID
+     is set to the PID of the new file.  In RUN UUOs, if the  PID  for
+     the low file is different than that of the high segment file, the
+     new PID will be set to zero.  A UUO to set/clear a program's  PID
+     will  be  implemented  so  that  a  processor can perform RUN and
+     RUNSEG UUOs as if it had normal access to the file in question.
+
+
+
+     1.6.2  GETSEG - A program's PID would be unaffected by the GETSEG
+     UUO.
+
+
+
+     1.7  PIDs And Commands
+
+     1.7.1  Old PID Policy - The RUN, GET, SAVE,  and  SSAVE  commands
+     will clear out the program's current PID and saved PID before any
+     file accesses are done.   The  CLOSE,  FINISH,  CORE,  and  START
+     command  with argument specified are considered meddling and will
+     clear out current  and  saved  PIDs.   In  general,  any  command
+     operation  that  would  reset the process license will also clear
+     out the current and saved PIDs.
+
+
+
+     1.7.2  New PID Policy - The program's PID is a  function  of  the
+     PID  of  the high segment file, if any, and the low segment file,
+     if any.  If the core image is setup from one file  (high  or  low
+     segment)  the PID will be set to the PID of that file just before
+     completion of the command.  If there  is  both  a  high  and  low
+     segment  file  involved,  both files must contain the same PID in
+     order for the new program to get a non-zero PID.  This is done so
+     that replacing one of two files (high and low seg) will not allow
+     the code in the new PID-less file to operate under the old file's
+     PID.
+
+
+
+     1.8  Unsolved Issues And Questions
+
+     1.  The fact that file access and storage charging are both  tied
+         through  .RBPID  means  that  you  can't  do  normal  storage
+         charging and have a file belong to a processor, and you can't
+         do  funny  storage  charging  without taking away the owner's
+         right to change the protection.
+                                                                Page 5
+
+
+     2.  The PID mechanism is setup to only  allow  one  PID  to  gain
+         access  to  a  file.   If  two processors with different PIDs
+         wanted to access common files  implementing  their  own  file
+         protection   schemes,  it  could  not  be  done  unless  both
+         processors had the same PID.
+
+     3.  Should a zero UUN with non-zero index be allowed if  the  job
+         has WF?
+
+     4.  Are there any problems with TITO with  respect  to  restoring
+         files that have PIDs?  TITO must run with WF when it restores
+         such files.
+
+     5.  No algorithm used by processors can include searching the UFD
+         for  a  user's file with the processor's PID on it, since the
+         processor cannot be guaranteed the ability to read the user's
+         UFD.   It  can only be guaranteed the ability to lookup files
+         with the processor's PID on them.
+
+     6.  Should  TELECOPY  retain  PIDs  during  a  copy?   This   was
+         requested  by  the  APL  group so they could backup specially
+         protected APL files on some  other  system,  and  if  a  file
+         became  damaged  somewhere, TELECOPY could be used to replace
+         it.   If  TELECOPY  is  changed  to  do  this,   under   what
+         circumstances should it retain the PID?
+
+     7.  A question was brought up concerning billing.  If a processor
+         is being billed for a file, what happens if it loses track of
+         the file?  (The processor can't necessarily search the UFD)
+
+     8.  Vicious jobs can find usernames that allow new files in their
+         UFDs  and  create large files that the owner of the UFD can't
+         delete.  The only solutions to this is to 1) allow  owner  to
+         delete  files  with  PIDs,  which would defeat the purpose of
+         PIDs;  2) Have user call Tymshare, who will  reverse  charges
+         and delete the file.  Note that the problem still exists even
+         without PIDs to some degree;  although the  owner  can  cause
+         the file to be deleted more easily.
+
+  

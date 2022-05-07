@@ -1,0 +1,643 @@
+$menu DISK;HOM/RIB/UFD/SAT information.
+*(MONDOC)RIB.NFO:DSKPAGE;Disk page allocations.
+*(MONDOC)RIB.NFO:HOM;Home page format.
+*(MONDOC)RIB.NFO:HOME;Sample HOME page.
+*(MONDOC)RIB.NFO:BAT;Bad Allocation Table format.
+*(MONDOC)RIB.NFO:SAT;Storage Allocation Table.
+*(MONDOC)RIB.NFO:RIB;Retreival Information Block.
+*(MONDOC)RIB.NFO:RIBSYS;Sample RIB for [1,4] UFD.
+*(MONDOC)RIB.NFO:RIBSAT;Sample RIB for SAT SYS.
+*(MONDOC)RIB.NFO:RIBHOME;Sample RIB for HOME SYS.
+*(MONDOC)RIB.NFO:RIBCRASH;Sample RIB for CRASH SAV.
+*(MONDOC)RIB.NFO:UFD;Format of UFD's.
+$text DSKPAGE;Disk page allocations.
+Disk page allocation for KI/KL/F3 (and KS after P034/P20)
+
+    0 = IPL (IBM controllers can read this to load IBM mainframes)
+    1 = HOM (primary HOM page)
+    2 = BAT (primary BAT page)
+    3 = BOOTS (first 4 blocks)
+    4 = BOOTS (next 3+1 blocks, before 1986 BOOTS was 7 blocks long)
+    5 = BOOTS (third page, not used before 1986)
+    6 = HOM (secondary HOM page)
+    7 = BAT (secondary BAT page)
+   10 = RIB for SAT.SYS
+   11 = DATA for SAT.SYS, for pages 0-21777 = 36.*512./2.
+   12 = RIB to HOME.SYS
+
+NOTE: The actual location for RIBs and UFD data depend on:
+  1) The size of CRASH.SAV
+  2) Whether or not SWAP.SYS exists (this file is obsolete)
+  3) The size of SPAGES.SYS (special pages in P034/P20 and later)
+
+   13 = primary RIB to CRASH.SAV
+   14-1013 = 512. data pages for CRASH.SAV (F3 and KS, more on KI and KL)
+ 1014 = secondary RIB for CRASH.SAV
+ 1015 = RIB for SPAGES.SYS (formerly RIB to SPOOL-ING.UFD)
+ 1016 = Data page for [1,4].UFD where SAT.SYS hashes to
+ 1017 = Data page for [1,4].UFD where HOME.SYS hashes to
+ 1020 = Data page for [1,4].UFD where SWAP.SYS hashes to (or SPAGES.SYS)
+ 1021 = Data page for [1,4].UFD where CRASH.SAV hashes to
+ 1022 = RIB for [1,4].UFD
+ 1023 = Data page for [1,1].UFD where [1,4] hashes to
+ 1024 = Data page for [1,1].UFD where [1,1] hashes to
+ 1025 = RIB for [1,1].UFD
+22000 = Second data page for SAT.SYS
+44000 = Third data page for SAT.SYS, etc
+
+--------------------------------------------------------------------
+
+The 8080 front-end for the KS-2020 uses 4 locations in page 0 to find
+the front-end file system, which contains the KS microcode and BOOTS.
+      200 NAM  SIXBIT /HOM/ for the 8080
+      301 FEA   40  FE-file starts at block 32. (page 8.)
+      302 FES  400  FE-file is 256. blocks long (64. pages)
+      303 TCS  402  FE-file starting Track/Cylinder/Sector in 8080 format
+      165 VID    0  Volume-ID, 12 bytes in PDP-11 format
+      166  .     0  (this should be set to 'TYMCOM-X'
+      167  .     0   so TOPS-10 will not attempt to mount it)
+
+Disk page allocation for KS prior to P034/P20
+
+    0 = HOME block is locations 200-377 of page 0 for the front-end
+    1 = HOM (primary HOM page)
+    2 = BAT (primary BAT page)
+    3 = DATA for SAT.SYS, for pages 0-21777 = 36.*512./2.
+    4 = RIB to HOME.SYS
+    5 = primary RIB to CRASH.SAV
+    6 = HOM (secondary HOM page)
+    7 = BAT (secondary BAT page)
+   10 = KSFEFS - Front-end file system directory in 8080 format
+   11 = BOOTS (first 4 blocks)
+   12 = BOOTS (next 3+1 blocks, before 1986 BOOTS was 7 blocks long)
+   13 = UCODE - microcode for the KS2020, 12. pages long
+  107 = last page reserved for front-end file system
+  110 = RIB for SAT.SYS
+  111-1110 = 512. data pages for CRASH.SAV
+ 1111 = secondary RIB for CRASH.SAV
+ 1112 = RIB for SPOOL-ING.UFD
+ 1113 = RIB for SWAP.SYS
+ 1114 = Data page for [1,4].UFD where SAT.SYS hashes to
+ 1115 = Data page for [1,4].UFD where HOME.SYS hashes to
+ 1116 = Data page for [1,4].UFD where SWAP.SYS hashes to
+ 1117 = Data page for [1,4].UFD where CRASH.SAV hashes to
+ 1120 = RIB for [1,4].UFD
+ 1121 = Data page for [1,1].UFD where [1,4] hashes to
+ 1122 = Data page for [1,1].UFD where [1,1] hashes to
+ 1123 = RIB for [1,1].UFD
+22000 = Second data page for SAT.SYS
+44000 = Third data page for SAT.SYS, etc
+$text HOM;Home page format.
+Each file structure has one HOME file: HOME.SYS.  (PREFIX "HOM")
+
+1000 HOMNAM sixbit /HOM/  (written by PAKCOP or REFSTR)
+1001 HOMHID sixbit /unit ID/ (written by PAKCOP or REFSTR)
+1002 HOMSNM sixbit /DSKB/  file structure name (written by REFSTR), 0 if none
+1003 HOMNXT sixbit /unit ID of next unit in file structure/, 0 if last
+1004 HOMPRV sixbit /unit ID of previous unit in file structure/, 0 if first
+1005 HOMLOG sixbit /logical unit name/ (DSKB0, DSKB77)
+1006 HOMLUN logical unit number within file structure, 00-77
+1007 HOMSPS LH: system pack-set id number, RH: system number, ( ^D1,,^D24 )
+            (old HOMP4S pages for swapping)
+1010 HOMREF structure needs to be refreshed if non-zero
+1011        (old HOMSID swapping list, zero if last unit or none)
+1012        (old HOMSUN -1 if not in active swapping list)
+1013        (old HOMSLP first logical page on unit for swapping)
+1014 HOMFEP number of FE file pages per unit,,first FE file page on this unit
+            (old HOMCFS swapping class for unit)
+1015 HOMSPU number of SAT pages per unit
+1016 HOMOVR number of pages of overdraw allowed per user (usually ^D-125)
+     HOMTAB Table of RIB pointers (in RIB format, 200uuuxxxxxx)
+1017 HOMSAT RIB for SAT.SYS
+1020 HOMHMS RIB for HOME.SYS
+1021 HOMSPG primary RIB for SPAGES.SYS (old HOMSWP first RIB for SWAP.SYS)
+1022 HOMCRS primary RIB for CRASH.SAV
+1023 HOMSUF RIB for SYS UFD
+1024 HOMPUF RIB for printer UFD
+1025 HOMMFD RIB for MFD [1,1].UFD
+1026 HOMP4C number of pages for CRASH.SAV file
+1027 HOMHSH LH is the hash constant (7) | HOMRAN RH is pack set identifier
+1030 HOMDCT DSKCLN type  (may contain HOMDCV = sixbit/DCV/)
+1174 HOMSER (not used) serial number incremented on system up
+1773        words 1030-1773 are zeroed when HOM page is initialized
+1774 HOMDAT date of last pack copy or garbage from RM03/RP06 formatter
+1775        not used, garbage from RM03/RP06 formatter
+1776 HOMCOD contains the "unlikely code" of 070717
+1777 HOMSLF pointer to self (200uuu000001)
+
+6000-6777   Secondary HOME page, duplicate of first except for HOMSLF
+$text HOME;Sample HOME page.
+        C26 - KL with 3650 disk                          X95 - KS with RM03
+1000 NAM 505755,,0       'HOM'                                        'HOM'
+1001 HID 222620,,202022  '260002' unit ID                          '950001'
+1002 SNM 446353,,420000  'DSKB'   STR name                           'DSKB'
+1003 NXT 222620,,202023  '260003' next unit                        '950002'
+1004 PRV 222620,,202021  '260001' previous unit                    '950000'
+1005 LOG 446353,,422200  'DSKB2'  unit name                         'DSKB1'
+1006 LUN         2       Unit 2 in structure                             1
+1007 SPS         0       Pack set number                                 1
+1015 SPU         15      Number of SAT pages per 3650 disk               4
+1016 OVR 777777,,777603  -500. blocks overdraw per user               -125.
+1017 SAT 200000,,10      RIB for SAT.SYS (data on page 11)    200000,, 110 (3)
+1020 HMS 200000,,12      RIB for HOME.SYS                     200000,,0004
+1021 SPG 200000,,13      RIB for SPAGES.SYS                   200000,,1113
+1022 CRS 200000,,14      RIB for CRASH.SAV                    200000,,0005
+1023 SUF 200000,,1667    RIB for [1,4].UFD                    200000,,1120
+1024 PUF 200000,,1662    RIB for (SPOOLING).UFD               200000,,1112
+1025 MFD 200000,,1672    RIB for [1,1].UFD                    200000,,1123
+1026 P4C         1000    Size of CRASH.SAV                            1000
+1027 HSH      7,,434575  Hash constant = 7 ,, random number for pack set ID
+1030 DCT 444366,,1       'DCV' DSKCLN validator and type                 0
+1174 SER         0       this word is NOT used                           0
+1774 DAT         0       Date of PAKCOPY or garbage           555555555753
+1775 ---         0       Reserved for PAKCOPY                 666666765553
+1776 COD         070717  Code for HOM                               070717
+1777 SLF 200004,,1       Pointer to self, page 1 on unit 2    200002,,0001
+
+2000 NAM 424164,,0       'BAT'                                424164,,0000
+2001 FIR 777006,,4       AOBJN pointer for storing entries    777006,,0004
+2002 SEC 0               Number of bad pages (not sectors)               0
+2003 CNT 0               Count of bad regions (consecutive pages)        0
+2004 REG 0               Start of data area                              0
+2776 COD 505050          Code for BAT                               505050
+2777 SLF 200004,,2       Pointer to self, page 2 on unit 2    200002,,0002
+
+3000/    CONO 0,200000   Start of BOOTS                       First SAT page
+3001/    TDZA 1,1                                             (bits set for
+3002/    HRLI 1,440715                                         pages that are
+3003/    HRRI 1,4254                                           not part of any
+3004/    SKIPA 0                                               file and are
+3005/    HRLI 1,440700   Enter here from COMMON                available)
+3400/    more of the same                                     777777,,777777
+$text BAT;Bad Allocation Table format.
+BATNAM==0       Name of page (for consistancy check)
+  777777 777777  00-35 = SIXBIT/BAT/
+BATFIR==1       AOBJN pointer to first available word pair in page
+  777777 000000  00-17 = Negative count of unused words on the page (-772)
+  000000 777777  18-35 = Offset relative to BATNAM for storing pairs (004)
+BATSEC==2       Number of bad pages
+  777777 777777  00-35
+BATCNT==3       Count of bad regions (consecutive bad pages = 1 region)
+  777777 777777  00-35
+BATREG==4       Start of data area, stored as word pairs
+ BATNBB==0      First of two words describing bad region
+  777000 000000  00-08 = Number of bad pages minus 1 (1 to 512.)
+  000400 000000  09    = Set if date was unknow (so word won't be all zero)
+  000377 740000  10-21 = unused
+  000000 037777  22-35 = Date bad spot was noticed, in TYMCOM-X format
+ BATELB==1      Error logical block
+  777777 777777  00-35 = Absolute page number in unit
+BATCOD==776     Unlikely code for BAT
+  777777 777777  00-35 = 505050
+BATSLF==777     Pointer to self
+  200uuu xxxxxx  00-35 = Retreival pointer
+  000776 000000  09-16 = Unit within structure
+  000001 777777  17-35 = Page within unit
+
+TYMCOM-X BAT page format (pages 2 and 7 on the disk)
+---------------------------------------------------------------------------
+RM03/RP06 BAT block format (block 2 = words 400-577 of page 0)
+
+BAFNAM==0       Name of block (for consistancy check)
+  777777 777777  00-35 = SIXBIT/BAT/
+BAFFIR==1       AOBJN pointer to first available word pair in page
+  777777 000000  00-17 = Negative count of unused words on the page (-172)
+  000000 777777  18-35 = Offset relative to BATNAM for storing pairs (004)
+BAFNBS==2       Number of bad spots
+  777000 000000  00-08 = Number of bad blocks found by MAP program (DDRPI)
+  000777 000000  09-17 = Number of regions found by MAP (# of word pairs)
+  000000 774000  18-24 = Controller device code use by MAP
+BAFCNT==3       Count of bad regions added by the Monitor
+  777777 777777  00-35
+BATREG==4       Start of data area, stored as word pairs
+ BATNBB==0      First of two words describing bad region
+  777000 000000  00-08 = Number of bad blocks minus 1 (1 to 512.)
+  000400 000000  09    = Set if different controller or APR noticed bad spot
+  000377 000000  10-17 = Physical unit (bit 17-n for unit n, n = 0-7)
+  000000 700000  18-20 = Logical controller number from UNIKNM
+  000000 040000  21    If on, entry is new format as described here
+  000000 040000  21    If off, only bits 0-8 of NBB and 9-35 of ELB are valid
+  000000 037777  22-35 = APR serial number of CPU that noticed bad spot
+ BATELB==1      Error logical block
+  700000 000000  00-02 = Version number of entry (currently 0)
+  040000 000000  03    = Other error (not data or search error)
+  020000 000000  04    = Data error (parity or ECC hard)
+  010000 000000  05    = Search error or header compare error
+  000777 777777  09-35 = Logical block number of first bad block in region
+BAFCOD==176     Unlikely code for BAT
+  777777 777777  00-35 = 606060
+BAFSLF==177     Pointer to self
+  777777 777777  00-35 = Logical block number in unit
+$text SAT;Storage Allocation Table.
+SAT.SYS is the file that contains all the SAT pages on a structure.  The RIB to
+SAT.SYS is pointed to by word 17 of the HOM page, the data pages are allocated
+at multiples of 22000 (octal), except for the first data page.  The first data
+page is page 11 on DSKB0 execpt for old 2020 disks, in which case is is page 3.
+
+
+Each SAT page is divided into two parts.  The first 256 words are 9216 "F"
+bits, the second 256 words are 9216 "M" bits.  The bits have a one-to-one
+correspondence with the pages in the same section of the disk as the SAT page
+itself.  For example, in the SAT that is at page 22000 on the disk, bit 1 of
+word 0 and bit 1 of word 400 are the F and M bits corresponding to page 22001.
+
+The F bit is zero when the page is in use by being part of a file.
+The M bit is zero when the page is in use by being mapped to memory.
+The JFFO instruction is used to find the first available free bit.
+
+F=1/M=1 - Page is not in use, it is available
+F=1/M=0 - Page is mapped to memory, a private page of someone's core image
+F=0/M=1 - Page is part of a file that is not being accessed
+F=0/M=0 - Page is part of a file and is mapped into memory
+
+To speed disk thruput, the SAT data is not rewritten to disk everytime a bit is
+changed.  Instead, a timer causes the SATs to be written 3 seconds after all
+disk activity stops.  Having out-of-date data on the disk is not a problem, as
+long as DSKCLN is run every time the system is reloaded.
+
+In "FULL" mode, DSKCLN reads every single RIB on the disk, and rebuilds the
+SATs from scratch.  It also verify that HOME.SYS covers all the pages allocated
+by the refresher.
+
+In "FAST" mode, DSKCLN reads in the old SATs, then looks up every file that has
+the RIBALC bit set.  This bit is set whenever the allocation of pages to a file
+changes, and is cleared when the Monitor is sure that all the SATs involved
+with the file have been written to disk.  This makes sure that the bits
+corresponding to newly allocated file pages are accounted for.
+$text RIB;Retreival Information Block.
+RIBRIB==0       Pointer to the next upper RIB, zero in the primary RIB
+  200uuu xxxxxx  00-35 = Retreival pointer (see word 51 for list of bits)
+  000776 000000  09-16 = Unit within structure
+  000001 777777  17-35 = Page within unit
+RIBRPS==1       Location of pointer to this RIB in the next upper RIB
+  777777 777000  00-27   bits 0-27 unused
+  000000 000777  28-35   Offset from start of page (004 to 775)
+RIBSZS==2       Number of pages each secondary RIB pointer represents
+  777777 777777  00-35   Must be 1, 772, or 764044
+RIBSNM==3       Number of secondary RIBs (stored in primary RIB only)
+  777777 777777  00-35   Maximum is 772+1
+RIBSFS==4       First available RIB pointer location in secondary RIB
+RIBPPN==4       PPN = [PROJECT,PROGRAMMER]
+  377777 000000  00-17 = Project number, must be nonzero, sign bit must be off
+  000000 777777  18-35 = Programmer number, 000001 to 777777 inclusive
+RIBNAM==5       File name for files, PPN for UFDs
+  777777 777777  00-35 = 6 characters in SIXBIT
+RIBEXT==6       Extension, access date
+  777777 000000  00-17 = Extension, 3 characters
+  000000 400000  18    = Always off in RIB, returned as flag in ENTER block
+  000000 200000  19    = unused
+  000000 140000  20-21 = Creation date high order 2 bits  (TYMCOM-X format)
+  000000 037777  22-35 = Access date, days since 1-Jan-64 (TYMCOM-X format)
+RIBPVW==7       File attributes (protection value word)
+  777000 000000  00-08 = File protection code
+  000740 000000  09-12 = File creation mode (0=ASCII, 10=BINARY, 17=DUMP)
+  000037 770000  13-23 = Creation time, minutes past midnight GMT
+  000000 007777  24-35 = Creation date low order bits     (TYMCOM-X format)
+RIBSIZ==10      Number of words in file (holes count as 512 words of zero)
+  777777 777777  00-35 = EOF pointer, maximum is 712044,,764000
+RIBVER==11      Version number for SAV files, same format at JOBVER in JOBDAT
+  777777 777777  00-35 = BYTE(3)WHO(9)MAJOR(6)MINOR(18)EDIT
+RIBFUT==12      Reserved for future use
+  777777 777777  00-35 = unused
+RIBEST==13      Was estimated size.  Faked on ENTER to act like TOPS10
+  777777 777777  00-35 = unused
+RIBALC==14      Was amount allocated.  Faked on ENTER to act like TOPS10
+  777777 777777  00-35 = unused
+RIBPOS==15      Was position allocated.
+  777777 777777  00-35 = unused
+RIBFT1==16      Reserved for future use
+  777777 777777  00-35 = unused
+RIBLCW==17      License and TYMCOM-X status bits
+  600000 000000  00-01 = Reserved, unprivileged bits
+  140000 000000  00-03 = Reserved, requires JL or WF to change
+  020000 000000  04    = Set by Monitor if file changed, cleared by TITO
+  010000 000000  05    = This file has an error (HRE!HWE!BDR!BFS!BDA)
+  004000 000000  06    = PID accounting done for this file
+  002000 000000  07    = Allocation change, SAT may not be on disk, for DSKCLN
+  001000 000000  08    = File is temporary
+  000400 000000  09    = MAGNUM file in JIS-8 Katakana mode
+  000200 000000  10    = unprivileged bit
+  000100 000000  11    = unprivileged bit
+  000077 000000  12-17 = creation time seconds past the minute
+  000000 777777  18-35 = File license bits
+RIBMTA==20      SIXBIT tape label if file has been put on magtape
+  777777 777777  00-35 = not used by current version of TITO
+RIBDEV==21      SIXBIT name of file structure file starts on
+  777777 777777  00-35 = unused
+RIBSTS==22      LH = status bits for all file in UFD, RH = status for this file
+  400000 000000  00    = UFD in use, logged in or GFD
+  300000 000000  01-02 = unused
+  040000 000000  03 NFS= No FailSave - do not backup any file in this UFD
+  034000 000000  04-06 = unused (3 bits)
+  002000 000000  07 BRB= Some file in UFD has a RIB error
+  001400 000000  08-09 = unused (checksum error on TOPS10)
+  000200 000000  10 HWE= Some file in UFD has hard write error
+  000100 000000  11 HRE= Some in UFD has hard read error
+  000060 000000  12-13 = unused
+  000010 000000  14 BFS= Some file in UFD found bad during restore from tape
+  000006 000000  15-16 = unused
+  000001 000000  17 BDA= Some file in UFD found bad by DSKCLN program
+  000000 400000  18 DIR= This file is a directory (UFD or MFD)
+  000000 200000  19 NDL= No delete - file cannot be deleted (it's in HOME.SYS)
+  000000 100000  20    = unused (unprocessed dump on TOPS10)
+  000000 040000  21 NFS= No FailSave - file should not be saved to tape (TITO)
+  000000 020000  22    = unused ("always bad checksum" on TOPS10)
+  000000 010000  23    = unused (second UFD compression bit on TOPS10)
+  000000 004000  24    = unused (always BACKUP this file on TOPS10)
+  000000 002000  25 BRB= RIB found bad by operating system, can't read file
+  000000 001000  26    = File author is owner of directory (DEVPPN=JBTPPN)
+  000000 000400  27    = unused (checksum error on TOPS10) (DSKCLN punched hole)
+  000000 000200  28 HWE= hard write error
+  000000 000100  29 HRE= hard read error
+  000000 000060  30-31 = unused (preallocated file on TOPS10)
+  000000 000010  32 BFS= bad from FailSave (tape read error while restoring)
+  000000 000006  33-34 = unused (closed after crash on TOPS10)
+  000000 000001  35 BDA= found bad by Damage Assessment program (DSKCLN)
+RIBELB==23      First bad page in file (error logical block)
+  200uuu xxxxxx  Standard pointer with RBREAL+unit+page (see word 51)
+RIBXT1==24      Reserved for future use
+  777777 777777  00-35 = unused
+RIBQTF==25      UFD only - First come first served logged in quota in pages
+  777777 777777  00-35
+RIBQTO==26      UFD only - Logged out quota in total number of data + RIB pages
+  777777 777777  00-35
+RIBMXA==27      UFD only - Max that RIBUSD has ever been, for accounting
+  777777 777777  00-35
+RIBUSD==30      UFD only - Count of pages used (including all overhead pages)
+  777777 777777  00-35
+RIBAUT==31      PPN of author of file, set by create or supersede
+  777777 777777  00-35
+RIBUNM==32      UFD only - first 6 characters of user name of this directory
+  777777 777777  00-35
+RIBUN1==33      UFD only - second 6 characters of user name
+  777777 777777  00-35
+RIBTRU==34      TRU budget
+  777777 777777  00-35 = used by LOGINN and LOGOUT
+RIBXT2==35      Reserved for future use
+  777777 777777  00-35 = unused
+RIBALP==36      Number of pages actually allocated to file (it may have holes)
+  777777 777777  00-35 = Includes RIBs (primary & secondary), excludes holes
+RIBPJC==37      First 5 ASCII characters of project code
+  777777 777776  00-34
+RIBPJ1==40      Second 5 ASCII characters of project code
+  777777 777776  00-34
+RIBPJ2==41      Last 2 characters of project code
+  777760 000000  00-13
+  000017 777776  14-34 = unused
+  000000 000001  35    = project code verify bit
+RIBPID==42      PID accounting
+  777777 777777  00-35
+RIBALT==43      Dirty timer (FNBALT), used to clear ALC bit when SAT gets out
+  777777 777777  00-35
+RIB044==44      Reserved for future use
+  777777 777777  00-35 unused
+RIB045==45      Reserved for future use
+  777777 777777  00-35 unused
+RIB046==46      Reserved for future use
+  777777 777777  00-35 unused
+RIB047==47      Reserved for future use
+  777777 777777  00-35 unused
+RIB050==50      Reserved for future use
+  777777 777777  00-35 unused
+RIBPFS==51      First spot which can be used for RIB pointers in primary RIB
+  400000 000000  RBSPAR= Pointer to a secondary RIB not a data page
+  200000 000000  RBREAL= Pointer to a real page (as opposed to a hole)
+  100000 000000  ;;INDX= Pointer to index page (defined but not used)
+  040000 000000  ;;DLTA= Pointer has been changed (defined but not used)
+  740000 000000  RBMASK= Currently defined flag bits
+  037000 000000  04-08 = unused
+  000776 000000  09-16 = Unit within structure (max of 256.)
+  000001 777777  17-35 = Page within unit (max of 524287. pages per unit)
+RIBLST==775     Last location for retreival pointers
+  775-051+1 = 725 pointers in a primary RIB = 469 decimal
+  775-004+1 = 772 pointers in each secondary RIB = 506 decimal
+  NOSPAR=1,      725*1       =         469 pages with no secondary RIBs
+  ONELVL=772,    725*772     =     237,314 pages in 1 level of secondary RIBs
+  TWOLVL=764044, 725*772*772 = 120,080,884 pages in 2 levels of secondary RIBs
+                 Note: at 67,108,864 pages, all 35 bits in RIBSIZ are set.
+RIBCOD==776     Contains unlikely code
+  000000 666666   CODRIB
+RIBSLF==777     Pointer to self
+  200uuu xxxxxx  Standard pointer with RBREAL+unit+page
+$text RIBSYS;Sample RIB for [1,4] UFD.
+000 RIB         0       Zero in the primary RIB
+001 RPS         0       Zero in the primary RIB
+002 SZS         1       Each RIB pointer represents 1 page
+003 SNM         0       No secondary RIBs in UFDs
+004 PPN      1,,1       Owner of this file
+005 NAM      1,,4       Name of file
+006 EXT 654644,,0       Extension = 'UFD', note creation date, access date zero
+007 PVW 754000,,0       Protection, note creation date/time is zero
+010 SIZ         16000   Size in words (14. pages)
+011 VER         1       Version number, or RH of PPN of author
+012 FUT         0       Reserved word in RIB
+013 EST         0       Estimated size
+014 ALC         0       Allocated size
+015 POS         0       Unused word in RIB
+016 FT1         0       Reserved word in RIB
+017 LCW  20000,,0       File changed since TITO ran, no license
+020 MTA         0       BACKUP tape reel-ID
+021 DEV         0       Unused word in RIB
+022 STS         400000  This is a directory
+023 ELB         0       Retreival pointer to first bad page
+024 XT1         0       Reserved word in RIB
+025 QTF         303240  FCFS (logged in) quota in pages
+026 QTO         303240  Logged out quota
+027 MXA         51763   Max used when DSKCLN last checked
+030 USD         51763   Used pages
+031 AUT         0       Author PPN
+032 UNM 637163,,0       Username = 'SYS'
+033 UN1      0,,0       2nd half of username
+034 TRU         0       Privileged arg
+035 XT2         0       Reserved word in RIB
+036 ALP         17      Allocated pages (1 RIB, 7 primary + 7 overflow data)
+037 PJC         0       Project code 1-5
+040 PJ1         0       Project code 6-10
+041 PJ2         0       Project code 11-12
+042 PID         0       PID accounting
+051 PFS 200uuu,,xxxxxx  Data page for files that have a hash remainder of 0
+052   1 200000,,1021    Data page for hash 1 (includes SWAP.SYS)
+053   2 200000,,1022    Data page for hash 2 (includes CRASH.SYS and SYSTEM.SAV)
+054   3 200uuu,,xxxxxx  Data page for hash 3 (includes SPAGES.SYS)
+055   4 200000,,1020    Data page for hash 4 (includes HOME.SYS)
+056   5 200uuu,,xxxxxx  Data page for hash 5
+057   6 200000,,1021    Data page for hash 6 (includes SAT.SYS)
+060   7 200uuu,,xxxxxx  1st overflow data page
+061  10 200uuu,,xxxxxx  2nd overflow data page
+062  11 200uuu,,xxxxxx  3rd overflow data page
+063  12 200uuu,,xxxxxx  4th overflow data page
+064  13 200uuu,,xxxxxx  5th overflow data page
+065  14 200uuu,,xxxxxx  6th overflow data page
+066  15 200uuu,,xxxxxx  7th overflow data page
+776 COD      0,,666666  Code for RIB
+777 SLF 200000,,1023    Pointer to self
+$text RIBSAT;Sample RIB for SAT SYS.
+10000 RIB         0       Zero in the primary RIB
+10001 RPS         0       Zero in the primary RIB
+10002 SZS         1       Each RIB pointer represents 1 page
+10003 SNM         0       No secondary RIBs in this file
+10004 PPN      1,,4       Owner of this file
+10005 NAM 634164,,0       Name of file = 'SAT'
+10006 EXT 637163,,0       Extension = 'SYS', note creation date/access date zero
+10007 PVW 444000,,0       Protection, note creation date/time is zero
+10010 SIZ         30000   Size in words (8*3 pages)
+10011 VER         1       Version number, or RH of PPN of author
+10022 STS         240000  Do not delete, do not backup
+10036 ALP         31      Allocated pages (1 RIB, 8 data for each of 3 units)
+10051 PFS 200000,,11      First data page for unit 0
+10052     200000,,22000   Each page maps 512/2*36 = 9216 pages
+10053     200000,,44000   The first half has bits which are set if the page is
+10054     200000,,66000   mapped, the second half has bits which are set if the
+10055     200000,,110000  page is allocated to a file.  The F3's CDC disks
+10056     200000,,132000  require 8 SAT pages per unit.
+10057     200000,,154000
+10060     200000,,176000
+10061     200002,,10
+10062     200002,,22000
+10063     200002,,44000
+10064     200002,,66000
+10065     200002,,110000
+10066     200002,,132000
+10067     200002,,154000
+10070     200002,,176000
+10071     200004,,10
+10072     200004,,22000
+10073     200004,,44000
+10074     200004,,66000
+10075     200004,,110000
+10076     200004,,132000
+10077     200004,,154000
+10100     200004,,176000
+10776             666666  RIB code
+10777     200000,,10      Self pointer (page 10 of unit 0)
+11005       2000,,0       "F" bits set for pages that are available (not part
+11172             4000    on any file).  A word of zero indicates that all 36
+11323         20,,0       pages are allocated to some file.
+11337          2,,0
+11400     777777,,777777  "M" bits set for pages that are not mapped to memory.
+11401     777777,,777777  A zero bit means that the particular page is in core,
+11402     777777,,777777  in use by the Monitor or by some user.
+11403     777777,,777777
+11404     777777,,777777
+11405     775777,,777777
+11407     777777,,777777  More of the same
+$text RIBHOME;Sample RIB for HOME SYS.
+12000 RIB         0       Zero in the primary RIB
+12001 RPS         0       Zero in the primary RIB
+12002 SZS         1       Each RIB pointer represents 1 page
+12003 SNM         0       No secondary RIBs in this file
+12004 PPN      1,,4       Owner of this file
+12005 NAM 505755,,450000  Name of file = 'HOME'
+12006 EXT 637163,,0       Extension = 'SYS', note creation date/access date zero
+12007 PVW 444000,,0       Protection, note creation date/time is zero
+12010 SIZ         30000   Size in words (8*3 pages)
+12011 VER         1       Version number, or RH of PPN of author
+12022 STS         240000  Do not delete, do not backup
+12036 ALP         31      Allocated pages (1 RIB, 8 data for each of 3 units)
+12051 PFS 200000,,0       Page 0 of unit 0 is reserved
+12052   1 200000,,1       Primary HOM page for unit 0
+12053   2 200000,,6       Secondary HOM page for unit 0
+12054   3 200000,,2       Primary BAT page for unit 0
+12055   4 200000,,7       Secondary BAT page for unit 0
+12056   5 200000,,3       First page of BOOTS on unit 0         Pages 10-107
+12057   6 200000,,4       Second page of BOOTS on unit 0        are allocated
+12060   7 200000,,5       Third page of BOOTS on unit 0         here by the old
+12051   8 200002,,0       Page 0 of unit 1 is reserved          version of
+12052   9 200002,,1       Primary HOM page for unit 1           REFSTR for the
+12053  10 200002,,6       Secondary HOM page for unit 1         KS.  This is
+12054  11 200002,,2       Primary BAT page for unit 1           where the front-
+12055  12 200002,,7       Secondary BAT page for unit 1         end file is
+12056  13 200002,,3       First page of BOOTS on unit 1         stored for the
+12057  14 200002,,4       Second page of BOOTS on unit 1        8080.  BOOTS is
+12060  15 200002,,5       Third page of BOOTS on unit 1         in pages 11 and
+12051  16 200004,,0       Page 0 of unit 2 is reserved          12 on unit 0.
+12052  17 200004,,1       Primary HOM page for unit 2           The KS microcode
+12053  18 200004,,6       Secondary HOM page for unit 2         is in pages 13
+12054  19 200004,,2       Primary BAT page for unit 2           thru 26.  Page 3
+12055  20 200004,,7       Secondary BAT page for unit 2         is SAT data, 4
+12056  21 200004,,3       First page of BOOTS on unit 2         is RIB for HOME,
+12057  22 200004,,4       Second page of BOOTS on unit 2        page 5 is RIB
+12060  23 200004,,5       Third page of BOOTS on unit 2         for CRASH.
+12776 COD      0,,666666  Code for RIB
+12777 SLF 200000,,12      Pointer to self, page 12 on unit 0
+$text RIBCRASH;Sample RIB for CRASH SAV.
+  13000 RIB         0       Zero in the primary RIB
+  13001 RPS         0       Zero in the primary RIB
+  13002 SZS       772       Each secondary RIB pointer represents 506. pages
+  13003 SNM         1       This file has 1 secondary RIB
+  13004 PPN      1,,4       Owner of this file
+  13005 NAM 436241,,635000  Name of file = 'CRASH'
+  13006 EXT 634166,,2120    Extension = 'SAV', access date nonzero by COPYCRASH
+  13007 PVW 447000,,0       Protection, note creation date/time is zero
+  13010 SIZ         433000  Size in words (nonzero words in compressed file)
+  13011 VER         1       Version number, or RH of PPN of author
+  13022 STS         240000  Do not delete, do not backup
+  13036 ALP         1002    Allocated pages (1 RIB, 1 secondary RIB, 512 data)
+  13051 PFS 600000,,1014    Spare RIB for first 506 data pages (000-771=14-1005)
+  13052   1 200000,,1006    Pointer to data page 772
+  13053   1 200000,,1007    Pointer to data page 773
+  13054   1 200000,,1010    Pointer to data page 774
+  13055   1 200000,,1011    Pointer to data page 775
+  13056   1 200000,,1012    Pointer to data page 776
+  13057   1 200000,,1013    Pointer to data page 777
+  13776 COD      0,,666666  Code for RIB
+  13777 SLF 200000,,13      Pointer to self
+  14000                     First of 512. contiguous pages
+  xxxxx                     CRASH.SAV data area
+1013777                     Last of 256K words
+
+In this example, page 1014 is a secondary RIB.
+
+1014000 RIB 200000,,13      Pointer to preceding primary RIB
+1014001 RPS         51      Pointer to this RIB is at offset 51 in primary RIB
+1014002 SZS         772     Each secondary RIB pointer represents 506. pages
+1014003 SNM         0       Zero in secondary RIB
+1014004 SFS 200000,,14      Pointer to first page
+1014xxx     200000,,xxx     Pointers to disk pages 15-1004
+1014775 LST 200000,,1005    Pointer to last page described by this RIB
+1014776 COD      0,,666666  Code for RIB
+1014777 SLF 200000,,1014    Pointer to self, page 1014 on unit 0
+$text UFD;Format of UFD's.
+UFDNAM==0       File name
+  777777 777777  00-35 = 6 characters in SIXBIT             (.RBNAM)
+UFDEXT==1       File extension and protection
+  777777 000000  00-17 = 3 characters in SIXBIT             (.RBEXT LH)
+  000000 400000  18    = spare bit, unused as of P035 monitor
+  000000 200000  19    = File has been dumped by TITO       (.RBLIC bit 4)
+  000000 100000  20    = File has an error                  (.RBLIC bit 5)
+  000000 040000  21    = File is subject to PID accounting  (.RBLIC bit 6)
+  000000 020000  22    = File allocation changed            (.RBLIC bit 7)
+  000000 010000  23    = File is temporary                  (.RBLIC bit 8)
+  000000 004000  24    = MAGNUM file in JIS-8 Katakana mode (.RBLIC bit 9)
+  000000 002000  25    = unprivileged bit                   (.RBLIC bit 10)
+  000000 001000  26    = unprivileged bit                   (.RBLIC bit 11)
+  000000 000777  27-35 = protection code                    (.RBPRV bits 0-8)
+UFDCDT==2       File creation date/time
+  400000 000000  00    = spare bit, unused as of P034 monitor
+  300000 000000  01-02 = reserved,   not privileged         (.RBLIC bits 0,1)
+  060000 000000  03-04 = reserved,   need WF or JL to set   (.RBLIC bits 2,3)
+  014000 000000  05-06 = Extended creation date bits        (.RBEXT bits 20,21)
+  003777 770000  07-23 = Creation time, seconds past midnight (see .RBLIC 12-17)
+  000000 007777  24-35 = Creation date, days since 1-Jan-64 (.RBPRV bits 24-35)
+UFDLIC==3       License bits and size
+  400000 000000  00    = File is bigger than 131071 pages
+  377777 000000  01-17 = Allocated pages (including RIB)    (.RBALP)
+  000000 777777  18-35 = File license                       (.RBLIC bits 18-35)
+UFDRIB==4       Retreival pointer to primary RIB of file
+  740000 000000  00-03 = RBMASK (only RBREAL=1B1 is allowed here)
+  000776 000000  09-16 = Unit within structure
+  000001 777777  17-35 = Page within unit
+UFDSIZ==5       Number of words per entry
+
+  Words 0. to 509. are used to store information for 102. files.
+  Word 510. must be zero.  Word 511. is 7 or more if there is a link.
+  The overflow page is found at RIBPFS+N.  UFDs never have spare RIBs.
+UFDLNK==777     Link to next page if more than 103. files hash to this page.
+  000000 000777  28-35 = Logical page # of overflow page
+
+UFDHSI==7       Hash code, divide file name by 7, remainder is 0 to 6.
+                Note: All UFDs on a given structure have the same hash code.
+                      It would be more efficient to have a different hash
+                      code on each UFD that has more than 5 overflow pages.
+
+  :@½

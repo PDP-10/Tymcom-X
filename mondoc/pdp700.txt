@@ -1,0 +1,257 @@
+		PDP-10 I/O instructions
+
+7xx00,7xx40=BLKI	Block Input, increment pointer, do DATAI, skip
+7xx04,7xx44=DATAI	Data Input, from device to memory
+7xx10,7xx50=BLKO	Block Output, increment pointer, do DATAO, skip
+7xx14,7xx54=DATAO	Data Output, from memory to device
+7xx20,7xx60=CONO	Conditions Out, 18 bits immediate to controller
+7xx24,7xx64=CONI	Conditions In, 36 bits from controller to memory
+7xx30,7xx70=CONSZ	Conditions in, test 18 bits, Skip if Zero
+7xx34,7xx74=CONSO	Conditions in, test 18 bits, Skip if One
+
+Unassigned codes act like all other illegal instructions, and cause an MUUO.
+
+ 000=APR Arithmetic Processor
+70000	BLKI  APR,  KA/KI Block mode RSW (Read SWitch register)
+70000	  APRID	    KL/KS Read APR serial number
+70004	DATAI APR,  KA/KI Read switch register
+70004	DATAI APR,  KL	  Read address break register
+70004		    KS		unassigned
+70010	BLKO  APR,  KA/KI Block mode DATAO APR,
+70010	  WRFIL     KL	  Write cache refill table
+70010		    KS		unassigned
+70014	DATAO APR,  KA	  Set user-mode protection and relocation registers
+70014	DATAO APR,  KI	  Maintenance Data Out (margin voltage, Bach)
+70014	DATAO APR,  KL	  Set address break register
+70014		    KS		unassigned
+70020	CONO  APR,  KA/KI Set PI channel for APR, I/O bus master RESET
+70020	  WRAPR     KL/KS Set PI channel for APR
+70024	CONI  APR,  KA/KI Read reason for APR interrupt (and KI sense switches)
+70024	  RDAPR     KL/KS Read APR status
+70030	CONSZ APR,1000 KA/KI Skip if 60Hz/50Hz clock flag is zero
+70030		    KL/KS	unassigned
+70034	CONSO APR,1000 KA/KI Skip if 60Hz/50Hz clock flag is one
+70034		    KL/KS	unassigned
+71054	DATAO PTR,  KI	  Set address break register (cannot be read back)
+
+ 004=PI  Priority Interrupts
+70040	BLKI  PI,   KA/KI	unassigned
+70040	  RDERA     KL	  Read Error Address Register (memory errors)
+70040		    KS		unassigned
+70044	DATAI PI,   all		unassigned
+70050	BLKO  PI,   KA/KI	unassigned
+70050	  SBDIAG    KL	  S-Bus Diagnostic function
+70050		    KS		unassigned
+70054	DATAO PI,   KA/KI Display 36 bits in console lights
+70054		    KL/KS	unassigned
+70060	CONO  PI,   KA/KI Enable, Disable, Clear, Start Interrupts
+70060	  WRPI	    KL/KS Enable, Disable, Clear, Start Interrupts
+70064	CONI  PI,   KA/KI Read status of interrupt system
+70064	  RDPI	    KL/KS Read status of interrupt system
+70070	CONSZ PI,   KA/KI/KL Conditions in, skip if masked bits are zero
+70070		    KS		unassigned
+70074	CONSO PI,   KA/KI/KL Conditions in, skip if masked bits are one
+70074		    KS		unassigned
+
+ 010=PAG Pager (KI+KL+KS, not on KA)
+70100	BLKI  PAG,  KI		unassigned
+70100		    KL/KS	unassigned
+70104	DATAI PAG,  KI	  Read UBR and EBR status
+70104	  RDUBR     KL/KS Read UBR and AC block in use
+70110	BLKO  PAG,  KI		unassigned
+70110	  CLRPT     KL/KS Clear page table entry
+70114	DATAO PAG,  KI	  Write UBR and EBR
+70114	  WRUBR     KL/KS Write UBR, set AC block
+70120	CONO  PAG,  KI	  Set EXEC AC stack pointer, page reload counter
+70120	  WREBR     KL/KS Write EBR, set cache strategy, clear pager
+70124	CONI  PAG,  KI	  Read APR serial number, page reload data
+70124	  RDEBR	    KL/KS Read EBR, cache strategy, pager modes
+70130	CONSZ PAG,  KI/KL CONI PAG, skip if selected bits are zero
+70130		    KS		unassigned
+70134	CONSO PAG,  KI/KL CONI PAG, skip if selected bits are one
+70134		    KS		unassigned
+
+ 014=CCA Cache Controller (KL only)
+70140	BLKI  CCA,	  Sweep cache (worthless no-op)
+70144	DATAI CCA,  SWPIA Sweep cache, Invalidate entries for All pages
+70150	BLKO  CCA,  SWPVA Sweep cache, Validate All to memory
+70154	DATAO CCA,  SWPUA Sweep cache, Unload All and invalidate cache
+70160	CONO  CCA,	  Sweep cache (worthless no-op)
+70164	CONI  CCA,  SWPIO Sweep cache, Invalidate One page entry
+70170	CONSZ CCA,  SWPVO Sweep cache, Validate One page to memory
+70174	CONSO CCA,  SWPUO Sweep cache, Unload One page and invalidate it
+70140-70174	    KS		unassigned
+
+ 020=TIM Timer (KL only)  (Note: KS uses opcode 70200, see below)
+70200	BLKI  TIM,  RDPERF  Read performance count (512+513 in EPT)
+70204	DATAI TIM,  RDTIME  Read 1MHz time base    (510+511 in EPT)
+70210	BLKO  TIM,  WRPAE   Write Performance Analysis Enable bits
+70214	DATAO TIM,		unassigned
+70220	CONO  TIM,	    Set interval timer enable and period (0.1MHz)
+70224	CONI  TIM,	    Read interval timer status and count
+70230	CONSZ TIM,1B22	    Skip if interval timer is not done
+70234	CONSO TIM,1B23	    Skip if interval timer has overflowed
+
+ 024=MTR Meter (KL only)
+70240	BLKI  MTR,  RDMACT  Read Memory reference count (506+507 in UPT)
+70244	DATAI MTR,  RDEACT  Read Execution count 0.5MHz (504+505 in UPT)
+70250	BLKO  MTR,		unassigned
+70254	DATAO MTR,		unassigned
+70260	CONO  MTR,  WRTIME  Enable E-box/M-box accounting, set PI for TIM
+70264	CONI  MTR,	    Read accounting enable bits, PI assignment for TIM
+70270	CONSZ MTR,	    CONI MTR, skip if selected bits are zero
+70274	CONSO MTR,	    CONI MTR, skip if selected bits are one
+
+
+  200=DTE0, 204=DTE1, 210=DTE2, 214=DTE3  PDP-11 interfaces
+  540=RH20#0, 544=#1, 550=#2, 554=#3, 560=#4, 564=#5, 570=#6, 574=#7
+777777,,777777	CONSO 774,@-1(17) is a legal user-mode instruction on KI/KL
+
+KS-2020 opcodes
+70000			See BLKI APR, and BLKI PI, above
+70100			See DATAI PAG, above
+70200	RDSPB	Read SPT Base address
+70204	RDCSB	Read CST Base address
+70210	RDPUR	Read Process Use Register
+70214	RDCSTM	Read CST Mask
+70220	RDTIM	Read Time base
+70224	RDINT	Read Interval register
+70230	RDHSB	Read Halt-Status-block Base address
+70234			unassigned
+70240	WRSPB	Write SPT Base address
+70244	WRCSB	Write CST Base address
+70250	WRPUR	Write Process Use Register
+70254	WRCSTM	Write CST Mask
+70260	WRTIM	Write Time Base
+70264	WRINT	Write Interval register
+70270	WRHSB	Write Halt-Status-block Base address
+70274			unassigned
+
+703			unassigned
+704	UMOVE	Move from user AC/memory to exec AC
+705	UMOVEM	Move from exec AC to user AC/memory
+706			unassigned
+707			unassigned
+710	TIOE	Test I/O word, skip if masked bits equal zero
+711	TION	Test I/O word, skip if masked bits nonzero
+712	RDIO	Read I/O word
+713	WRIO	Write I/O word
+714	BSIO	Bit Set I/O word
+715	BCIO	Bit Clear I/O word
+716			unassigned
+717			unassigned
+720	TIOE	Test I/O byte, skip if masked bits equal zero
+721	TION	Test I/O byte, skip if masked bits nonzero
+722	RDIO	Read I/O byte
+723	WRIO	Write I/O byte
+724	BSIO	Bit Set I/O byte
+725	BCIO	Bit Clear I/O byte
+726			unassigned
+727			unassigned
+730-777			unassigned
+I/O Device Numbers (including KA and PDP-6 peripherals)
+
+000=CPA   004=PI    010=PAG   014=CCA   020=TIM   024=MTR   030=ADC2  034=
+040=      044=      050=      054=      060=DLB1  064=DLC2  070=CLK1  074=CLK2
+100=PTP   104=PTR   110=CDP   114=CDR   120=TTY   124=LPT1  130=DIS1  134=DIS2
+140=PLT1  144=PLT2  150=CR1   154=CR2   160=DLB2  164=DLC2  170=DSK1  174=DSK2
+200=DTE0  204=DTE1  210=DTE2  214=DTE3  220=DX10  224=      230=LPT3  234=LPT2
+240=DLS1  244=DLS2  250=DPC1  254=DPC2  260=DPC3  264=DPC4  270=RMC1  274=RMC2
+300=DCSA  304=DCSB  310=      314=      320=DTC1  324=DTS1  330=DTC2  334=DTS2
+340=TMC1  344=TMS1  350=TMC2  354=TMS2  360=      364=      370=      374=
+400=      404=      410=      414=      420=      424=      430=      434=
+440=      444=      450=      454=      460=DSS1  464=DSI1  470=DSS2  474=DSI2
+500=      504=      510=      514=      520=      524=      530=      534=
+540=RH20  544=RH21  550=RH22  554=RH23  560=RH24  564=RH25  570=RH26  574=RH27
+600=      604=      610=      614=      620=      624=      630=      634=
+640=      644=      650=      654=      660=      664=      670=      674=
+700=      704=      710=      714=      720=      724=      730=      734=
+740=user  744=user  750=user  754=user  760=user  764=user  770=user  774=user
+
+ 000=CPA  Central Processor Assigment (for APR interrupts)
+ 004=PI   Priority Interrupt
+ 010=DRM  Drum controller for PDP-6
+ 010=PAG  Pager
+ 014=CCI  Computer to Computer Interface, DA10 (PDP-8 TTY scanner)
+ 014=CCA  Cache Controller (KL only)
+ 020=CCI2 2nd CCI
+ 020=TIM  Timer (KL only)
+ 024=ADC  Analog to Digital Converter
+ 024=MTR  Meter (KL only)
+ 030=ADC2 2nd ADC
+ 034-054  unassigned
+ 060=DLB  PDP-11 Data Link, DL10 Base Address
+ 064=DLC  PDP-11 Data Link, DL10 Control
+ 070=CLK  Real-time Clock, DK10
+ 074=CLK2 2nd CLK
+ 100=PTP  Paper Tape Punch
+ 104=PTR  Paper Tape Reader
+ 110=CDP  Card Punch, CP10
+ 114=CDR  Card Reader, CR10
+ 120=TTY  Console Teletype
+ 124=LPT  Lineprinter, LP10
+ 130=DIS  Display (graphics device), GT40
+ 134=DIS2 2nd DIS
+ 140=PLT  Plotter, XY10
+ 144=PLT2 2nd PLT
+ 150=CR   Bufferred Card Reader, CR10
+ 154=CR2  2nd CR
+ 160=xxx  PDP-6 to PDP-7/8 interface
+ 160=DLB2 2nd DL10
+ 164=DLC2 2nd DL10
+ 170=DSK  Disk/Drum Controller, RC10
+ 174=DSK2 2nd DSK
+ 200=DC   Data Controller
+ 200=DTE0 Data Ten to Eleven (KL Console Front End PDP-11)
+ 204=DC2  2nd DC
+ 204=DTE1 2nd DTE
+ 210=UTC  User DECtape Controller
+ 210=DTE2 3rd DTE
+ 214=UTS  User DECtape Status
+ 214=DTE3 4th DTE
+ 220=MTC  old Magnetic Tape Controller
+ 224=MTS  old Magnetic Tape Status
+ 230=MTM  old Magnetic Tape M
+ 220=DX10 Magnetic Tape Controller (PDP-8 driving TU-70)
+ 230=LPT3 3rd LPT
+ 234=LPT2 2nd LPT
+ 240=DLS  Data Line Scanner, DC10
+ 244=DLS2 2nd DLS
+ 250=DPC  Disk Pack Controller, RP10
+ 254=DPC2 2nd DPC
+ 260=DPC3 3rd DPC
+ 264=DPC4 4th DPC
+ 270=DF   Disk File on PDP-6
+ 270=RMC  Data Control
+ 270=FSD1
+ 274=RMC2 2nd RMC
+ 274=FSD2
+ 300=DCSA Data Communications Scanner, A
+ 304=DCSB Data Communications Scanner, B
+ 310-314  unassigned
+ 320=DTC  DECtape Controller, TD10 (alias DAC)
+ 324=DTS  DECtape Status, TD10     (alias DAS)
+ 330=DTC2 2nd DTC                  (alias DBC)
+ 334=DTS2 2nd DTS                  (alias DBS)
+ 340=TMC  Standard Magnetic Tape Controller, TM10
+ 344=TMS  Standard Magnetic Tape Status, TM10
+ 350=TMC2 2nd TMC
+ 354=TMS2 2nd TMS
+ 360=FSD3
+ 360-374  unassigned
+ 440-454  reserved
+ 460=DSS  Single Synchronous Line Unit, DS10
+ 464=DSI  DS10 Interrupt register, DS10
+ 470=DSS2 2nd DSS
+ 474=DSI2 2nd DSI
+ 500-534  reserved
+ 540=RH20#0 Massbus controller for disk or tape
+ 544-574  RH20 units 1 to 7
+ 600-634  reserved
+ 640-674  unassigned
+ 700-734  reserved
+ 740-774  Unrestricted on KI and KL
+777777,,777777	CONSO 774,@-1(17) is a legal user-mode instruction on KI/KL
+
+[The above information does not appear in any DEC manual.]
+    

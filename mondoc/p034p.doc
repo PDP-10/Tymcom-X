@@ -1,0 +1,39 @@
+Significant changes to TYMCOM-X between P034/N and P034/P      12-Sep-85
+
+Major reliability improvements:
+
+  1)  Fixed the INPUT RING PROCESSING TIMEOUT crash problem caused by an
+      improperly setup user page map.
+
+  2)  Stopcode information is output to the CTY when the system crashes,
+      instead of just the enigmatic BOOTS LOADED message.  The new messages
+      contain more information than is reported by CRSHID.  For more details
+      on the stopcode mechanism, see the accompanying document STOPCD.MEM.
+
+  3)  Fixed the problem with running out of FRECOR and restricted the size
+      of FRECOR allocated on smaller processors to allow more memory for
+      user jobs.
+
+New features:
+
+  1)  The frame inactivity timeout feature is now fully implemented.  The
+      timeout may be set and read both by the "SET AUTOLOGOUT n" monitor
+      command and the SETINA, SETPRV and GETTAB UUOs.  In addition, this
+      feature can be enabled automatically by setting the appropriate bit
+      in the LUD.  A system-wide default may be set by the operator or
+      system administrator using the command "SET DEFAULT INACTIVITY n".
+
+  2)  The TRU limit for a job may now be set or extended by both the monitor
+      command "SET LIMIT n" and the SETLIM UUO.  A frame my now request an
+      interrupt when the TRU limit has been exceeded.
+
+  3)  New GETTAB tables have been added.  These tables will be fully
+      documented in the next release of the YAMM.
+
+  4)  Some errors which caused the system to be reloaded are now continuable
+      stopcodes.  Instead of causing "BOOTS LOADED", these errors now output
+      a message to the CTY describing the problem.  If the error affects only
+      one job, then that job is halted, but the system as a whole continues
+      running.
+
+[End of P034P.DOC]

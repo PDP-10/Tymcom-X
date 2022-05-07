@@ -1,0 +1,14 @@
+.library man.dfs
+.synopsis
+Run a program from a directory in the DO list.
+.syntax
+DO program
+.description
+This command is similar to the RUN command,
+except that it searches for the named program in all of
+the directories specified in the current DO list.
+The directories are searched in the order they appear in the DO list.
+.see also
+CTEST ADDDOLIST
+CTEST SETDOLIST
+(XEXEC)MEXEC

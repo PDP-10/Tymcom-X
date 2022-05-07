@@ -1,0 +1,151 @@
+$menu DISKS;Disk drives.
+*(MONDOC)DISKS.NFO:M3650;The 3650 project.
+*(MONDOC)DISKS.NFO:DISKSIZE;Disk capacities.
+*(M33)DISKIO.MEM:DISKIO;Disk-driver routine definitions.
+*(MONDOC)DISKS.NFO:DECDISK;Commands to RH11 for RP06/RM03 on 2020.
+*(MONDOC)DISKS.NFO:IBMDISK;Commands to IBM compatible disk controller.
+*(MONDOC)SA10.NFO:SA10DISK;Programming the SA10 disk channel.
+$text M3650;The 3650 project.
+xx-Xxx-85  KI installed in CUPC.  System number 5.
+xx-Xxx-85  SYSNO changed to C12.
+xx-Xxx-85  SYSNO changed again, to C24, which is a valid PDP-10 number.
+xx-Xxx-85  Maintenance verified that 3674 and 3653 work standalone.
+25-Sep-85  PAKCOP updated.  Replaced all hardcoded constants with symbols.
+   Nov-85  Rewrote BPXKON to handle disks formatted in pages.
+26-Nov-85  PAKCP3 tested, formats 3675 in pages instead of blocks.
+           Cannot boot from disk, LODBTS works with 3675 blocks only.
+30-Nov-85  C24-P034/P09 runs on a 3675 formatted in pages.
+ 6-Dec-85  Attempt to format 3650 in pages failed.  Had to use SA10 diagnostics
+           to reformat 3650 in native mode.  System ran in native blocks.
+ 8-Dec-85  Discovered that 3650 native mode needs additional commands, which
+           the SA10 diagnostics used.  PAKCP5 works if SA10 diag run first.
+ 9-Dec-85  C24-P034/P09 running on 3650 formatted in native pages.
+           Modified BPXKON to recognize all 4 formats.
+ 7-Jan-86  Meeting with Ed Roup, demonstrating the 3650.
+17-Jan-86  Located cause of EUE stopcode on C24 - garbage in UFD page.
+18-Jan-86  Did a TITO all-files of the blocks pack and pages pack, refreshed
+           the pages pack and restored both tapes.
+28-Jan-86  Hacked BOOTS to understand pages only, in (M33)BOOTX.MAC
+29-Jan-86  Verified that C70's paper-tape punch works.  New LODBTS doesn't.
+30-Jan-86  PAKCP5 formats and sets unit ID, can't read HOM page, can't COPY.
+           Had to JFCL out tests that verified alternate tracks.
+31-Jan-86  C24-P034/P14 works, created at 10-pack 3650 system (1 million pages).
+ 2-Feb-86  System 26's data moved to System 29's hardware so that the I/O bus
+           cables from the new C26 will reach to the upgraded SA10.
+11-Feb-86  Using the old copy routine in PAKCP5 ("OLDC" plus "DOIT") takes about
+           25 minutes to copy one 3650 pack to another.
+11-Feb-86  Fixed bug in BPXKON, ASP restore takes 26 minutes to read 2 tapes.
+21-Feb-86  Disconnected C24, brought up C26 on the 3650 disks.
+
+25-Jun-86  Due to RIB errors and other unexplained problems with the new disk
+           driver, it was renamed to CPXKON.  All systems not using 3650 disks
+           are loaded with the old BPXKON.
+
+       86  Problems with large files on 3650 - holes appear, BADSAT when the
+           file is touched, FILAUS & GIVPG1 stopcodes when BADSAT made
+           continuable, portions of [1,4].UFD getting overwritten.
+
+ 7-Jan-87  Went back to the old BPXKON and modified it to talk to 3650 in blocks
+           only.  This hack is named BP5KON, and is working on system 58.
+   Feb-87  CPXKON works on 3650/3652 disks as well as 3675 disks.
+   Apr-87  CPXKON verified as working on all disks in P035/B03.
+
+It is currently possible to boot from magnetic tape (FTALOD) and run a multipack
+3650 system.  Booting from paper tape or "J BOTLOD" works only if at least one
+pack on the system is formatted in blocks.
+
+        Things to be done yet:
+
+1) Modify BOOTS to understand all 4 disk types.  Right now, "BOOTS" understands
+   3675 blocks only, and "BOOTX" understands 3650 pages only.
+
+2) Add a command to BOOTS telling it which set of packs to look at.  This is so
+   that a one-pack test system can be kept spinning and not confuse the Monitor
+   by having two packs claiming to be "DSKB0".
+2a) Modify REFSTR to recognize an added word in the HOME block for system number
+2b) Modify REFSTR to reserve cylinders 1 and 2 for UFD project.
+
+3) Make a single version of PAKCOPY that understands 3675 and 3650 disks.
+$text DISKSIZE;Disk capacities.
+ Model  Raw     Cylind Heads Bytes   Blocks  Pages   Pages   Pages   Used
+        bytes   (alts)       /track  /track  /track  /cyl    total   bytes
+------  -----   ------ ----  ------  ------  ------  -----   -----   -----
+  Disks used on F3
+CDC-MMD 150M    813+10  10   (20K)    (32)    8       80      65040  143M
+  DEC disks, used on KS only
+RM03-B   75M    823+0    5   (20K)     30    (7.5)    37      30451   67M
+RP06-B  200M    815+0   19   13030     20    (5)      95      77425  176M
+  Memorex disks, used on KI and KL
+3675-B  200M    808+7   19   13030     18    (4.5)    85      68680  151M
+3675-P  200M    808+7   19   13030    (20)    5       95      76760  168M
+3650-B  317M    555+5   30   19069     25    (6.25)  187     103785  228M
+3650-P  317M    555+5   30   19069    (28)    7      210     116550  256M
+3652-P  635M  2*555+5   30   19069    (28)    7      210     233100  512M
+
+Ampex DC331 is the same as IBM 3330-II and Memorex 3675
+IBM 3330-II is the same as Memorex 3675 and Ampex DC331
+IBM 3350    is the same as Memorex 3650
+
+2 strings of 3650 (or 1 string of 3652) replaces 3 strings of 3675
+Other types of disks.
+ Model  Raw     Cylind Heads Bytes   Blocks  Pages   Pages   Pages  Vendor
+        bytes   (alts)       /track  /track  /track  /cyl    total
+------  -----   ------ ----  ------  ------  ------  -----   -----  ------
+CAL215   50M    used on XDS940 systems, same as IBM 2316            CALCOMP
+CAL230  404M    used on XDS940 systems, same as IBM 3330            CALCOMP
+3375    404M    959+?   12   35616    (56)    13     156    149604  IBM
+3330-II 200M    808+7   19   13030     18    (4.5)    85     68680  IBM
+3350    317M    555+5   30   19069     25    (6.25)  187    103785  IBM
+3380    630M    885+1   15   47476    (68)    17     165    146025  IBM/STC
+3380    630M    885+1   15   47476     44    (11)    255    225675  IBM/STC
+RP01      5M    200+3   10    2880      5    (1.25)   12.5    2500  DEC
+RP02     23M    200+3   20    5760     10    (2.5)    50     10000  DEC
+RP03     46M    400+6   20    5760     10    (2.5)    50     20000  DEC
+RP04    100M    406+5   19   13030     20    (5)      95     38570  DEC
+RP06    200M    810+5   19   13030     20    (5)      95     76950  DEC
+RP07    500M    629+1   32             43   (10.75)  344    216376  DEC
+RM03     75M    823+0    5   (20K)     30    (7.5)    37     30451  DEC
+RM05    300M            19                                          DEC
+RP20    630M    1119+1  30   (19K)     25    (11)    187.5  225675  DEC
+3652-P  635M  2*555+5   30   19069    (28)    7      210    233100  MEMOREX
+RA60    205M                                                        DEC
+RA80    121M                                                        DEC
+RA81    456M                                                        DEC
+(F3)     75M    800+5    5   (20K)    (32)    8       40     32000  Ampex
+Capricorn 330M                                                      Ampex
+Century   330M                                                     Century Data
+$text DECDISK;RP06/RM03/RH11 on 2020.
+The RP06 uses the same 200 megabyte disk pack as an IBM 3330-II, a Memorex 3675,
+and Ampex 331.  It interfaces to DEC's Massbus via a card-cage called the DCL.
+Because the RP06 uses a different track layout (no KEY fields, smaller COUNT
+field), up to 20 blocks of 128 PDP-10 words can fit on a track.  (The disks
+using IBM compatible controllers can only get 18 blocks on a track.)
+
+The RM03 is a CDC 67 megabyte disk formatted as 30 blocks per track.
+
+The RH11 disk controller in the 2020 can handle any combination RP04/RP06/RM03
+drives, up to 8 disks.  The controller is capable of transferring more than one
+block in a single command, switching to the next head in the cylinder
+automatically.  The PDP-11 console front-end on the KL also has an RH11, for
+loading diagnostics off of an RP06 or RP04.
+
+        MORE TO BE ADDED LATER.
+$text IBMDISK;Commands to IBM compatible disk controller.
+The Ampex DC-830 is a combination storage control unit and string controller.
+It is capable of controlling two 8-disk strings of Ampex DM-331 disks only.
+
+The Memorex 3672 is functionally equivalent to the IBM 3830 storage control
+unit.  It is capable of controlling two strings of 8 IBM-compatible disks.
+A string of IBM 3330-II disks has one 3333 string controller built in.
+A string of Memorex 3675 disks need an external 3673 string controller.
+
+The Memorex 3675 is functionally equivalent to the IBM 3830-2 storage control
+unit.  It is capable of controlling four strings of IBM-compatible disks.
+A 200 megabyte removable string can be an IBM 3333 plus three IBM 3330 modules,
+or a Memorex 3673 plus four Memorex 3675 modules (8 spindles per string).
+A 300 megabyte string of nonremovable disks can be an IBM 3353 plus three
+IBM 3350 modules, or a Memorex 3653 plus three Memorex 3650 modules.
+
+        MORE TO BE ADDED LATER.
+
+   

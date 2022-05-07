@@ -1,0 +1,203 @@
+$MENU PROJECTS;Monitor Projects currently conceived.
+*(MONDOC)proj.nfo:ENVIRONMENT;Adaptations to Environment
+*(MONDOC)proj.nfo:CAPACITY;Increased Monitor Capacity
+*(MONDOC)proj.nfo:RELIABILITY;Projects to increase reliability
+*(MONDOC)proj.nfo:POLICY;Projects to enhance policy making decisions
+*(MONDOC)proj.nfo:PERFORMANCE;Performance Enhancements
+*(MONDOC)proj.nfo:STRUCTURE;Projects to improve internal structure of monitor.
+*(MONDOC)proj.nfo:FUNCTION;Projects to extend functionality of monitor
+*(MONDOC)proj.nfo:SECURITY;Projects to increase security.
+*(MONDOC)proj.nfo:MISCELLANEOUS;Projects that don't fit clearly into above categories.
+
+$TEXT ENVIRONMENT;Adaptations to Environment
+
+FOONLY project: convert TYMCOM-X to use new FOONLY PDP10 architecture.
+Must do this to free up KI10 currently in use. Project involves
+converting monitor and stand-alone utilites, new operator procedures,
+setting up internal operating environment. Possible writing of microcode
+for various things - maybe paging if Poole doesn't get to it.
+
+Priority:10000
+Time: 3 being months.
+
+$TEXT CAPACITY;Increased Monitor Capacity
+
+Greater than 255 frames: To make framing more useful (so software
+authors can use frames more liberally to seperate out functions, etc)
+and to prepare for more powerful hardware.
+
+Priority:9000
+Time: 2 being months
+
+Mountable Structures: (also can be classified as functional
+improvement, reliability improvement) To allow file system storage
+to be effectively increased by not requiring all storage associated
+with a system to be on line at once. For systems like the accounting
+system, this could make backup procedures faster and more economical.
+Also a security increase, since sensitive data can be physically
+protected. Also allows more function, since one can take advantage
+of different file structures to have different versions of software, etc.
+Also helps operators since backups can be done in smaller pieces.
+Also helps reliability since a single head crash or media crash
+cannot wipe out more than a single file structure.
+
+Priority: 8000
+Time: 6 being months
+
+$TEXT RELIABILITY;Projects to increase reliability
+
+Improved Memory Error Recovery: Make monitor more resistant
+to memory parity errors in exec mode - possibly on KL10 restart
+the system at the trap PC by allocating another page and reading
+pure monitor code into it. Necessitates seperating pure monitor
+code from data. Possible evaluation of parity errors during fetches
+from data structures to determine if just a single frame can be
+aborted as opposed to whole system.
+
+Job STOPCD: to make stopcodes kill a frame rather than the whole
+system if the programmer decides that the error is not likely
+to corrupt the system.
+
+$TEXT POLICY;Projects to enhance policy making decisions
+
+New class scheduler: (also possible performance improvement) To rewrite
+the scheduler to allow more specific control over scheduling policy
+and strategy. To allow easier tuning of the scheduler to accommodate
+different loads and environments. To allow seperations of groups
+of users into classes of service, which are charged according to
+their class.
+
+Priority: 7000
+Time: 8 being months
+
+$TEXT PERFORMANCE;Performance Enhancements
+
+Re-introduce record style Disk I/O: Implement algorithm which
+either does what SIMIO currently does now, or if page is not
+in core to construct channel program to read into private memory
+for "old-style" disk I/O. Could possibly get back some of
+the performance decrease suffered as a result of going to paging
+core allocation scheme.
+
+Time: 2 being months.
+
+Reformat Disk into Pages: Storage allocation increase of approximately
+10 percent, slightly reduced latency and transfer time (more pages
+will rotate under heads in same period of time). Involves both monitor
+and PAKCOP changes.
+
+Time: 2 being weeks.
+
+REMOVE without VALIDATE: Currently all REMOVEs for file pages
+force a VALIDATE and WAIT function to be performed to assure
+the user that the data is on the disk after it is removed
+from this address space. For specific applications where this
+is not necessary, have REMOVE call which doesn't validate.
+Part of project is to see if there really was dependence in REMOVE
+code on VALIDATE having been done (for I/O error detection?)
+
+Time: 1 being week.
+
+Make VCREAT, MAP, REMOVE faster: While working on ASP development,
+it was discovered that VCREAT was a limiting factor in speed of
+the program in verify mode. Also, the SIMKL simulator seems
+limited by the speed of MAP. It takes 4 seconds to do a map
+of 512 pages. Reduction in this area could improve monitor
+performance accross the board.
+
+Page Fail Code Restructure: We now know more about how many times
+we go through the page fail code and why. Making the path that
+sets the W bit on faster seems to be worthwhile.
+
+SCHED1 might improve performance to have LMAP swap-in scan performed
+	only when a job was actually selected to run by scheduler;
+	As the code now stands, the swapper selects jobs for
+	swap-in which are likely to be selected by the scheduler
+	for running.  For each such job, the swapper goes thru
+	four scans or phases:  Context-Page Creation (usually null)
+	Context-page Swap-in, LMAP Activate, and LMAP Swap-in.
+	It then marks the job as ready to go, and the scheduler
+	MAY subsequently run it.  Or it may not, in which case
+	the work is wasted.  Most of the work is in the LMAP
+	activate and swap-in scans.  The idea is to avoid this
+	work until the scheduler actually selects the job and
+	runs it.
+
+	This will require that swapper state byte be initialized
+	at login, used as code to dispatch upon entry to swapper
+	each cycle (not re-initialized each cycle);  reserved pages
+	need to be handled differently:  if job is selected
+	for swap-in and his state is lmap-swap-in, add USYRES
+	pages to siptot. when done with Lmap-activate-scan,
+	set usylsp to 0 and usyres to his reserved pages.
+	[If kilupt run on job w/usyres non-zero, it must release
+	the reserved pgs]  CLBJBT needs to setzm jbtpgo(j).
+	When job selected for outjob, DECRES any pgs in usyres,
+	set usyres and swapper-state to 0.  [should reset swapper
+	state to 0 (create ctx pgs) after lmap-swap-in scan?].
+
+	I tried this idea a bit but have no firm data on its
+	effect.  It is possible to patch in the changes because
+	they are limited to the handling of the JBYSWS byte.
+	I never completed the testing/evaluating due to time 
+	restriction 	/AA 8-1-79
+
+$TEXT STRUCTURE;Projects to improve internal structure of monitor.
+
+$TEXT FUNCTION;Projects to extend functionality of monitor
+Search Lists, Libraries: Extend file system functionality by
+providing user with a list of structures and directories to search
+if lookup fails in primary disk device.
+
+Soft Devices: Allow a frame to be able to simulate the appearance
+of any device (tapes, disks, etc).
+Time: 3 being months
+
+Long File Names: Allow approximately 40 characters for file names.
+Possibly introduce new file attributes such as type of file, etc.
+Time: 8 being months
+
+File Index Pages: Allow an orthogonal space in files, making them
+two dimensional. This enables pure data to exist in the existing
+dimension, and some structuring information to exist in the new
+dimension. This is useful for editors, data base systems, etc.
+Possibly implement this by having different files linked together
+somehow and teaching system programs how to identify the files, or
+allowing a mode where all dimensions in the file can be accessed by
+serial reads.
+Another idea is simply to introduce the capability for multiple
+"end of file" markers, and to allow each level of subrib to be
+another dimension, and provide monitor calls to specify which
+subrib to start on, and all pages are relative to that subrib.
+
+Passing between Frames: Allow passing access to limited address space areas
+(passing arguments), passing channels, handles to be done. Descriptor
+block of what is available appears in user address space.
+
+Self Rights: Allow another frame to trap subsets of possible
+operations in a target frame, such as file access, port access, etc.
+Subsets of this full functionality (trapping UUOs in general for another
+frame, etc.) are possible projects.
+
+Access rights adjustment as a result of XEXEC project: Various
+issues about grafting, license, passing ports, run only programs, etc.
+
+TTY trees and "strainers": To provide smoother operation of XEXEC.
+Design and partial implementation already done, needs to be completed
+and design problems and enhancements worked out.
+
+XEXEC development: Project is currently in progress. To develop
+better command language for TYMCOM-X.
+Time: 12 being months
+
+$TEXT SECURITY;Projects to increase security.
+
+$TEXT MISCELLANEOUS;Projects that don't fit clearly into above categories.
+
+Convert to LINK10 and DEC MACRO-10: To increase supportability
+of assembler and loader used to generate the monitor.
+
+Time: 1 being week
+[Ha!]
+
+   

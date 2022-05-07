@@ -1,0 +1,304 @@
+
+AT DT 92,1 617 467 1550
+CONNECT 1200
+
+LARGE SYSTEMS ENGINEERING
+ENTER HOST KL1026
+GO
+
+Connecting to host system.
+RL171A DEC10 Development 15:31:46 TTY103 system 1026/1042
+Connected to Node NOVA(31) Line # 12
+Please LOGIN or ATTACH
+
+.WHO/NODE
+ 8 NED              30,5674  TTY56  NOVA_51D    FL171A 162+0     TI     0:00:33
+19 KBY              30,5730  TTY20  KL1026_20   NRT    15+23     TI     0:01:04
+20 KBY              30,5730  TTY75  SPIRIT_43D  DTECO  24+35     TI SW  0:00:11
+21 [KMR]            30,5637  TTY60  SPIRIT_24D  DC     2+1       ^C     0:00:20
+22 DAVENPORT,W      10,6026  TTY63  NOVA_21D    STECO  19+46     TI     0:02:35
+23 STU GROSSMAN     10,5665  TTY65  NOVA_1      FL171A 162+0     NA     0:00:17
+28 STU GROSSMAN     10,5665  TTY64  SPIRIT_2    DTELDR 7+28      TI LK  0:03:52
+30 SYMONDS,M.       10,2100  TTY55  SPIRIT_36D         2+0       ^C SW  0:00:02
+31 FRANTZ,A         10,73    TTY52  NOVA_43D    NETWOR 6+15      ^C SW  0:00:24
+32 SIRUS            30,4571  TTY53  NOVA_56D    WEEKLY 257+41    R2     0:00:39
+33 EKLUND           66,3024  TTY57  NOVA_34D    RUNOFF 5+24      TI     0:00:18
+34 TARL             10,5535  TTY101 NOVA_42D    WHO    14+62     ^C SW  0:00:09
+35 LWS              30,6030  TTY67  NOVA_40D    QUEUE  4+31      ^C SW  0:00:38
+36 HAYNES           30,5743  TTY66  SPIRIT_23D  NRT    5+22      ^C SW  0:01:05
+38 ALGOL            30,5336  TTY71  KL2137_2N   QUEUE  4+31      ^C SW  0:00:02
+39 IOTA             32,6010  TTY61  SPIRIT_34D  NRT    5+22      HB SW  0:00:02
+40 TREMBLAY         30,5672  TTY54  NOVA_24D    PIP    4+11      ^C SW  0:00:30
+41 HUIZENGA,B       10,2370  TTY72  NOVA_23D    MACRO  89+25     R2*    0:01:52
+42 COLEMAN,D        30,6012  TTY73  NOVA_30D    DTECO  15+35     TI SW  0:00:21
+43 KAEPPLEIN, M     30,5576  TTY77  SPIRIT_22D  WHO    14+62     ^C SW  0:00:52
+44 AUTOPATCH        10,5764  TTY74  NOVA_50D    NRT    7+22      HB SW  0:00:18
+45 IOTA             32,6010  TTY76  NOVA_31D    NRT    5+22      HB SW  0:00:06
+46 WOLFE,S          30,5602  TTY23  KL1026_23   FDDT   142+0     TI SW  0:01:14
+47 TROTTER,E        10,5774  TTY70  NOVA_54D    SED    10+20     TI SW  0:00:09
+49 [RDH]           226,4563  TTY62  SPIRIT_14D  MM     143+48    HB     0:00:04
+50 -MH-             10,5033  DET103             SYSTAT 26+SPY    TO SW  0:00:04
+51 HUIZENGA,B       10,2162  TTY104 SPIRIT_35D  WHO    14+62     ^C SW  0:00:40
+52 HELP              2,5     TTY103 NOVA_12D    WHO    14+62     R1*    0:00:00
+
+.KJOB
+
+-------------------------------------------------
+
+Connecting to host system.
+RL240A DEC10 Development 23:32:58 TTY51 system 1026/1042
+Connected to Node NOVA(31) Line # 14
+Please LOGIN or ATTACH
+
+.SYSTAT F
+
+System File Structures:
+Name    Free    Mount
+BLUI    18675   0
+DSKN    21300   1
+DSKA    115150  12
+BLKX    18535   1
+GLXX    140280  0
+DSKT    3448    1
+AP10    57920   0
+DSKC    63640   9
+BLKK    92180   1
+DSKR    16780   0
+DSKB    11160   9
+DSKP    14300   0
+BLKY    151970  1
+DSKK    554050  0
+DSKQ    577780  0
+Total Free 1857168
+
+.
+.queue
+
+Event Queue:
+  Type     Req#       Expiration                 Description           
+--------  ------  ------------------  ---------------------------------
+  USGFIL     201  30-Sep-84 23:59:30  Usage file closure               
+  OPRFIL     202   1-Oct-84  0:00:00  OPR log file closure             
+* KSYS        27   3-Oct-84  0:00:00  Debug new monitor                
+There are 3 jobs in the queue (1 in progress)
+
+Batch Queue:
+Job Name   Req#   Run Time  Core            User
+--------  ------  --------  ----  ------------------------
+  GCOFIL      28  00:05:00   512  SPIDER [30,5653]       /After: 2-Oct-84  7:50
+  MF         306  00:01:00   512  SELDERS,J [30,5553]    /After: 1-Oct-84  3:12
+  MF         327  00:01:00   512  HAYNES [30,5743]       /After: 1-Oct-84  4:29
+  FORWRD     263  00:05:00   512  PHILIP BUDNE [31,5732]  /After: 1-Oct-84 12:00
+  LSTMCO     350  00:05:00   512  PHILIP BUDNE [31,5732]  /After: 1-Oct-84 22:29
+  MAIL       237  00:15:00   512  NED    [30,5674]       /After: 1-Oct-84  6:00
+  SJH         19  00:04:00   512  SPIDER [30,5653]       /After: 2-Oct-84  3:30
+  MMOVE      245  00:30:00   512  SPIDER [30,5653]       /After: 1-Oct-84  7:30
+  FINSPR      12  00:05:00   512  HUIZENGA [10,5351]     /Dep:3
+  FINSPD     150  00:05:00   512  SPEAR  [307,5702]      /Dep:9
+  SPRKLD     152  00:30:00   512  SPEAR  [307,5702]      /Dep:1
+  NOTIFD     154  00:30:00   512  SPEAR  [307,5702]      /Dep:1
+  SPRAND     156  00:30:00   512  SPEAR  [307,5702]      /Dep:1
+  SPRCOD     158  00:30:00   512  SPEAR  [307,5702]      /Dep:1
+  SPRIND     160  00:30:00   512  SPEAR  [307,5702]      /Dep:1
+  SPRTHD     162  00:30:00   512  SPEAR  [307,5702]      /Dep:1
+  SPRDID     164  00:30:00   512  SPEAR  [307,5702]      /Dep:1
+  SPRRED     166  00:30:00   512  SPEAR  [307,5702]      /Dep:1
+  SPRSUD     168  00:30:00   512  SPEAR  [307,5702]      /Dep:1
+There are 19 jobs in the queue (none in progress)
+
+Printer Queue:
+Job Name   Req#    Limit             User
+--------  ------  -------  ------------------------
+  GILL        34      525  J CONNOR [30,5315]     /Lower  /Dest:COMET(70)
+There is 1 job in the queue (none in progress)
+
+
+.KJOB
+.sys g
+
+Status of RL240A DEC10 Development at 23:35:19 on 30-Sep-84
+
+CPU0 Uptime 40:09:02, 74% Null time = 74% Idle + 0% Lost, 19% Overhead
+CPU1 Uptime 40:09:02, 89% Null time = 89% Idle + 0% Lost, 8% Overhead
+
+26 Jobs in use out of 100.  25 logged in, 15 detached.
+
+Swapping space used = 0/36781 = 0%
+Virt. Core used = 786781/36781 = 2139%
+Swapping Ratio = 786781/2141 = 367
+Active swapping ratio = 3/2141 = .00
+Virt. Core saved by sharing = 579/(579+786781) = 0%
+Average job size =786380/26 = 30245P+980/26 = 37.6P  Total=787360/26 = 30283P
+
+.KJOB
+.who
+Job      PPN      Line    Connect    Prog   Low + Hgh  OH State  Runtime
+  1      1,2     PTY1   OPSER  J3   FAL-10    17+109    3 ED     0:00:03
+  2     10,5535  TTY50  NOVA_43D    STOPCD     1+4      5 ^C     0:00:24
+  3      1,2     CTY    KL1026_362  OPSER      2+6      4 HB     0:00:01
+  4      1,2     DET360             DAEMON    15+SPY    4 HS     0:03:03
+  5      1,2     DET360             ACTDAE    31+36     4 HS     0:01:04
+  6      1,2     TTY52  SPIRIT_1    SYSANS    16+SPY    3 HS     0:45:54
+  7      1,2     DET360             QUASAR    83+36     4 HS     0:00:40
+  8      1,2     DET360             PULSAR    29+36     3 HB     0:00:03
+  9     10,6026  DET51              DIRECT     6+45     4 ^C     0:00:05
+ 10      1,2     DET360             FILDAE     5+9      4 SL     0:00:01
+ 11      1,2     DET360             BATCON    25+36     3 HS     0:01:08
+ 12      1,2     DET360             CATLOG    28+36     4 HS     0:00:01
+ 13      1,2     DET360             ORION     25+36     4 HS     0:00:11
+ 14      1,2     DET360             LPTSPL    24+36     4 HB     0:00:03
+ 15      1,2     DET360             MIC        2+16     3 HS     0:00:04
+ 16      1,2     PTY2   OPSER  J3   FAL-10    17+109    3 ED     0:00:10
+ 17      1,2     DET360             PSTHRU     5+7      3 HB     0:00:12
+ 18      1,2     DET360             NML       42+115    3 HB     0:04:59
+ 19      1,2     DET360             NETMAI    43+11     3 HB     0:02:48
+ 20      1,2     DET360             DTELDR     6+7      3 HS     0:00:15
+ 21      1,2     PTY4   OPSER  J3   DTR        5+17     3 ED     0:00:00
+ 22      1,2     PTY3   OPSER  J3   FAL-10    13+109    3 ED     0:00:00
+ 23      1,2     TTY53  SPIRIT_3    OPR       50+36     3 HS     0:00:06
+ 24     10,5535  TTY55  NOVA_13D    NRT        3+19     5 R1     0:00:10
+ 25      2,5     TTY51  NOVA_14D    WHO       14+67     2 R1*    0:00:00
+ 28      1,2     PTY0   OPSER  J3   FAL-10    13+109    3 EN     0:00:01
+
+
+.KJOB
+.sys u
+
+Status of RL240A DEC10 Development at 23:36:55 on 30-Sep-84
+
+CPU0 Uptime 40:10:38, 74% Null time = 74% Idle + 0% Lost, 19% Overhead
+CPU1 Uptime 40:10:38, 89% Null time = 89% Idle + 0% Lost, 8% Overhead
+
+26 Jobs in use out of 100.  25 logged in, 15 detached.
+
+Job    Who       User          Line#    What   Size(P)  State   Run Time
+
+ 1    [OPR]     OPERATOR        P1J3    FAL-10  3+109   EW             3
+ 2    10,5535   TARL            50      STOPCD  5+4     ^C            24
+ 3    [OPR]     OPSER           CTY     OPSER   4+6     HB             1
+ 4    [OPR]     SYSJOB          DET     DAEMON  4+SPY   SL          3:03
+ 5    [OPR]     SYSJOB          DET     ACTDAE  4+36    SL          1:04
+ 6    [OPR]     SYSANS          52      SYSANS  3+SPY   SL         45:55
+ 7    [OPR]     SYSJOB          DET     QUASAR  4+36    SL            40
+ 8    [OPR]     SYSJOB          DET     PULSAR  3+36    HB             3
+ 9    10,6026   DAVENPORT       DET     DIRECT  4+45    ^C             5
+10    [OPR]     SYSJOB          DET     FILDAE  262139+9        HB             1
+11    [OPR]     SYSJOB          DET     BATCON  3+36    SL          1:08
+12    [OPR]     SYSJOB          DET     CATLOG  4+36    SL             1
+13    [OPR]     SYSJOB          DET     ORION   4+36    SL            11
+14    [OPR]     SYSJOB          DET     LPTSPL  4+36    HB             3
+15    [OPR]     SYSJOB          DET     MIC     3+16    SL             4 01
+16    [OPR]     OPERATOR        P2J3    FAL-10  3+109   EW            10
+17    [OPR]     SYSJOB          DET     PSTHRU  3+7     HB            12
+18    [OPR]     SYSJOB          DET     NML     262032+115      HB          4:59
+ 01
+19    [OPR]     SYSJOB          DET     NETMAI  3+11    HB          2:48
+20    [OPR]     SYSJOB          DET     DTELDR  3+7     SL            15
+21    [OPR]     OPERATOR        P4J3    DTR     3+17    EW             0
+22    [OPR]     OPERATOR        P3J3    FAL-10  3+109   EW             0
+23    [OPR]     OPR             53      OPR     3+36    SL             6
+24    10,5535   TARL            55      NRT     262130+19       HB            11
+25     2,5                      51      SYSTAT  3+SPY   RN             0 $
+28    [OPR]     OPERATOR        P0J3    FAL-10  3+109   EW             1
+$ means Execute Only    n means job runs in HPQ n
+Jnn is the controlling job, Pnn corresponds to TTY363+nn
+
+High Segments:
+Program Device  Owner   High(P) Users
+
+OPSER   DSKA    [SYS]    6      1
+GLXLIB  DSKA    [SYS]   36      8
+(PRIV)          Job 10   9      1
+(PRIV)          Job 18  115     1
+NETMAI  DSKA    [SYS]   11      1
+PSTHRU  DSKA    [SYS]    7      1
+MIC     DSKA    [SYS]   16      1
+DTELDR  DSKA    [SYS]    7      1
+NFT     DSKA    [SYS]   109     4
+STOPCD  DSKA    [SYS]    4      1
+DTR     DSKA    [SYS]   17      1
+DIRECT  DSKA    [SYS]   45      1
+(PRIV)          Job 24  19      1
+
+.node
+ANF     NOVA(31) DN87S V23(213) 20-Sep-84
+        TTY[48] LPT[1] TSK[2] 
+DECnet  ?!?!?!(0) Unreachable
+.
+.
+.network
+[ANF10 network: connected to NOVA(31), located at NOVA(31), 6 nodes]
+Node    KL1026  (26)    RL240A DEC10 Development        09-25-84
+Node    SPIRIT  (30)    DN82 V23(212)   21-Aug-84
+Node    NOVA    (31)    DN87S V23(213)  20-Sep-84
+Node    DWARF   (33)    DN87S V24(214)  25-Sep-84
+Node    COMET   (70)    DN200 V23(213)  20-Sep-84
+Node    KS4097  (76)    RS72+ Tarl's Toy system 01-24-84
+
+[DECnet network: local node KL1026, 161 reachable nodes in area 7]
+AMBER   AQUA1   ARCANE  ARDEN   AVALON  BAGMAN  BARNUM  BELKER  BEMIS   BESSIE  
+BRANDX  BRANDY  BRONCO  BRUNO   CAFE    CARBON  CASHEW  CHECK   CHERRY  CHIPDN  
+CHRMDN  CHROMA  CHRYDN  CLOYD   CLYDDN  CORWIN  COUNT   CSSEJR  CURIE   CURIUM  
+D1031A  D2102A  D2116A  D2123A  D2137A  D2244A  D2263A  D2530A  DALEDN  DEMILO  
+DIZZY   DSAGE1  DSAGE2  DUKE    DVINCI  EDISON  EMILY   ESTA    ESTADN  ESTRHS  
+ETHER   ETHRDN  EUBIE   FATHA   FEMILY  FXADM   FXENG1  FXNBS   FXVNS   GIDDN   
+GIDNEY  GIGI    GNOME   GOLD    IBOX    IBOXDN  IMAGES  INANNA  IO      IODN    
+ISAVAX  ISHTAR  JINX    JOVE    JOVEDN  JUNIPR  KIWI    KL1026  KL1031  KL2102  
+KL2116  KL2137  KL2263  KL2530  KS4097  KS4145  LATOUR  LELV80  LELV81  LELV93  
+LELV95  LEZAH   LOUIE   LSMVAX  MABELL  MADAME  MAGRAT  MAIS01  MARKET  MATE    
+MAX     MCAD    MENTOR  MIKEY   MILES   MIRROR  MKT750  MKT780  MKT782  MONK    
+MONSUR  MONTY   MR3HUB  MRADM   MRCHIP  MRCSSE  MRED    MRFORT  MRGL    MRNBS   
+MROBCA  MROMTS  MRSMEG  MRSNA   MRSVAX  MRSX25  MRVAX   MRX25   MSFORT  NIMBUS  
+OGDEN   OSMIUM  OZONE   PABELL  PAR5    PEANUT  PEGGY   PONE    POTTER  PYTHON  
+RAYNA   RENKO   RNCODN  RONCO   SAGE1   SAGE2   SHOW    SILVER  STONED  SUBA    
+TGMISA  USAVAX  USMRM1  USMRW1  VEGGIE  VENNEX  VIO     VLNVAX  VOLTA   VOYAGR  
+WSGATE  
+
+
+.KJOB
+.set host market
+?LOGIN please
+
+
+.help nul:*
+
+The monitor has the following commands:
+ACCOUN  ALLOCA  ASSIGN  ATTACH  BACKSP  BACKTO  CANCEL  CCONTI  CLOSE   COJOB
+COMPIL  CONTEX  CONTIN  COPY    CORE    CPUNCH  CREATE  CREF    CSTART  CTEST
+D       DAYTIM  DDT     DEALLO  DEASSI  DEBUG   DECLAR  DELETE  DETACH  DIRECT
+DISABL  DISMOU  DO      DSK     E       EDIT    ENABLE  EOF     ERROR   EXECUT
+FILE    FINISH  FUDGE   GET     GOTO    HALT    HELP    IF      INITIA  JCONTI
+KJOB    LABEL   LET     LINE    LIST    LOAD    LOCATE  LOGIN   MAKE    MERGE
+MIC     MM      MODIFY  MOUNT   MS      NCOPY   NDELET  NDIREC  NETWOR  NMOVE
+NODE    NOERRO  NOOPER  NRENAM  NREVIE  NTYPE   ON      OPERAT  PATH    PIVOT
+PJOB    PLEASE  PLOT    POP     PRESER  PRINT   PROTEC  PUNCH   PUSH    QUEUE
+R       REASSI  REENTE  RENAME  RESOUR  REVIVE  REWIND  RUN     SAVE    SCHEDU
+SEND    SESSIO  SET     SHOW    SILENC  SKIP    SOS     SSAVE   START   STRUCT
+SUBMIT  SYSTAT  TECO    TERMIN  TIME    TLINK   TPUNCH  TTY     TYPE    UNIT
+UNLOAD  USESTA  VERSIO  WHENEV  WHERE   WHO     XCHNGE  ZERO
+
+The monitor has the following SET commands:
+BLOCKS  BREAK   CDR     CORMAX  CORMIN  CPU     CTEST   DATE    DAYTIM  DDT
+DEFAUL  DEFER   DENSIT  DSKFUL  DSKPRI  EDDT    FLOATI  FORMAT  HOSTES  HPQ
+MEMORY  NODEFE  NOMESS  OPR     PHYSIC  RETRY   SCHEDU  SPOOL   TERMIN  TIME
+TTY     VIRTUA  VMMAX   WATCH
+
+The monitor has the following SET DEFAULT commands:
+ACCOUN  BIGBUF  BUFFER  PROTEC
+
+The monitor has the following SET TTY commands:
+ALTMOD  BLANKS  COPY    CRLF    DEFER   DISPLA  ECHO    FILL    FORM    GAG
+GOOD    HOLD    IGNORE  LC      LENGTH  NO      PAGE    REMOTE  RTCOMP  SBELL
+SLAVE   SPEED   SSTOP   STOP    TABS    TAPE    TYPE    UC      WIDTH   XONXOF
+
+The monitor supports the following terminal types:
+2741    DAS21   H19     H19A    LA120   LA30    LA34    LA36    LA38    TTY
+TTY33   TTY35   VK100   VT05    VT06    VT100   VT101   VT102   VT103   VT125
+VT180   VT185   VT220   VT240   VT50    VT52    VT61
+
+The monitor has the following SET WATCH commands:
+CONTEX  DAY     FILES   MTA     READS   RUN     VERSIO  WAIT    WRITES
+
+
+[End of KL1026.LOG]
+ 

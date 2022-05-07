@@ -1,0 +1,400 @@
+
+
+
+     1.0  HOW TO START
+
+     1.  Look at SYSCRS.  If it is non-zero, it is the  address  of  a
+         system stopcode that was hit.  Get out your monitor fiche and
+         figure out why it got there.  Bear in mind a stopcode can  be
+         caused by software or hardware.
+
+     2.  The relation between SAV30 and 30 determines how system  came
+         down.   If  SAV30  and  30 have same contents, normal case is
+         that base took system down - see KEY620  (output  in  16  bit
+         format)  and  first  16  bit  byte is reason base took system
+         down.  Abnormal case is that base wasn't running  -  this  is
+         detected by SAV30 and 30 containing a "1" (operations is told
+         to put a 1 in 30 to take system down, but  occasionally  they
+         may  put  something else in).  If SAV30 and 30 are different,
+         then operator deposited non-zero value in 30.  Remember  that
+         SAV30  is  normally  used during system operation as a normal
+         instruction location, just as CRSHAC is;  i.e.,  the  monitor
+         overwrites  code to save contents of location 30 and the ACs.
+         Therefore, if SAV30 or the ACs look like  instructions,  they
+         probably  are.   Check the locations in the monitor to see if
+         the data matches the instructions that normally reside there.
+         If  it  does,  the  system has not successfully completed the
+         crash code.
+
+     3.  If the base took the system down, look at the crash code.  If
+         it  is  not  read  bad key from host or input ring processing
+         timeout, see if the base has dumped itself into memory.  This
+         can  be  determined  by  looking  at  location  FILSER in the
+         monitor.  If bits 32-35 are all ones, then it has.  Save  the
+         crash for the network people to look at.
+
+     4.  Bad data type or port number from host crashes can be  caused
+         by 1)Monitor telling base in initial message that it has more
+         ports than base has  (configuration  problem  with  value  of
+         PORTN),  2) Monitor sending bad message type to base (look at
+         output ring to base (ORING) to see if all messages are  legal
+         3)  Monitor  sending  port  number out of range to base (same
+         procedure as sending bad message type).
+
+     5.  Input ring processing timeout means the  system  is  probably
+         hung, although APR level is refreshing the key.  This usually
+         indicates that scheduler level is not running.   See  section
+         on hung crashes (look at THSTIM, etc.)
+
+     6.  Read bad key from host normally  appears  when  a  STOPCD  is
+         done.   Also  appears if host stops refreshing key or if host
+         places bad value for key into KEY620.
+
+
+Notes for looking at crashes                                    Page 2
+
+
+     2.0  HUNG CRASHES
+
+     Don't forget - the main drive behind analysis of hung crashes  is
+     to  FIND  OUT  WHAT  THE  MACHINE  WAS DOING, i.e., find the most
+     recent PC the machine was known to be at.  This  motive  is  very
+     easy  to forget as one gets lost in the intricacies of the crash.
+     Don't spend too much time on tangents - find out what the machine
+     was doing.
+
+
+
+     2.1  Hung At PI Level?
+
+     Check pi channels in progress, look at PCs in CHn for all  values
+     of   n,  look  at  device  CONIs  to  make  sure  device  is  not
+     interrupting continuously on wrong channel or  on  right  channel
+     but service routine is not paying attention (line printer service
+     turns off its CONSO when it thinks printer is not supposed to  be
+     running).
+
+
+
+
+     2.2  Hung At Scheduler Level?
+
+     First see how  long  its  been  since  we  ran  SCNSER  (and  the
+     scheduler).   Open SCNSER and compare THSTIM with the contents of
+     UPTIME.  If this comparison is not very  close,  problem  was  we
+     didn't get to scheduler any more.  Look for loop at PI level (see
+     PISTS to see if any PIs were in progress), and if not,  look  for
+     loop  in  scheduler  level.   Use  stacks  and contents of ACs to
+     pinpoint last known location.  Remember - object is to  find  out
+     as  much  as possible about last known location that monitor was.
+     Look at all JBTSTS words with RUN bit on if channel 7 is  running
+     normally.   See  if they are all stuck in one state (AC wait, for
+     example when CHKPNT or stream accounting dies).  Look at PARPC to
+     see if machine was processing user prity error, which can take so
+     long sometimes that base takes us down for input ring  processing
+     timeout (code 7).  Look at UNIHNG for all disk units to make sure
+     a disk isn't hung - sometimes certain programs  and/or  jobs  can
+     still  run  if  they aren't using files or pages on the hung disk
+     unit, while other programs/and or jobs will be hung.Also look for
+     large numbers of errors
+
+     Sometimes looking to see what ACs were  at  last  disk  interrupt
+     will yield information about a monitor loop.
+
+     If swapper hangs, see if SIPTOT disagrees with the actual  number
+     of  pages being swapped in.  If SIPTOT ever gets off by 1 or more
+     (which it has been known to do) and SIPQTA is  sufficiently  low,
+     swapper  will  stop  doing  anything,  OPERs  will probably crash
+     system as being hung.
+
+Notes for looking at crashes                                    Page 3
+
+
+     2.3  Crashes Where Deposit In 30 Or 147 Start Didn't Work
+
+     If dump  indicates  that  OPRs  hit  reset  before  saving  dump,
+     sometimes  they  couldn't  get the dump any other way.  Call OPRs
+     and see if they filled out a hang sheet.  One thing that  happens
+     sometimes  is  that  processor  makes a memory request and memory
+     sends ACK but no data - processor will just hang  in  this  case.
+     If  PI  system  is  indicated  as  on, PI requests are up, All PI
+     channels were indicated on, but no PI in progress were  on,  then
+     processor is hung.  
+
+
+
+
+     2.4  CHKPNT Failure
+
+     The system will hang if CHKPNT dies.  There are several  ways  to
+     recognize this condition.
+
+     1.  CHKPNT's JBTSTS shows it is not running.
+
+     2.  CHKPNT's interrupt system is not turned on, or  its  channels
+         are not turned on
+
+     3.  Almost all jobs on the system are in AC wait (note some  jobs
+         will  be  able  to  continue  running  until  they perform an
+         operation that requires a stream record to be written)
+
+     Look for many hard disk errors on one or more units  (UNIHCT)  or
+     hung units (UNIHNG) if CHKPNT is still running.
+
+
+
+     2.5  Hung Disks?
+
+     This is likely if many jobs are stuck in SW wait,  or  many  jobs
+     have  MRQ on.  To see for sure, check UNIHNG for hung disk units.
+     If there are one or more units with high  hung  counts,  this  is
+     probably what was causing system to hang.
+
+
+
+     2.6  Parity Error Scan
+
+     Sometimes the parity error scan takes so  long  that  the  system
+     looks  hung  and  the  base or the operators take it down.  Check
+     PARPC, PARSPR, PARTOT, and the most recent PC that can  be  found
+     to see if the system is processing a parity error.
+Notes for looking at crashes                                    Page 4
+
+
+     3.0  NXM CRASHES
+
+     Beware of the fact that on NXM crashes the processor can actually
+     execute  a  zero  before  the  NXM interrupt occurs.  This can be
+     confusing.  On the KI, there is no hope of knowning exactly  what
+     happened, but on the KL, examination of ERASTS shows the physical
+     address (not virtual) that caused the NXM.  If this is within the
+     range  of  the  memory indicated by MEMSIZ and PGYNXM bits (watch
+     out for holes in memory,  don't  assume  all  memory  from  0  to
+     c(MEMSIZ)  is  there)  then  it  is  certainly  a hardware crash.
+     Otherwise, look for a bad page map pointer in the current UPT  or
+     EPT.  On the KI, one has to deduce the location of the NXM by the
+     contents of the ACs and the PC at interrupt time .
+
+
+
+     4.0  CLUES TO UNSOLVED CRASHES
+
+     Hanging around somewhere is a file CHUNK.CMD.  If used  properly,
+     one can sometimes obtain information about why a system went down
+     that is otherwise unavailable.  Setup P1 and P2 as start and  end
+     byte  pointers (if P2 is zero will type out to end of chunk list)
+     and type out TTY chunk free pool.  This  will  sometimes  contain
+     messages  from the operator about the system, CTY output that the
+     operator lost or forgot to tell operating systems group, etc.  
+
+     Search PCBs for disk address of a RIB if you have a desire to see
+     a RIB that was recently dealt with - it may still be in core.
+
+     Look at the accounting buffer  or  the  stream  accounting  files
+     (*.SAT  on  UN1  or  BILLING10)  for clues regarding who ran what
+     programs.  Bear in mind that not all runs cause stream records to
+     be  written,  and  that  it is possible that some stream data got
+     lost by being in CHKPNT's data buffers at the time of the crash.
+
+     Don't overlook the locations on the stack higher than the address
+     of  the  current  value  of  the stack pointer.  This can be very
+     helpful in reconstructing the path  that  was  traversed  by  the
+     machine in getting to where it died.
+
+     Sometimes it is possible to deduce the execution path by  careful
+     examination of the ACs.  The key is to recognize what the data in
+     the AC is (LDB?  clock CONI word?  DDB?  etc.)
+
+     Occasionally there will be a crash where it  looks  like  a  disk
+     transfer  brought  in  the  wrong  page.  In these crashes, it is
+     important to check to see if the I/O is still  in  progress.   If
+     the  job  was awakened too early for some reason, it will see the
+     old contents of the page  and  not  the  new  one,  and  disaster
+     usually results.
+Notes for looking at crashes                                    Page 5
+
+
+     5.0  GENERAL ADVICE ON CRASH ANALYSIS
+
+     Usually,  processor  executing   instructions   incorrectly   and
+     confused crash dump analyst are indistinguishable.
+
+     This doesn't happen frequently in out monitor anymore, but  watch
+     out  for PI level smashing lower level ACs.  Always be suspicious
+     if the monitor crashes and  the  PC  is  close  to  one  that  is
+     contained  in  an  interrupt  JSR cell.  When looking at a crash,
+     always make sure you have the correct ACs for the place  you  are
+     looking  at.   For  example,  a  page fault for an exec page will
+     stack the acs and then die in the page fault code.   Always  look
+     at  the  previous  context ACs in this case and similar cases, or
+     many hours of confusion can result.  For KI10 crashes, to look at
+     previous  ACs one must go into "CODE MODE" and set contents of $I
+     ("Altmode I") to zero - LH of $I represents  the  simulated  user
+     IOT  bit.   This causes FILDDT to look at the AC stack instead of
+     indicated user AC block.  On KL10 crashes, previous  context  ACs
+     are fixed by the hardware and are not affected by either the real
+     user IOT flag in the actual  machine  or  the  simulated  one  in
+     FILDDT.
+
+
+
+     6.0  FREECORE ALLOCATION CRASHES
+
+     In crashes where freecore allocation has been messed  up  (giving
+     back free core that was already free, two users of same freecore)
+     try to recognize what data structure is likely using the core  by
+     the  contents  of  the core.  Refer to a chart of uses of monitor
+     free core and it may occur to you  what  is  being  used.   (disk
+     DDBs,  block  I/O  buffers, secondary PCBs, Club tables, SPTs all
+     come out of freecore).  Check to make sure all callers of GETWDS,
+     GIVWDS,  GET4WD,  and  GIV4WD are allocating as much free core as
+     they try to give back.
+
+
+
+     7.0  OVERWRITTEN MONITOR PROBLEM
+
+     7.1  If Monitor Is Suspected Of Being Overwritten
+
+     Sometimes confusing information found in  a  crash  dump  can  be
+     attributed  to  the  monitor  being  overwritten.   If  you  find
+     yourself  suspecting  that  the   processor   has   executed   an
+     instruction  or  instructions incorrectly, check to make sure the
+     code in the monitor hasn't been clobbered.  To do this,  use  the
+     XPAND  program  to  convert both the source monitor and the crash
+     dump into expanded form, and do selective FILCOMs between the two
+     to  see  if any instructions have been modified.  The FILCOM must
+     be selective, since in general code and data are  interleaved  in
+     virtual/physical  memory in the monitor.  It is good to start the
+     FILCOM at location FILSER (this skips some actual code in  COMMON
+     and  COMMOD,  so  beware),  and end at the end of the patch area,
+     location PAT.   It  is  usually  advisable  to  do  two  seperate
+Notes for looking at crashes                                    Page 6
+
+
+     FILCOMs,   one   between  FILSER  and  CRSHAC,  and  one  between
+     CRSHAC+20*10 and PAT.  This is because there is  code  at  CRSHAC
+     that is overwritten in a normal crash dump with AC data.  Specify
+     the source monitor file  first,  then  the  crash  monitor  file.
+     After doing the FILCOMs into files, edit the files and search for
+     the    following    fancy    string:     <beg    of    line>6<any
+     char><tab><1,2,3,4,5,6>.       EDIT10     string     for     this
+     is:?9?/?/?/?/?/?/<tab>?0123456?0.  This will find  all  words  in
+     the  source  monitor file that are likely to have instructions in
+     them that have been modified since the system came up.  Note that
+     some  of  these  changes  are OK - JEN instructions that have now
+     become part of a CONSO chain, etc.  Just take the addresses  with
+     the differences and see whether or not it is reasonable that they
+     have changed.  Note that this procedure skips some code - it  can
+     only  ensure  that  there is an instruction that was changed, not
+     that one was not.  Also note that the monitor's data  base  being
+     overwritten  is also a source of strange problems, although there
+     is no way in many cases of knowing what is supposed to  be  there
+     unless  some  other  part  of  the data base suggests some former
+     contents.
+
+
+
+     7.2  Who Clobbered The Monitor?
+
+     The important thing to use as a clue is the address and  data  of
+     the overwritten cell (cells).  Is the data pattern a recognizable
+     one?  If so, it might  help  isolate  which  data  structure  the
+     monitor  thinks  it  is  writing into.  Was data anded to memory,
+     ored to memory, movem ed to memory?   Which  bits  are  involved?
+     Does  the  address appear in any ACs?  Don't forget to look in AC
+     save areas (the AC stack, UPTXAC for jobs with their UPTs in core
+     and  below 256K).  Are there any other crashes with the same data
+     or addresses smashed?  If so, is there a pattern to which job  or
+     jobs are logged in, which programs are running?  A common monitor
+     failure is using AC J without setting it up - and a common  value
+     for  J  to  be  if  it  is  not  setup is a controller data block
+     address.  Look at SCnnCB+CHNKON for  the  controller  data  block
+     addresses,  and  subtract the value from the smashed address.  If
+     this turns out to be the exact address of word 0 of a JBT  table,
+     you can then look at the references to the JBT table to see which
+     one is the culprit.
+
+     When damage occurrs to  core  somewhere,  make  sure  no  channel
+     command  lists  point  to damaged area (could be broken channel).
+     Also broken base could cause this - look for bits  23-35  all  1.
+     If suspect base wrote the data, look at output ring for block I/O
+     requests and see if the request address bears any relation to the
+     addresses that were overwritten.
+Notes for looking at crashes                                    Page 7
+
+
+     8.0  GENERAL ADVICE
+
+     Always make sure you are looking at an exact listing of code that
+     is  suspected of causing a crash, or that you are very very aware
+     that what you are looking at is not the exact code running at the
+     time  of the crash.  Many times a bug has been overlooked because
+     the older or newer version of the code did not have a bug but the
+     running version did.
+
+     Don't believe that a PC looking thing on the stack is a PC unless
+     the  stack  pointer  and  the  code  indicate  that a PC is there
+     (example - UUOCON skips over a word on the  stack,  leaving  what
+     could be a word looking like a PC from the last page fault)
+
+     Always think twice before chalking a crash dump up  to  processor
+     failure.
+
+
+
+     9.0  ANALYSIS OF LIVE BUT SICK SYSTEMS
+
+     Sometimes analyzing a running "dead" system can save  some  time.
+     Here  are some techniques to use on a system that is stil running
+     but is about to be crashed because it is not getting  any  useful
+     work done.
+
+
+
+     9.1  If You Can't Login
+
+     Login to system 37 and get a copy of the monitor that is  running
+     on  the  sick system into core and into DDT.  Ask the operator to
+     examine key locations that you  want  to  see  to  determine  the
+     problem.  For example, see what location STRDDB+STRTAL is and ask
+     the operator to examine it to see if system's problems are due to
+     disk space.
+
+
+
+     9.2  Job Capacity Exceeded
+
+     This message comes out when there is not enough disk to  allocate
+     context  pages,  when  the  system  is out of job slots, when the
+     system doesn't have enough contiguous free core to create  a  new
+     TTY  DDB,  or when LOGIN kicks a user off because it is reserving
+     job slots for GAN 3.
+
+
+
+     9.3  System Very Slow
+
+     This can be caused by a large variety of things, but check to see
+     if  any  one  particular  job  is  getting all the runtime in the
+     system.  Sometimes (PJ)PAM goes into a loop.  Sometimes it  is  a
+     job  that abusing/using SCHPRV.  General strategy is to find
+Notes for looking at crashes                                    Page 8
+
+
+     out where the system is spending its time.  Sometimes  the  field
+     engineers  are  testing a disk drive off line through the storage
+     control, which will slow down disk transfers  somewhat,  although
+     they should not be doing this on customer systems.
+
+
+
+     9.4  Job Can't Be Hung
+
+     If a job can't be hung, see if it was detached and is  now  using
+     the  spare LDB - see if there is a list of waiters waiting to use
+     the spare LDB.  See if the job to be hung still has command  bits
+     set for it - look at its JBTSTS, see if COMCNT is still non-zero.
+     Try to look at the job's context pages and see if its  PC  is  in
+     the monitor (will keep control-c from happening).
+eDAœ

@@ -1,0 +1,2 @@
+.DIRECTORY _ null;
+.require "(XEXEC)MAN.DFS" source!file;
