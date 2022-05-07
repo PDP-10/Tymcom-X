@@ -1,0 +1,411 @@
+$menu RPG;RPG program.
+*(OSU)RPG.NFO:COMMANDS;Monitor commands that run RPG.
+*(OSU)RPG.NFO:COMPILERS;Recognized compilers.
+*(OSU)RPG.NFO:COMPSWITCHES;Switches for COMPILE class commands.
+*(OSU)RPG.NFO:CREFSWITCHES;Switches for CREF/CROSS program.
+*(OSU)RPG.NFO:TYPESWITCHES;Switches for TYPE/LIST/PRINT commands.
+*(OSU)RPG.NFO:DIFFSWITCHES;Switches for DIFFER command.
+*(OSU)RPG.NFO:LOADSWITCHES;Switches for LOADER.
+*(OSU)RPG.NFO:CTEST;CTEST commands.
+*(OSU)RPG.NFO:DO;The DO, SETDOLIST and ADDDOLIST commands.
+*(OSU)RPG.NFO:SETMAIL;The SETMAIL command.
+*(OSU)RPG.INF:RPGHISTORY;Modification history.
+*(OSU)RPG.NFO:RPGINI;Format of RPG's INI file.
+$menu DIRFILES;The DIRECTORY and FILES command.
+*(OSU)RPG.NFO:DIRITSWITCHES;Switches for DIRIT class commands.
+*(OSU)RPG.NFO:DIRITINI;Deleting files and DIRIT INI.
+*(OSU)RPG.NFO:FILES;Commands for manipulating files.
+$text COMMANDS;Monitor commands that run RPG.
+   Compile class commands (see also COMPILERS and COMPSWITCHES)
+COMPILE  Call the appropriate compiler or assembler
+LOAD     Compile if necessary, then load program into memory
+EXECUTE  Compile if necessary, then load program and run it
+DEBUG    Compile if necessary, load program with DDT and start DDT
+CDEBUG   Compile if necessary, load program with COBOL debugger
+FDEBUG   Compile if necessary, load program with FORTRAN debugger
+;SDEBUG  Compile if necessary, load program with SFORTRAN debugger
+TRY      Compile if necessary, load program with DDT and start program (not DDT)
+CREF     Finish creating cross-reference listings of compile programs
+CROSS    Finish creating cross-reference listings of compile programs
+
+   File commands (see also DIRITSWITCHES)
+DIRECTORY  Print file names, extensions, size in pages, creation time
+FILES      Print file names and extensions only
+DELETE     Erase files
+RENAME     Change old file name to new file name
+COPY       Copy old file to new file
+DECLARE    Set the file security protection on files
+FDC        Set file directory controls
+PFDC       Print file directory controls
+
+   List/type commands (see also TYPESWITCHES)
+TYPE     Display file on your terminal
+PRINT    Send file to lineprinter (no header)
+LIST     Send file to lineprinter, print header and page numbers
+
+   Editor commands
+CREATE  <PUSHJ P,CREATE>
+MODIFY  <PUSHJ P,MODIFY>
+EDITOR  <PUSHJ P,EDITOR>
+VUE     <PUSHJ P,VUE>
+TECO    <PUSHJ P,TECO>
+MAKE    <PUSHJ P,MAKE>
+10EDIT  <PUSHJ P,EDIT10>
+
+   Compare two files looking for differences
+DIFFERENCES     Compare two files (see also DIFFSWITCHES)
+
+   Command to RPG itself
+CTEST           Special command to RPG (see also CTEST)
+
+   Old style MAIL       (see also SETMAIL)
+MAIL            Read mail
+OPNOTICE        Read notice from OPERations
+SEND            Send mail
+POSTMAN         Check if mail has been read
+
+   Miscellaneous
+PPN             Output the PPN that corresponds to a user name
+HELP            Output the built-in help message for RPG
+DATE            Output the date, in "AUG 26, 1985   12:38" format
+TYMEX           Set XDS940 mode
+XEXEC           Set XDS940 mode
+PDP10           Set PDP10 mode
+DO              Run a program from the DO list
+$text COMPILERS;Recognized compilers.
+For the COMPILE, LOAD, EXECUTE, and DEBUG commands, RPG checks to see if the
+program sources need to be compiled.  It does this by 1) determining which
+source file to use, 2) checking the output binary file, and 3) calling the
+appropriate language translators.
+
+If you do not specify an extension, RPG will try all the extensions listed in
+the "source" column below.  Then it checks if the REL or other binary file
+is present.  If not, or if the source file was modified after the binary file
+was created, then the source needs to be compiled.  RPG calls all the needed
+compilers, then calls LOADER to read in the binary files for the LOAD, EXECUTE,
+and DEBUG commands.
+
+Note:  You can tell RPG to run a different compiler by using the CTEST SETPROC
+and CTEST ADDPROC commands.  See "CTEST" for more information.
+
+Compiler Switch  Output=Source
+------  -------    -------
+F40     /FORTRA    REL=F4       FORTRAN IV
+FORTRA  /F10       REL=FOR      FORTRAN-10 (ANSI-68)
+MACRO   /MACRO     REL=MAC      MACRO assembler
+FTF40   /FTFORT    REL=FTF      Field Test FORTRAN IV
+FTFORT  /F10       REL=FTX      Field Test FORTRAN-10
+SFOCMP  /SFORTR    REL=SFO      Super FORTRAN
+SIMPL   /SIMPL     REL=SIM      SIMPL
+FAIL    /FAIL      REL=FAI      FAIL (Stanford's one-pass assembler)
+SAIL    /SAIL      REL=SAI      SAIL (Stanford's ALGOL replacement)
+COBOL   /COBOL     REL=CBL      COBOL-68
+BLISS   /BLISS     REL=BLI      BLISS-10
+
+PUB     /PUB       DOC=PUB      Document compiler, create DOC from PUB sources
+BLIS11  /B11       P11=B11      PDP-11 BLISS (note: calls MACY11 to make OBJ)
+MACY11  /PAL       OBJ=P11      PDP-11 assembler (doesn't work)
+VAS     /VAS       BIN=VAS      VARIAN assembler (620 base)
+SPECX   /SPEC      MIC=SPC      Microcode specifications (create MIC for MICRO)
+MICRO   /MICRO     ULD=MIC      Microcode (post processor for SPC files)
+
+ALG=ALGOL, BAS=BASIC, LSP=LISP, SNO=SNOBOL, SIT=STG=SITGO, B10=BLISS, B36=BLIS36
+$text COMPSWITCHES;Switches for COMPILE class commands.
+  Special abbreviations
+/C = /CREF, /F = /FORTRAN, /N = /NOLIST, /M = /MACRO, /LIB = /LIBRARY
+
+  Switches for RPG to decide on what compiler to use
+/REL			File is a REL file, needs no compilation
+/COMPILE/NOCOMPILE	Force recompilation even if new REL file exists
+/NONSTANDARD:FOOBAR	Use FOOBAR.SHR to compile *.FOO files
+/USER			Use specified directory name for finding files
+/FORWARD/NOTFORWARD	Source file doesn't exist yet (comes from pre-processor)
+/RUN			Run a particular compiler
+
+  Switches for compilers
+/LIST/NOLIST		Tell language translator to make a listing file
+/CREF/CROSS		Create cross-reference listing file
+/NOBINARY/BINARY	Compile but don't create a REL file (for /CREF/NOBIN)
+
+  Switches for loaders
+/DEBUG/NODEBUG		Include DDT and symbol table
+/NOLOAD/LOAD		Compile but don't load REL file
+/SEARCH/NOSEARCH	Load REL file in library search mode
+/LIBRARY		REL file is a library, load only parts of it
+/SAVE/SSAVE		Create a SAV or SHR file
+/MIXFOR/NOMIXFOR	Allow mixture for F4 and FORTRAN-10 REL files
+/MAP			Create a load map
+/SYMFILE		Store symbols in a file on disk
+/LIBF40			Include LIB40 or FTLIB4 in search
+/LIBSFORTRAN		Include SFOLIB in search
+/LIBALGOL		Include ALGLIB in search
+/LIBCOBOL		Include COBLIB in search
+/LIBSYM			Include        in search
+/SDEBUG/FDEBUG		Include FORTRAN debugger
+
+  Switches for overlays
+/INITIAL		Define initial overlay segment
+/CLOSE			Tell overlay handler to close .OVL file each call
+
+  Undocumented switches
+/REFERENCE/NOREFERENCE
+/HOTSTART,<IMED,,HOTSTR>
+/NSLOAD,<IMED,,NSLOD>
+/NAME,<IMED,,STNAM>
+/PROFILE,<IMED,,STPRF>
+$text CREFSWITCHES;Switches for CREF/CROSS program.
+/CROSS(NOSYMBOLS) Don't include ordinary symbols in the CREF
+/CROSS(NOMACROS)  Don't include macro or opdef names in the CREF
+/CROSS(OPCODES)   Include opcode names in the CREF
+/CROSS(NOLISTING) Omit source listing - print only the CREF
+/CROSS(MONITOR)   Generate .SWT file for use by SWEET (global CREF)
+/CROSS(COMBINE)   Combine all F40 subroutines within a single file in one CREF
+$text TYPESWITCHES;Switches for TYPE/LIST/PRINT commands.
+/SINGLE         Normal spacing (no extra blanks lines)
+/DOUBLE         Double spacing (extra blank after every line)
+/MULTISPACE 3   Triple spacing
+/SMALL          43 lines per page for 8.5 by 11 inch paper
+/LARGE          58 lines per page for 11 by 14 inch paper (default PRINT LIST)
+/SIZE 54        54 lines per page (default for TYPE command)
+/LOL 132        Length of Line, usually 72, 80, or 132
+/COUNT          Report how many pages total were printed at end of request
+/NOCOUNT        Don't count total pages
+/HEADING        Print heading at the top of each page (default for LIST)
+/NOHEADING      Don't print heading (default for PRINT and TYPE)
+/CHEAD          Print file ID on page before starting file
+/NOCHEAD        Don't print header page (default)
+/ONENUM         Increment page number at top of every page
+/TWONUM         Increment page number at every formfeed, using sub-page numbers
+/CASE           Print uppercase, lowercase, numbers, space, 28 special symbols
+/NOCASE         Same as /CASE, but convert lowercase to upper (for CDC printer)
+/FULLCHARACTERSET    Allow all 96 printing characters including `{|}~
+/NOFULLCHARACTERSET  Don't allow `{|}~ or RUBOUT
+/NORMALCHARACTERSET     ?
+/QUESTION       Indicate control characters with a question mark
+/NOQUESTION     Control characters are not printed (default)
+/SEQUENCE       Print line sequence numbers for files that have them
+/NOSEQUENCE     Suppress the line sequence numbers if the file has them
+/FORTRAN        Interpret the character in column 1 as carriage control
+/NOFORTRAN      Column 1 is not treated special
+/SKIPCONTROL            ?
+/NOSKIPCONTROL          ?
+/PAGED                  ?
+/NOPAGE                 ?
+/RESTART                ?
+/RUN                    ?
+$text DIFFSWITCHES;Switches for DIFFER command.
+/ASCII      /A   Compare the files in ASCII (line-by-line) mode
+/BLANK      /B   Ignore differences in blank lines
+/CASE       /K   Ignore differences in uppercase versus lowercase
+/COMMENT    /C   Ignore comments that follow a semicolon
+/LINES     /6L/A Number of lines to match after a difference has been found
+/OFFSET     /O   Output position as number of lines past a MACRO label
+/SPACING    /S   Ignore differences in spacing (blanks, tabs)
+/SYMBOLIC   /A   The 940 name for ASCII
+/UPDATE     /U/A Output change bars "|" on lines that have been updated
+
+/HELP       /H   Type out the help file
+/QUICK      /Q   Output message if different, but not the differences
+/SMALL      /N           ?
+
+/BINARY     /W   Compare the files as binary data (word-by-word mode)
+/COREIMAGE  /X   Treat file as *.SAV, expand before comparing
+/WORD       /W   Compare the files in word-by-word mode (binary data)
+/EXPAND     /X   For *.SAV files, expand core image before comparing words
+/LOWER 140 /140L Lower limit for binary compare
+/UPPER 777 /777U Upper limit for binary compare
+$text LOADSWITCHES;Switches for LOADER program.
+%A			List all global symbols in map
+%1B			Put symbol table at end of hiseg
+%nB			Reserve n words for patch space (n greater than 100)
+%C			Obsolete switch for CHAIN overlays
+%D			Loads DDT, turns on %S
+%E			Execute program just loaded
+%F			Forces library search
+%G			Go - terminates loading when LOADER run manually
+%nG			Set starting address
+%H			Load everything into low segment only
+%1H			Load everything into high segment only
+%-H			Load low and high segments
+%nH			Set hiseg origin to n if above 400000
+%I			Ignore further start addresses
+%J or %-I		Use last start address found
+%-K			Don't cut back core at end of loading
+%nK			Set user core to n K
+%L			Library search
+%M			Create load map
+%N or %-L		Cancels %L
+%nO			Load start at n (for overlays)
+%P			Prevent normal library searches
+%Q or %-P		Allow library searches without loading local symbols
+%R			Obsolete switch for CHAIN overlays
+%S			Include local symbols in subsequent files
+%T			Loads DDT like %D, start DDT instead of program
+%U			Print list of undefined globals
+%V			Load the reentrant libraries from a set of defaults
+%W or %-S		Cancel %S
+%X			Suppress global symbols from zero length programs in map
+%Z			Reset LOADER and restart
+$text CTEST;CTEST commands.
+CTEST SETDDT (FTSYS)DDT.REL
+CTEST SETMAIL MYMAIL.BOX
+CTEST MAKINI
+CTEST SETRPG (FTSYS)NEWRPG
+CTEST SETPROC LOADER=(FTSYS)LINKER,MACRO=(FTSYS)MACRO
+CTEST ADDPROC TECO=(FTSYS)TECO
+CTEST SETDOLIST DEFAULT,LOG,(SPL),(MPL),(FTSYS),(SYS)
+CTEST ADDDOLIST (XEXEC)
+CTEST RUN LOADER
+CTEST SETNONSTANDARD,<JRST SETNSD>
+CTEST ADDNONSTANDARD,<JRST ADDNSD>
+CTEST SETDEFAULT,<JRST SETDFL>
+$text SETMAIL;The SETMAIL command.
+RPG 133.0   September 7, 1978        W.R.Soley
+
+Version 133 of RPG now contains the following new features:  1) New switch for
+DIRIT - /AUTHOR, 2) New mail saving capability.  The first is self explanatory.
+The second is normally off.  It is invoked by giving the command
+"CTEST SETMAIL <file.name>" to RPG.  The file name given must be in your
+directory and in most cases should have the name "MAIL.BOX".
+$text DO;The DO, SETDOLIST and ADDDOLIST commands.
+The wonderful "DO" command
+
+Purpose:	Provide a command to simplify running common programs
+
+Format:		-DO program
+		-CTEST SETDOLIST = dolist
+		-CTEST ADDDOLIST = dolist
+	A dolist is some number of directories separated by commas.
+	Directories may be specified as (USERNAME) or [gan,uun].  In
+	addition the special names DEFAULT or LOG may be used, to
+	indicate the directory currently GFD'd to and the directory
+	this job is logged in as respectively.
+
+Use:	Behaves very much like RUN (or R), but will search a list of
+	directories in the order specified until it finds a program
+	of the appropriate name.  [Currently, the default list is
+	DEFAULT, LOG, (SYS)]
+
+Restrictions:	All directories are assumed to be on device DSK.  The
+	default list is actually represented as the null list, so
+	an initial "CTEST ADDDOLIST=(UPL)" will set the do list to
+	a single entry, rather than appending (UPL) to the default.
+	The "DO" command will ignore the list if a directory is
+	specified.  Since the "DO" command code is in RPG, a RESCAN
+	from the program will not succeed. (Thus programs which reread
+	the command line and check for ";program commands" will not
+	find the proper results.)
+$text RPGINI;Format of RPG's INI file.
+CTEST SETMAIL will generate a record type 7 in the  RPG temp
+file.  The format of record 7 is as follows:
+        XWD 7,6
+        EXP 5
+        XWD <gan>,<uun>
+        SIXBIT <name>
+        SIXBIT <extension>
+        EXP 0,0
+
+Once this record exists in the RPG temp file, any MAIL  commands given
+thereafter will append  one disk block  containing the mail  packet in
+the first  100(8) words to  the named file  for each mail  packet read
+from the system mailbox.  The format of the mail packet is:
+        0..1    SIXBIT <sender's username>
+        2       <sender's PPN>
+        3       <date sent (DEC format)>
+        4       <time sent (ticks past midnight)>
+        5..n-1  <list of PPNs who have not recieved yet>
+        n       -1
+        n+1..77 ASCIZ <message>
+
+For simplicity,  this file  may be simply  manipulated by  the program
+SYS:MAIL which is self-documenting.
+$text DIRITSWITCHES;Switches for DIRIT class commands.
+   Sort switches:  Default is to show newest files first
+/REVERSE        List files in reverse of what they would be listed
+/ALPHABETICAL   Alphabetical order (except digits in column 1 last)
+/STORAGE        Decreasing order based on size of the file
+/EXTENSION      Alphabetical order based on extension
+/UNSORTED       List files in the order they are in the UFD
+
+   Item switches:  (selects what will be shown on each line)
+/ACCESS         List date the file was last accessed, signified by "(A)"
+/AUTHOR         List name of the user who last wrote to the file
+/CREATION       List date the file was created or last written to
+/EVERYTHING     List everything
+/FAST           List file name only
+/LICENSE        List the file's license if it has any
+/PID            List the Project ID if the file has one
+/PROJECT        Same as /PID
+/PROTECTION     List the file's protection (ALL CP UPD RD RUN LK NO)
+/SECONDS        List the file's creation time to the nearest second
+/SIZE           List the size of the file in pages
+/STATUS         List the file status bits if they are not zero
+/TIME           List the time of day when the file was created
+/TOTAL          List total number of files and pages used
+/UFDBITS        List the status bits of the directory (UFD)
+/WORDS          List the size of the file in words
+
+   Selection switches:
+/AFTER 1-JAN    Include only files created after 1-JAN of this year
+/BEFORE 31-DEC  Include only files created before 31-DEC of this year
+/TODAY          Include only files created since midnight today
+/YESTERDAY      Include only files created since midnight yesterday
+/NOPRINT
+/TEMPS (OR /K)  Include *.TMP and "deleted" files
+
+   Delete switches: (legal from DELETE command to DIRIT only)
+/BAD            Delete only bad files
+/ANY            Delete bad and good files
+/SOFT           Soft delete by renaming to ######.TMP
+
+Undocumented:      /LPT, /MODE, /WAIT, /RUN
+$text DIRITINI;Deleting files and DIRIT INI.
+Four new capabilities have been added to RPG and DIRIT:
+
+	1)  PID reporting.
+	2)  Bad file deletion.  Deletion of files with RIB errors.
+	3)  "Soft" deletion of files.  If this mode is enabled, DIRIT
+	    will rename the deleted files to ######.TMP so that they
+	    can then be recovered with UNDEL (described below) if desired.
+	4)  DIRIT accepts an INI file.  If the file DIRIT.INI exists
+	    in the GFD'd directory, DIRIT will append the string in this
+	    file to the command string that it is supplied.
+
+The switches for invoking features 1) to 3) from RPG or DIRIT are as follows:
+
+		RPG	DIRIT		Comments
+		---	-----		---------
+	1.	/pid	/1		The UUN is printed as username,
+					PPN, or UUN in that order of
+					preferance.
+	2.1	/bad	/2		Bad files only will be deleted.
+					Only legal with "del" in RPG.
+	2.2	/any	/X/2		Good or bad files will be deleted.
+					Only legal with "del" in RPG.
+	3.	/soft	/X/3		Renames files to ######.tmp.  Soft
+					deleting a bad file is not allowed.
+					Only legal with "del" in RPG.
+
+A file that has been soft deleted can be recovered by using the "UNDEL"
+monitor command which calls the UNDELete program.  A number of switches
+for Undel are available to perform such actions as listing, expunging, and
+recovering soft deleted files.  The Undel command with no parameters will
+restore all undeled files.  To enable/disable DIRIT for soft deletion mode,
+the commands "UNDEL/E" and "UNDEL/D" can be used respectively.  These
+create DIRIT.INI if it doesn't exit, append or delete a "/3" from it,
+and delete it if no other switches are present commands which act
+upon files take an optional file list which is a set of file specifiers
+(wild cards accepted) seperated by commas.  The command "UNDEL/?" will
+print a help message.  Other capabilities of UNDEL include interactive
+mode and entering the program.  See the help info for details.  Note:
+The UNDEL command is only available in monitors P034/K and later.
+$text FILES;Commands for manipulating files.
+DIRECTORY,FILES,DELETE,RENAME,COPY,DECLAR,FDC,PFDC
+CREATE,MODIFY,EDITOR,VUE,TECO,MAKE,10EDIT
+COMPILE,LOAD,EXECUTE,DEBUG,CDEBUG,FDEBUG,SDEBUG,TRY,CREF,CROSS
+DIFFER,CTEST,PPN,HELP,DATE,TYMEX,XEXEC,PDP10,DO
+TYPE,LIST,PRINT
+MAIL,OPNOTICE,SEND,POSTMAN
+
+
+9Q7

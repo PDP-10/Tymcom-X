@@ -1,0 +1,1096 @@
+tymspc==14	;major version no.
+tymrel==7	;bugfix nu.
+
+define titl(ts,tr)<
+title gfd version ts'.'tr perform get file directory function
+vergfd=<ts,,tr>
+>
+
+titl (\tymspc,\tymrel)
+
+jobver==137
+loc jobver
+exp vergfd
+reloc
+
+if2 <printx 	lic needed: st jl rf>
+
+subttl	modhis	- modification history
+repeat 0,<
+
+v 12.1; ??? no history ???
+
+v 13.0; w.r.soley 4/27/78; marked by (wrs):
+	added code to look for access.msg in the
+	directory just gfd'd into.  if found, the
+	first page is mapped in and printed at the
+	terminal.  a maximum of 256 chars will be
+	allowed in the file.
+
+v 13.1;	w.r.soley 5/26/78; fixes bug where nulls in text
+	cause eot and prevents ^o.  messages are truncated
+	to 150 characters.
+
+v 13.2;	w.r.soley 6/12/78; fixes problem of truncation and fact
+	that user always gets his own message even if protected
+	when he has read license set.  Now ignores line numbers!
+
+v 13.3;	w.r.soley 6/13/78; fixes error messages so they tell you
+	something - also won't print access.msg if an error.
+
+v 14.0; w.r.soley 8/10/78; new feature allowing GFD to be called
+	by another program and call it back.
+
+
+v 14.1;	w.r.soley 11/6/78; fixes above for disk files!
+
+v 14.2; w.r.soley 8/6/81; fixes ?not a valid user for users with NOLOG
+
+v 14.3; c.a.baltrunas 8/17/81; fixes page calculation for files .gt. 400000
+	since .chufd doesn't handle these right, also changed in LOGOUT.
+
+v 14.4; c.a.baltrunas 5/13/82; fixed typeout of access message to NOT
+	allow people to create letter-bombs.
+
+v 14.5;	c.a.baltrunas 10/19/82; changed edit 14.4 to allow ^G to beep.
+	this was a COEES and MAGNUM request!
+
+v 14.6;	Joe Smith 11/20/86; Ignore parenthesis when scanning for user name.
+	Do CHGPPN a second time so monitor can set .GTNM1 and .GTNM2.
+
+v 14.7;	Joe Smith 5/25/89; Ignore LH when checking for overflow blocks.
+>	; end repeat 0 for modhis
+subttl	defs	- define bits and ac's and such
+
+pdlsiz==60
+array pdl[pdlsiz]
+p=17	;pdl
+c=16	;chr read
+ptr=15	;lud pointer
+
+errflg=10	; ac to return sucess code (0=okay, otherwise code)
+errmsg=11	; ac to return error message string in
+
+t1=1
+t2=2
+t3=3
+t4=4
+t5=5
+
+lud==1	;channel for lud
+ufd==2	;channel for ufd's (original and destination
+fil==3	;channel for files (deleting tmp from original ufd etc)
+acs==4	;channel for checking access list file for gfd authority
+msg==5  ;channel for checking access.msg file (wrs)
+tmp==6	;channel for tmp disk file
+
+bperpg==^d4		;blocks per page
+p2bcnv==2		;pages to blocks shift conversion
+b2pcnv==0,,-2		;blocks to pages shift conversion
+
+ifndef silmsg,<silmsg==0>	; make non-zero to allow message
+				; to be suppressed by <esc> for eol
+
+array buf,ufdbuf[200],ludnam[4],srcusr[2]
+array x[3],n,ludcom[2]
+usrnam:	block 2		; these three blocks must be
+runnam:	block 7		; together for the blt!
+runusr:	block 2
+
+ludhsh==^d887	;hahs for lud
+
+lppn==0	;ppn entry in lud
+laun==0		;aun entry in lud
+lbits==2	;bit entry in lud
+llink==2	;link entry in lud
+ lcspb==400	;cusp to run bit
+ ltrub==(1b4)	;there is a tru budget word
+lprv==3		;prv entry in lud
+lhun==4		;hashed user name entry in lud
+lfsnam==5	;file str name
+lfsbts==5	;file str bits
+lfsqin==6	;quota in
+lfsqot==7	;quota out
+
+lnolog==400000	;do not let user log in
+gfdok==040000	;user can gfd here
+
+jbtppn==2	;ppn gettab table
+jbtprv==6	;prv gettab table
+ actsup==20000	;account supervisor
+jbtaun==-23	;aun gettab table
+jbtsts==0	;status table
+jacct==1	;acct bit in jbtsts
+segitm==15	;item and table for number of jobs (segment pointer)
+segtbl==11
+jbtlic==-20
+licwf==2	;write file license
+jbtunm==-22
+jbtun1==-21
+exlppn==1	;word positions in extended lookup, ppn
+exlnam==2	;name
+exlext==3	;extension
+exlsiz==5	;size of file in words
+exlsts==17	;status
+  expspp==1000	;same ppn bit in exlsts
+exlqti==22	;quota in
+exlqto==23	;quota out
+exlusd==25	;space used
+exlaut==26
+exlun1==27	;user name in ufd
+exlun2==exlun1+1;other half of username
+exlast==exlun2+1;end of extended block...(put any
+		;new ones before here and adjust this
+
+;words in gobstr uuo
+
+gobnam==2
+gobppn==1
+gobjob==0
+
+ufdgil==^d360	;times to wait for interlock (6 min)
+ulkstr==6	;code to lock str
+uclstr==7	;code to unlock str
+
+array rdhed[2],gobuf[4+3*10],filnam[exlsts+1],ufdnam[exlast]
+
+ufperr==1b20	;ufd error in file bit
+
+.fsdsl==1	;function bit to say delete from search list ok
+
+riplog==400000	;logged in bit for directory
+ripdir==400000	;directory bit in rh of status word
+
+ripbdr==2000	;rib error.
+riphwe==200	;hard write error
+riphre==100	;hard read error
+ripbfa==10	;file bad from failsafe
+ripcrh==4	;file closed on crash
+ripbda==1	;file bad from dskcln
+
+riperr==ripbfa!ripcrh!ripbda!ripbdr!riphwe!riphre
+
+stufnc==0	;struuo function
+stujob==1	;struuo job
+stuppn==2	;struuo ppn
+studel==3	;struuo delete flag
+stunam==4	;struuo fsn name
+stuxtr==5	;struuo extra word for now
+stubts==6	;struuo fsn flag bits
+
+tmprdf==2	; read & delete tmpcor file
+
+prv.rd==4	; rd protection code
+
+array acsbuf[3],acsnam[exlaut+1]
+subttl 	error handeler
+
+define	error (no,msg) = <
+	move errflg,[no]
+	movei errmsg,[asciz "msg
+"]
+	skipn runnam+1	; if calling another prog, don't type msg
+	  outstr (errmsg)>
+subttl	main
+
+stpt:	skipa
+	  jrst	ccl	;run from another program
+	rescan
+	move p,[iowd pdlsiz,pdl]
+	pushj p,skpsp	;skip spaces
+	movei t1,0
+	move t2,[point 6,t1,17]	;read first thing on line
+	jrst idrd1
+idread:	subi c,40
+	tlne t2,770000
+	idpb c,t2
+	inchwl c
+idrd1:	cail c,140
+	subi c,40
+	caig c,"Z"
+	caige c,"0"
+	jrst gotid
+	caige c,"A"
+	caig c,"9"
+	jrst idread
+gotid:	caie t1,'GFD'
+	cain t1,'GF '
+	jrst isgfd	;called as gfd foo
+	cain t1,'G  '
+	jrst isgfd
+waitsm:	cain c,";"
+	jrst gotsm	;scan till the ;
+	caige c,40
+	jrst isgfd	;end of line and no ;, treat as null
+	inchwl c
+	jrst waitsm
+gotsm:	inchwl c	;skip over the ;
+isgfd:	pushj p,skpsp1	;skip spaces starting with whats in c
+	setzm usrnam
+	setzm usrnam+1	;now read the user name
+	movei t1,^d12
+	skipa t2,[point 6,usrnam]
+usrlp:	inchwl c
+	cail c,40
+	cain c,";"
+	jrst waitlf	;finished with user name
+	caie c,"("
+	cain c,")"
+	 jrst usrlp
+	cail c,140
+	subi c,40
+	subi c,40
+	sojl t1,usrlp	;skip extra chrs
+	idpb c,t2
+	jrst usrlp
+waitlf:	caie c,33	; end with <esc>?
+	 cain c,3	; or a <ctrl-c>?
+	  jrst [setom silent#
+		outstr [byte (7)15,12]
+	  	jrst gotlf]
+	setzm silent	; not silent
+	cain c,12
+	jrst gotlf	;read till we see the line feed
+	inchwl c
+	jrst waitlf
+subttl	CCL - handle call from another program
+
+	; handle the CCL entry from another program
+	; read commands from TMPCOR:GFD or DSK:jjjGFD.TMP
+
+tmpsiz==15	; only a bad string could be this long
+
+tmparg:	sixbit "GFD"
+tmpiow:	iowd tmpsiz,tmpbuf
+	z
+tmpbuf:	block tmpsiz
+	z
+tmplkb:	sixbit "000GFD"
+	sixbit "TMP"
+	z
+	z
+
+ccl:	setzb errflg,errmsg		; set return flag to <failed>
+	move p,[iowd pdlsiz,pdl]
+	move t1,[tmprdf,,tmparg]	; read/delete temp file
+	tmpcor t1,
+	 skipa				; not tmpcor:
+	  jrst gottmp			; got the file
+
+	init tmp,16		; init dsk for tmp file
+	sixbit "DSK"
+	z
+	  halt .
+	
+	pjob t1,		; get job number for file name
+	move ptr,[point 6,tmplkb]; pointer to tmp file name
+	idivi t1,^d100		; break into digits
+	idivi t2,^d10
+	movei t1,'0'(t1)
+	idpb t1,ptr
+	movei t1,'0'(t2)
+	idpb t1,ptr
+	movei t1,'0'(t3)
+	idpb t1,ptr
+
+	lookup tmp,tmplkb
+	 jrst notemp
+	input tmp,tmpiow
+	setzm tmplkb
+	rename tmp,tmplkb
+	 jfcl
+	releas tmp,
+
+gottmp:	move ptr,[point 7,tmpbuf]
+	setzm usrnam
+	move t1,[usrnam,,usrnam+1]
+	blt t1,runusr+1
+	movsi t1,'DSK'
+	movem t1,runnam
+	move t4,[point 6,usrnam]
+	movei t3,^d12
+
+tmpin1:				; get the username to gfd to
+	ildb t1,ptr		; get character from tempfile
+	caie t1,"("		; ignore "(" and ")"
+	cain t1,")"
+	 jrst tmpin1
+	jumpe t1,tmpend		; end with null
+	cain t1,12		; test for line feed
+	  jrst tmpin2		; handle runnam
+	subi t1,40		; convert to 6-bit
+	jumpl t1,tmpin1		; ignore non-sixbit
+	cail t1,100		; convert case
+	  subi t1,40
+	skiple t3		; ignore extra characters
+	  idpb t1,t4		; save in usrnam
+	soja t3,tmpin1
+
+tmpin2:				; get the runnam to run after gfd
+	move t4,[point 6,runnam+1]	; point to file name part
+	movei t3,6		; maximum of 6 characters
+tmpin3:	ildb t1,ptr		; get char from tmpfile
+	cain t1,"."		; is it an extension
+	  jrst [move t4,[point 6,runnam+2]
+		movei t3,3
+		jrst tmpin3]
+	cain t1,":"		; is it a device
+	  jrst [move t1,runnam+1
+		movem t1,runnam
+		setzm runnam+1
+		jrst tmpin2]
+	cain t1,"("		; is it a user name
+	  jrst [movei runusr
+		movem runnam+4
+		move t4,[point 6,runusr]
+		movei t3,^d12
+		jrst tmpin3]
+	cain t1,")"
+	  jrst tmpin2
+	cain t1,"["		; a PPN!
+	  jrst [pushj p,octred
+		hrlm t2,runnam+4
+		pushj p,octred
+		hrrm t2,runnam+4
+		jrst tmpin2]
+	cain t1,"!"		; a bang means run
+	  jrst tmpend
+	subi t1,40		; make it sixbit
+	cail t1,100		; make it lower case
+	  subi t1,40
+	jumpl t1,tmpend		; end on non-sixbit
+	skiple t3		; ignore extra characters
+	  idpb t1,t4
+	soja t3,tmpin3
+
+octred:	setz t2,
+octrd1:	ildb t1,ptr
+	subi t1,"0"
+	skipl t1
+	 caile t1,7
+	  popj p,		; go back on non-octal
+	lsh t2,3
+	add t2,t1
+	jrst octrd1
+
+notemp:	outstr [asciz "?no temp file found"]
+	jrst norun
+
+tmpend:			; fall through when done
+gotlf:	init lud,16
+	sixbit /sys/
+	0
+	 jrst nolud
+	movei t1,lud
+	devppn t1,
+	movem t1,sysppn#
+	hrroi t1,jbtunm
+	gettab t1,
+	 jrst bomb
+	hrroi t2,jbtun1
+	gettab t2,
+	 jrst bomb
+	dmovem t1,srcusr	;save this user name
+	skipn usrnam		;any user name specified?
+	dmovem t1,usrnam	;no, use his own
+	move t1,[ludorg,,ludnam]
+	blt t1,ludnam+3
+	lookup lud,ludnam
+	 jrst nolud
+	move t1,[iowd 200,buf]
+	movem t1,ludcom
+	setzm ludcom+1
+	move t1,[xini,,x]
+	blt t1,x+2
+	move t1,[usrnam,,n]
+	blt t1,n+1
+	movei t4,0
+	repeat 4,<pushj p,rnd>	;generate hash and hun
+	move t1,x+1
+	xor t1,x+2
+	hrloi t2,377777
+	and t2,t1
+	idivi t2,ludhsh
+	addi t3,1
+	movem t3,hshblk#
+	xor t1,x
+	jumpe t1,notval
+	movem t1,hshnam#
+srus1:	movem t3,usrblk#
+	useti lud,(t3)
+	input lud,ludcom
+	statz lud,760000
+	jrst notval
+srus0:	movei ptr,0
+srusr:	camn t1,buf+lhun(ptr)
+	jrst fndusr
+nusr:	skipg t3,buf+lppn(ptr)
+	jrst blklnk
+	move t3,buf+llink(ptr)
+	andi t3,177
+	add ptr,t3
+	caile ptr,177
+	jrst notval
+	jrst srusr
+
+blklnk:	jumpe t3,notval
+	HRRZS T3	;[JMS] Make sure sign bit is off for the compare
+	camg t3,usrblk
+	jrst notval
+	jrst srus1
+;Now have user's entry in BUF
+
+fndusr:	move t1,buf+lppn(ptr)	;yes, get ppn of destination user
+	movem t1,dstppn#
+	camn t1,sysppn		;can't gfd to sys
+	 jrst notsys
+	hrroi t1,jbtppn
+	gettab t1,
+	 jrst bomb
+	camn t1,dstppn		;destination ppn same as source?
+	jrst gfdfin		;yes, nothing to do. just exit.
+	movem t1,srcppn#
+	pushj p,tstchg	;see if ppn change is legal
+	  jrst goaway	;  no - oh well, (msg already sent)
+	hrroi t1,jbtsts
+	gettab t1,
+	 jrst bomb
+	tlo t1,jacct
+	setjal t1,
+	 jrst bomb
+	move t1,[sixbit /dskb/]
+	movem t1,strbuf#
+	pushj p,lokstr	;lock the str
+	 jrst nostr 	;ignore if can not lock
+	pushj p,opnstr	;init ufd and fil for str
+	 jrst nostr
+	pushj p,chkus	;check to see if other users
+	 jrst nostr	;ignore if there are
+	pushj p,lkufst	;set up extended list for ufd
+	lookup ufd,ufdnam
+	 jrst nostr	;nothing to do if no ufd
+	move t1,ufdnam+exlqto	;get logged out quota, in pages
+	movem t1,qto#	;save logged out quota (in pages)
+	setzm nsblks#	;no blocks yet
+	setzm delnam	;nothing to delete yet.
+scnufd:	pushj p,lkset	;set for next file
+	 jrst finths	;done with this ufd
+	pushj p,delchk	;see if anything to delte
+	jrst scnufd
+finths:	pushj p,delchk	;see if any leftover delete
+	move t1,nsblks	;finished with ufd, get amount used
+	ash t1,b2pcnv		;convert to pages
+	camg t1,qto
+	jrst qtok	;no over quota message
+	move t2,strbuf
+	pushj p,prtsix
+	outstr [asciz / logged out quota of /]
+	move t1,qto
+	pushj p,outdec
+	outstr [asciz / pages exceeded by /]
+	move t1,nsblks
+	ash t1,b2pcnv		;convert back to pages
+	sub t1,qto
+	pushj p,outdec
+	outstr [asciz / pages
+/]
+qtok:	move t1,nsblks
+	ash t1,b2pcnv		;convert to pages
+	movem t1,ufdnam+exlusd	;set number of pages used in source ufd
+	movsi t1,riplog
+	andcam t1,ufdnam+exlsts
+	rename ufd,ufdnam
+	 jfcl
+nostr:	release ufd,
+	release fil,
+	pushj p,nlkstr	;unlock str
+;now get him into new directory
+
+	move t1,dstppn
+	movem t1,srcppn
+	chgppn t1,
+	 jrst nocppn	;can not do change ppn uuo
+	move t1,buf+llink(ptr)
+	andi t1,177	;get size
+	add t1,ptr	;make it a real pointer to the end
+	move t2,buf+lbits(ptr)
+	trne t2,lcspb	;is there a cusp?
+	addi ptr,3	;yes, update pointer to disk info
+	tlne t2,ltrub
+	addi ptr,1	;and another one if tru budget word
+	move t1,buf+lfsqin(ptr)
+	ash t1,b2pcnv		;convert lud in quota back to pages
+	movem t1,qti#		;save quota in, in pages.
+	move t1,buf+lfsqot(ptr)
+	ash t1,b2pcnv		;convert lud quota out to pages
+	movem t1,qto		;save quota out, in pages.
+	pushj p,lokstr
+	 jrst gfdfin	;can not create file structure
+	pushj p,opnstr
+	 jrst adddon	;str error, unlock and go
+	pushj p,lkufst
+	lookup ufd,ufdnam
+	 skipa t1,ufdnam+exlext	;get error code
+	jrst ufdex	;ifd exists
+	trne t1,-1
+	jrst ufdbad	;ufd is bad, forget it
+;create a ufd for this user
+
+	move t1,qti		;get quota in , in pages
+	movem t1,ufdnam+exlqti
+	move t1,qto		;get quota out, in pages
+	movem t1,ufdnam+exlqto
+	move t1,[riplog,,ripdir]
+	movem t1,ufdnam+exlsts
+	dmove t1,usrnam
+	dmovem t1,ufdnam+exlun1	;save user name
+	enter ufd,ufdnam
+	 jrst ufdbad
+	useto ufd,^D<7*4>	;Make it 7 pages long
+	close ufd,
+	jrst ufdok	;all set to go
+
+;here when the ufd exists.
+ufdex:	move t1,qti
+	movem t1,ufdnam+exlqti
+	move t1,qto
+	movem t1,ufdnam+exlqto	;reset quotas
+	movsi t1,riplog!riperr	;riplog or any error bits
+	tdnn t1,ufdnam+exlsts
+	jrst ufdex2		;none, on, ok
+	pushj p,chkus
+	 jrst ufdex5	;another user using it, ok
+	movsi t1,riplog!riperr
+	andcam t1,ufdnam+exlsts
+	movsi t1,riplog
+	iorm t1,ufdnam+exlsts	;set only logged in bit
+	setzm nsblks
+	setzm lkarg+4
+	setzm lkcnt
+scnnuf:	pushj p,lkset
+	 jrst ufdx3	;finished reading ufd
+	move t1,uflsts
+	trnn	t1,ufperr	;any errors in this file?
+	jrst scnnuf	;no. no need to look it up.
+	lookup fil,filnam
+	jrst	[hrrz t1,filnam+exlext ;rib errors will
+		caie t1,6 ;cause this to fail.
+		jrst scnnuf ;not a rib error.
+		movn t1,uflnbl ;yes, don't count its space
+		addm t1,nsblks	;and
+		movsi t1,ripbdr ;pretend we saw
+		jrst scnnf2] ;it.
+	hrlz t1,filnam+exlsts
+	and t1,[riperr,,0]
+scnnf2:	iorm t1,ufdnam+exlsts	;include error bits in ufd
+	jumpe t1,scnnuf	;scan if no errors
+	tlne t1,ripbfa
+	pushj p,bfafil
+	tlne t1,ripcrh
+	pushj p,crhfil
+	tlne t1,ripbda
+	pushj p,bdafil
+	tlne	t1,ripbdr
+	pushj	p,bdrfil
+	tlne t1,riphwe
+	pushj p,hwefil
+	tlne t1,riphre
+	pushj p,hrefil
+	jrst scnnuf
+ufdex2:	movsi t1,riplog
+	iorm t1,ufdnam+exlsts
+ufdex5:	setom ufdnam+exlusd	;use old used count
+ufdex4:	dmove t1,usrnam
+	dmovem t1,ufdnam+exlun1	;Store correct username in UFD
+	rename ufd,ufdnam
+	 skipa
+	jrst ufdok
+	outstr [asciz "?can't rename ufd
+"]
+ufdok:
+adddon:	release ufd,0
+	release fil,0
+	pushj p,nlkstr		;unlock
+	jrst gfdfin
+
+ufdx3:	move t1,nsblks
+	ash	t1,b2pcnv	;convert blocks back to pages
+	movem t1,ufdnam+exlusd	;set used
+	jrst ufdex4
+bfafil:	pushj p,strfil
+	outstr [asciz / found bad by restore
+/]
+	popj p,
+
+crhfil:	pushj p,strfil
+	outstr [asciz / partially written file closed after monitor stopped
+/]
+	popj p,
+
+bdafil:	pushj p,strfil
+	outstr [asciz / found bad by damage assessment program
+/]
+	popj p,
+
+bdrfil:	pushj p,strfil
+	outstr [asciz / rib error
+/]
+	popj p,
+
+hrefil:	pushj p,strfil
+	outstr [asciz / hardware data read error detected
+/]
+	popj p,
+
+hwefil:	pushj p,strfil
+	outstr [asciz / hardware data write error detected
+/]
+	popj p,
+
+strfil:	push p,t1
+	move t2,strbuf
+	pushj p,prtsix
+	outchi ":"
+	move t2,filnam+exlnam
+	pushj p,prtsix
+	hllz t2,filnam+exlext
+	jumpe t2,tpopj
+	outchi "."
+	pushj p,prtsix
+tpopj:	pop p,t1
+	popj p,
+tstchg:	hrroi t1,jbtlic
+	gettab t1,
+	 jrst notwfl	;check for write file
+	trne t1,licwf
+	jrst cpopj1	;any gd ok if write file
+notwfl:	hrroi t1,jbtaun
+	gettab t1,
+	  jrst bomb	; very bad problem
+	movem t1,srcaun#
+	xor t1,dstppn
+	jumpe t1,cpopj1	;can always get back to origin
+	tlne t1,-1
+	jrst notgan	;this is not the same gan
+	hrroi t1,jbtprv
+	gettab t1,
+	 jrst notas	;say not account sup
+	trne t1,actsup
+	jrst cpopj1	;same gan and account supervisor
+notas:	movsi t1,gfdok	;is a gfd in this gan ok
+	tdne t1,buf+lbits(ptr)
+	jrst cpopj1	;yes, go do it
+notgan:	init acs,14
+	sixbit /dsk/
+	acsbuf		;read access list file
+	  jrst noacs	; no disk - deny access
+	move t1,[acsorg,,acsnam]
+	blt t1,acsnam+exlaut
+	move t1,dstppn
+	movem t1,acsnam+exlppn
+	lookup acs,acsnam
+	 jrst noacs	;no access file
+	move t1,acsnam+exlsts
+	move t5,acsnam+exlaut
+	trnn t1,expspp
+	camn t5,dstppn
+	skipa
+	jrst noacs	;not the real auther, ignore
+acssrc:	pushj p,rdacs	;get a word from the acs file
+	 jrst noacs	;give up on eof
+	hrrz t5,t1	;get the count
+	hlrzs t1	;and type
+	jumpl t1,skprec	; negative types are a no-no
+	cail t1,typnum
+	jrst skprec	;skip record if unrecognized type
+	xct acstrn(t1)	;do it
+
+acstrn:	jrst noacs	;type 0, end of data
+	jrst acsusr	;check user name
+	jrst acsppn	;check ppn
+	jrst acsgan	;check gan
+typnum==.-acstrn
+
+skprec:	sojle t5,acssrc	;done with this record
+	pushj p,rdacs
+	 jrst noacs	;eof
+	jrst skprec
+rdacs:	sosle acsbuf+2
+	jrst rdacs1
+	input acs,0
+	statz acs,760000
+	popj p,		;non-skip return on error or eof
+rdacs1:	ildb t1,acsbuf+1
+cpopj1:	aos (p)
+cpopj:	popj p,
+
+acsppn:	pushj p,rdacs	;get the ppn
+	 jrst noacs
+	came t1,srcppn	;is he the one?
+	soja t5,skprec	;no, skip remainder (couunt 1 word read)
+acsok:	release acs,0
+	jrst cpopj1
+
+acsgan:	pushj p,rdacs	;get the gan
+	 jrst noacs
+	hlrz t2,srcaun
+	came t1,t2
+	soja t5,skprec	;not this on, skip
+	jrst acsok
+
+noacs:	release acs,0
+	error 2,<?access denied>
+	popj p,
+
+acsusr:	pushj p,rdacs
+	 jrst noacs
+	came t1,srcusr
+	soja t5,skprec	;not this user, skip record
+	subi t5,1
+	pushj p,rdacs
+	 jrst noacs
+	came t1,srcusr+1
+	soja t5,skprec
+	jrst acsok
+
+acsorg:	exlaut
+	0
+	sixbit /a/
+	sixbit /lis/
+	repeat exlaut-3,<0>
+bomb:	error 1,<?system problem>
+	jrst goaway
+
+gfdfin:	pushj p,typmsg		; go type access.msg
+goaway:	release lud,0
+	release ufd,0
+	release fil,0
+	skipn runnam+1		; see if anyone to run
+	  jrst norun
+	movs t1,errmsg		; move error msg to errmsg:17
+	hrri t1,errmsg
+	skipe errflg		; no blt if no error
+	  blt t1,17		; note - wipes out P, etc.
+	move t1,[1,,runnam]	; run requested program
+	run t1,
+	outstr [asciz "?can't run requested program"]
+	skipe errflg		; if error, type supressed message
+	  outstr errmsg		; already blt'd asciz here
+norun:	exit 1,
+	jrst .-1
+
+chkus:	move t1,[segitm,,segtbl]
+	gettab t1,
+	 movei t1,^d96		;assume 96 jobs
+	movni t1,-1(t1)
+	hrlzs t1		;make an aobjn pointer
+	pjob t2,
+	movem t2,thsjob#
+chkus1:	movei t2,1(t1)
+	camn t2,thsjob
+	jrst chkus2
+	movem t2,gobuf+gobjob	;set job for gobstr
+	move t2,strbuf
+	movem t2,gobuf+gobnam
+	move t2,srcppn
+	movem t2,gobuf+gobppn
+	movei t2,gobuf
+	gobstr t2,
+	 skipa
+	popj p,		;found a match, ufd in use
+chkus2:	aobjn t1,chkus1	;no match, try next job
+	jrst cpopj1	;not in use
+
+opnstr:	movei t1,17
+	hrli t1,400000
+	move t2,strbuf
+	movei t3,0
+	open ufd,t1
+	 jrst nofsn
+	open fil,t1
+	 jrst nofsn
+	jrst cpopj1
+
+nofsn:	error 3,<?can't open structure>
+	popj p,
+
+prtsix:	movei t1,0
+	lshc t1,6
+	outchi " "(t1)
+	jumpn t2,prtsix
+	popj p,
+lkset:	skiple lkcnt
+	jrst lkset1	;have stuff in buffer
+	move t1,[33,,ufd]
+	chanio t1,lkarg		;refill buffer
+	popj p,		;cant
+	skipn lkcnt	;nothing to refill it with
+	popj p,		;yes.
+	movei t1,lkbuf
+	movem t1,lkbufp	;pointer to start of buffer
+lkset1:	move t1,lkbufp
+	move t2,(t1)
+	movem t2,uflnam	;name
+	movem t2,filnam+exlnam
+	move t2,1(t1)
+	movem t2,uflext
+	movem t2,filnam+exlext	;extension
+	move t2,2(t1)
+	camn t2,[-1,,400000]	;see if file too big to list by .chufd
+	  pushj p,lkrlsz	;yes--so find real size (return it in t2)
+	movem t2,uflnbl		;size
+	addm t2,nsblks
+	move t2,3(t1)
+	movem t2,uflsts		;status bits
+	addi t1,4		;point to next entry
+	movem t1,lkbufp
+	movei t1,exlsts
+	movem t1,filnam
+	move t1,srcppn
+	movem t1,filnam+exlppn	;set up ppn
+	sos lkcnt	;finished wiht entry
+	jrst cpopj1
+
+;lookup files' sizes for files larger than 400000 blks, too big for .chufd
+lkrlsz:	movei t2,exlast		; length of block
+	movem t2,lkrlbk
+	move t2,(t1)		; name
+	movem t2,lkrlbk+exlnam
+	move t2,1(t1)		; extension
+	movem t2,lkrlbk+exlext
+	move t2,srcppn		; ppn
+	movem t2,lkrlbk+exlppn
+	movei t2,400000		; in case of error -- set size to 400000
+	lookup fil,lkrlbk
+	  popj p,		; error -- return 400000
+	move t2,lkrlbk+exlsiz	; file size in words
+	lsh t2,-7		; convert to DEC blocks
+	popj p,			; return
+
+lkarg:	-1000,,lkbuf
+	sixbit /*/
+	sixbit /*/
+	1b1+1b4		;size and status
+	0
+	0
+	0
+lkcnt:	0
+
+lkrlbk:	block	exlast		; extended lookup block files .gt. 400000 blks
+
+uflnam:	0
+uflext:	0
+uflnbl:	0
+uflsts:	0
+
+lkbufp:	0
+lkbuf:	block 1000
+
+delchk:	skipn delnam	;anything to delete?
+	jrst delch1	;no see if one for next time
+	lookup fil,delnam
+	jrst delch1
+	setzm delnam
+	rename fil,delnam	;delete it
+	jrst delch1
+	movn t1,delnbl
+	addm t1,nsblks		;no longer counted in quota
+delch1:	hlrz t1,uflext
+	move t2,uflsts
+	caie t1,'TMP'		;tmp file?
+	trne t2,1b23		;or tmp file with ext <>tmp?
+	skipa		;yes to either
+	popj p,
+	hrlzm t1,delext
+	move t1,uflnam
+	movem t1,delnam		;next name to delete
+	move t1,srcppn
+	movem t1,delppn
+	move t1,uflnbl
+	movem t1,delnbl
+	popj p,
+
+wtlok:	sojle t4,cpopj
+	movei t1,1
+	sleep t1,
+	skipa		;this is the retry on interlock busy
+lokstr:	movei t4,ufdgil
+	movei t1,ulkstr	;lock code
+	move t2,strbuf
+	move t3,srcppn
+	move t5,[3,,t1]
+	struuo t5,
+	 jrst wtlok	;busy
+	jrst cpopj1
+
+nlkstr:	movei t1,uclstr	;clear
+	move t2,strbuf
+	move t3,srcppn
+	move t5,[3,,t1]
+	struuo t5,
+	 popj p,
+	popj p,
+
+;block to do short lookups and renames from
+delnam:	0
+delext:	0
+	0
+delppn:	0
+
+delnbl:	0			;size in blocks of current file
+rdufd:	skipge t1,rdhed
+	jrst rdufd1
+rdufd2:	move t1,[iowd 200,ufdbuf]
+	movem t1,rdhed
+	setzm rdhed+1
+	input ufd,rdhed
+	statz ufd,760000
+	jrst ufderr
+rdufd1:	aobjn t1,.+1
+	movem t1,rdhed
+	move t1,(t1)	;get next word from buffer
+	jrst cpopj1
+
+ufderr:	statz ufd,20000
+	popj p,
+	error 4,<?ufd read error>
+	popj p,
+
+comment ! routine lkufst     set up for extended ufd lookup
+expects: srcppn/ ufd to look up
+!
+
+
+lkufst:	setzm ufdnam	;make sure all 0
+	move t1,[ufdnam,,ufdnam+1]
+	blt	t1,ufdnam+exlast
+	movei	t1,exlast
+	movem t1,ufdnam
+	move t1,[1,,1]
+	movem t1,ufdnam+exlppn	;set up for lookup on ufd
+	movsi t1,'UFD'
+	movem t1,ufdnam+exlext
+	move t1,srcppn
+	movem t1,ufdnam+exlnam
+	popj p,
+
+outdec:	idivi t1,^d10
+	hrlm t2,(p)
+	skipe t1
+	pushj p,outdec
+	hlrz t1,(p)
+	outchi "0"(t1)
+	popj p,
+
+strufl:	error 5,<?can't delete search list>
+	jrst goaway
+
+nocppn:	error 6,<?chgppn uuo failed>
+	jrst goaway
+
+ufdbad:	error 7,<?bad ufd>
+	jrst adddon
+skpsp:	inchwl c
+skpsp1:	caie c," "
+	cain c,11
+	jrst skpsp
+	popj p,
+
+nolud:	error 10,<?can't read lud>
+	jrst goaway
+
+ludorg:	3
+	0
+	sixbit /lud/
+	sixbit /sys/
+
+notval:	error 11,<?not a valid user>
+	jrst goaway
+notsys:	error 12,<?access to SYS: denied>
+	jrst goaway
+
+xini:	555555555555
+	361275431652
+	612754316523
+
+rnd:	dmove t1,n	;geterate hash for lud
+	addm t1,x+1
+	rotc t1,-22
+	dmovem t1,n
+	movei t3,5
+rnd1:	move t1,x+1(t4)
+	mul t1,[5*5*5*5*5*5*5*5*5*5*5*5*5*5*5]
+	addm t2,x+2(t4)
+	aoje t4,rnd2
+	movni t4,1
+	move t1,x+1
+	trne t1,1
+	skipl x+2
+	movei t4,0
+	move t1,x
+	exch t1,x+2
+	movem t1,x
+rnd2:	sojg t3,rnd1
+	popj p,
+
+subttl	typmsg	- look for dsk:access.msg and type if present
+
+msgbuf:	block 3		; message buffer header
+msglkb:	sixbit .access.	; lookup block for message
+	sixbit .msg.
+	z
+	z
+
+typmsg:	init msg,1
+	sixbit /dsk/
+	xwd 0,msgbuf
+	 jrst msgdon	; give up if error
+	lookup msg,msglkb
+	 jrst msgdon	; no message - go home
+	hrroi t1,jbtaun	; see if he can read it (check protection)
+	gettab t1,	; get login ppn
+	  setz t1,
+	xor t1,dstppn	; compare with current directory
+	move t2,[point 3,msglkb+2,8]
+	tlnn t1,-1	; same GAN?
+	  move t2,[point 3,msglkb+2,5]
+	trnn t1,-1	; same UUN?
+	  move t2,[point 3,msglkb+2,2]
+	ldb t2,t2	; get appropriate protection code
+	caile t2,prv.rd	; no lk or run?
+	  jrst msgdon	;   yes - can't read it
+	setz t3,	; set to ignore chars in line number
+msgin:	sosge msgbuf+2
+	 jrst msginp
+	ildb t2,msgbuf+1
+	jumpe t2,msgin	; throw away nulls!
+	move t1,@msgbuf+1
+	trne t1,1
+	 seto t3,	; line number, set to ignore until tab
+	jumpn t3,msgtab
+	cain t2,"~"	; tilde and rubout have problems too
+	 hrroi t2,"%"-100
+	cain t2,177
+	 hrroi t2,"#"-100
+	cail t2," "	; control character?
+	 jrst msgchi	; no - output
+	cail t2,"G"-100	; If bell thru return (bell BS TAB LF VT FF CR)
+	caile t2,"M"-100
+	 caia
+	jrst msgchi	; allow it
+	outchi "^"	; else make it an up-arrow character
+	movei t2,"@"(t2)
+msgchi:	outchi (t2)
+msgtab:	cain t2,11	; TAB
+	 setz t3,	; end of line number, clear t3
+	jrst msgin
+msginp:	in msg,
+	 jrst msgin
+msgdon:	getppn t1,		;Tell monitor to update JBTNM1 and JBTNM2
+	  jfcl			; by doing CHGPPN again this time with a
+	chgppn t1,		; file open (or a failed lookup) on channel
+	  jfcl			; (Monitor uses name in DRB)
+	releas msg,
+	popj p,
+end	stpt
+  -((y|

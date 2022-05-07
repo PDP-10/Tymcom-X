@@ -1,0 +1,1180 @@
+Title ASH Absolute Structure Hack
+Subttl C. Baltrunas 14-Jan-87 /CARL
+
+	LALL
+
+	ASHVER==2	; version 2
+	ASHMIN==0	; minor ---
+	ASHEDT==13	; edit   13
+	ASHWHO==0	; who   ---
+
+	LOC 137
+	BYTE (3) ASHWHO (9) ASHVER (6) ASHMIN (18) ASHEDT
+	RELOC
+
+	SALL	;CLEAN LISTINGS PLEASE
+	SEARCH	UUOTYM	;Get TYMSHARE symbols (if using DEC's MACRO)
+SUBTTL Revision History
+
+comment \
+
+(to be implemented) When doing "CHECK DSKB", alternate reads among all units.
+
+ (13)	/Joe	Do some seeks so that BPC0 doesn't get a "hung device"
+		message when we are reading BPA0.  (elevator algorithm)
+
+ (12)	/Joe	Use DMPPAG (in preparation for random access reads).
+
+ (11)	/Carl	Fix sixbit input to really allow multiple spaces between
+		parameters for various commands (as documented).
+
+ (10)	/Carl	Fix usage of CNT at once mapping is done to use RECPAG
+		for everything except the very last buffer used.  Also
+		needs to be checked in error message routines.
+
+ (7)	/Carl	Fix startup at some point less than BUFNUM*RECSIZ by
+		only mapping pages that exist on the structure.
+
+ (6)	/Carl	Minor fixups.  Set USETI for proper page on startup
+		rather than at GETSTR.  Other printing fixups.
+		Allow buffers to be any size that doesn't overflow
+		the available memory image.
+
+ %2(5)	/Carl	Added VERBOSE and DEBUG commands.  Changed page typout,
+		and START to require a structure name and page number.
+		Print header at startup and completion.
+
+ (4)	/Carl	Print on wide paper both of the pages whenever there is
+		any difference.  Only print lines that differ... sigh!
+
+ (3)	/Carl	Fix status of DUMP device, SETSTS required.
+		Need to do USETI after an error to get past it.
+
+ (2)	/Carl	Add CHECK mode to compare disks.
+
+ (1)	/Carl	Change the functionality ofr various commands.
+
+ %1(0)	/Carl	FIRST VERSION OF ASH, ABSOLUTE STRUCTURE HACK
+	Taken from ASP %12 to try to find a way to track page errors that
+	may occur asynchronously to the buffer/record reading loop.
+
+\;end comment
+
+;AC DEFINITIONS
+
+	S=0
+	T1=1		;TEMPORARIES
+	T2=2		;  MAY BE CLOBBERED
+	T3=3		;  BY JUST ABOUT
+	T4=4		;  ANY ROUTINE
+	DP=5		;DISK PAGE NUMBER
+	CNT=6		;COUNT OF PAGES IN BUFFER
+	CMP=7		;POINTER INTO COMPARE BUFFER
+	BUF=10		;POINTER INTO BUFFER
+	IOW=11		;IOWD FOR DUMP MODE
+	DAT=13		;WORD FOR COMPARE (not clobbered)
+	CH=14		;CHARACTER
+	P=17		;STACK
+
+;PARAMETERS
+
+
+;  *** MAXREC will be on a page boundary ***
+
+IFNDEF MAXREC,<MAXREC==^D24*^D512>	;MAXIMUM RECORD SIZE (24 PAGES)
+IFN <MAXREC&777>,<PRINTX MAXREC not an integrel page size>
+BUFNUM==^D10		;HOW MANY BUFFERS AT FIRST
+
+;I/O CHANNELS
+
+DISK==0			; CHANNEL FOR SUPER MAP
+DUMP==1			; CHANNEL FOR SUPER DUMP
+
+;MACRO DEFINITIONS
+
+DEFINE ERROR(MSG),<PUSHJ P, [OUTSTR [ASCIZ\MSG
+\]
+		EXIT 1,
+		JRST .-1]>;END ERROR MACRO DEFINITION
+DEFINE	ERRPOP(MESS) <
+JRST	[OUTSTR [ASCIZ \'MESS
+\]
+	 POPJ	P,]
+>;END ERRPOP
+
+DEFINE MSG(MESS,CRLF)<IFB <CRLF> <OUTSTR [ASCIZ\'MESS\]>
+IFNB <CRLF> <OUTSTR [ASCIZ \'MESS
+\]>
+>;END MSG MACRO DEFINITION
+
+PDLLEN==^D40
+
+
+SUBTTL	DEFINITIONS
+
+.CHPSI==31	; Page useti
+.CHSMP==43	; Super map
+IO.UWC==1B31
+.WSRNG==1
+
+OPDEF VCLEAR [CALLI -66]
+OPDEF VREMOV [CALLI -65]
+OPDEF VCREAT [CALLI -67]
+OPDEF VPROT  [CALLI -70]
+OPDEF WSCTL  [CALLI -74]
+OPDEF PREREF [CALLI -75]
+OPDEF PERSET [CALLI -72]
+
+OPDEF PAGSTS [CALLI -71]
+PS.UWS==1B0		; in user working set
+PS.REF==1B1		; has been referenced
+PS.MXW==1B2		; can be protected read/write
+PS.SUP==1B3		; super mapped
+PS.DER==1B4		; device page I/O error occurred
+PS.DTE==1B5		; data page I/O error occurred
+ PS.DDE==3B5		; page I/O error occurred
+PS.DRT==1B6		; not dirty or swapping out
+PS.NEW==1B7		; ignoring errors
+PS.OER==1B8		; output error
+PS.PAR==1B9		; parity error
+PS.FIL==1B32		; originally mapped from a file
+PS.CPR==7B35		; current protection
+ PS.CP0==0		; non-existent
+ PS.CP1==1		; read only
+ PS.CP2==2		; copy on write
+ PS.CP3==3		; read/write
+
+OPDEF PGESTS [CALLI -100]
+EI.VAL==1B0		; Valid info
+EI.PAR==1B14		; Parity error on dirty page
+EI.OER==1B15		; Output error
+EI.DER==1B16		; Device error
+EI.DTE==1B17		; Data error
+EI.VPN==777777B35	; Virtual page number
+
+OPDEF PJRST  [JRST]
+
+.GTCNF==11
+  .CNDAT==11
+  .CNTIM==10
+SYSNSZ==5		;NUMBER OF WORDS IN SYSTEM NAME
+
+IOTEND==2000		;END OF TAPE
+IODEND==20000		;END OF FILE
+
+IOEMSK==740000		;ERROR MASK
+IOIMPM==400000		;WRITE LOCK
+IODERR==200000		;DEVICE ERROR
+IODTER==100000		;DATA ERROR
+IODBKT==040000		;BLOCK TOO LARGE
+
+IFNDEF FTDEBG,<FTDEBG==0>
+
+SUBTTL	COMMAND TABLES
+
+DEFINE COMMAC<
+X <Buffer >,BUFFER,<Set nonstandard ASH buffer length>
+X <Check  >,CHECK,<Checks mapping and dump mode data for the structure>
+X <Daytime>,DAYTIM,<Prints current date and time>
+X <Debug  >,BREAK,<Allows debugging with DDT at DMPBRK for page>
+X <Find   >,FIND,<Search through the given structure>
+X <Help   >,HELP,<Types this message>
+X <Mark   >,PAUSE,<Set the read count between typeout marks>
+X <Noisy  >,NOISE,<Toggle the noisy flag for read indicator>
+X <Quit   >,COPBYE,<Exit from ASH>
+X <Read   >,PAGE,<Scan through the given structure>
+X <Start  >,RESTAR,<Sets start page on the structure>
+X <Verbose>,VERB,<Toggle verbose flag for CHECK mode>
+X <Where  >,PRTRES,<Prints any start page information>
+>
+
+
+DEFINE X(A,B,C)<<SIXBIT /'A/>>
+COMNAM:	COMMAC
+	COMLEN==.-COMNAM
+DEFINE X(A,B,C)<EXP 'B>
+COMADR:	COMMAC
+
+SUBTTL	BUFFER - Setup buffer size and pointers
+
+BUFFER:	PUSHJ	P,DECIN		; READ A NUMBER
+	  MOVEI	T1,MAXREC/1000	; USE DEFAULT IF NONE GIVEN
+	CAMLE	T1,MAXBUF	; ALLOW ANYTHING UP TO MAXIMUM SIZE
+	  ERRPOP <Specified buffer size is too large>
+BUFFR0:	LSH	T1,^D9		; CONVERT TO WORDS
+BUFFR1:	MOVEM	T1,RECSIZ	; SAVE IT
+	LSH	T1,-^D9		; CONVERT TO PAGES
+	MOVEM	T1,RECPAG	; SAVE IT
+	CAMLE	T1,MAXBUF	; MAKE SURE WITHIN RANGE
+	  ERRPOP <Record size too large for existing memory>
+	MOVE	T1,RECSIZ	; GET BUFFER SIZE IN WORDS
+	IMULI	T1,BUFNUM	; MULTIPLY BY INITIAL BUFFER CACHE
+	HRRZ	T1,.JBREL##	; GET HIGHEST USED LOC
+	AOJ	T1,		; ROUNDED TO PAGE BOUNDARY
+	HRLI	T1,-BUFNUM	; GET -BUFS,,ADDR
+	MOVEM	T1,PTRBUF	; SAVE FOR WRAP AROUND
+	POPJ	P,
+
+
+
+PAUSE:	PUSHJ	P,DECIN		; READ A NUMBER
+	  ERRPOP <Enter the buffer count between typeout pauses>
+	MOVEM	T1,TYPREC	; REMEMBER IT
+	POPJ	P,		; RETURN
+SUBTTL	Starting and reentry points
+
+NOSTOP:	RELEAS	DISK,		;FREE ANY DISK CHANNEL IN USE
+	RELEAS	DUMP,		;FREE ANY DUMP CHANNEL IN USE
+	MSG	<>,CRLF		;GIVE A LITTLE MESSAGE
+	MSG	<Command aborted.>,CRLF
+	JRST	ST1		;RESTART PROGRAM
+
+ST:	JFCL			;NO DIFFERENCE IF CCL ENTRY
+	RESET
+	SETZM	TYPREC		;NUMBER OF RECORDS BETWEEN TYPEOUT
+	SETZM	DEBCNT#		;CLEAR DEBUG COUNT
+
+ST1:	MOVE	P,[IOWD PDLLEN,PDL]
+	HRRZ	T2,.JBREL	; GET HIGHEST LOCATION
+	MOVEI	T1,777777	; TOP OF MEMORY
+	SUB	T1,T2		; SUBTRACT FROM TOP OF MEMORY
+	LSH	T1,-^D9		; CONVERT TO A PAGE
+	IDIVI	T1,BUFNUM	; DIVIDE BY NUMBER OF BUFFERS
+	MOVEM	T1,MAXBUF	; LARGEST BUFFER SIZE
+
+	MOVEI	T1,MAXREC	;GET DEFAULT BUFFER SIZE
+	PUSHJ	P,BUFFR1	;SETUP POINTERS
+
+;GET COMMAND AND PROCESS.
+
+GETCOM:	MSG	,CRLF
+	MOVEI	CH,-1		;SO SCANNERS
+	OUTSTR	[ASCIZ \Ash>\]	;PROMPT FOR COMMAND
+	PUSHJ	P,SIXIN		;GET IT
+	  JRST	GETCOM		;BLANK.
+	MOVE	T4,[-COMLEN,,COMNAM] ;SCAN THE TABLE
+	PUSHJ	P,COMMAN
+	  JRST	GETCOM		;GET A COMMAND
+	PUSHJ	P,@COMADR(T4)	;DO IT
+	  JFCL			;IN CASE OF ERROR RETURNS
+	PUSHJ	P,BRKEAT	;EAT UP UNUSED CHARS.
+	JRST	GETCOM		;AND GET ANOTHER COMMAND
+
+SUBTTL HELP MESSAGE
+
+HELP:	MSG	<Valid commands are>,CRLF
+
+DEFINE X(A,B,C),<
+MSG	<  'A'   'C'.>,CRLF
+>
+	COMMAC			;;PRINT OUT TEXT FOR ALL COMMANDS
+	POPJ	P,
+
+SUBTTL	Break Noisy Verbose and Quit commands
+
+BREAK:	PUSHJ	P,OCTIN		;Read something to break on
+	  ERRPOP <Enter an octal page number>
+	MOVEM	T1,DEBPAG	;Store
+	MSG	<Watching >
+	MOVE	T4,T1		;Copy page number
+	PJRST	PRTDP		;Print page info
+
+NOISE:	MOVN	T1,NOISY	;Get old noise
+	AOJ	T1,		;Increment to 1 or 0
+	MOVEM	T1,NOISY	;Set new noise
+	OUTSTR	@NOIMSG(T1)	;Print message
+	MSG	<.>,CRLF	;Finish
+	POPJ	P,		;Done
+
+VERB:	MOVN	T1,VERBOSE	;Get old noise
+	AOJ	T1,		;Increment to 1 or 0
+	MOVEM	T1,VERBOSE	;Set new noise
+	OUTSTR	@VERMSG(T1)	;Print message
+	MSG	<.>,CRLF	;Finish
+	POPJ	P,		;Done
+
+COPBYE:	RELEAS	DISK,
+	RELEAS	DUMP,
+	EXIT	1,
+	JRST	.-1
+
+NONONO:	SIXBIT	\NO\		;A NEGATIVE RESPONSE
+NODEVS:	CAMN	T1,NONONO	;IS THERE A MATCH?
+	  JRST	NOSTOP		;YES, DO SOME RESTART
+NOOPEN:	MSG	<Device >	;  PRINT TEXT
+	PUSHJ	P,SIXOUT	;  SHOWING DEVICE NAME
+	MSG	< not available>,CRLF
+	POPJ	P,		;RETURN
+
+SUBTTL MAIN COMMAND ROUTINES	CHECK	PAGE	FIND
+
+FIND:	PUSHJ	P,OCTIN		;READ SOMETHING TO SEARCH FOR
+	  ERRPOP <Enter an octal constant>
+	SKIPN	T1		;MAKE SURE IT'S NON-ZERO
+	  ERRPOP <Don't be ridiculous, too many zeroes on disk>
+	MOVEM	T1,CMPWRD	;SAVE AND
+	JRST	CHKINC		;FALL INTO WORD MODE
+
+CHECK:	AOS	FLGCHK		;REALLY DO CHECKSUM
+	SETZM	CMPWRD		;NO SEARCHING
+CHKINC:	AOS	CHKFLG		;WORD MODE
+	JRST	PAGES		;SKIP INTO COMMON CODE
+
+PAGE:	SETZM	FLGCHK		;NO CHECKSUM
+	SETZM	CMPWRD		;NO SEARCHING
+	SETZM	CHKFLG		;THIS IS NOT A CHECKSUM, USE NORMAL RANGE.
+PAGES:	SETZM	ERRCLR		;NO ERRORS
+	MOVE	T1,[ERRCLR,,ERRCLR+1]
+	BLT	T1,ERRZER	;CLEAR ALL COUNTERS
+
+	PUSHJ	P,GETSTR	;GET A STRUCTURE
+	  JRST	NOSTRS		;OOPS, MSG ALREADY PRINTED
+
+	SETZ	DP,		;CLEAR OUT AND GET VALUE OF
+	EXCH	DP,RESTDP	;WHERE TO START
+	MOVE	T1,DP		;GET DP
+	IDIV	T1,RECPAG	;GET RECORD NUMBER WE WILL START WITH
+	MOVEM	T1,RECNUM	;REMEMBER PAGE (RECORD)
+
+	IMUL	T1,RECPAG	;GET ACTUAL START PAGE
+	CAME	T1,DP		;DOES IT MATCH?
+	  MSG	<Adjusted start page.>,CRLF
+	MOVE	DP,T1		;MAKE IT MATCH (NO-OP IF MATCH)
+	MOVE	T2,[.CHPSI,,DUMP]
+	SKIPE	FLGCHK		;If we are in check mode
+	 CHANIO	T2,T1		;Yes, mark it super mode, given page
+
+	PUSHJ	P,PRTHED	;PRINT A HEADER
+
+; DP HAS DISK PAGE ADDRESS TO START WITH.
+
+SAVRST:	MOVN	IOW,RECSIZ	;GET RECORD SIZE IN -WORDS
+	HRLZ	IOW,IOW		;SETUP FOR AOBJN LOOP
+	SKIPE	DP,RECNUM	;GET DP SETUP TO BEGINNING OF REEL
+	  IMUL	DP,RECPAG	;TURN FROM RECNUM TO DP NO
+
+WRTRST:	MOVE	BUF,PTRBUF	;GET PAGE BUFFER POINTER SETUP
+	SETZM	LASBUF		;INDICATOR FOR LAST BUFFER.
+	MSG	<Reading >
+	MOVE	T4,STRTYP	;GET STRUCTURE TYPE
+	OUTSTR	@STRMSG(T4)	;LET THEM KNOW WHAT KIND
+	MOVE	T4,DP		;GET DP TO PRINT OUT
+	PUSHJ	P,PRTDP		;NOW PRINT WHAT WE ARE SAVING.
+	MSG	,CRLF
+
+;NOW START IN THE WHOLE BUFFER AREA
+
+	MOVEM	DP,DMPPAG	;[12] 1st page in this set
+	MOVE	CNT,RECPAG	;MAP IN EVERYTHING
+	IMULI	CNT,BUFNUM	;  ALL GROUPS OF BUFFERS
+	MOVE	T1,STRMXP	; Need to see if
+	SUB	T1,DP		;  current page
+	SUB	T1,CNT		;  plus count will fit
+	SKIPGE	T1		;  on the structure?
+	  ADD	CNT,T1		; No, so fixup the difference
+	PUSHJ	P,MAPRD		; NOW MAP IT ALL
+	  POPJ	P,		; SOMETHING WENT VERY WRONG
+	ADD	DP,CNT		; ADVANCE DISK ADDRESS.
+	MOVE	CNT,RECPAG	; FROM NOW ON, DO ONE BUFFER AT A TIME.
+
+
+; PROCESS BUFFER, THEN START NEXT XFER INTO BUFFER.
+; RECNUM HAS CURRENT RECORD, DP HAS NEXT DISK PAGE TO MAP.
+
+COPLUP:	SKIPN	T2,TYPREC	;ANY TYPEOUT WANTED?
+	  JRST	COPLU1		;NO!
+	MOVE	T1,RECNUM	;NUMBER OF RECORDS SO FAR
+	JUMPE	T1,COPLU1	;  NEVER ON FIRST ONE
+	IDIV	T1,T2		;DIVIDE FOR MOD FUNCTION
+	SKIPN	T2		;  AND PRINT ON EVEN DIVIDE
+	  PUSHJ	P,PRTSTS	;PRINT A STATUS LINE
+COPLU1:	PUSHJ	P,CMPDSK	;TOUCH PAGES FOR PGESTS & OTHER STUFF
+	HRR	IOW,BUF		;GET NEXT ADDRESS INTO IOW
+	CAME	BUF,LASBUF	;IS THIS THE LAST BUFFER?
+	  JRST	COPRTY		;NO.
+	MOVN	T1,CNT		;YES, GET -VE PAGES TO DO
+	HRL	IOW,T1		;PUT INTO IOW
+COPRTY:	SKIPN	T1,LASBUF	;SKIP IF WE'RE DONE MAPPING IN STUFF
+	  JRST	OUTOK1		;NOT DONE MAPPING YET.
+	CAMN	T1,BUF		;HAVE WE JUST XFERRED THE LAST BUFFER?
+	  JRST	SAVDON		;YES.
+	JRST	NOMAPR		;NO, JUST PROCESS REMAINING ONES
+
+OUTOK1:	MOVE	T1,STRMXP	;GET PAGE PER STRUCTURE
+	SUB	T1,DP		;GET PAGES LEFT TO GO
+	CAMLE	T1,RECPAG	;SKIP IF THIS IS LAST RECORD
+	  JRST	COPROK		;NOT LAST RECORD
+	JUMPE	T1,NOMAPR	;MAPPING DONE IF NO MORE TO MAP
+	MOVEM	BUF,LASBUF	;FLAG THAT THIS IS LAST BUFFER TO COPY
+	MOVE	CNT,T1		;GET LAST PAGE COUNT IN CNT
+COPROK:	PUSHJ	P,MAPRD		;UNMAP CURRENT, MAP ANY MORE
+	  POPJ	P,		;SOMETHING WENT WRONG
+	ADD	DP,CNT		;NEXT DISK ADDRESS TO READ.
+NOMAPR:	AOS	RECNUM		;INCREMENT WORKING RECORD NUMBER
+	ADD	BUF,RECSIZ	;INCREMENT BY BUFFER SIZE
+	SOJ	BUF,		; MINUS 1
+	AOBJN	BUF,COPLUP
+	MOVE	BUF,PTRBUF	;WRAP AROUND
+	JRST	COPLUP
+
+
+SAVDON:	MSG	<ASH read of >
+XXXDON:	MOVE	T1,STRTYP	;GET STRUCTURE TYPE
+	OUTSTR	@STRMSG(T1)	;LET THEM KNOW WHAT KIND
+	MOVE	T1,STRNAM
+	PUSHJ	P,SIXOUT	;AND "STRUCTURE"
+	MSG	<>,CRLF
+	MSG	<Completed on >
+	PUSHJ	P,CURDAT
+	  POPJ	P,		;DATE NOT YET RECEIVED (SHOULD NEVER HAPPEN)
+	MSG	,CRLF
+	HRRZ	T1,PTRBUF	;GET RESET BUFFER AOBJN POINTER
+	LSH	T1,-^D9		;CONVERT TO PAGE NUMBER
+	MOVEI	T2,1000		;MAXIMUM PAGE COUNT
+	SUB	T2,T1		;GET DIFFERENCE
+	HRL	T1,T2		;SETUP COUNT,,PAGE
+	VCLEAR	T1,		;REMOVE REMAINDER OF MEMORY
+	  JFCL			;NEVER ANY ERROR
+	PUSHJ	P,PRTHED	;PRINT HEADER AGAIN
+	JRST	CPOPJ1		;ALL DONE
+
+SUBTTL	PRTSTS - Print status of buffer pages
+
+PRTSTS:	MOVE	T4,RECNUM	; Current entry
+	IMUL	T4,RECPAG	; By pages in record
+	PUSHJ	P,PRTDP		; print disk page #
+	SKIPE	CHKSUM		; Checksum
+	  JFCL
+	SKIPE	CMPNXM		; NXMs
+	  JFCL
+	SKIPE	CMPDER		; Device errors
+	  JFCL
+	SKIPE	CMPDTE		; Data errors
+	  JFCL
+	SKIPE	CMPUNK		; Unknown errors
+	  JFCL
+	SKIPE	DMPIMP		; Improper mode
+	  JFCL
+	SKIPE	DMPDER		; Device errors
+	  JFCL
+	SKIPE	DMPDTE		; Data errors
+	  JFCL
+	SKIPE	DMPBKT		; Block too large
+	  JFCL
+	MSG	<>,CRLF		; extra line
+	POPJ	P,		; return
+
+SUBTTL	DATE and TIME type out routines
+
+DAYTIM:	PUSHJ	P,CURDAT
+	MSG	,CRLF
+	JRST	CPOPJ1
+
+CURDAT:	MOVE	T1,[.CNDAT,,.GTCNF]
+	GETTAB	T1,
+	  ERRPOP <Can't GETTAB date>
+	SKIPGE	T1		;MAKE SURE SYSTEM KNOWS
+	ERRPOP	<Date not yet received, aborting>
+	MOVE	T2,[.CNTIM,,.GTCNF]
+	GETTAB	T2,
+	  ERRPOP <Can't GETTAB time>
+	AOS	(P)		;GIVE SKIP RETURN NOW
+	PJRST	PRTDAT		;AND PRINT DATE, CALER DOES CRLF
+
+SUBTTL	Restart
+
+RESTAR:	PUSHJ	P,GETSTR	;GET STRUCTURE NAME
+	  JRST	RESTA2		;COMPLAIN
+	SETZM	RESTDP		;CLEAR OUT PREVIOUS ONE
+RESTA1:	PUSHJ	P,OCTIN		;GET NEXT NUMBER
+	  JRST	RESTA3		;COMPLAIN
+	MOVE	T2,STRMXP	;GET STRMXP
+	CAML	T1,T2		;MAKE SURE ITS IN RANGE
+	  ERRPOP <Page number not within range of the structure>
+	MOVEM	T1,RESTDP	;SAVE AND
+
+PRTRES:	MSG	<Starting with >
+	MOVE	T1,RESTDP	; Get page entered
+	IDIV	T1,RECPAG	; Divide by record current size
+	IMUL	T1,RECPAG	; Then multiply for boundary
+	CAME	T1,RESTDP	; Any rounding possible?
+	  MSG	<adjusted >
+	MOVE	T4,T1		; Get it in the right place
+	PUSHJ	P,PRTDP		; Print it
+	JRST	CPOPJ1		; Then skip return
+
+RESTA2:	CAMN	T1,NONONO	; Did they say NO?
+	  POPJ	P,		; Yes, just leave
+	PUSHJ	P,BRKEA1	;EAT TO BREAK
+	MSG	<Type structure name and disk page: >
+	JRST	RESTAR		;TRY AGAIN
+
+RESTA3:	PUSHJ	P,BRKEA1	;EAT TO BREAK
+	MSG	<Type disk page number: >
+	JRST	RESTA1		;CONTINUE
+
+SUBTTL	CMPDSK - do disk related checking
+
+CMPDSK:	SKIPN	FLGCHK		;[13] Only if doing a CHECK
+	 JRST	CMPDS1		;[13]
+	MOVE	T1,[.CHPSI,,DUMP] ;[13] Force a seek to previous cylinder
+	MOVE	T2,DMPPAG	;[13] so that the elevator algorithm
+	TRZ	T2,777		;[13] has a chance to service BPC0 while
+	CHANIO	T1,T2		;[13] we are beating on BPA0.
+	IN	DUMP,[IOWD 1000,DMPBUF
+		      EXP  0]	;[13] Move the heads back up to 3 cylinders
+	  JFCL			;[13]
+	MOVE	T1,[.CHPSI,,DUMP];[12]
+	CHANIO	T1,DMPPAG	;[12] Do a super-USETI to right page on disk
+CMPDS1:				;[13]
+	HRRZ	CMP,BUF		; Get disk buffer address
+	LSH	CMP,-^D9	; Make a page number
+	MOVN	T1,RECPAG	; -Count of pages
+	CAMN	BUF,LASBUF	; Was this the last buffer?
+	  MOVN	T1,CNT		; Yes, get (partial) count of pages
+	HRL	CMP,T1		; Make page loop counter
+CMPLOP:	HRR	IOW,CMP		; Copy buffer page
+	LSH	IOW,^D9		; Convert to words
+	HRLI	IOW,-1000	; Get -page AOBJN pointer
+	MOVE	DAT,(IOW)	; Get disk word - to touch page
+	HRRZ	T2,CMP		; Get page number
+	PAGSTS	T2,		; Read status
+	  ERRPOP <Unexpected bad page from PAGSTS>
+	JUMPE	T2,CMPNOP	; Non-existent page?
+	TLNE	T2,(PS.DER!PS.DTE)
+	  JRST	CMPERR		; Device/Data error detected
+CMPCHK:	SKIPN	CHKFLG		; Checking? (return here from CMPRDP)
+	  JRST	CMPEND		; No, update page and go
+	SKIPN	FLGCHK		; Need to read in a page?
+	  JRST	CMWLOP		; No, just scan the page
+	IN	DUMP,[IOWD 1000,DMPBUF
+		      EXP  0]	; Read a page in
+	  JRST	CMPIT		; All OK, go scan and compare
+	GETSTS	DUMP,T2		; Status in T2
+	TRNE	T2,IOEMSK	; An error?
+	  JRST	DMPERR		; Of course, expected
+	JRST	DMPHUH		; No error, I'm confused
+
+CMPIT:	AOS	DMPPAG		; Bump the USETI pointer
+CMWLOP:	MOVE	DAT,(IOW)	; Get disk word, 2nd time
+	SKIPN	T1,CMPWRD	; Anything to find?
+	  JRST	CMWCHK		; Must not search for 0
+	CAMN	T1,DAT		; Did we find it?
+	  PUSHJ	P,CMPWNO	; ** print page #, word # here **
+	JRST	CMWEND		; Skip
+CMWCHK:	MOVE	T1,IOW		; Get buffer word offset
+	ANDI	T1,777		; Make page word offset
+	CAME	DAT,DMPBUF(T1)	; And compare
+	  JRST	DMPDIF		; Page is not the same (ret to CMPEND)
+CMWEND:	AOBJN	IOW,CMWLOP	; Try next word
+CMPEND:	AOBJN	CMP,CMPLOP	; Try next page (word stuff adjusted)
+	POPJ	P,		; All done, return
+
+SUBTTL	Error handling for CMPERR
+
+CMPNOP:	AOS	CMPNXM		; non existent memory
+	MSG	<Map failure for >
+	JRST	CMPRDP		; print disk page and return
+
+CMPERR:	TLNN	T2,(PS.DER)	; device error?
+	  JRST	CMPER1		; no, try next
+	AOS	CMPDER		; yes!
+	MSG	<Device error for >
+	JRST	CMPRDP		; print disk page and return
+
+CMPER1:	TLNN	T2,(PS.DTE)	; data error?
+	  JRST	CMPER2		; no? hmmmm.
+	AOS	CMPDTE		; yes!
+	MSG	<Data error for >
+	JRST	CMPRDP
+
+CMPER2:	AOS	CMPUNK		; unknown - how did I get here?
+	MSG	<Unknown I/O error for >
+CMPRDP:	PUSHJ	P,CMPPNO	; Print page number
+	JRST	CMPCHK		; Return to loop
+
+CMPWNO:	MSG	<Word >		; tell what word
+	HLRE	T1,IOW		; -word offset in aobjn
+	ADDI	T1,1000		; +full page
+	PUSHJ	P,OCTOUT	; = + offset
+	MSG	< in >		; fall into page output
+
+CMPPNO:	MOVE	T4,RECNUM	; current record read
+	IMUL	T4,RECPAG	; times pages per record
+	HLRE	T1,CMP		; -left in buffer
+	ADD	T4,T1		;  added into result
+	MOVE	T1,RECPAG	; + record size
+	CAMN	BUF,LASBUF	;  (if last buffer)
+	  MOVE	T1,CNT		;  use modified record size
+	ADD	T4,T1		; = correct page number.
+	PJRST	PRTDP		; And give the page number.
+
+SUBTTL	Error handling for DMPERR, DMPDIF
+
+DMPDIF:	MSG	<Dump page different at >
+	PUSHJ	P,CMPWNO	; Print the word/pumber
+	SKIPN	VERBOSE		; Want verbose?
+	  JRST	DMPEND		; No, just go to end
+	MOVE	T4,RECNUM	; current record read
+	IMUL	T4,RECPAG	; times pages per record
+	HLRE	T1,CMP		; -left in buffer
+	ADD	T4,T1		;  added into result
+	MOVE	T1,RECPAG	; + record size
+	CAMN	BUF,LASBUF	;   (on last record)
+	  MOVE	T1,CNT		;   use current record count
+	ADD	T4,T1		; = correct page number.
+	CAMN	T4,DEBPAG	; page number we are scanning for
+DMPBRK:	  JFCL			; ** place for a breakpoint **
+	PUSH	P,CMP		; don't wipe these
+	PUSH	P,IOW		; just yet
+	HRLI	IOW,-1000/4	; fixup for AOBJN
+	TRZ	IOW,777		; reset word address
+	MOVEI	CMP,DMPBUF	; address of buffer
+
+DMPDF1:	MOVE	T1,(IOW)	; first on a line
+	CAME	T1,(CMP)	; match?
+	  JRST	DMPDF2		; no - must print then
+	MOVE	T1,1(IOW)	; first on a line
+	CAME	T1,1(CMP)	; match?
+	  JRST	DMPDF2		; no - must print then
+	MOVE	T1,2(IOW)	; first on a line
+	CAME	T1,2(CMP)	; match?
+	  JRST	DMPDF2		; no - must print then
+	MOVE	T1,3(IOW)	; first on a line
+	CAMN	T1,3(CMP)	; match?
+	  JRST	DMPDF4		; yes, no need to print
+
+DMPDF2:	HRRZ	T1,IOW		; get address part
+	ANDI	T1,777		; only want to see word
+	PUSHJ	P,OCTWNO	; print word number
+	MSG	</  >		; line header
+	MOVE	T1,(IOW)	; first on a line
+	PUSHJ	P,OCTSIX	; print it
+	MSG	<  >		; spacing
+	MOVE	T1,1(IOW)	; first on a line
+	PUSHJ	P,OCTSIX	; print it
+	MSG	<  >		; spacing
+	MOVE	T1,2(IOW)	; first on a line
+	PUSHJ	P,OCTSIX	; print it
+	MSG	<  >		; spacing
+	MOVE	T1,3(IOW)	; first on a line
+	PUSHJ	P,OCTSIX	; print it
+	MSG	<    |    >	; spacing --------------------------------
+	MOVE	T1,(CMP)	; first on a line
+	PUSHJ	P,OCTSIX	; print it
+	MSG	<  >		; spacing
+	MOVE	T1,1(CMP)	; first on a line
+	PUSHJ	P,OCTSIX	; print it
+	MSG	<  >		; spacing
+	MOVE	T1,2(CMP)	; first on a line
+	PUSHJ	P,OCTSIX	; print it
+	MSG	<  >		; spacing
+	MOVE	T1,3(CMP)	; first on a line
+	PUSHJ	P,OCTSIX	; print it
+	MSG	<>,CRLF		; spacing
+DMPDF4:	ADDI	CMP,4		; add next offset
+	ADDI	IOW,3		; add next offset
+	AOBJN	IOW,DMPDF1	; loop through page
+	MSG	<>,CRLF		; final crlf
+	POP	P,IOW		; we are done with
+	POP	P,CMP		; these for now
+DMPEND:	JRST	CMPEND		; and go on to next page
+
+DMPERR:	MSG	<-Dump- >	; Flag it's the dump page
+	MOVE	T1,T2		; copy status info
+	TRZ	T1,IOEMSK	; clear error bits
+	SETSTS	DUMP,(T1)	; and clear status
+	MOVE	T4,RECNUM	; Get records read to date
+	IMUL	T4,RECPAG	;  times pages in record
+	HLRE	T1,CMP		; Distance left in record
+	ADD	T4,T1		;  added into result
+	MOVE	T1,RECPAG	; + entire record
+	CAMN	BUF,LASBUF	;  (for last record)
+	  MOVE	T1,CNT		;  use current record size
+	ADD	T1,T4		; + whole records read-distance
+	ADDI	T1,1		; + 1 for next page
+	MOVE	T4,[.CHPSI,,DUMP]
+	CHANIO	T4,T1		; set next page (useti)
+
+	TRNN	T2,IOIMPM	; improper mode?
+	  JRST	DMPER1
+	AOS	DMPIMP		; count errors
+	MSG	<Improper mode at >
+	JRST	DMPRDP		; print and go to next page
+
+DMPER1:	TRNN	T2,IODERR	; device error?
+	  JRST	DMPER2		; no, try next
+	AOS	DMPDER		; yes!
+	MSG	<Device error for >
+	JRST	DMPRDP		; print and go to next page
+
+DMPER2:	TRNN	T2,IODTER	; data error?
+	  JRST	DMPER3		; no, try next
+	AOS	DMPDTE		; yes!
+	MSG	<Data error for >
+	JRST	DMPRDP		; print and go to next page
+
+DMPER3:	TRNN	T2,IODBKT	; Block too large?
+	  JRST	DMPHUH		; no, give up?
+	AOS	DMPBKT		; yes!
+	MSG	<Block to large at >
+	JRST	DMPRDP		; print and go to next page
+
+DMPHUH:	TRNN	T2,IODEND	; EOF?
+	  JRST	DMPHU1		; no, try next
+	MSG	<(EOF) at >
+	JRST	DMPRDP		; print and go to next page
+
+DMPHU1:	MSG	<Unknown error >
+	MOVE	T1,T2		; Get number
+	PUSHJ	P,OCTOUT	; Print it
+	MSG	< at >
+DMPRDP:	PUSHJ	P,CMPPNO	; print page and
+	JRST	CMPEND		; go to next page
+
+;ROUTINE TO MAP A NUMBER OF PAGES INTO THE BUFFER AREA.
+; BUF/ADDR-1 OF PLACE TO START MAPPING
+; CNT/NUMBER OF PAGES TO MAP.
+; DP/DISK ADDRESS TO START MAPPING.
+
+MAPRD:	MOVSI	T4,2000(CNT)	;GET WORD FOR MAPPING (READ-ONLY)
+	  JRST	MAPIT
+MAPWT:	MOVSI	T4,6000(CNT)	;FOR WRITING (COPY ON WRITE FOR TESTING)
+
+MAPIT:	SKIPE	NOISY		;IF NOISY MODE SELECTED
+	 OUTCHI	"$"		; PRINT SOMETHING
+	MOVEI	T1,1(BUF)	;GET ADDR OF BUFFER
+	LSH	T1,-^D9		;PAGE NUMBER
+	HRL	T1,CNT		;COUNT,,FIRST PAGE TO REMOVE
+	VCLEAR	T1,		;REMOVE THE PAGE
+	  JRST	[HRRZS	T1	;JUST CODE
+		 CAIE	T1,4	;MAKE SURE JUST BECAUSE PAGE WASN'T THERE
+		   ERRPOP <Unexpected VCLEAR error code>
+		 JRST	.+1]
+	MOVE	T3,[.CHSMP,,DISK] ;THE FUNCTION
+	MOVE	T2,DP		;GET DP TO MAP
+	HLL	T1,T4		;GET PROPER BITS+COUNT,,PAGE IN T1
+	CHANIO	T3,T1
+	  ERRPOP <Can't super map>
+	MOVE	T2,[.WSRNG,,T1]	;PUT THEM INTO WS
+	WSCTL	T2,
+	  ERRPOP <Can't put pages into working set>
+	PREREF	T1,		;PREREF THE FIRST PAGE, REST WILL COME IN WITH IT.
+	  ERRPOP <Can't pre-reference buffer pages>
+	HRLI	T1,2000(CNT)	;NOW SET IGNORE ERRORS
+	PERSET	T1,
+	  ERRPOP <Can't set ignore error for buffer pages>
+	JRST	CPOPJ1		;GOOD RETURN
+
+;PRINT OUT A HEADER, ADDRESS OF BLOCK IN T4
+
+PRTHED:	MSG	<ASH version >	; Show version
+	LDB	T1,[POINT 9,.JBVER##,11]
+	PUSHJ	P,OCTOUT	; Major version
+;	LDB	T1,[POINT 6,.JBVER##,17]
+;	SKIPE	T1
+;	  PUSHJ	P,MINOUT	; Minor version
+	HRRZ	T1,.JBVER##	; Really loc 137
+	JUMPE	T1,PRTHD1	; No edits?
+	OUTCHI	"("		; Yes, in parenthesis
+	PUSHJ	P,OCTOUT
+	OUTCHI	")"
+PRTHD1:	LDB	T1,[POINT 3,.JBVER##,2]
+	JUMPE	T1,PRTHD2	; Who field
+	OUTCHI	"-"
+	PUSHJ	P,OCTOUT
+PRTHD2:	MSG	<, using >
+	MOVE	T1,RECPAG	; Show buffer length
+	PUSHJ	P,DECOUT	; Print buffer size
+	MSG	< page records>,CRLF
+	MOVE	T1,STRTYP
+	OUTSTR @STRMSG(T1)
+	MOVE	T1,STRNAM
+	PUSHJ	P,SIXOUT
+	OUTCHI	"("
+	MOVE	T1,STRHID	;ID FOR STRUCURE
+	PUSHJ	P,SIXOUT
+	OUTCHI	")"
+	MSG	,CRLF
+	MSG	,CRLF
+	POPJ	P,
+
+
+;ROUTINE TO PRINT DISK UNIT NUMBER AND PAGE FROM T4
+
+PRTDP:	MOVE	T1,STRNAM	;GET STR NAME
+	PUSHJ	P,SIXOUT	;PRINT STR NAME
+	MSG	< page >
+	MOVE	T1,T4		;GET PAGE NUMBER
+	PUSHJ	P,OCTOUT	;PRINT IT
+	SKIPE	STRNMU		;Any units specified?
+	SKIPE	STRTYP		;Yes, single unit?
+	  JRST	PRTDP1		;Yes, finish line
+	MSG	<, on unit >
+	MOVE	T1,T4		;GET PAGE NUMBER IN T1
+	MOVE	T2,STRMXP	;GET SIZE OF STR
+	IDIV	T2,STRNMU	;GET PAGES PER UNIT
+	IDIV	T1,T2		;GET UNIT NO IN T1, PAGE IN T2
+	PUSH	P,T2
+	PUSHJ	P,OCTOUT	;PRINT "0", ETC
+	MSG	< page >
+	POP	P,T1		;GET INTO T1
+	PUSHJ	P,OCTOUT	;PRINT IT
+PRTDP1:	MSG	<>,CRLF
+	POPJ	P,		;AND RETURN.
+
+
+;PRINT DATE - DAYS SINCE JAN 1,1964 IN T1
+; TIME IN JIFFIES SINCE MIDNITE (GMT) IN T2
+
+PRTDAT:	MOVSI	T3,400020	;FROM GMT TO CURRENT USERS ZONE, DEC FORMAT
+	MOVEI	T4,T1
+	DATUUO	T4,
+	  ERROR <DATUUO error return - should never happen>
+	PUSH	P,T2		;SAVE THE TIME
+	IDIVI	T1,^D31		;GET DAY OF MONTH
+	PUSH	P,T1		;SAVE T1 FROM GETTING SMASHED
+	MOVEI	T1,1(T2)	;GET DAY NUMBER IN T1
+	PUSHJ	P,DECOUT	;PRINT IT
+	POP	P,T1		;GET # MONTHS IN T1
+	IDIVI	T1,^D12		;GET MONTH IN T2
+	MOVE	T2,MONTAB(T2)
+	SETZ	T3,
+	OUTSTR	T2
+	MOVEI	T1,^D1964(T1)	;YEAR
+	PUSHJ	P,DECOUT	;PRINT YEAR
+	OUTCHI	" "		;SEPERATE DATE AND TIME
+	POP	P,T1		;GET TIME BACK
+	IDIVI	T1,^D60*^D60	;GET MINUTES
+	PUSH	P,T2		;SAVE JIFFY REMAINDER
+	IDIVI	T1,^D60		;GET HOUR IN T1, MINUTE IN T2
+	PUSH	P,T2
+	CAIGE	T1,^D10		;IF LESS THAN 10,
+	OUTCHI	"0"		;PRINT A ZERO
+	PUSHJ	P,DECOUT	;PRINT HH
+	POP	P,T1
+	CAIGE	T1,^D10
+	OUTCHI	"0"
+	PUSHJ	P,DECOUT	;AND MM
+	POP	P,T1		;GET JIFFIES
+	IDIVI	T1,^D60		;GET SECONDS IN T1
+	MSG	<.>
+	CAIGE	T1,^D10
+	OUTCHI	"0"
+	PUSHJ	P,DECOUT	;PRINT FRACTIONS OF A SECOND
+	POPJ	P,
+
+MONTAB:	ASCII /-Jan-/
+	ASCII /-Feb-/
+	ASCII /-Mar-/
+	ASCII /-Apr-/
+	ASCII /-May-/
+	ASCII /-Jun-/
+	ASCII /-Jul-/
+	ASCII /-Aug-/
+	ASCII /-Sep-/
+	ASCII /-Oct-/
+	ASCII /-Nov-/
+	ASCII /-Dec-/
+
+SUBTTL	GETSTR - Routine to get a structure or device
+
+GETSTR:	PUSHJ	P,SIXIN		;GET STRUCTURE NAME
+	  ERRPOP <No structure specified>
+
+	MOVEM	T1,STRNAM	;STORE IT
+	OPEN	DISK,OPNSTR	;OPEN THE STRUCTURE
+	  JRST	STRDNA		;NO, DEVICE NOT AVAILABLE
+	SETZB	T4,STRMXP	;START WITH FIRST SYSTEM UNIT, CLEAR MAX PAGES PER STR
+	SETZM	STRNMU		;CLEAR NUMBER OF UNITS WORD.
+UNILUP:	SYSPHY	T4,
+	  ERRPOP <Error from SYSPHY uuo>
+	JUMPE	T4,UNIDON	;IF RETURNED ZERO, WE'RE DONE.
+	MOVEM	T4,DSKCHB	;PUT INTO DSKCHR BLOCK
+	MOVE	T1,[DSKCHS,,DSKCHB]
+	DSKCHR	T1,
+	  ERRPOP <DSKCHR error for unit name from SYSPHY>
+	SETZ	T2,		;"STRUCTURE"
+	MOVE	T1,STRNAM	;GET STRUCTURE NAME
+	CAMN	T1,DSKCHB+4	;IS IT OUR STRUCTURE?
+	  JRST	UNIFND		;YES, GO ON
+	AOJ	T2,		;"LOGICAL UNIT"
+	CAMN	T1,DSKCHB+14	;IS IT A SPECIFIC UNIT?
+	  JRST	UNIFND		;YES, GO ON
+	AOJ	T2,		;"PHYSICAL UNIT"
+	CAME	T1,DSKCHB+15	;IS IT A SPECIFIC DRIVE?
+	  JRST	UNILUP		;NO, TRY NEXT UNIT
+UNIFND:	AOS	STRNMU		;COUNT ANOTHER UNIT
+	MOVEM	T2,STRTYP	;SET STRUCTURE TYPE INDEX
+	MOVE	T1,DSKCHB+6	;GET UNIT CAPACITY IN PAGES
+	ADDM	T1,STRMXP	;ADD TO STRMXP
+	MOVE	T1,DSKCHB+16	;GET HOM BLOCK UNIT ID
+	TRZ	T1,7777		;MASK OFF UNIT NAME
+	MOVEM	T1,STRHID	;PUT INTO HERE FOR REFERENCE.
+	JRST	UNILUP		;AND CONTINUE.
+UNIDON:
+	SKIPE	STRNMU		;ANY UNITS
+	  JRST	STRAOK		;YES, FINISH UP
+	RELEAS	DISK,		;DROP DEVICE
+	MSG	<Device not an available structure, disk unit, or disk drive>,CRLF
+NOSTRS:	POPJ	P,		;NO STRUCTURE NAME GIVEN
+
+STRAOK:	SKIPN	FLGCHK		;Are we in checking mode?
+	  JRST	CPOPJ1		;No, we are all done
+	OPEN	DUMP,OPNSTR	;Open the structure
+	  JRST	DMPREL		;No?  This is strange
+	JRST	CPOPJ1		;All done
+
+DMPREL:	RELEAS	DUMP,		;Drop it...
+	RELEAS	DISK,		;  (both)
+	JRST	STRDN1		; and fall out
+
+STRDNA:	CAMN	T1,NONONO	;Was it NO?
+	  POPJ	P,		;Yes, so drop it
+STRDN1:	MSG	<Cannot open >
+	MOVE	T1,STRNAM	;Get name for message
+	PUSHJ	P,SIXOUT	; Cannot open STRNAM
+	MSG	<>,CRLF
+	POPJ	P,		;OR GIVE UP TRYING
+	
+SUBTTL COMMAND SCANNER
+
+;ENTER WITH COMMAND NAME IN T1, AOBJN TO TABLE IN T4
+;SMASHES T2-T4, S
+;NON-SKIP IF BAD COMMAND OR AMBIGUOUS COMMAND, MESSAGE PRINTED ON TERMINAL
+;SKIP IF COMMAND FOUND, INDEX INTO TABLE GIVEN IN C(T4) RETURNED IN T4
+
+COMMAN:	PUSH	P,T4		;SAVE SO CAN CALCULATE OFFSET IF COMMAND IS FOUND
+	MOVE	T3,T1		;COPY COMMAND IN T3
+	SETO	T2,		;MASK
+	SETZ	S,		;CLEAR FLAG
+	LSH	T2,-6		;AT LEAST 1 CHAR MUST BE PRESENT
+	LSH	T3,6		;MAKE A TDZ MASK
+	JUMPN	T3,.-2
+COM1:	MOVE	T3,(T4)		;GET NEXT COMMAND NAME
+	CAMN	T1,T3		;MATCH?
+	JRST	COMFND		;YES, RETURN INDEX
+	TDZ	T3,T2		;MASK TABLE ENTRY DOWN TO NUMBER OF CHARS IN TYPED COMMAND
+	CAME	T1,T3		;MATCHES NOW?
+	JRST	NXTCOM		;NO, GO FOR NEXT ENTRY
+	TROE	S,1		;FLAG SEEN 1. IF ALREADY SEEN ONE,
+	TRO	S,2		;MARK IT.
+	HRL	S,T4		;AND SAVE ADDRESS
+NXTCOM:	AOBJN	T4,COM1		;CONTINUE
+	TRNE	S,2		;IF SAW TWO OR MORE,
+	JRST	[MSG (<Ambiguous command >)
+		 JRST NOCOM]
+	TRNN	S,1		;OK, SKIP IF HAVE A COMMAND
+	JRST	[MSG (<Unknown command >)
+		 JRST NOCOM]
+	HLRZ	T4,S		;RESTORE PROPER TABLE ADDRESS
+COMFND:	POP	P,T3		;GET ORIGINAL AOBJN POINTER
+	TLZ	T4,-1		;CLEAR OUT COUNT
+	SUBI	T4,(T3)		;GET COMMAND NUMBER
+CPOPJ1:	AOS	(P)		;AND SKIP RETURN
+CPOPJ:	POPJ	P,		;BYE.
+
+NOCOM:	PUSHJ	P,SIXOUT	;PRINT COMMAND
+	MSG	,CRLF
+	PUSHJ	P,BRKEAT	;EAT REST OF LINE
+	POP	P,(P)		;GET SAVED AOBJN POINTER OFF STACK
+	POPJ	P,		;AND RETURN.
+
+
+DECOUT:	IDIVI	T1,^D10
+	HRLM	T2,(P)
+	SKIPE	T1
+	PUSHJ	P,DECOUT
+	HLRZ	T1,(P)
+	OUTCHI	"0"(T1)		;OUTPUT AS ASCII.
+	POPJ	P,
+
+DECIN:	SETZ	T1,		;CLEAR RESULT
+	PUSHJ	P,ISBRK		;WAS LAST SEP CHAR A BREAK?
+	  POPJ	P,		;YES, FIELD IS BLANK
+DECIN0:	PUSHJ	P,GTCHR		;SCAN TO FIRST DIGIT IF ANY
+	PUSHJ	P,ISBRK		;IS IT BLANK?
+	  POPJ	P,		;YES, ERROR
+	CAIL	CH,"0"		;IS IT NUMERIC
+	CAILE	CH,"9"
+	JRST	DECIN0		;NO, SKIP THE NUMBERS
+	SKIPA			;OK, HAVE FIRST ONE.
+DECIN1:	PUSHJ	P,GTCHR		;GET CHAR
+	CAIL	CH,"0"		;MUST BE NUMBER
+	CAILE	CH,"9"
+	JRST	CPOPJ1
+	IMULI	T1,^D10
+	ADDI	T1,-"0"(CH)	;GET IT IN
+	JRST	DECIN1		;AND GO FOR MORE
+
+
+OCTIN:	SETZ	T1,		;CLEAR RESULT
+	PUSHJ	P,ISBRK		;WAS LAST SEP CHAR A BREAK?
+	  POPJ	P,		;YES, FIELD IS BLANK
+OCTIN0:	PUSHJ	P,GTCHR		;SCAN TO FIRST DIGIT IF ANY
+	PUSHJ	P,ISBRK		;IS IT BLANK?
+	  POPJ	P,		;YES, ERROR
+	CAIL	CH,"0"		;IS IT NUMERIC
+	CAILE	CH,"7"
+	JRST	OCTIN0		;NO, SKIP THE NUMBERS
+	SKIPA			;OK, HAVE FIRST ONE.
+OCTIN1:	PUSHJ	P,GTCHR		;GET CHAR
+	CAIL	CH,"0"		;MUST BE NUMBER
+	CAILE	CH,"7"
+	JRST	CPOPJ1
+	LSH	T1,3		;SLIDE WORD OVER
+	ADDI	T1,-"0"(CH)	;GET IT IN
+	JRST	OCTIN1		;AND GO FOR MORE
+
+
+BRKEAT:	PUSHJ	P,ISBRK		;IS IT BREAK TIME YET?
+	  JRST	BRKEA1		;GO CLEAR CH AND RETURN
+	PUSHJ	P,GTCHR
+	JRST	BRKEAT
+BRKEA1:	MOVEI	CH,-1		;SO SCANNERS DONT GIVE ERROR NEXT TIME
+	POPJ	P,		;AND RETURN.
+
+OCTOUT:	JUMPE	T1,OCTOU1	;Zero, so skip this
+	JUMPG	T1,OCTOU0	;Positive, so go on
+OCTHWO:	PUSH	P,T1		;Negative or half-word, save number
+	HLRZ	T1,(P)		;Get left half
+	PUSHJ	P,OCTOU0	;  and print it
+	MSG	<,,>		;  use half-word designation
+	POP	P,T1		;Get right half
+	TLZ	T1,-1		;Clear left
+OCTOU0:	IDIVI	T1,10		;Print number
+	HRLM	T2,(P)		;  using established
+	SKIPE	T1		;  routine from the
+	PUSHJ	P,OCTOU0	;  software notebooks
+	HLRZ	T1,(P)		;  examples.
+OCTOU1:	OUTCHI	"0"(T1)		; Immediate mode outchr
+	POPJ	P,		; Return
+
+SUBTTL	Sepcial purpose octal output routines
+
+OCTSIX:	PUSH	P,T4		;Working register
+	MOVEI	T4,6		;Halfword
+OCTSI0:	ROT	T1,3		;Shift around
+	LDB	T2,[Point 3,T1,35]
+	OUTCHI	"0"(T2)		;Print
+	SOJG	T4,OCTSI0	;Loop
+	OUTCHI	" "		;Add spacing
+	MOVEI	T4,6		;Halfword
+OCTSI1:	ROT	T1,3		;Shift around
+	LDB	T2,[Point 3,T1,35]
+	OUTCHI	"0"(T2)		;Print
+	SOJG	T4,OCTSI1	;Loop
+	POP	P,T4		;Restore
+	POPJ	P,		;Return
+
+OCTWNO:	IDIVI	T1,10		;One digit
+	PUSH	P,T2		;Save it
+	IDIVI	T1,10		;Second digit
+	OUTCHI	"0"(T1)		;First digit printing
+	OUTCHI	"0"(T2)		;Second digit printing
+	POP	P,T2		;Get digit
+	OUTCHI	"0"(T2)		;Last digit printing
+	POPJ	P,		;Done
+
+;RETURN NEXT SIXBIT TOKEN IN T1, BREAK CHAR IN CH
+; SCANS PAST BLANKS AND CONTROL CHARS FIRST.
+SIXIN:	MOVE	T3,[POINT 6,T1]
+	SETZ	T1,
+	PUSHJ	P,ISBRK		;WAS LAST CHAR A BREAK?
+	  POPJ	P,		;GIVE ERROR RETURN.
+SIXIN1:	PUSHJ	P,GTCHR
+	CAILE	CH," "		;IF BLANK OR CONTROL,
+	PUSHJ	P,ISBRK		;BREAK?
+	  JRST	SIXIN3		;SEE IF COLLECTED ANYTHING
+SIXIN2:	TLNN	T3,770000	;ANY MORE ROOM?
+	JRST	SIXIN1		;NO, JUST IGNORE THE REST
+	CAIL	CH,"a"		;CONVERT LOWER TO UPPER CASE
+	CAILE	CH,"z"		;
+	JRST	.+2
+	SUBI	CH,"a"-"A"
+	SUBI	CH," "
+	IDPB	CH,T3
+	JRST	SIXIN1		;NO, CONTINUE
+
+SIXIN3:	JUMPN	T1,CPOPJ1	;IF COLLECTED ANYTHING, RETURN SKIP
+	CAIN	CH," "		; ELSE IF SPACE
+	  JRST	SIXIN1		;       LOOK FOR MORE
+	POPJ	P,		;ELSE ERROR RETURN.
+
+SIXOUT:	MOVE	T2,[POINT 6,T1]
+SIXOU1:	ILDB	T3,T2
+	JUMPE	T3,CPOPJ
+	OUTCHI	"0"-'0'(T3)
+	TLNE	T2,770000
+	JRST	SIXOU1
+	POPJ	P,
+
+ISBRK:	CAIE	CH,176
+	CAIG	CH,37
+	POPJ	P,
+	JRST	CPOPJ1
+
+GTCHR:	INCHWL	CH		;GET IT
+	CAIN	CH,15		;IGNORE CR
+	JRST	GTCHR
+	POPJ	P,		;AND RETURN WITH IT IN CH
+
+SUBTTL	DATA
+
+PDL:	BLOCK	PDLLEN
+PTRBUF:	BLOCK	1		;AOBJN POINTER TO WRAP AROUND TO FIRST BUFFER
+LASBUF:	BLOCK	1		;AOBJN POINTER TO LAST BUFFER ON SAVE AND RESTORE.
+RESTDP:	BLOCK	1		;IF NON-ZERO, SAYS WHERE TO START A SAVE.
+FLGCHK:	BLOCK	1		;CHECK DUMP/PAGE IO FLAG.
+CHKSUM:	BLOCK	1		;HOLDS CHECKSUM.
+TYPREC:	BLOCK	1		;HOW MANY RECORDS BETWEEN PAUSES.
+CHKFLG:	BLOCK	1		;COMPARE FLAG.
+CMPWRD:	BLOCK	1		;WORD TO SEARCH ON DISK.
+
+ERRCLR:
+CMPCNT:	BLOCK	1		;COUNT OF COMPARE ERRORS.
+CMPDER:	BLOCK	1		;COUNT OF DEVICE ERRORS.
+CMPDTE:	BLOCK	1		;COUNT OF DATA ERRORS.
+CMPNXM:	BLOCK	1		;COUNT OF MAP ERRORS.
+CMPUNK:	BLOCK	1		;COUNT OF UNKNOWN ERRORS.
+DMPIMP:	BLOCK	1		;COUNT OF IMPROPER MODE ERRORS.
+DMPDER:	BLOCK	1		;COUNT OF DEVICE ERRORS.
+DMPDTE:	BLOCK	1		;COUNT OF DATA ERRORS.
+DMPBKT:	BLOCK	1		;COUNT OF BLOCK TO LARGE ERRORS.
+DMPUNK:	BLOCK	1		;COUNT OF UNKNOWN ERRORS.
+ERRZER==.-1			;End of zero area
+
+MAXBUF:	BLOCK	1		;MAXIMUM SIZE OF RECPAG
+RECSIZ:	BLOCK	1		;SIZE OF BUFFER IN WORDS
+RECPAG:	BLOCK	1		;SIZE OF BUFFER IN PAGES
+DEBPAG:	BLOCK	1		;Page used for debugging search
+VERBOSE:BLOCK	1		;More noise
+VERMSG:	[ASCIZ	\No verbose messages\]
+	[ASCIZ	\Verbose messages\]
+NOISY:	BLOCK	1		;Add noisemaker
+NOIMSG:	[ASCIZ	\Quiet mode\]	;QUIET
+	[ASCIZ	\Noisy mode\]	;NOISY
+STRMXP:	BLOCK	1		;MAX PAGES PER STR STORED HERE.
+STRTYP:	BLOCK	1		;TYPE OF REQUEST 0=STR, 1=LOG, 2=PHY
+STRMSG:	[ASCIZ	\Structure \]	;MESSAGE TO PRINT FOR EACH TYPE
+	[ASCIZ	\Logical unit \]
+	[ASCIZ	\Physical unit \]
+
+    DSKCHS==24
+DSKCHB:	BLOCK	DSKCHS		;DSKCHR BLOCK
+
+CODNAM:	SIXBIT	/ASH/
+RECNUM:	BLOCK	1		;CURRENT RECORD NUMBER
+
+OPNSTR:	17
+STRNAM:	SIXBIT	/DSKB/
+	0			;THIS IS AN OPEN BLOCK
+STRHID:	BLOCK	1		;HOME BLOCK ID
+STRNMU:	BLOCK	1		;NUMBER OF UNITS IN STRUCTURE
+
+DMPPAG:	BLOCK	1		;CURRENT DUMP PAGE
+DMPBUF:	BLOCK	1000		;ONE PAGE FOR SUPER DUMP IO
+
+	END	ST
+
+    3Bkë

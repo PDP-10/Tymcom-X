@@ -1,0 +1,2271 @@
+TITLE ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM
+SUBTTL E. SOCCI 31-OCT-79/WRS/DARREN/SUTTOND/CARL
+LALL
+	ASPVER==7
+	ASPMIN==0
+	ASPEDT==110
+	ASPWHO==0
+
+	LOC 137
+	BYTE (3) ASPWHO (9) ASPVER (6) ASPMIN (18) ASPEDT
+	RELOC
+
+	SALL	;CLEAN LISTINGS PLEASE
+
+;REVISION HISTORY
+
+comment \
+
+7(110)	Remove the range check for the START command to allow VERIFY of
+	tapes on any system regardless of size.
+
+7(107)	Print the position to be used at the beginning of the next tape.
+
+7(106)	Make VERIFY use the CMP buffer and be less different.
+
+7(105)	Fix MAPVER code for VERIFY command.  CNT was not setup.  Use the
+	value in BUFPAG instead.  For VCREAT use right accumulator [T1].
+
+7(104)	Revamp revision history to match major version change from the
+	released version 6 ASP to version 7.  Remainder of the code is
+	unchanged.
+
+(103)	Cosmetic changes to verbose output.  Fix off-by-one index number.
+
+(102)	Add code to print verbose page differences when compare finds a
+	mis-match.  Add NOISY command which toggles VERBOSE flag.
+	Fix "adjusted" message at startup to check DP instead of RESTDP.
+
+(101)	Fix missing -^D9 on words to page LSH at STSxxx plus a few.
+
+(100)	Set DEC standard version number, edits starting now at 100.  The
+	tape header and print routines reflect this change and can cope
+	with either the old or current version formats.
+
+	Changed command SETRES to START, PRTRES to WHERE and modified the
+	HELP command to be more presentable.  START falls into WHERE to
+	tell you what you've just said to do.  START format is changed to
+	START <structure-name> <page-number> <tape-name>
+	the tape device is read to obtain a header and the tape number to
+	use is calculated at that time.  If <page-number> is not an exact
+	multiple of BUFPAG it is rounded down to a buffer-record boundary.
+
+	Disk page numbers are now printed as structure absolute and then
+	broken down to unit components for pattern analysis (on errors).
+
+	Routines STSRED and STSWRT have been added to track disk errors
+	during supermap.  Currently only read checking is performed both
+	on save and restore of tape data.
+
+(12)	Modify buffer size constants to use variables, to work around bug
+	if F3TSER.  F3 bug will be fixed, but since work was done already
+	added command BUFSIZE to set nonstandard buffer sizes for all of
+	the tape-io operations.  (This allows F3 to work NOW.)  /Carl
+
+	Modified or reformatted many messages to be more meaningful.  /Carl
+
+	Allow "NO" in response to "next tape" in GETTAP to abort the current
+	command, reset the stack and reenter the command loop.  This ONLY
+	happens if the open for device "NO" fails!  If the user is stupid
+	enough to type a command such as "OPEN NO" he gets what he deserves.
+
+(11)	Added COMPARE command to actually compare the data on the tapes
+	with the data on disk.  Must be done on the system that the SAVE
+	was performed, otherwise everything will mis-match.  Should be
+	done just after the save.  Any attempt to bring the system up
+	before the COMPARE will cause the COMPARE to fail  since the disk
+	system will have been changed.  /Carl
+
+	Changed messages to lowercase.  /Carl
+
+	Changed SAVE/RESTORE/COMPARE to accept a structure name and a tape
+	drive name (in that order).  /Carl
+
+	For all flavor of SAVE/RESTORE/COMPARE/VERIFY commands unload the
+	current tape whenever we switch to a new tape unit.  /Carl
+
+(10)	Removed <ADDI T1,1> @ NXTSAV+5 so that when a tape is replaced
+	in a SAVE operation the 1st record on the tape will be rewritten.
+	Also added <MTAPE TAPE,.MTEOF> @ UNLTAP to write a tape mark on
+	the bad tape.  /SUTTOND
+
+(7)	Code modified @ INOK+6 to type record sequence numbers when
+	verify detects an error.  Change made by Darren Price but
+	not distributed.  /DARREN  (comment by SUTTOND)
+
+6	Fixed problem with SETRES which caused current date and time to
+	be written onto a restarted tape instead of date and time of
+	ASP save set. format for SETRES is now SETRES <tape unit name>.
+	Operator must mount last fully successful tape saved, restored,
+	or checked, and ASP gets the tape number and date and time from
+	the header of that tape. Then operator mounts tape to restart
+	(fresh tape for save, next tape to restore or verify for
+	RESTORE and VERIFY operations) and ASP operation continues
+	from there. PRTRES changed to print out date and time
+	of ASP save/restore.
+	Routine CHKHED changed so that in verify mode ASP doesn't
+	demand that structure of the system the verify is being done
+	on is the same as structure that the ASP dump is for.
+
+5	Put in SETRES command to set tape number, unit number
+	and page number to do a restart of an ASP SAVE or RESTOR,
+	and a PRTRES command to print out current status of
+	SETRES. The CHECK command will now print out the first
+	page written on the tape to facilitate restarting saves
+	or restores. Since only certain disk pages are legal to
+	start saves or restores on, there is some built in
+	consistency checking.
+
+4	VERIFY command - allows tape drive speed verification of an ASP
+	tape set. Does everything for a restore short of actually writing
+	the data onto the disk. Doesn't require stand alone system to perform,
+	can be performed under timesharing. After a set of ASP tapes has
+	been verified with no significant read back problems, it is far more
+	likely that the restore if it is necessary will proceed successfully.
+
+	New output error recovery: If a write error is encountered,
+	a section of blank tape enough to cover the size of the failed record
+	is written onto the tape, and the record is re-written. If the
+	retry is unsuccessful, the another section of blank tape is written,
+	and the record is tried once again. If this cycle finally succeeds
+	in successfully writing the record before OECMAX tries (currently
+	20 is the default) then the save will proceed normally. Otherwise,
+	the operator is asked to set the tape aside and mount a new tape,
+	at which point the save is restarted from there.
+
+	The header record for each tape is actually read back after it is
+	written to ensure that it made it out to the tape successfully.
+
+	New input error recovery:
+	On input, if an I/O error or consistency error (bad record sequencen
+	number, bad prologue code) is encountered, the tape is searched backwards
+	for the last good record. If it is not found, the tape is searched
+	forwards for the first good record that can be found. If it is found,
+	a message stating what the last disk page restored or verified
+	is is printed. The tape is then searched for the next good record.
+	If it is not found on the remainer of the tape, the operator
+	is asked to mount the next tape if it exists. Otherwise,
+	the restore continues from the record that was found.
+
+	New Prologue Record format:
+	The format of an ASP tape consists of a header, followed by
+	<data record><prologue record> pairs. The prologue record used
+	to contain SIXBIT/ASP/, but now has been changed to contain
+	the GMT time of day that was written into the header. This
+	ensures that during read recovery old ASP data is not mistaken
+	for new ASP data. However, this format also makes tapes written
+	by this version of ASP unreadable by previous ASP versions.
+
+	OECMAX and SRCLEN commands: These commands set the number of
+	times an output record is tried to be written out before asking
+	for a new tape, and the number of records to search in input
+	error recovery for a good record in the forward direction.
+	Under normal circumstances, these commands should not be used.
+
+	A more explicit error message is now given on a fatal tape output
+	error. The operator is now specifically instructed that the tape
+	is no longer part of the ASP tape save set and that it should be
+	put aside.
+
+	A bug was fixed which was introduced in ASP version 3 which caused
+	the code instead of the record sequence number to be stored
+	in the prologue record, causing the tapes to be unuseable on
+	restore - would have gotten record sequence error.  However, data on
+	the tapes written by version 3 was still good, and if it becomes necessary
+	to use that data, a special version of ASP V3 can be created which
+	will restore those tapes.
+
+3	Put blank line in output after printing out STR unit
+	and DP as per operations request.
+	Fixed bug where could overwrite ASP tape of the same set
+	after a fatal output error.
+	Fixed bug where record sequence number got zeroed instead
+	of reset after fatal tape output error.
+	Fixed bug where you could type I DONT and it would overwrite
+	tape because it stopped scanning.
+	Tape is now always rewound before writing header onto it.
+
+2	*Prints out recording density with header and tape change
+	messages. /EVS
+	*Prints out unit within structure and page within unit
+	being saved for each tape written or restored (i.e.
+	DSKB2, PAGE 11111 (OCTAL) . Installed for debugging./EVS
+	*ASP will no longer allow a tape to be overwritten during
+	a given ASP SAVE run if the header on that tape indicates
+	that it has been written during that run (to save people
+	from typing return accidentally when ASP asks for new
+	tape unit. /EVS
+
+1	FIRST VERSION OF ASP, ABSOLUTE STRUCTURESAVINGANDRESTORING PROGRAM
+
+\;end comment
+
+;AC DEFINITIONS
+
+	S=0
+	T1=1		;TEMPORARIES
+	T2=2		;  MAY BE CLOBBERED
+	T3=3		;  BY JUST ABOUT
+	T4=4		;  ANY ROUTINE
+	DP=5		;DISK PAGE NUMBER
+	CNT=6		;COUNT OF PAGES IN BUFFER
+	CMP=7		;POINTER INTO COMPARE BUFFER
+	BUF=10		;POINTER INTO BUFFER
+	IOW=11		;IOWD FOR DUMP MODE TAPE TRANFERS
+	IOW1=12		;MUST BE IOW+1
+	IOW2=13		;MUST BE IOW+2
+	CH=14		;CHARACTER
+	P=17		;STACK
+
+;MTAPE FUNCTION CODES
+
+.MTREW==1		; REWIND TAPE
+.MTEOF==3		; WRITE EOF/EOT
+.MTSKR==6		; SKIP RECORD
+.MTBSR==7		; BACKSPACE RECORD
+.MTBLK==13		; WRITE BLANK TAPE
+.MTUNL==11		; UNLOAD TAPE
+
+
+;PARAMETERS
+
+
+;  *** MAXREC will be on a page boundary ***
+
+IFNDEF MAXREC,<MAXREC==30000>	;MAXIMUM RECORD SIZE (24 PAGES)
+IFN <MAXREC&777>,<PRINTX MAXREC not an integrel page size>
+BUFNUM==^D10		;HOW MANY BUFFERS AT FIRST
+
+STDSRC==^D20		;DEFAULT FORWARD SEARCH LENGTH IN RESYNC
+INCHPG==^D3		;BLANK TAPE IN INCHES FOR .MTBLK
+STDOEC==^D10		;TIMES WILL TRY TO WRITE SAME REC OUT TO TAPE.
+
+;I/O CHANNELS
+
+DISK==0			; CHANNEL FOR SUPER MAP
+TAPE==1			; CHANNEL FOR DUMP TO/FROM TAPE
+
+
+;MACRO DEFINITIONS
+
+DEFINE ERROR(MSG),<PUSHJ P, [OUTSTR [ASCIZ\MSG
+\]
+		EXIT 1,
+		JRST .-1]>;END ERROR MACRO DEFINITION
+DEFINE	ERRPOP(MESS) <
+JRST	[OUTSTR [ASCIZ \'MESS
+\]
+	 POPJ	P,]
+>;END ERRPOP
+
+DEFINE MSG(MESS,CRLF)<IFB <CRLF> <OUTSTR [ASCIZ\'MESS\]>
+IFNB <CRLF> <OUTSTR [ASCIZ \'MESS
+\]>
+>;END MSG MACRO DEFINITION
+
+PDLLEN==^D40
+
+
+;DEFINITIONS
+
+.CHSMP==43
+IO.UWC==1B31
+.WSRNG==1
+
+;UGETF SYMBOLS
+
+.UGCNT==0		;GET LAST RECORD SIZE
+.UGSTS==2		;GET STATUS
+  UG.HWP==(1B0)
+  UG.RDY==(1B1)		;READY
+  UG.LDP==(1B3)		;LOAD POINT
+  UG.D62==(1B13)	;DENSITY 6250
+  UG.D16==(1B14)	;DENSITY 1600
+  UG.D8==(1B15)		;DENSITY 800
+  UG.D5==(1B16)		;DENSITY 500
+  UG.D2==(1B17)		;DENSITY 200
+  UG.DNM==UG.D62!UG.D16!UG.D8!UG.D5!UG.D2
+
+;*;	OPDEF VCLEAR [CALLI -66]
+;*;	OPDEF VREMOV [CALLI -65]
+;*;	OPDEF VCREAT [CALLI -67]
+;*;	OPDEF VPROT  [CALLI -70]
+;*;	OPDEF WSCTL  [CALLI -74]
+;*;	OPDEF PREREF [CALLI -75]
+;*;	OPDEF PERSET [CALLI -72]
+
+;*;	OPDEF PAGSTS [CALLI -71]
+PS.UWS==1B0		; in user working set
+PS.REF==1B1		; has been referenced
+PS.MXW==1B2		; can be protected read/write
+PS.SUP==1B3		; super mapped
+PS.DER==1B4		; device page I/O error occurred
+PS.DTE==1B5		; data page I/O error occurred
+ PS.DDE==3B5		; page I/O error occurred
+PS.DRT==1B6		; not dirty or swapping out
+PS.NEW==1B7		; ignoring errors
+PS.OER==1B8		; output error
+PS.PAR==1B9		; parity error
+PS.FIL==1B32		; originally mapped from a file
+PS.CPR==7B35		; current protection
+ PS.CP0==0		; non-existent
+ PS.CP1==1		; read only
+ PS.CP2==2		; copy on write
+ PS.CP3==3		; read/write
+
+OPDEF PJRST  [JRST]
+
+.GTCNF==11
+  .CNDAT==11
+  .CNTIM==10
+SYSNSZ==5		;NUMBER OF WORDS IN SYSTEM NAME
+
+IOTEND==2000		;END OF TAPE
+IODEND==20000		;END OF FILE
+IOEMSK==740000		;ERROR MASK
+IODERR==200000
+IODTER==100000
+IOIMPM==400000		;WRITE LOCK
+
+IFNDEF FTDEBG,<FTDEBG==0>
+
+SUBTTL	COMMAND TABLES
+
+DEFINE COMMAC <
+X <Save   >,SAVE,<Save a file structure image to tape>
+X <Check  >,CHECK,<Read and check the ID record from an ASP tape>
+X <Restore>,RESTOR,<Rebuild a disk structure from an ASP tape>
+X <Verify >,VERIFY,<Verify a set of ASP tapes to ensure their readability>
+X <Compare>,COMPAR,<Compare the data from a set of ASP tapes with the disk>
+X <Help   >,HELP,<Type this message>
+X <Status >,STATUS,<Print current tape status and available densities>
+X <Density>,SETDEN,<Set Non-Standard tape density>
+X <Rewind >,REWIND,<Rewind current tape unit>
+X <Unload >,UNLOAD,<Unload current tape unit>
+X <Open   >,TAPOPN,<Select tape unit for future operation>
+X <Daytime>,DAYTIM,<Print current date and time>
+X <OECMAX >,MAXOEC,<Set maximum tape output retry count>
+X <SRCLEN >,SETSRC,<Set maximum tape records to search during resynch>
+X <Start  >,SETRES,<Set structure start page and read tape number from tape>
+X <Where  >,PRTRES,<Print out start page and tape number>
+X <Bufsize>,SETBUF,<Set Non-Standard tape record size (use with caution)>
+X <Noisy  >,NOISES,<Set or clear verbose output mode during compare>
+X <Quit   >,COPBYE,<Exit from ASP>
+>
+
+
+DEFINE X(A,B,C)<<SIXBIT /'A'/>>
+COMNAM:	COMMAC
+	COMLEN==.-COMNAM
+DEFINE X(A,B,C)<EXP 'B>
+COMADR:	COMMAC
+
+SUBTTL	SETBUF - Setup buffer size and pointers
+
+SETBUF:	PUSHJ	P,DECIN		; READ A NUMBER
+	  MOVEI	T1,MAXREC/1000	; USE DEFAULT IF NONE GIVEN
+	CAILE	T1,MAXREC/1000	; ALLOW ANYTHING UP TO MAXIMUM SIZE
+	  ERRPOP <Specified buffer size is too large>
+SETBF0:	LSH	T1,^D9		; CONVERT TO WORDS
+SETBF1:	MOVEM	T1,BUFSIZ	; SAVE IT
+	LSH	T1,-^D9		; CONVERT TO PAGES
+	MOVEM	T1,BUFPAG	; SAVE IT
+
+	MOVE	T1,BUFSIZ	; GET BUFFER SIZE IN WORDS
+	IMULI	T1,BUFNUM	; MULTIPLY BY INITIAL BUFFER CACHE
+	MOVEM	T1,CMP		; SAVE SIZE OF PAGE BUFFER AREA
+	HRRZ	T1,.JBFF##	; GET FIRST FREE LOC
+	TRO	T1,777		; ROUNDED TO PAGE BOUNDARY
+	ADDM	T1,CMP		; ADD TO GET LAST WORD OF BUFFER
+	HRLI	T1,-BUFNUM	; GET -BUFS,,ADDR-1
+	MOVEM	T1,PTRBUF	; SAVE FOR WRAP AROUND
+	POPJ	P,
+
+SUBTTL	Starting and reentry points
+
+NOSTOP:	RELEAS	DISK,		;FREE ANY DISK CHANNEL IN USE
+	RELEAS	TAPE,		;FREE ANY TAPE CHANNEL IN USE
+	MSG	<>,CRLF		;GIVE A LITTLE MESSAGE
+	MSG	<Command aborted.>,CRLF
+	JRST	ST1		;RESTART PROGRAM
+
+ST:	JFCL			;NO DIFFERENCE IF CCL ENTRY
+	RESET
+	MOVEI	T1,STDOEC
+	MOVEM	T1,OECMAX	;SETUP STD RETRY COUNT
+	MOVEI	T1,STDSRC	;AND FORWARD RESYNC SEARCH COUNT
+	MOVEM	T1,SRCLEN
+	SETZM	OPNTNM		;SAY NO TAPE IS OPENED.
+	SETZM	DEBCNT#		;CLEAR DEBUG COUNT
+
+ST1:	MOVE	P,[IOWD PDLLEN,PDL]
+	MOVEI	T1,MAXREC	;GET DEFAULT BUFFER SIZE
+	PUSHJ	P,SETBF1	;SETUP POINTERS
+	MOVE	BUF,PTRBUF	;GET BUFFER POINTER
+
+;GET COMMAND AND PROCESS.
+
+GETCOM:	MSG	,CRLF
+	MOVEI	CH,-1		;SO SCANNERS
+	OUTSTR	[ASCIZ \ASP>\]	;PROMPT FOR COMMAND
+	PUSHJ	P,SIXIN		;GET IT
+	  JRST	GETCOM		;BLANK.
+	MOVE	T4,[-COMLEN,,COMNAM] ;SCAN THE TABLE
+	PUSHJ	P,COMMAN
+	  JRST	GETCOM		;GET A COMMAND
+	PUSHJ	P,@COMADR(T4)	;DO IT
+	  JFCL			;IN CASE OF ERROR RETURNS
+	PUSHJ	P,BRKEAT	;EAT UP UNUSED CHARS.
+	JRST	GETCOM		;AND GET ANOTHER COMMAND
+
+SUBTTL HELP MESSAGE
+
+HELP:	MSG	<Valid ASP commands>,CRLF
+
+DEFINE X(A,B,C),<
+MSG <  'A'    'C'.>,CRLF
+>
+	COMMAC			;;PRINT OUT TEXT FOR ALL COMMANDS
+	POPJ	P,
+
+SUBTTL CHECK
+
+CHECK:	PUSHJ	P,GETTAP	;GET TAPE
+	  JRST	NOTAPO
+	PUSHJ	P,CHECK0
+	  POPJ	P,		;NO GOOD.
+	IN	TAPE,[IOWD 1,HEDBF1
+			IOWD PROLEN,PROBUF
+			0] ;GET FIRST DP ON TAPE.
+	JRST	.+2	;OK
+	JRST	[GETSTS TAPE,S
+		 ERRPOP <Cannot read first data record on tape>
+		 JRST TPINER]
+	MOVE	T1,HEDBUF+HEDTIM	;MAKE SURE CODE MATCHES
+	CAME	T1,PROBUF+PROCOD
+	  ERRPOP <Bad prologue code found in first record>
+	MOVE	T4,PROBUF+PROCNT
+	IMUL	T4,BUFPAG		;CONVERT TO RELATIVE PAGE
+	MSG	<First page on tape is >
+	AOS	(P)
+	PJRST	PRTDP
+
+CHECK0:	MTAPE	TAPE,.MTREW		;REWIND
+	SETZM	HEDBUF			;CLEAR OUT THE BUFFER
+	MOVE	T1,[HEDBUF,,HEDBUF+1]
+	BLT	T1,HEDBUF+SIZHED-1
+	IN	TAPE,[IOWD SIZHED,HEDBUF
+			0]
+	  JRST	CHECK1
+	GETSTS	TAPE,S			;GET STATUS IN S FOR TPINER
+	JRST	[MSG <Cannot read header record: >
+		 JRST TPINER]
+CHECK1:	MOVE	T1,HEDBUF+HEDNAM	;MAKE SURE ITS OK
+	CAME	T1,CODNAM		;OK?
+	  ERRPOP <Not in ASP format, bad header code name>
+	HRRZ	T2,HEDBUF+HEDSIZ
+	CAILE	T2,SIZHED		;PROPER SIZE? (or less)
+	  ERRPOP <Unknown ASP format, header size too large>
+	CAIE	T2,SIZHED		;PROPER SIZE? (or less)
+	  MSG	<Tape header record is smaller than standard.>,CRLF
+	HLRZ	T1,HEDBUF+HEDSIZ	;GET BUFFER PAGE COUNT
+	SKIPE	T1			;  IF SPECIFIED
+	  PUSHJ	P,SETBF0		;  RESET ALL BUFFER POINTERS
+	MOVEI	T4,HEDBUF		;GET HEADER ADDRESS
+	MSG	<>,CRLF			;  AND PRINT FOR ALL TO SEE
+	MSG	<Recorded by >
+	AOS	(P)
+	PJRST	PRTHED
+
+SUBTTL	REWIND UNLOAD NOISY and QUIT commands
+
+REWIND:	PUSHJ	P,GETTAP		;GET TAPE OPEN
+	  JRST	NOTAPO
+	MTAPE	TAPE,.MTREW		;YES, REWIND IT
+	POPJ	P,			;AND RETURN.
+
+UNLOAD:	PUSHJ	P,GETTAP		;GET A TAPE OPEN
+	  JRST	NOTAPO
+	MTAPE	TAPE,.MTUNL		;REWIND AND UNLOAD.
+	RELEAS	TAPE,			;GIVE UP DEVICE
+	JRST	CPOPJ1			;OK RETURN.
+
+NOISES:	MOVN	T1,VERBOSE		;GET VERBOSE FLAG
+	AOJ	T1,			; FLIP/FLOP (0=1, 1=0)
+	MOVEM	T1,VERBOSE		;REMEMBER FOR LATER
+	OUTSTR	@[[ASCIZ \Brief\]
+		  [ASCIZ \Verbose\]](T1)
+	MSG	< messages during compare.>,CRLF
+	JRST	CPOPJ1			;ALL DONE
+
+COPBYE:	RELEAS	DISK,
+	RELEAS	TAPE,
+	EXIT	1,
+	JRST	.-1
+
+SUBTTL MAIN COMMAND ROUTINES
+
+TAPOPN:	PUSHJ	P,SIXIN
+	  ERRPOP <No tape specified>
+	PUSHJ	P,TAPOP1	;OPEN IT
+	  JRST	NOOPEN		;NO OPEN HERE
+	JRST	CPOPJ1
+
+TAPOP1:	MOVEM	T1,OPNTNM	;PUT INTO TAPE OPEN BLOCK
+TAPOP2:	OPEN	TAPE,OPNTAP
+	  JRST	[SETZM OPNTNM	;NOTHING IS REALLY OPEN
+		 POPJ P,]	;RETURN.
+	MOVE	S,OPNTAP	;GET INITIAL STATUS SETUP IN S.
+	AOS	(P)		;IT WILL WORK.
+	PJRST	SETDTB		;SETUP DENSITY BLOCK ADDRESS AND RETURN.
+
+
+NONONO:	SIXBIT	\NO\		;A NEGATIVE RESPONSE
+NOTDEV:	CAMN	T1,NONONO	;IS THERE A MATCH?
+	  JRST	NOSTOP		;YES, DO SOME RESTART
+NOOPEN:	MSG	<Device >	;  PRINT TEXT
+	PUSHJ	P,SIXOUT	;  SHOWING DEVICE NAME
+	MSG	< not available>,CRLF
+	POPJ	P,		;RETURN
+
+
+
+;STATUS COMMAND, PRINTS MISCELLANEOUS S.
+; ENTER AT CURDEN TO PRINT CURRENT DENSITY ON OPEN TAPE UNIT
+
+STATUS:	PUSHJ	P,GETTAP	;OPEN TAPE UNIT
+	  JRST	NOTAPO
+	MOVE	T1,OPNTNM	;GET NAME IN T1 FOR PRINTOUT
+	PUSHJ	P,SIXOUT	;PRINT IT OUT
+	MSG	<:>,CRLF
+	MOVEI	T1,.UGSTS	;GET CONDENSED DEVICE INDEPENDENT TAPE STATUS
+	UGETF	TAPE,T1		;ANSWER IN T2
+	TLNE	T2,UG.HWP	;WRITE PROTECTED?
+	MSG	(<Unit is write protected>,CRLF)
+	TLNN	T2,UG.LDP	;UNIT AT LOAD POINT?
+	MSG	(<Unit not at load point>,CRLF)
+	PUSHJ	P,PRTDEN	;PRINT AVAILABLE DENSITIES
+	MSG	<, current = >
+CURDEN:	LDB	T1,[POINT 2,OPNTAP,28] ;GET CURRENT
+	JUMPE	T1,STAT0
+	SUBI	T1,3
+	MOVMS	T1		;GET INDEX INTO DENSITY TABLE
+STAT0:	ADD	T1,TAPDTB
+	HRRZ	T1,(T1)		;GET THE DECIMAL NUMBER
+	PUSHJ	P,DECOUT	;PRINT IT AND
+	MSG	< BPI>,CRLF
+	POPJ	P,		;RETURN.
+
+
+;ROUTINE TO PRINT DENSITIES AVAILABLE. TAPE DENSITY TABLE IN TAPDTB.
+
+PRTDEN:	MSG	(<Density(>)
+	MOVE	T3,TAPDTB	;GET DENSITY TABLE ADDRESS
+	HRRZ	T1,(T3)		;MUST BE AT LEAST ONE
+	JRST	DENLP0		;DON'T PRINT COMMA FIRST TIME.
+DENLUP:	SKIPN	T1,(T3)		;GET NEXT ONE
+	JRST	DENDON		;RETURN.
+	MSG	(<,>)		;SEPARATE
+DENLP0:	HRRZS	T1
+	PUSHJ	P,DECOUT	;PRINT OUT IN DECIMAL
+	AOJA	T3,DENLUP	;AND PRINT NEXT IF ANY.
+
+DENDON:	MSG	(<)>)
+	POPJ	P,		;AND RETURN.
+
+
+SETDTB:	MOVEI	T1,.UGSTS	;GET UGETF WORD	
+	UGETF	TAPE,T1		;IN T2
+	TDZ	T2,[<-UG.DNM-1>,,-1]
+	SETZ	T3,		;FOR INDEXING
+FNDDTB:	HLLZ	T1,DENSTB(T3)	;GET BITS
+	SKIPN	T1
+	  ERRPOP <Unit has unknown combination of densities>
+	CAME	T1,T2		;MATCH
+	  AOJA	T3,FNDDTB	;NO, GO FOR NEXT
+	MOVE	T4,DENSTB(T3)	;GET ADDRESS OF TABLE.
+	MOVEM	T4,TAPDTB	;SAVE IT FOR LATER.
+	POPJ	P,		;AND RETURN.
+
+SUBTTL PAGE STATUS CODE
+
+STSRED:	TDZA	T1,T1		; Zero entry: Reading
+STSWRT:	MOVEI	T1,1		; One entry:  Writing
+	MOVEM	T1,STSTYP	; Remember which!
+	PUSH	P,CMP		; Save a pointer
+	HRRZ	CMP,BUF		; Get buffer address
+	AOJ	CMP,		; Increment to next page
+	LSH	CMP,-^D9	; Convert to page number
+	MOVN	T1,BUFPAG	; Get count of pages
+	CAMN	BUF,LASBUF	; If last buffer
+	  MOVN	T1,CNT		; Use current count
+	HRL	CMP,T1		; Setup AOBJN pointer
+STSPAG:	HRRZ	T1,CMP		; Get page number
+	PAGSTS	T1,		; Read status
+	  ERRPOP <Unexpected bad page from PAGSTS>
+	SKIPE	T1		; Non-existent page?
+	TLNE	T1,(PS.DER!PS.DTE)
+	  PUSHJ	P,STSERR	; or Device/Data error detected
+	AOBJN	CMP,STSPAG	; 
+	POP	P,CMP		; Restore
+	POPJ	P,		; Return
+
+
+;*;
+;*;  %Warning: device/data read or write error for DSKBx unit y page z
+;*;  This page will most likely be bad on disk after the restore.
+;*;
+
+STSERR:	TLNE	T1,(PS.DER)	; Device error?
+	  MSG	<Device >
+	TLNE	T1,(PS.DTE)	; Data error?
+	  MSG	<Data >
+	SKIPN	T1		; or non-existent
+	  MSG	<Non-existent page >
+	MSG	<error >
+	MOVE	T1,STSTYP	; Reading or writing?
+	OUTSTR	@[[ASCIZ \reading \]
+		  [ASCIZ \writing \]](T1)
+	HLRE	T1,CMP		; Get count left
+	MOVE	T4,BUFPAG	; + full = page
+	CAMN	BUF,LASBUF	; (on last buffer)
+	  MOVE	T4,CNT		; + count = page
+	ADD	T1,T4		; Current page
+	MOVE	T4,PROBUF+PROCNT ;Last record saved/restored
+	SKIPN	STSTYP		; Reading or writing?
+	  MOVE	T4,PROBUF+PROCNT ;Last record saved/restored
+	IMUL	T4,BUFPAG	; Turn into page number
+	ADD	T4,T1		; Add in current set.
+	PJRST	PRTDP		; And give the page number.
+
+SUBTTL SAVE CODE
+
+SAVE:	SETZM	VERFLG		;THIS IS NOT A VERIFY, DO NORMAL MAPPING.
+	SETZM	CMPFLG		;THIS IS NOT A COMPARE, USE NORMAL RANGE.
+	PUSHJ	P,GETSTR	;GET A STRUCTURE
+	  JRST	NOSTRS		;OOPS, MSG ALREADY PRINTED
+	PUSHJ	P,GETTAP	;OPEN TAPE UNIT
+	  JRST	NOTAPO
+
+	PUSHJ	P,ALONE		;I WANT TO BE ALONE
+	  POPJ	P,		;SORRY.
+
+	SETZ	DP,		;CLEAR OUT AND GET VALUE OF
+	EXCH	DP,RESTDP	;WHERE TO START
+	CAMLE	DP,STRMXP	;[110] Make sure its in range
+	  ERRPOP <Start page number too large for specified structure>
+	MOVE	T1,DP		; Copy start page
+	IDIV	T1,BUFPAG	; See if it needs adjusting
+	MOVEM	T1,TAPBAS	; Save record number for tape
+	IMUL	T1,BUFPAG	; Back to page number for
+	CAME	T1,DP		;   adjustment check
+	  MSG	<Start page adjusted.>,CRLF
+	MOVE	DP,T1		; Set DP properly
+
+	SETZM	LASBUF		; Clear last buffer counter
+	MTAPE	TAPE,.MTREW	;REWIND THE TAPE
+	SETZ	T1,
+	EXCH	T1,RESTTP	;GET TAPE NUMBER TO RESTART AT
+	SKIPN	T1
+	MOVEI	T1,1		;IF NO RESTART, START AT TAPE 1
+	MOVEM	T1,TAPNUM
+
+	PUSHJ	P,INIHED	;INIT THE HEADER TO GO OUT
+	  POPJ	P,		;BAD DATE OR SOMETHING
+
+
+;HERE TO RESTART THE WRITE OF A TAPE REEL
+; DP HAS DISK PAGE ADDRESS TO START WITH.
+
+SAVRST:	PUSHJ	P,WRTHED	;WRITE IT OUT
+	  POPJ	P,		;SORRY, DIDN'T WORK.
+	MOVEI	T4,HEDBUF	;ADDRESS OF THE HEADER
+	PUSHJ	P,PRTHED	;PRINT IT OUT FOR USER
+
+	MOVN	IOW,BUFSIZ	;START OUT WITH THIS BIG OF A TRANSFER
+	HRLZ	IOW,IOW		;SETUP IOWD COUNT
+	MOVE	IOW+1,[IOWD PROLEN,PROBUF] ;PROLOGUE BUFFER
+	SETZ	IOW+2,		;END OF LIST
+	MOVE	DP,TAPBAS	;GET DP SETUP TO BEGINNING OF REEL
+	IMUL	DP,BUFPAG	;TURN FROM REC PAIR NO TO DP NO
+
+;HERE AFTER A WRITE ERROR RECOVERY TO WRITE OUT THE TAPE FROM LAST KNOWN GOOD POINT.
+
+WRTRST:	MOVE	BUF,PTRBUF	;GET PAGE BUFFER POINTER SETUP
+	SETZM	LASBUF		;INDICATOR FOR LAST BUFFER. ??? * ???
+	MOVE	T1,FIRTIM	;CODE IS THE TIME SET STARTED.
+				;THIS KEEPS OVERLAPPING ASP DATA FROM
+				;APPEARING OK ON RESTORE.
+	MOVEM	T1,PROBUF+PROCOD
+	MOVE	T1,DP		;GET FIRST RECORD THAT GOES ONTO THIS TAPE.
+	IDIV	T1,BUFPAG	;TURN INTO REC PAIR NUMBER
+	MOVEM	T1,PROBUF+PROCNT ;THIS IS FIRST REC NUMBER THAT GOES INTO PROLOGUE RECORD.
+	MSG	<Saving >
+	MOVE	T4,STRTYP	;GET STRUCTURE TYPE
+	OUTSTR	@STRMSG(T4)	;LET THEM KNOW WHAT KIND
+	MOVE	T4,DP		;GET DP TO PRINT OUT
+	PUSHJ	P,PRTDP		;NOW PRINT WHAT WE ARE SAVING.
+	MSG	,CRLF
+
+;NOW START IN THE WHOLE BUFFER AREA
+IF2,<PRINTX [Need to fix initial read on a restart if too near end of STR]>
+
+	MOVE	CNT,BUFPAG	;MAP IN EVERYTHING
+	IMULI	CNT,BUFNUM	;  ALL GROUPS OF BUFFERS
+	PUSHJ	P,MAPRD
+	  POPJ	P,		;SOMETHING WENT VERY WRONG
+	ADD	DP,CNT		;ADVANCE DISK ADDRESS.
+	MOVE	CNT,BUFPAG	;FROM NOW ON, DO ONE BUFFER AT A TIME.
+
+
+;NOW START OUT A BUFFER TO TAPE, THEN START NEXT XFER INTO IT.
+; DP HAS NEXT DISK PAGE TO MAP.  PROBUF+PROCNT HAS LAST RECORD NUMBER.
+
+COPLUP:	HRR	IOW,BUF		;GET NEXT ADDRESS INTO IOW
+	CAME	BUF,LASBUF	;IS THIS THE LAST BUFFER?
+	  JRST	COPRTY		;NO.
+	MOVN	T1,CNT		;YES, GET -VE PAGES TO DO
+	ASH	T1,^D9		;TURN INTO WORDS
+	HRL	IOW,T1		;PUT INTO IOW
+COPRTY:	TRNE	S,IOTEND	;IS END OF TAPE LEFT OVER FROM LAST WRITE?
+	  JRST	NXTSAV		;YES, MUST SWITCH TAPES.
+	PUSHJ	P,STSRED	; Check the read status on the current range
+	OUT	TAPE,IOW	;START IT OUT TO TAPE
+	  JRST	OUTOK		;ALL IS OK.
+	GETSTS	TAPE,S		;GET TAPE STATUS
+	TRNE	S,IOEMSK	;MAKE SURE NO ERRORS
+	JRST	TPOERR		;TAPE OUTPUT ERROR, TRY TO RECOVER
+	TRNN	S,IOTEND	;END OF TAPE?
+	  ERRPOP <Unknown TAPE output error condition>
+	JRST	OUTOK		;YES, WE WILL CATCH IT ABOVE IF WE HAVE TO WRITE ANOTHER RECORD OUT
+
+NXTSAV:	GETSTS	TAPE,S		;SEE IF CAN WRITE IT
+	TRNE	S,IOEMSK	;MAKE SURE NO FATAL ERRORS
+	  JRST	BADTAP		;NO GOOD, REWRITE THE TAPE (WILL BE CLOSED)
+	CLOSE	TAPE,		;WRITE EOT (CLOSE FILE)
+	MTAPE	TAPE,.MTUNL	; REWIND AND UNLOAD CURRENT TAPE
+	RELEAS	TAPE,		; RELEASE DRIVE
+	MOVE	T1,PROBUF+PROCNT ;GET NEXT RECORD NUMBER
+	MOVEM	T1,TAPBAS	;STORE IN CASE HAVE TO RESTART
+	AOS	HEDBUF+HEDTPN	;SETUP NEXT TAPE NUMBER
+	AOS	TAPNUM		;INCREMENT TO NEXT TAPE
+NXTSV1:	MSG	<Tape >
+	MOVE	T1,TAPNUM	;GET TAPE NUMBER
+	PUSHJ	P,DECOUT	;PRINT IT OUT
+	MSG	< will begin with >
+	MOVE	T4,STRTYP	;GET STRUCTURE TYPE
+	OUTSTR	@STRMSG(T4)	;LET THEM KNOW WHAT KIND
+	MOVE	T4,PROBUF+PROCNT ;RECORD NUMBER WE ARE SAVING.
+	IMUL	T4,BUFPAG	;TURN INTO PAGE NUMBER
+	PUSHJ	P,PRTDP
+	MSG	<>,CRLF
+	MSG	<Next tape unit:>
+	MOVEI	CH,-1		;NEW LINE TO INPUT
+	PUSHJ	P,GETTAP	;GET NEXT ONE
+	  JRST	NXTSV1		;HE HAS TO SPECIFY ONE.
+	MTAPE	TAPE,.MTREW	;REWIND IT
+	PUSHJ	P,NOTHED	;MAKE SURE NOT FROM CURRENT SET BEING RECORDED
+	  JRST	NXTSV1		;NO GOOD, ASK AGAIN.
+	PUSHJ	P,WRTHED	;WRITE OUT HEADER
+	  JRST	NXTSV1		;WRITE ERROR OR SOMETHING, ASK FOR ANOTHER UNIT
+	MOVEI	T4,HEDBUF	;AND PRINT OUT THE INFO FOR USER'S INFO
+	PUSHJ	P,PRTHED	;PRINT OUT THE INFO FOR HIM
+	MSG	<Saving >
+	MOVE	T4,STRTYP	;GET STRUCTURE TYPE
+	OUTSTR	@STRMSG(T4)	;LET THEM KNOW WHAT KIND
+	MOVE	T4,PROBUF+PROCNT ;RECORD NUMBER WE ARE SAVING.
+	IMUL	T4,BUFPAG	;TURN INTO PAGE NUMBER
+	PUSHJ	P,PRTDP
+	MSG	<>,CRLF
+	JRST	COPRTY		;AND GO REJOIN THE CODE.
+
+TPOERR:	TRNE	S,IODERR		;DEVICE?
+	  MSG	<Device >
+	TRNE	S,IODTER		;DATA?
+	  MSG	<Data >
+	MSG	<write error, attempting recovery>,CRLF
+	MOVE	T1,PROBUF+PROCNT	;GET REC NUMBER OF THIS ERROR
+	EXCH	T1,LASOER		;THIS IS NOW LAST ERROR
+	CAME	T1,LASOER		;SAME AS LAST TIME?
+	  JRST	[SETZM LASOEC		;NO, RESET COUNT
+		  JRST TPOER1]		;AND DO FIRST RETRY FOR THIS REC
+	AOS	T1,LASOEC		;INCREMENT COUNT, GET IT
+	CAMLE	T1,OECMAX		;STILL IN RANGE?
+	  JRST	BADTP0			;NO, ASK FOR NEW TAPE.
+TPOER1:	SETOM	T4			;INDICATE BACKWARD SEARCH
+	PUSHJ	P,RESYNC		;FIND PLACE ON TAPE AGAIN.
+	  JRST	BADTP0			;CANNOT RESYNC, TRY ANOTHER TAPE
+	CAML	T4,PROBUF+PROCNT	;MUST NOT BE ONE WE JUST FAILED ON
+	JRST	[MTAPE	TAPE,.MTBSR	;IT WAS, BACKSPACE
+		 MSG	<Trying...>
+		 JRST	TPOER1]
+	LDB	T2,[POINT 2,OPNTAP,28]	;GET DENSITY
+	JUMPE	T2,TPOSTD		;STD DENSITY IF ZERO
+	SUBI	T2,3
+	MOVMS	T2
+TPOSTD:	ADD	T2,TAPDTB
+	HRRZ	T2,(T2)			;GET THE  DENSITY
+	IMULI	T2,^D8			;TIMES MAX NUMBER OF TRACKS GIVES BITS PER INCH
+	IDIVI	T2,^D36			;GET WORDS PER INCH
+	MOVE	T1,BUFSIZ		;GET BUFFER SIZE
+	ADDI	T1,PROLEN		;NUMBER OF WORDS PER RECORD PAIR
+	ADDI	T1,-1(T2)		;ROUND UP
+	IDIV	T1,T2			;GET NUMBER OF INCHES TO WRITE
+	IDIVI	T1,INCHPG		;GET NUMBER OF GAPS TO WRITE
+	MOVEI	T2,1			;GET 1 PLUS COUNT
+	ADD	T2,LASOEC		; OF ERROR ON SAME RECORD
+	IMUL	T1,T2			;DO THIS MANY TIMES RETRY COUNT
+	MTAPE	TAPE,.MTBLK
+	SOJGE	T1,.-1			;AND WRITE ONE EXTRA FOR THE RECORD GAPS
+	AOS	DP,T4			;OK, GET REC NUMBER WE FOUND, LAST GOOD + 1 = WHERE TO START.
+	IMUL	DP,BUFPAG		;GET DP TO START OVER WITH
+	STATZ	TAPE,IOEMSK+IOTEND	;ANY PROBLEMS?
+	  JRST	BADTP0			;YES, TRY ANOTHER TAPE
+	MSG	<Recovery successful>,CRLF
+	JRST	WRTRST			;AND GO RESTART TAPE FROM C(DP) POINT.
+
+
+;HERE IF NO HOPE OR GOT ERROR IN SOME PAIN IN THE NECK SPOT
+
+BADTP0:	MSG	<Recovery unsuccessful, fatal write error>,CRLF
+	MSG	<>,CRLF
+	JRST	BADT1A
+BADTAP:	PUSHJ	P,TPOUER	;COMPLAIN ABOUT THE ERROR (DEVICE OR DATA)
+BADT1A:	MOVE	DP,TAPBAS	;GET RECORD NUMBER THIS TAPE STARTED WITH
+	IMUL	DP,BUFPAG	;COMPUTE STARTING DP ADDRESS
+	CLOSE	TAPE,		;WRITE TAPE MARK ON BAD TAPE
+	MTAPE	TAPE,.MTUNL	; REWIND AND UNLOAD CURRENT TAPE
+	RELEAS	TAPE,		; RELEASE DRIVE - TELL OPR WE DON'T LIKE IT
+BADTP1:	MSG	<Please mount a new TAPE and put this one aside,>,CRLF
+	MSG	< it is no longer part of this ASP save set.>,CRLF
+	MSG	<Next tape unit:>
+	MOVEI	CH,-1		;SCANNING A NEW LINE
+	PUSHJ	P,GETTAP	;OPEN UP NEW TAPE
+	  JRST	BADTP1		;SOME PROBLEM, ASK AGAIN
+	PUSHJ	P,NOTHED	;REWIND, MAKE SURE NOT OF SAME SET.
+	  JRST	BADTP1		;NO, ASK AGAIN.
+	JRST	SAVRST		;AND GO RESTART THE TAPE.
+
+;HERE IF NO ERROR.
+
+OUTOK:	AOS	PROBUF+PROCNT	;NEXT RECORD NUMBER
+	SKIPN	T1,LASBUF	;SKIP IF WE'RE DONE MAPPING IN STUFF
+	  JRST	OUTOK1		;NOT DONE MAPPING YET.
+	CAMN	T1,BUF		;HAVE WE JUST XFERRED THE LAST BUFFER?
+	  JRST	SAVDON		;YES.
+	JRST	NOMAPR		;NO, JUST OUTPUT REMAINING ONES TO TAPE
+
+OUTOK1:	MOVE	T1,STRMXP	;GET PAGE PER STRUCTURE
+	SUB	T1,DP		;GET PAGES LEFT TO GO
+	CAMLE	T1,BUFPAG	;SKIP IF THIS IS LAST RECORD
+	  JRST	COPROK		;NOT LAST RECORD
+	MOVEM	BUF,LASBUF	;FLAG THAT THIS IS LAST BUFFER TO COPY
+				;(MAYBE 1 PAST LAST IF COUNT IS ZERO)
+	MOVE	CNT,T1		;GET LAST PAGE COUNT IN CNT
+COPROK:	PUSHJ	P,MAPRD
+	  POPJ	P,		;SOMETHING WENT WRONG
+	ADD	DP,CNT		;NEXT DISK ADDRESS TO DO.
+NOMAPR:	ADD	BUF,BUFSIZ	;INCREMENT BY BUFFER SIZE
+	SOJ	BUF,		; MINUS 1
+	AOBJN	BUF,COPLUP
+	MOVE	BUF,PTRBUF	;WRAP AROUND
+	JRST	COPLUP
+
+SAVDON:	CLOSE	TAPE,		;WRITE EOT (CLOSE FILE)
+	GETSTS	TAPE,S		;MAKE SURE ALL IS OK
+	TRNE	S,IOEMSK	;MAKE SURE NO PROBLEMS.
+	  ERRPOP <Cannot write logical EOT>
+	MSG	<ASP save of >
+XXXDON:	MTAPE	TAPE,.MTUNL	; REWIND AND UNLOAD CURRENT TAPE
+	RELEAS	TAPE,		; RELEASE DRIVE
+	MOVE	T1,STRTYP	;GET STRUCTURE TYPE
+	OUTSTR	@STRMSG(T1)	;LET THEM KNOW WHAT KIND
+	MOVE	T1,STRNAM
+	PUSHJ	P,SIXOUT	;AND "STRUCTURE"
+	MSG	<>,CRLF
+	MSG	<Completed on >
+	PUSHJ	P,CURDAT
+	  POPJ	P,		;DATE NOT YET RECEIVED (SHOULD NEVER HAPPEN, CHECKED ABOVE)
+	MSG	,CRLF
+	HRRZ	T1,PTRBUF	;GET RESET BUFFER AOBJN POINTER
+	AOJ	T1,		;MAKE AN EVEN PAGE ADDRESS
+	LSH	T1,-^D9		;CONVERT TO PAGE NUMBER
+	MOVEI	T2,1000		;MAXIMUM PAGE COUNT
+	SUB	T2,T1		;GET DIFFERENCE
+	HRL	T1,T2		;SETUP COUNT,,PAGE
+	VCLEAR	T1,		;REMOVE REMAINDER OF MEMORY
+	  JFCL			;NEVER ANY ERROR
+	JRST	CPOPJ1		;ALL DONE
+
+SUBTTL	DATE and TIME type out routines
+
+DAYTIM:	PUSHJ	P,CURDAT
+	MSG	,CRLF
+	JRST	CPOPJ1
+
+CURDAT:	MOVE	T1,[.CNDAT,,.GTCNF]
+	GETTAB	T1,
+	  ERRPOP <Can't GETTAB date>
+	SKIPGE	T1		;MAKE SURE SYSTEM KNOWS
+	ERRPOP	<Date not yet received, aborting>
+	MOVE	T2,[.CNTIM,,.GTCNF]
+	GETTAB	T2,
+	  ERRPOP <Can't GETTAB time>
+	AOS	(P)		;GIVE SKIP RETURN NOW
+	PJRST	PRTDAT		;AND PRINT DATE, CALER DOES CRLF
+
+SUBTTL	MAXOEC and SETSRC commands
+
+MAXOEC:	MOVE	T1,OECMAX	;PRINT OLD VALUE
+	MSG	<Old OECMAX was >
+	PUSHJ	P,DECOUT
+	MSG	<>,CRLF
+	PUSHJ	P,DECIN		;GET NUMBER
+	  JRST	[MSG <setting to default value >
+		  MOVEI T1,STDOEC
+		   PUSHJ P,DECOUT
+		 MOVEI T1,STDOEC
+		 JRST .+1]
+	MOVEM	T1,OECMAX
+	JRST	CPOPJ1
+
+SETSRC:	MOVE	T1,SRCLEN	;GET OLD VALUE
+	MSG	<Old SRCLEN was >
+	PUSHJ	P,DECOUT
+	MSG	<>,CRLF
+	PUSHJ	P,DECIN		;GET NUMBER TYPED
+	  JRST	[MSG <setting to default value >
+		 MOVEI T1,STDSRC
+		 PUSHJ P,DECOUT
+		 MOVEI T1,STDSRC
+		 JRST .+1]
+	MOVEM	T1,SRCLEN
+	JRST	CPOPJ1
+
+SUBTTL	START and WHERE commands
+
+SETRES:	SETZM	RESTDP			; Clear previous page
+	SETZM	RESTTP			;  and tape number
+SETRE1:	PUSHJ	P,GETSTR		; Get a structure name
+	  JRST	SETRE4			; None?  Check below
+SETRE2:	PUSHJ	P,OCTIN			; Get start page number
+	  JRST	SETRE5			; Not specified, ask
+;[110]	CAML	T1,STRMXP		; Make sure its in range
+;[110]	  ERRPOP <Page number too large for specified structure>
+	MOVEM	T1,RESTDP		; Save for later
+	IDIV	T1,BUFPAG		; Number of records
+	IMUL	T1,BUFPAG		; Number of pages
+	CAME	T1,RESTDP		; See if adjusted
+	  MSG	<Start page will be adjusted.>,CRLF
+
+SETRE3:	PUSHJ	P,GETTAP		; Open up tape unit (if not open)
+	  JRST	SETRE6			; Not available - go ask
+	PUSHJ	P,CHECK0		; Check header
+	  POPJ	P,			; No good, bad header
+	MOVE	T1,HEDBUF+HEDTPN	; Get current tape number
+	ADDI	T1,1			; Next is the one to use
+	MOVEM	T1,RESTTP		; Save it
+	MOVE	T1,HEDBUF+HEDDAT	; Get save-set date
+	MOVEM	T1,RESDAT		; Store it
+	MOVE	T1,HEDBUF+HEDTIM	; Get save-set time
+	MOVEM	T1,RESTIM		; Store it
+
+	MTAPE	TAPE,.MTUNL		; REWIND THE GOOD TAPE
+	RELEAS	TAPE,			; GIVE DEVICE BACK TO POOL
+	MSG	<Unloading restart tape.>,CRLF
+	MSG	<Now mount the tape you wish to continue on.>,CRLF
+
+PRTRES:	MSG	<ASP will start on tape >
+	SKIPN	T1,RESTTP		; Get tape number
+	  MOVEI	T1,1			; If none, set to 1
+	PUSHJ	P,DECOUT		; Print value
+	MSG	<>,CRLF			; Use next line
+	MSG	<Using >
+	MOVE	T1,RESTDP		; Get disk page
+	IDIV	T1,BUFPAG		; See if it needs
+	IMUL	T1,BUFPAG		;  to be adjusted
+	CAME	T1,RESTDP		; due to record size
+	  MSG	<adjusted >		; Yes, print adjusted
+	MOVE	T4,T1			; but leave old DP
+	PUSHJ	P,PRTDP			; Print page number
+	MOVE	T1,RESDAT		; Get date
+	MOVE	T2,RESTIM		;   and time
+	JUMPE	T1,CPOPJ1		; If zero, no date-time
+	MSG	<Identifying date for this ASP tape set is >
+	PUSHJ	P,PRTDAT		; Print date info
+	MSG	<>,CRLF
+	JRST	CPOPJ1			; and return
+
+
+SETRE4:	CAMN	T1,NONONO	; Did they say NO?
+	  POPJ	P,		; Yes, just leave
+	PUSHJ	P,BRKEA1	;EAT TO BREAK
+	MSG	<Type structure name, disk page and tape name: >
+	JRST	SETRE1		;TRY AGAIN
+
+SETRE5:	PUSHJ	P,BRKEA1	;EAT TO BREAK
+	MSG	<Type disk page number and tape name: >
+	JRST	SETRE2		;CONTINUE
+
+SETRE6:	CAMN	T1,NONONO	; Did they say NO?
+	  POPJ	P,		; Yes, just leave
+	PUSHJ	P,BRKEA1	;EAT TO BREAK
+	MSG	<Type tape device name: >
+	JRST	SETRE3		;TRY AGAIN
+
+SUBTTL RESTORE, VERIFY and COMPARE
+
+VERIFY:	SETZM	CMPFLG		;NOT COMPARING
+	AOS	VERFLG		;FLAG THAT WE ARE VERIFYING.
+	JRST	VERCMN		;JUMP INTO COMMON CODE
+
+COMPAR:	SETZM	CMPCNT		;COUNT BAD PAGES
+	AOS	CMPFLG		;WE ARE COMPARING
+	AOS	VERFLG		; SIMILAR TO VERIFY
+	PJRST	RESCMN		;JUMP INTO COMMON CODE
+
+RESTOR:	SETZM	VERFLG		;NOT VERIFYING.
+	SETZM	CMPFLG		;NOT COMPARING
+RESCMN:	PUSHJ	P,GETSTR	;NEED A STRUCTURE FOR RESTORE/COMPARE
+	  JRST	NOSTRS		;SORRY, NONE AVAILABLE?
+VERCMN:	PUSHJ	P,GETTAP	;GET TAPE DRIVE SETUP
+	  JRST	NOTAPO		;NO DICE.
+
+	PUSHJ	P,ALONE		;I WANT TO BE ALONE
+	  POPJ	P,		;SORRY, WE'RE NOT ALONE
+
+;OK, NOW ALL STUFF IN FILE SYSTEM IS WRITTEN OUT TO DISK.
+
+	SETZ	DP,		;CLEAR OUT AND GET VALUE OF
+	EXCH	DP,RESTDP	;WHERE TO START
+	SKIPN	VERFLG		;[110] VERIFY or COMPARE?
+	  JRST	ALLCMN		;[110] No, any start is allowed
+	SKIPN	CMPFLG		;[110] COMPARE?
+	  JRST	VERCHK		;[110] No, VERIFY - allow any range
+ALLCMN:	CAMLE	DP,STRMXP	;[110] Make sure its in range
+	  ERRPOP <Start page number too large for specified structure>
+VERCHK:	MOVE	T1,DP		; Copy start page
+	IDIV	T1,BUFPAG	; See if it needs adjusting
+	MOVEM	T1,CNTPRO	; Save sequence number for tape search
+	IMUL	T1,BUFPAG	; Back to page number for
+	CAME	T1,DP		;   adjustment check
+	  MSG	<Start page adjusted.>,CRLF
+	MOVE	DP,T1		; Set DP properly
+
+	SETZM	LASBUF		;CLEAR LAST BUFFER FLAG
+	SETZ	T1,
+	EXCH	T1,RESTTP
+	SKIPN	T1
+	  MOVEI	T1,1
+	MOVEM	T1,TAPNUM
+	PUSHJ	P,CHKFIR	;READ IN FIRST HEADER AND CHECK IT OUT FOR RESTORING
+	  POPJ	P,		;IT DIDN'T CHECK OUT SOMEHOW
+
+	PUSHJ	P,RESVER	;SAY RESTORING OR VERIFYING
+	MOVE	T4,DP		;THIS IS WHERE TO SAY WE ARE RESTORING FROM
+	PUSHJ	P,PRTDP		;SAY WHERE WE ARE RESTORING FROM PROCNT
+	MSG	<>,CRLF
+
+	SKIPE	VERFLG		;IF VERIFY OR COMPARE
+	  JRST	[
+		 PUSHJ	P,MAPVER	;SETUP CACHE OF PAGES
+		   POPJ	P,		;OOPS!
+		 JRST	.+1]		;ALL DONE
+
+	MOVN	IOW,BUFSIZ	;GET WORDS FOR TRANSFER
+	HRLZ	IOW,IOW		;SETUP COMMAND LIST
+	MOVE	IOW+1,[IOWD PROLEN,PROBUF] ;PROLOGUE IOWD
+	SETZ	IOW+2,		;END OF IOWD LIST
+
+;NOW MAP IN THE FIRST BUFFERS
+
+
+;HERE TO RESTART A RESTORE AFTER A TAPE INPUT ERROR.
+
+RESRES:	MOVE	BUF,PTRBUF	;RESET BUFFER POINTERS.
+	MOVE	CNT,BUFPAG	;SIZE OF BUFFERS
+	IMULI	CNT,BUFNUM	;  FOR ALL BUFFERS
+	PUSHJ	P,MAPWT		;WRITE MAP THEM IN
+	  POPJ	P,		;SOMETHING WENT WRONG
+	ADD	DP,CNT	 	;THIS WILL BE NEXT DP TO MAP.
+	MOVE	CNT,BUFPAG	;DO IT THIS WAY
+
+RESLUP:	HRR	IOW,BUF		;GET CURRENT BUFFER
+	CAME	BUF,LASBUF	;LAST BUFFER? IF SO, NEED DIFFERENT COUNT
+	  JRST	RESLU1		;NOT LAST.
+	MOVN	T1,CNT		;GET -VE COUNT
+	ASH	T1,^D9		;GET COUNT IN -VE WORDS
+	HRL	IOW,T1		;PUT INTO IOW
+RESLU1:	TRNE	S,IOTEND	;DID WE SEE PHYSICAL EOT LAST RECORD?
+	  JRST	NXTRS0		;YES, MAKE SURE LOGICAL EOT IS NEXT.
+	SKIPN	CMPFLG		;IF COMPARING, WE MUST CHECK
+	  SKIPN	VERFLG		; IF NOT, SKIP IF WE ARE VERIFYING
+	 PUSHJ	P,STSRED	;CHECK READ STATUS FROM DISK
+	SKIPE	VERFLG		;ARE WE COMPARING (OR VERIFYING)?
+	  HRR	IOW,CMP		;YES, USE COMPARE BUFFER
+	IN	TAPE,IOW
+	  JRST	INOK		;OK
+	GETSTS	TAPE,S		;GET STATUS
+	TRNE	S,IOEMSK	;MAKE SURE NO INPUT ERRORS
+	JRST	TINERR		;SOME FATAL ERROR.
+	TRNE	S,IODEND	;END OF FILE?
+	JRST	NXTRES		;YES, GET NEXT TAPE.
+	TRNN	S,IOTEND	;END OF TAPE?
+	ERRPOP	<Unknown tape input error condition>
+	JRST	INOK		;JUST PHYSICAL EOT, HANDLE IT IF HAVE TO READ ANOTHER TAPE.
+
+NXTRS0:	IN	TAPE,[IOWD 1,PROBUF
+			0]
+	ERRPOP	<Logical EOT missing at physical end of tape>
+	GETSTS	TAPE,S		;GET TAPE STATUS
+	TRNE	S,IOEMSK	;MAKE SURE NO ERRORS
+	JRST	TPINER		;INPUT ERRORS, GO PRINT
+	TRNN	S,IODEND	;OK, MAKE SURE LOGICAL EOT
+	ERRPOP	<Unknown tape input error condition>
+NXTRES:	MTAPE	TAPE,.MTUNL	;REWIND AND UNLOAD CURRENT TAPE
+	RELEAS	TAPE,		;FINISH DEVICE
+	AOS	TAPNUM		;NEXT TAPE NUMBER
+NXTRS1:	MSG	<Next tape unit:>
+	MOVEI	CH,-1		;FORCE READ OF NEW LINE
+	PUSHJ	P,GETTAP	;GET NEXT TAPE UNIT NAME
+	  JRST	NXTRS1		;KEEP TRYING
+	PUSHJ	P,CHKHED	;REWIND TAPE, READ IN AND CHECK THE HEADER
+	  JRST	NXTRS1		;HEADER NO GOOD, ASK FOR ANOTHER TAPE UNIT
+	PUSHJ	P,RESVER
+	MOVE	T4,PROBUF+PROCNT ;LAST RECORD RESTORED
+	ADDI	T4,1		;THIS IS WHAT WE WILL RESTORE NEXT
+	IMUL	T4,BUFPAG	;TURN INTO PAGE NUMBER
+	PUSHJ	P,PRTDP		;PRINT DISK ADDRESS FROM PROCNT
+	MSG	<>,CRLF
+	JRST	RESLUP		;THE RESTORE.
+
+
+;HERE ON INPUT ERROR FROM TAPE. BACKUP TO FIND LAST RECORD RESTORED,
+; THEN SPACE FORWARD TO NEXT RECORD AND RESTART THE RESTORE,
+; AND TELL OPERATOR WHICH DISK PAGES DIDN'T MAKE IT OFF THE TAPE.
+
+TINERR:	TRNE	S,IODERR
+	MSG	<Device read error>
+	TRNE	S,IODTER
+	MSG	<Data read error>
+TBDERR:	MSG	<, attempting recovery...>,CRLF
+TINER1:	SETO	T4,		;SEARCH BACKWARDS
+	PUSHJ	P,RESYNC	;FOR THE RECORD
+	  JRST	[MSG <Cannot find last good record, searching for next good record>,CRLF
+		  JRST TINER2]
+	CAML	T4,CNTPRO	;MAKE SURE ITS LESS THAN ONE WERE WERE TRYING TO RESTORE
+	JRST	TINER1		;NOT, SEARCH BACKWARDS SOME MORE
+TINCSB:	MSG	<Last page read successfully was >
+	AOJ	T4,		;COUNT FOR NEXT RECORD
+	IMUL	T4,BUFPAG	;FIRST PAGE IN NEXT RECORD
+	SOJ	T4,		;LAST PAGE DONE
+	PUSHJ	P,PRTDP
+	MSG	<>,CRLF
+TINER2:	SETZ	T4,		;NOW SEARCH FORWARD FOR A GOOD RECORD
+	PUSHJ	P,RESYNC	;TRY IT
+	JRST	TINNXT		;SORRY, TRY ANOTHER TAPE.
+	CAMG	T4,CNTPRO	;DON'T MESS WITH ONE WE COULDN'T RESTORE
+	JRST	TINER2		;KEEP GOING
+	MOVEM	T4,CNTPRO	;OK, THIS IS NEXT RECORD WE WILL BE RESTORING.
+	IMUL	T4,BUFPAG	;TURN INTO PAGE NUMBER FOR PRTDP
+	MOVE	DP,T4		;GET INTO DP FOR MAPPING ROUTINE
+	PUSHJ	P,RESBSR	;NOW BACKSPACE BEHIND PROLOG RECORD
+	  ERRPOP <Cannot backspace past next good record in input error recovery>
+	PUSHJ	P,RESBSR	;NOW SPACE BACK OVER THE DATA RECORD
+	  ERRPOP <Cannot backspace past next good data record>
+	MSG	<Continuing at disk page >
+	PUSHJ	P,PRTDP		;PRINT OUT
+	MSG	<>,CRLF
+	SKIPN	VERFLG		;DONT BOTHER US ABOUT VERIFIES.
+	  MSG	<Notify operating systems of the missing pages.  Save this output.>,CRLF
+	JRST	RESRES		;AND GO REDO THE BUFFERS, ETC.
+
+;HERE IF NO HOPE, PRINT OUT MESSAGE.
+
+TINNXT:	OUTSTR	TINMSG		;PRINT MESSAGE
+	JRST	NXTRES		;TRY TO RESTORE FROM NEXT TAPE.
+
+TINMSG:	ASCIZ	\
+Cannot read the remainder of this tape. If there is another tape,
+please mount it and the operation will be continued from there.
+If there is no other tape, all pages on the structure after the last
+reported one have been lost.
+
+On a RESTORE this is a serious error and you should not bring up the
+system for general timesharing.
+\
+
+
+;HERE IF ALL IS OK
+
+INOK:	MOVE	T1,PROBUF+PROCOD	;GET MAGIC CODE
+	CAME	T1,FIRTIM		;SEE IF ITS CORRECT
+	  JRST	[MSG <Bad data record prologue code >
+		 JRST TBDERR]		;TRY TO RECOVER
+	MOVE	T1,PROBUF+PROCNT	;GET RECORD NUMBER
+	CAMN	T1,CNTPRO		;OK?
+	  JRST	INOK0			;Yes
+	MSG	(<Bad record sequence number found in data record >,CRLF)
+	MSG	<Found >
+	PUSHJ	P,OCTOUT		;Type out T1 (PROBUF+PROCNT)
+	MSG	<, expecting >
+	MOVE	T1,CNTPRO
+	PUSHJ	P,OCTOUT
+	JRST	TBDERR			;TRY TO RECOVER
+
+INOK0:	AOS	CNTPRO			;GO TO NEXT ONE.
+	SKIPN	T1,LASBUF	;IF THROUGH MAPPING STUF,
+	  JRST	INOK1		;NOT THRU
+	CAME	T1,BUF		;DID WE JUST INPUT TO THE LAST BUFFER?
+	  JRST	NOMAPW		;OK,SKIP AROUND MAPPING.
+	IN	TAPE,[IOWD 1,PROBUF
+			0]	;MAKE SURE WE SEE EOT
+NOEOT:	 ERRPOP <Logical EOT expected and not seen>
+	GETSTS	TAPE,S
+	TRNE	S,IODEND	;IF END OF FILE,
+	  JRST	RESDON		;THEN END OF RESTORE.
+	TRNN	S,IOEMSK	;ANY IO ERROR? IF SO, PRINT.
+	  ERRPOP <Expecting logical EOT but received >
+	JRST	TPINER		;SAY WHAT WENT WRONG.
+
+INOK1:	MOVE	T1,STRMXP	;GET MAX PAGE NUMBER ON THIS STR
+	SUB	T1,DP		;T1 GETS HOW MANY LEFT
+	CAMLE	T1,BUFPAG	;SKIP IF THIS IS LAST RECORD
+	  JRST	INOK2		;NO, JUST MAP IN NEXT BUFFER
+	MOVEM	BUF,LASBUF	;THIS WILL BE LAST BUFFER WE RESTORE TO
+	MOVE	CNT,T1
+INOK2:	SKIPE	CMPFLG		;IF COMPARING TAPE TO DISK
+	  PUSHJ	P,CMPDSK	;COMPARE DISK PAGES WITH TAPE RECORD
+	PUSHJ	P,MAPWT		;GET NEXT BUFFER IN
+	  POPJ	P,		;NO GOOD
+	ADD	DP,CNT		;ADVANCE TO NEXT ADDRESS TO MAP
+NOMAPW:	ADD	BUF,BUFSIZ	;ADVANCE BUFFER ADDRESS
+	SOJ	BUF,		;  MINUS 1
+	AOBJN	BUF,RESLUP	;AND INPUT TO NEXT BUFFER
+	MOVE	BUF,PTRBUF	;WRAP AROUND
+	JRST	RESLUP		;AND LOOP
+
+
+;HERE IF FIND END OF FILE. MAKE SURE EVERYTHING HAS BEEN RESTORED
+
+RESDON:	CAME	BUF,LASBUF	;MAKE SURE WE JUST RESTORED LAST BUFFER
+	  ERRPOP <Not enough data on tapes to fill entire structure>
+	SKIPN	CMPFLG		;WERE WE COMPARING?
+	  JRST	RESDO2		;NO, JUST RETURN
+	MOVE	T1,CMPCNT	;GET ERROR COUNT
+	JUMPN	T1,RESDO1	;NON-ZERO, PRINT COUNT
+	MSG	<No>		;ELSE PRINT NONE
+	CAIA			;  SKIP
+RESDO1:	  PUSHJ	P,DECOUT	; PRINT # OF ERRORS
+	MSG	< page>		; CONCERNING PAGE(S)
+	MOVE	T1,CMPCNT	; SEE HOW MANY
+	CAIE	T1,1		;  ONLY ONE?
+	 OUTCHI	"s"		;  NO, SAY PLURAL
+	MSG	< are different.>,CRLF
+	MSG	<>,CRLF
+
+RESDO2:	MSG	<ASP >
+	PUSHJ	P,RESVER
+	PJRST	XXXDON		;PRINT COMPLETED ON AND GIVE SKIP RETURN
+				;WHAT ABOUT IF A FEW PAGES MISSING FROM
+				;THE LAST RECORD?
+
+
+;HERE WITH CHANNEL STATUS IN S TO PRINT MESSAGE AND POPJ
+
+TPINER:	MSG <Fatal input tape >
+	JRST	TPXXER		;COMMON PLACE
+TPOUER:	MSG	<Fatal output tape >
+TPXXER:	TRNE S,IODERR
+	  MSG	<device >
+	TRNE S,IODTER
+	  MSG	<data >
+	TRNE	S,IOIMPM	;WRITE LOCK?
+	  MSG	<write lock >
+	MSG	<error>
+	POPJ	P,
+
+ALONE:	SKIPE	.JBDDT##	;IF DDT IS LOADED
+	  JRST	ALONE2		; ALLOW ANYTIME
+	SKIPE	CMPFLG		;IF COMPARING
+	  JRST	ALONE1		; MUST BE SINGLE ACCESS
+	SKIPE	VERFLG		;IF VERIFYING,
+	  JRST	CPOPJ1		;THEN OK.
+ALONE1:	ONEJOB			;SEE IF OK TO RESTORE
+	  ERRPOP <Not only job or system not super shut, aborted>
+	DSKCLR	0,		;OK, TRY TO DUMP OUT PCBS
+	  JRST	.-1		;PCB IO IN PROGRESS, TRY AGAIN
+	  ERRPOP <Cannot perform DSKCLR, aborting>
+
+ALONE2:	JRST	CPOPJ1		;OK, FINISHED.
+
+SUBTTL	CMPDSK - Compare disk to tape output
+
+CMPDSK:	HRR	IOW,BUF		; Get disk buffer address
+	MOVN	T1,BUFPAG	; Use full buffer count
+	CAMN	BUF,LASBUF	; Unless this is last buffer
+	  MOVN	T1,CNT		; Get current count of pages
+	ASH	T1,^D9		; Convert to words
+	PUSH	P,CMP		; Save compare buffer address
+	HRL	CMP,T1		; Get -wordcount AOBJN pointer
+CMPLOP:	MOVE	T1,1(IOW)	; Get disk word
+	CAME	T1,1(CMP)	; Compare with tape word
+	  JRST	CMPFAL		; Failed!
+	AOJ	IOW,		; Increment pointer
+CMPEND:	AOBJN	CMP,CMPLOP	; Try next
+	POP	P,CMP		; Restore compare buffer address
+	POPJ	P,		; All done, return
+
+CMPFAL:	AOS	CMPCNT		; count failures
+	SKIPE	VERBOSE		; are we verbose?  (yes --vvv-- 68 spaces)
+	  MSG	<                                                                    >
+	MSG	<Disk modified at >
+	HLRE	T1,CMP		;  - word count left
+	ASH	T1,-^D9		;  - pages left
+	MOVE	T4,BUFPAG	;  + full buffer
+	CAMN	BUF,LASBUF	;  (except last buffer)
+	  MOVE	T4,CNT		;  use current count
+	ADD	T1,T4		;  + total = page #
+	MOVE	T4,PROBUF+PROCNT ;Last record restored
+	IMUL	T4,BUFPAG	; Turn into page number
+	ADD	T4,T1		; Add in current set.
+	PUSHJ	P,PRTDP		; And give the page number.
+;*;	PUSHJ	P,CMPWNO	; Print the word/page number
+
+	SKIPN	VERBOSE		; Want verbose?
+	  JRST	CMPDFX		; No, just go to end
+	PUSH	P,CMP		; don't wipe these
+	PUSH	P,IOW		; just yet
+
+	HRLI	IOW,-1000/4	; fixup for AOBJN
+	SUBI	IOW,777		; decrement for this page	[DISK]
+	TRO	IOW,777		; reset word address
+	SUBI	CMP,777		; decrement for this page	[TAPE]
+	TRO	CMP,777		; reset word address
+	SETZM	OSTARS		; don't print stars
+
+CMPDF1:	MOVE	T1,1(IOW)	; first on a line
+	CAME	T1,1(CMP)	; match?
+	  JRST	CMPDF2		; no - must print then
+	MOVE	T1,2(IOW)	; first on a line
+	CAME	T1,2(CMP)	; match?
+	  JRST	CMPDF2		; no - must print then
+	MOVE	T1,3(IOW)	; first on a line
+	CAME	T1,3(CMP)	; match?
+	  JRST	CMPDF2		; no - must print then
+	MOVE	T1,4(IOW)	; first on a line
+	CAMN	T1,4(CMP)	; match? -*-
+	  JRST	CMPDF4		; yes, no need to print
+
+CMPDF2:	HRRZI	T1,1(IOW)	; get address part
+	ANDI	T1,777		; only want to see word
+	PUSHJ	P,OCTWNO	; print word number
+	MSG	</  >		; line header
+	MOVE	T1,1(CMP)	; first on a line
+	PUSHJ	P,OCTSIX	; print it
+	MSG	<  >		; spacing
+	MOVE	T1,2(CMP)	; first on a line
+	PUSHJ	P,OCTSIX	; print it
+	MSG	<  >		; spacing
+	MOVE	T1,3(CMP)	; first on a line
+	PUSHJ	P,OCTSIX	; print it
+	MSG	<  >		; spacing
+	MOVE	T1,4(CMP)	; first on a line
+	PUSHJ	P,OCTSIX	; print it
+	MSG	<    |    >	; spacing --------------------------------
+	MOVE	T1,1(IOW)	; first on a line
+	CAME	T1,1(CMP)	; same as tape?
+	  SETOM	OSTARS		; no, output a star
+	PUSHJ	P,OCTSIX	; print it
+	MSG	<  >		; spacing
+	MOVE	T1,2(IOW)	; first on a line
+	CAME	T1,2(CMP)	; same as tape?
+	  SETOM	OSTARS		; no, output a star
+	PUSHJ	P,OCTSIX	; print it
+	MSG	<  >		; spacing
+	MOVE	T1,3(IOW)	; first on a line
+	CAME	T1,3(CMP)	; same as tape?
+	  SETOM	OSTARS		; no, output a star
+	PUSHJ	P,OCTSIX	; print it
+	MSG	<  >		; spacing
+	MOVE	T1,4(IOW)	; first on a line
+	CAME	T1,4(CMP)	; same as tape?
+	  SETOM	OSTARS		; no, output a star
+	PUSHJ	P,OCTSIX	; print it
+	MSG	<>,CRLF		; spacing
+CMPDF4:	ADDI	CMP,4		; add next offset
+	ADDI	IOW,3		; add next offset
+	AOBJN	IOW,CMPDF1	; loop through page
+	MSG	<>,CRLF		; final crlf
+	POP	P,IOW		; we are done with
+	POP	P,CMP		; these for now
+
+CMPDFX:	AOJ	IOW,		; Setup current page
+	TRO	IOW,777		; Set to page boundary
+
+	TLZ	CMP,777		; Beginning of page
+	AOJ	CMP,		; Into the right page
+	TRO	CMP,777		; Round to next page
+	ADD	CMP,[1000,,0]	; Count is set properly
+	SUB	CMP,[1,,1]	; Backup one for jump
+	JRST	CMPEND		; And look for more
+
+COMMENT \RESYNC - ROUTINE TO FIND A GOOD RECORD ON TAPE
+ENTER WITH T4/0 IF SEARCH FORWARD, 1 IF SEARCH BACKWARD
+RETURNS CPOPJ IF CANNOT FIND ANY GOOD RECORDS
+RETURNS CPOPJ1 WITH RECORD PAIR NUMBER IN T4 IF FIND A GOOD RECORD.
+
+\
+
+RESYNC:	MOVN	T3,SRCLEN	;HOW MANY PAIRS TO SEARCH
+	HRLZS	T3		;GET -COUNT,,0
+	SETSTS	TAPE,@OPNTAP	;CLEAR ANY ERROR STATUS
+
+RESYN1:	JUMPE	T4,RESYN2	;GO IF GOING FORWARD.
+	PUSHJ	P,RESBSR	;TRY IT
+	  POPJ	P,		;DIDNT WORK.
+RESYN2:	IN	TAPE,[IOWD PROLEN,HEDBF1
+		      0]	;READ DATA IN
+	  JRST	RESYN3		;OK, SEE WHAT WE'VE GOT FOR DATA
+	GETSTS	TAPE,S		;GET IO STATUS
+	TRNN	S,IOTEND+IODEND	;BEG OR END OF TAPE?
+	JRST	RESYN4		;NO, SOME OTHER ERROR, JUST IGNORE
+	JRST	RESERR		;PRINT OUT AND CPOPJ RETURN.
+
+RESYN3:	MOVE	T1,HEDBF1+PROCOD ;IS IT A PROLOGUE RECORD?
+	CAME	T1,FIRTIM
+	  JRST	RESYN4		;NO, KEEP GOING
+	MOVE	T4,HEDBF1+PROCNT	;GET NUMBER AND
+	JRST	CPOPJ1		;RETURN, POSITIONED AFTER THE RECORD FOUND.
+RESYN4:	TRNE	S,IOEMSK	;ANY ERRORS?
+	 SETSTS	TAPE,@OPNTAP	;YES, CLEAR THE STATUS SO CAN DO A NEW INPUT.
+	JUMPE	T4,RESYN5	;GO IF NOT BACKAPCE
+	PUSHJ	P,RESBSR	;TRY TO BACKSPACE
+	  POPJ	P,		;NO GO
+RESYN5:	AOBJN	T3,RESYN1	;GO FOR MORE
+	ERRPOP	<Cannot find a good prologue record while attempting to resynchronize.>
+
+;ROUTINE TO TRY TO BACKSPACE A RECORD.
+
+RESBSR:	MTAPE	TAPE,.MTBSR	;THEN BACKSPACE PAST REC WE JUST READ.
+	GETSTS	TAPE,S		;GET STATUS AFTER BACKSPACE.
+	TRNN	S,IOEMSK+IOTEND+IODEND ;ANY PROBLEMS?
+	JRST	CPOPJ1		;OK.
+
+RESERR:	TRNE	S,IOTEND
+	  ERRPOP <Physical end or beginning of tape while attempting to resynchronize.>
+	TRNE	S,IODEND
+	  ERRPOP <Logical EOT encountered while attempting to resynchronize.>
+	MSG	<Unknown error while attempting to resynchronize.>
+	POPJ	P,
+
+;ROUTINE TO MAP A NUMBER OF PAGES INTO THE BUFFER AREA.
+; BUF/ADDR-1 OF PLACE TO START MAPPING
+; CNT/NUMBER OF PAGES TO MAP.
+; DP/DISK ADDRESS TO START MAPPING.
+
+MAPRD:	MOVSI	T4,2000(CNT)	;GET WORD FOR MAPPING (READ-ONLY)
+	  JRST	MAPIT
+MAPWT:	MOVSI	T4,6000(CNT)	;FOR WRITING (COPY ON WRITE FOR TESTING)
+	SKIPN	CMPFLG		;IF NOT COMPARING
+	  JRST	MAPIT		;CONTINUE
+	MOVSI	T4,2000(CNT)	; MAP AS READ-ONLY
+	JRST	MAPCMP		; AND GO
+
+MAPIT:	SKIPE	VERFLG		;IF VERIFY,
+	  JRST	CPOPJ1		; WE ALREADY DID THIS
+MAPCMP:	MOVEI	T1,1(BUF)	;GET ADDR OF BUFFER
+	LSH	T1,-^D9		;PAGE NUMBER
+	HRL	T1,CNT		;COUNT,,FIRST PAGE TO REMOVE
+	VCLEAR	T1,		;REMOVE THE PAGE
+	  JRST	[HRRZS	T1	;JUST CODE
+		 CAIE	T1,4	;MAKE SURE JUST BECAUSE PAGE WASN'T THERE
+		   ERRPOP <Unexpected VCLEAR error code>
+		 JRST	.+1]
+	MOVE	T3,[.CHSMP,,DISK] ;THE FUNCTION
+	MOVE	T2,DP		;GET DP TO MAP
+	HLL	T1,T4		;GET PROPER BITS+COUNT,,PAGE IN T1
+PATMAP:
+IFE FTDEBG,<CHANIO T3,T1>
+IFN FTDEBG,<VCREAT T1,>
+	  ERRPOP <Can't super map>
+PATMP1:
+IFN FTDEBG,<TLNN T4,4000	;IF READING,
+	JRST	[MOVE T2,T1
+		 TLO T2,4000
+		 VPROT T2,	;READ ENABLE
+		  ERRPOP <VPROT failed>
+		 MOVEM DP,1(BUF) ;SET DP IN THIS PAGE
+		 TLZ T2,4000
+		 VPROT T2,
+		  ERRPOP <VPROT failed>
+		 JRST .+1]>;END IFN FTDEBG
+	MOVE	T2,[.WSRNG,,T1]	;PUT THEM INTO WS
+	WSCTL	T2,
+	  ERRPOP <Can't put pages into working set>
+	PREREF	T1,		;PREREF THE FIRST PAGE, REST WILL COME IN WITH IT.
+	  ERRPOP <Can't pre-reference buffer pages>
+	HRLI	T1,2000(CNT)	;NOW SET IGNORE ERRORS
+	PERSET	T1,
+	  ERRPOP <Can't set ignore error for buffer pages>
+	JRST	CPOPJ1		;GOOD RETURN
+
+SUBTTL	MAPVER  CMPCLR
+
+MAPVER:	PUSHJ	P,CMPCLR	; UNMAP PREVIOUS PAGES
+	  POPJ	P,		;  OOPS!
+	MOVEI	T1,1(CMP)	; GET ADDRESS OF COMPARE BUFFER
+	LSH	T1,-^D9		; CONVERT TO PAGES
+	HRL	T1,BUFPAG	;  COUNT = #PAGES IN BUFFER
+	TLO	T1,6000		;  .PRRW = read/write
+	VCREAT	T1,		; CREATE NEW PAGES
+	  ERRPOP <Unexpected VCREAT error in COMPARE>
+	JRST	CPOPJ1		; RETURN
+
+
+CMPCLR:	MOVEI	T1,1(CMP)	;GET ADDRESS OF COMPARE BUFFER
+	LSH	T1,-^D9		;CONVERT TO PAGES
+	HRL	T1,BUFPAG	; COUNT = #PAGES IN BUFFER
+	VCLEAR	T1,		;REMOVE THE PAGES
+	  JRST	[HRRZS	T1	;  GET ERROR CODE
+		 CAIE	T1,4	;  NOT IF PAGE NOT THERE
+		   ERRPOP <Unexpected VCLEAR error in COMPARE>
+		 JRST	.+1]	;  (or CPOPJ1)
+	JRST	CPOPJ1		;RETURN
+
+SUBTTL HEADER STUFF
+
+COMMENT #THE FIRST RECORD ON A ASP TAPE CONTAINS THE FOLLOWING
+INFORMATION
+
+SIZE OF RECORD
+CODE NAME
+VERSION OF ASP
+TAPE NUMBER
+SYSTEM NAME
+DATE ASP STARTED
+TIME ASP STARTED (GMT)
+STRUCTURE NAME
+SIZE OF STRUCTURE
+NUMBER OF UNITS IN STRUCTURE
+
+#
+
+
+INIHED:	MOVEI	T1,SIZHED		; Size of header record
+	HRL	T1,BUFPAG		; Page size of tape record
+	MOVEM	T1,HEDBUF+HEDSIZ
+	MOVE	T1,CODNAM		; Unlikely code 'ASP'
+	MOVEM	T1,HEDBUF+HEDNAM
+	MOVE	T1,.JBVER##		; Version number
+	MOVEM	T1,HEDBUF+HEDVER
+	MOVE	T1,TAPNUM		; CURRENT TAPE NUMBER
+	MOVEM	T1,HEDBUF+HEDTPN	; STORE IT
+	MOVE	T1,STRNMU		; GET NUMBER OF UNITS
+	MOVEM	T1,HEDBUF+HEDNMU
+	MOVE	T1,STRHID		; HOME BLOCK ID OF STR
+	MOVEM	T1,HEDBUF+HEDHID
+	MOVE	T1,STRMXP		;GET STR SIZE
+	MOVEM	T1,HEDBUF+HEDMXP	;SET IN HEADER
+	MOVSI	T2,-SYSNSZ		;AOBJN POINTER
+SYNLUP:	MOVEI	T1,.GTCNF		;TABLE NUMBER
+	HRL	T1,T2			;GET WORD NUMBER
+	GETTAB	T1,			;GET THE NAME
+	  ERRPOP <Cannot get system name>
+	MOVEM	T1,HEDBUF+HEDSYN(T2)	;STORE INTO HEADER
+	AOBJN	T2,SYNLUP
+	SETZ	T1,		;GET POSSIBLE RESTART DATE
+	EXCH	T1,RESDAT	;AND CLEAR
+	JUMPN	T1,INISRD	;SET RESTART DATE
+	MOVE	T1,[.CNDAT,,.GTCNF]
+	GETTAB	T1,
+	  ERRPOP <Cannot get date>
+	SKIPGE	T1		;MAKE SURE SYSTEM HAS A DATE
+	ERRPOP	<Date not yet received, save aborted>
+INISRD:	MOVEM	T1,HEDBUF+HEDDAT
+	SETZ	T1,		;GET POSSIBLE RESTART TIME
+	EXCH	T1,RESTIM
+	JUMPN	T1,INISRT	;SET RESTART TIME
+	MOVE	T1,[.CNTIM,,.GTCNF]
+	GETTAB	T1,
+	  ERRPOP <Cannot GETTAB time>
+INISRT:	MOVEM	T1,HEDBUF+HEDTIM
+	MOVEM	T1,FIRTIM	;ALSO SAVE HERE TO WRITE IN PROLOG RECORDS.
+	MOVE	T1,STRNAM	;GET NAME OF STR WE'RE DOING
+	MOVEM	T1,HEDBUF+HEDSTR
+	JRST	CPOPJ1		;AND GIVE GOOD RETURN
+
+WRTHED:	OUT	TAPE,[IOWD SIZHED,HEDBUF
+			0]
+	  JRST	WRTHD1		;GO MAKE SURE IT GOT OUT
+	MSG	<Can't write header record: >
+	GETSTS	TAPE,S		;GET STATUS IN S FOR PRINTING
+	JRST	TPOUER
+WRTHD1:	MTAPE	TAPE,.MTREW	;REWIND NOW
+	IN	TAPE,[IOWD SIZHED,HEDBF1
+		      0] ;AND SEE IF DATA GOT OUT
+	  JRST	WRTHD2		;OK, GO CHECK DATA
+	GETSTS	TAPE,S		;GET STATUS
+	MSG	<Can't read header record just written: >
+	JRST	TPINER
+
+WRTHD2:	MOVSI	T1,-SIZHED
+WRTHD3:	MOVE	T2,HEDBUF(T1)
+	CAMN	T2,HEDBF1(T1)
+	  AOBJN	T1,WRTHD3
+	JUMPGE	T1,CPOPJ1
+	MSG	<Read back check of header record failed>
+	POPJ	P,
+
+;PRINT OUT A HEADER, ADDRESS OF BLOCK IN T4
+
+	MOVE	T1,HEDVER(T4)
+PRTHED:	MSG	<ASP version >
+	LDB	T1,[POINT 9,HEDVER(T4),11]
+	SKIPN	T1		; New or old format?
+	  HRRZ	T1,HEDVER(T4)	; Old - get version
+	PUSHJ	P,OCTOUT	; Major version
+	LDB	T1,[POINT 9,HEDVER(T4),11]
+	JUMPE	T1,PRTHD1	; Old format, skip this rot
+	LDB	T1,[POINT 6,HEDVER(T4),17]
+	SKIPE	T1		; Non-zero?
+	 OUTCHI	"@"(T1)		; Minor version
+	HRRZ	T1,HEDVER(T4)	; Edits
+	JUMPE	T1,PRTHD1	; No edits?
+	OUTCHI	"("		; Yes, in parenthesis
+	PUSHJ	P,OCTOUT
+	OUTCHI	")"
+PRTHD1:	LDB	T1,[POINT 3,HEDVER(T4),2]
+	JUMPE	T1,PRTHD2	; Who field
+	OUTCHI	"-"
+	PUSHJ	P,OCTOUT
+PRTHD2:	HLRZ	T1,HEDSIZ(T4)	; Read buffer length
+	JUMPE	T1,PRTHE1	; Non-zero ?
+	CAIN	T1,MAXREC/1000	; Standard size?
+	  JRST	PRTHE1		; Yes, don't bother with details
+	MSG	<, using >
+	PUSHJ	P,DECOUT	; Print buffer size
+	MSG	< page records>
+PRTHE1:	MSG	,CRLF
+	MSG	<Unit >
+	MOVE	T1,OPNTNM	;GET TAPE  NAME
+	PUSHJ	P,SIXOUT
+	MSG	<  at density >
+	PUSHJ	P,CURDEN
+	MSG	<Tape number >
+	MOVE	T1,HEDTPN(T4)
+	PUSHJ	P,DECOUT
+	MSG	< on >
+	MOVE	T1,HEDDAT(T4)
+	MOVE	T2,HEDTIM(T4)
+	PUSH	P,T4
+	PUSHJ	P,PRTDAT
+	POP	P,T4
+	MSG	<>,CRLF
+	OUTSTR	HEDSYN(T4)
+	MSG	< >
+	MOVE	T1,STRTYP
+	SKIPN	CMPFLG
+	 SKIPN	VERFLG
+	  OUTSTR @STRMSG(T1)
+	SKIPN	CMPFLG
+	 SKIPN	VERFLG
+	  CAIA
+	 MSG	<structure >
+	MOVE	T1,HEDSTR(T4)
+	PUSHJ	P,SIXOUT
+	OUTCHI	"("
+	MOVE	T1,HEDHID(T4)	;ID FOR STRUCURE
+	PUSHJ	P,SIXOUT
+	OUTCHI	")"
+	MSG	,CRLF
+	MSG	,CRLF
+	POPJ	P,
+
+
+;ROUTINE TO PRINT DISK UNIT NUMBER AND PAGE FROM T4
+
+PRTDP:	MOVE	T1,STRNAM	;GET STR NAME
+	PUSHJ	P,SIXOUT	;PRINT STR NAME
+	MSG	< page >
+	MOVE	T1,T4		;GET PAGE NUMBER
+	PUSHJ	P,OCTOUT	;PRINT IT
+	SKIPE	STRNMU		;Any units specified?
+	SKIPE	STRTYP		;Yes, single unit?
+	  JRST	PRTDP1		;Yes, finish line
+	MSG	<, on unit >
+	MOVE	T1,T4		;GET PAGE NUMBER IN T1
+	MOVE	T2,STRMXP	;GET SIZE OF STR
+	IDIV	T2,STRNMU	;GET PAGES PER UNIT
+	IDIV	T1,T2		;GET UNIT NO IN T1, PAGE IN T2
+	PUSH	P,T2
+	PUSHJ	P,OCTOUT	;PRINT "0", ETC
+	MSG	< page >
+	POP	P,T1		;GET INTO T1
+	PUSHJ	P,OCTOUT	;PRINT IT
+PRTDP1:	MSG	<>,CRLF
+	POPJ	P,		;AND RETURN.
+
+
+RESVER:	MOVEI	T4,[ASCIZ \Restoring \]
+	SKIPE	VERFLG
+	  MOVEI	T4,[ASCIZ \Verifying \]
+	SKIPE	CMPFLG
+	  MOVEI	T4,[ASCIZ \Comparing \]
+	OUTSTR	(T4)
+	POPJ	P,		;Return
+
+;CHKFIR - CHECK FIRST HEADER.
+
+CHKFIR:	PUSHJ	P,CHECK0	;READ IT IN AND MAKE SURE ITS REASONABLE
+	  POPJ	P,		;NO
+	MOVE	T1,HEDBUF+HEDDAT
+	MOVEM	T1,FIRDAT
+	MOVE	T1,HEDBUF+HEDTIM
+	MOVEM	T1,FIRTIM	;SETUP FIRST DATE AND TIME FOR LATER TAPES
+	JRST	CHKHD0		;AND FINISH UP.
+
+;CHKHED - CHECK HEADER FOR TAPE OUT. TAPE NUMBER MUST BE INCREMENTED BEFORE CALLING
+
+CHKHED:	PUSHJ	P,CHECK0	;REWIND TAPE, READ IN HEADER AND CHECK GENERALLY
+	  POPJ	P,		;NO GOOD.
+CHKHD0:	MOVE	T1,TAPNUM	;GET TAPE NUMBER
+	CAME	T1,HEDBUF+HEDTPN	;GET TAPE NUMBER
+	  JRST	[MSG <Wrong tape number mounted, please mount tape number >
+		 PUSHJ P,DECOUT
+		 ERRPOP ()]
+	MOVE	T1,HEDBUF+HEDDAT	;DATE AND TIME HAD BETTER MATCH
+	CAME	T1,FIRDAT
+	  ERRPOP <Date on this tape doesn't match previous tape or tapes>
+	MOVE	T1,HEDBUF+HEDTIM
+	CAME	T1,FIRTIM
+	  ERRPOP <Time on this tape doesn't match previous tape or tapes>
+
+	SKIPN	CMPFLG			;IF NOT COMPARING
+	 SKIPN	VERFLG			;JUST VERIFYING, DON'T CHECK SYSTEM
+	  CAIA				;SPECIFIC STUFF
+	 JRST	CHKHD1			;FAKE THEM OUT BELOW
+	MOVE	T1,HEDBUF+HEDSTR	;MAKE SURE SAME STR
+	CAME	T1,STRNAM
+	  ERRPOP <Tape is not for same structure being restored>
+	MOVE	T1,HEDBUF+HEDHID	;GET UNIT ID
+	CAME	T1,STRHID		;FOR SAME HID?
+	  ERRPOP <Tape not for same system-pack set>
+	MOVE	T1,HEDBUF+HEDMXP	;GET SIZE OF STRUCUTRE
+	CAME	T1,STRMXP		;SAME SIZE?
+	  ERRPOP <Bad strucure size>
+	MOVE	T1,HEDBUF+HEDNMU	;GET NUMBER OF UNITS IN STR
+	CAME	T1,STRNMU		;BETTER BE THE SAME
+	  ERRPOP <Number of units in STR on tape doesn't match number of units in STR on disk>
+	JRST	CPOPJ1
+
+CHKHD1:	MOVE	T1,HEDBUF+HEDSTR	;MAKE SURE SAME STR
+	MOVEM	T1,STRNAM
+	MOVE	T1,HEDBUF+HEDHID	;SET UNIT ID
+	MOVEM	T1,STRHID
+	MOVE	T1,HEDBUF+HEDMXP	;SET SIZE OF STRUCUTRE
+	MOVEM	T1,STRMXP
+	MOVE	T1,HEDBUF+HEDNMU	;SET NUMBER OF UNITS IN STR
+	MOVEM	T1,STRNMU
+	JRST	CPOPJ1			;THEN WE ARE DONE
+
+;ROUTINE NOTHED - MAKE SURE TAPE CURRENTLY MOUNTED DOES NOT
+; BELONG TO THE SET WE ARE CURRENTLY WRITING.
+; CALLED AFTER INIHED AND BEFORE WRTHED.
+; TAPE UNIT IS OPEN AND READY TO BE WRITTEN ON.
+; TAPE IS AT LOAD POINT, SO NOTHED WILL PUT IT BACK THERE BEFORE EXITING.
+; RETURNS SKIP IF OK TO OVERWRITE TAPE, NON-SKIP IF NOT.
+; ASKS OPERATOR WHETHER OR NOT TO OVERWRITE TAPE IF HEADER LOOKS LIKE
+; ITS FROM THIS SET.
+
+NOTHED:	MTAPE	TAPE,.MTREW		;REWIND SO CAN SEE THE HEADER.
+	SETZM	HEDBF1
+	MOVE	T1,[HEDBF1,,HEDBF1+1]
+	BLT	T1,HEDBF1+SIZHED-1	;CLEAR OUT AREA
+	IN	TAPE,[IOWD SIZHED,HEDBF1
+			 0]
+	  JRST	NOTHD1			;OK
+	SETSTS	TAPE,@OPNTAP		;CLEAR STATUS AND IF ERROR, ASSUME BAD
+	JRST	NOTREW			; DATA ON TAPE, LET WRITE ERROR RECOVERY
+					; WORRY IF ITS THE TAPE.  NO HEADER.
+
+NOTHD1:	MOVE	T1,HEDBF1+HEDNAM	;IS NAME OK?
+	CAME	T1,CODNAM		;WELL?
+	  JRST	NOTREW			; NO ASP TAPE, OK TO WRITE ON IT.
+	HRRZ	T1,HEDBF1+HEDSIZ	;RIGHT SIZE?  (BUF PAGES,,HEADER)
+	CAIE	T1,SIZHED
+	  JRST	NOTREW			;OK
+
+;MACRO TO SAVE OURSELVES FROM TYPING AND TYPOS
+
+DEFINE HEDCMP(THING)<
+IRP THING,<
+	MOVE	T1,HEDBF1+HED'THING
+	CAME	T1,HEDBUF+HED'THING
+	  JRST	NOTREW		;;OK, DOESN'T COMPARE. DO REWIND AND RETURN.
+>;END IRP THING
+>;END HEDCMP MACRO
+
+HEDCMP(<STR,HID,MXP,NMU,DAT,TIM>)
+
+;HERE IF ALMOST EVERYTHING MATCHES. WE DON'T CHECK ASP VERSION
+; OR SYSTEM NAME OR TAPE NUMBER, IF ITS THE SAME EXACT STRUCTURE AND
+; TIME, ITS SUSPICIOUS ENOUGH. ASK OPERATOR IF HE WANTS TO CONTINUE.
+
+	MSG	<You are about to overwrite an ASP tape from the same
+set as you are currently recording:>,CRLF
+	MOVEI	T4,HEDBF1	;TELL PRTHED WHERE ITS AT.
+	PUSHJ	P,PRTHED
+	MSG	,CRLF
+	MSG	<Do you wish to continue?  Type "I DO" followed by a return if you do.>,CRLF
+	MSG	<?>
+
+DEFINE STRCMP(STRING),<
+IRPC STRING,<
+	PUSHJ	P,GTCHR
+	CAIE	CH,"'STRING"
+	PJRST	BRKEAT
+>;END IRPC STRING
+>;END STRCMP MACRO
+
+STRCMP(I DO)
+	PUSHJ	P,GTCHR
+	CAIE	CH,12		;BETTER NOT BE ANYTHING PAS THIS
+	JRST	BRKEAT		;IS, FORGET IT.
+	
+NOTREW:	MTAPE	TAPE,.MTREW	;REWIND TO GET BACK TO HEADER PLACE
+	JRST	CPOPJ1
+
+
+;PRINT DATE - DAYS SINCE JAN 1,1964 IN T1
+; TIME IN JIFFIES SINCE MIDNITE (GMT) IN T2
+
+PRTDAT:	MOVSI	T3,400020	;FROM GMT TO CURRENT USERS ZONE, DEC FORMAT
+	MOVEI	T4,T1
+	DATUUO	T4,
+	  ERROR <DATUUO error return - should never happen>
+	PUSH	P,T2		;SAVE THE TIME
+	IDIVI	T1,^D31		;GET DAY OF MONTH
+	PUSH	P,T1		;SAVE T1 FROM GETTING SMASHED
+	MOVEI	T1,1(T2)	;GET DAY NUMBER IN T1
+	PUSHJ	P,DECOUT	;PRINT IT
+	POP	P,T1		;GET # MONTHS IN T1
+	IDIVI	T1,^D12		;GET MONTH IN T2
+	MOVE	T2,MONTAB(T2)
+	SETZ	T3,
+	OUTSTR	T2
+	MOVEI	T1,^D1964(T1)	;YEAR
+	PUSHJ	P,DECOUT	;PRINT YEAR
+	OUTCHI	" "		;SEPERATE DATE AND TIME
+	POP	P,T1		;GET TIME BACK
+	IDIVI	T1,^D60*^D60	;GET MINUTES
+	PUSH	P,T2		;SAVE JIFFY REMAINDER
+	IDIVI	T1,^D60		;GET HOUR IN T1, MINUTE IN T2
+	PUSH	P,T2
+	CAIGE	T1,^D10		;IF LESS THAN 10,
+	OUTCHI	"0"		;PRINT A ZERO
+	PUSHJ	P,DECOUT	;PRINT HH
+	POP	P,T1
+	CAIGE	T1,^D10
+	OUTCHI	"0"
+	PUSHJ	P,DECOUT	;AND MM
+	POP	P,T1		;GET JIFFIES
+	IDIVI	T1,^D60		;GET SECONDS IN T1
+	MSG	<.>
+	CAIGE	T1,^D10
+	OUTCHI	"0"
+	PUSHJ	P,DECOUT	;PRINT FRACTIONS OF A SECOND
+	MSG	< (local time)>
+	POPJ	P,
+
+MONTAB:	ASCII /-JAN-/
+	ASCII /-FEB-/
+	ASCII /-MAR-/
+	ASCII /-APR-/
+	ASCII /-MAY-/
+	ASCII /-JUN-/
+	ASCII /-JUL-/
+	ASCII /-AUG-/
+	ASCII /-SEP-/
+	ASCII /-OCT-/
+	ASCII /-NOV-/
+	ASCII /-DEC-/
+
+HEDBUF:
+	PHASE 0
+HEDSIZ:!	0		;SIZE OF BUFFER(PAGES),,HEADER RECORD(WORDS)
+HEDNAM:!	0		;MAGIC CODE
+HEDVER:!	0		;VERSION OF ASP
+HEDTPN:!	0		;TAPE NUMBER
+HEDSYN:! BLOCK SYSNSZ		;SYSTEM NAME TAPE WAS RECORDED ON
+HEDDAT:!	0		;DATE FIRST TAPE WAS STARTED (APPEARS ON ALL TAPES TO GROUPTHEM TOGETHER)
+HEDTIM:!	0		;TIME FIRST TAPE WAS STARTED
+HEDSTR:!	0		;STRUCTURE NAME
+HEDMXP:!	0		;SIZE OF STRUCTURE
+HEDHID:!	0		;XXYY IN SIXBIT - SYS NUMBER AND PACK SET ID
+HEDNMU:!	0		;NUMBER OF UNITS IN STR
+	DEPHASE
+SIZHED==.-HEDBUF
+
+HEDBF1:	BLOCK	SIZHED
+
+SUBTTL	GETSTR - Routine to get a structure or device
+
+GETSTR:	PUSHJ	P,SIXIN		;GET STRUCTURE NAME
+	  ERRPOP <No structure specified>
+
+	MOVEM	T1,STRNAM	;STORE IT
+	OPEN	DISK,OPNSTR	;OPEN THE STRUCTURE
+	  JRST	[MSG	<Cannot open >
+		 PUSHJ	P,SIXOUT	; Cannot open STRNAM
+		 MSG	<>,CRLF
+		 POPJ	P,]	;OR GIVE UP TRYING
+
+	SETZB	T4,STRMXP	;START WITH FIRST SYSTEM UNIT, CLEAR MAX PAGES PER STR
+	SETZM	STRNMU		;CLEAR NUMBER OF UNITS WORD.
+UNILUP:	SYSPHY	T4,
+	  ERRPOP <Error from SYSPHY uuo>
+	JUMPE	T4,UNIDON	;IF RETURNED ZERO, WE'RE DONE.
+	MOVEM	T4,DSKCHB	;PUT INTO DSKCHR BLOCK
+	MOVE	T1,[DSKCHS,,DSKCHB]
+	DSKCHR	T1,
+	  ERRPOP <DSKCHR error for unit name from SYSPHY>
+	SETZ	T2,		;"STRUCTURE"
+	MOVE	T1,STRNAM	;GET STRUCTURE NAME
+	CAMN	T1,DSKCHB+4	;IS IT OUR STRUCTURE?
+	  JRST	UNIFND		;YES, GO ON
+	AOJ	T2,		;"LOGICAL UNIT"
+	CAMN	T1,DSKCHB+14	;IS IT A SPECIFIC UNIT?
+	  JRST	UNIFND		;YES, GO ON
+	AOJ	T2,		;"PHYSICAL UNIT"
+	CAME	T1,DSKCHB+15	;IS IT A SPECIFIC DRIVE?
+	  JRST	UNILUP		;NO, TRY NEXT UNIT
+UNIFND:	AOS	STRNMU		;COUNT ANOTHER UNIT
+	MOVEM	T2,STRTYP	;SET STRUCTURE TYPE INDEX
+	MOVE	T1,DSKCHB+6	;GET UNIT CAPACITY IN PAGES
+	ADDM	T1,STRMXP	;ADD TO STRMXP
+	MOVE	T1,DSKCHB+16	;GET HOM BLOCK UNIT ID
+	TRZ	T1,7777		;MASK OFF UNIT NAME
+	MOVEM	T1,STRHID	;PUT INTO HERE FOR REFERENCE.
+	JRST	UNILUP		;AND CONTINUE.
+UNIDON:
+	SKIPE	STRNMU		;ANY UNITS
+	  JRST	CPOPJ1		;YES, WE ARE DONE
+	RELEAS	DISK,		;DROP DEVICE
+	MSG	<Device not an available structure, disk unit, or disk drive>,CRLF
+
+NOSTRS:	POPJ	P,		;NO STRUCTURE NAME GIVEN
+
+
+;ROUTINE TO SET DENSITIES, POINTER TO PROPER DENSITY TABLE IN T4.
+
+SETDEN:	PUSHJ	P,GETCTP	;GET CURRENT TAPE OR NOTHING
+	  POPJ	P,		;NOTHING.
+	PUSHJ	P,DECIN		;GET ANSWER IN T1
+	  PJRST	PRTDEN		;NOTHING TYPED, JUST PRINT
+	MOVE	T3,TAPDTB	;GET DENSITY TABLE ADDRESS
+DENCHK:	SKIPN	T2,(T3)		;GET VALUE
+	ERRPOP	<Density not available>
+	XOR	T2,T1		;RH OF T2 ZERO IF MATCH
+	TRNE	T2,-1		;SKIP IF GOT IT
+	AOJA	T3,DENCHK	;NO, GET NEXT ONE
+	HLRZ	T1,(T3)		;GET FILE STATUS
+	MOVEM	T1,OPNTAP	;PUT IN STATUS WORD
+	SETSTS	TAPE,(T1)	;SET IT.
+	POPJ	P,		;AND NOW WE'RE DONE.
+
+
+GETTAP:	PUSHJ	P,SIXIN		;SPECIFIED TAPE?
+	  JRST	GETCTP		;SEE IF THERE'S A CURRENT UNIT
+	PUSHJ	P,TAPOP1	;OPEN IT
+	  JRST	NOTDEV		;CAN'T, CHECK FOR 'NO'
+	JRST	CPOPJ1
+
+GETCTP:	SKIPN	OPNTNM		;ANYTHING THERE?
+	  ERRPOP <No tape unit open>
+	JRST	TAPOP2		;OPEN IT FRESH, AND RETURN.
+
+NOTAPO:	POPJ	P,
+
+DEFINE DENMAC <
+X(<6250>)
+X(<6250,1600>)
+X(<1600>)
+X(<1600,800>)
+X(<800,556>)
+X(<800,556,200>)
+>;END DENMAC
+
+
+DEFINE X(DENS)<
+ZZ==3
+DENBIT(<'DENS>)
+XWD ZZ1,[
+IRP DENS,<<ZZ>B<28>+17,,^D<'DENS>
+ZZ==ZZ-1
+>;END IRP DENS
+	0];;END TABLE WITH A ZERO
+>;END X MACRO DEFINITION
+
+
+DEFINE DENBIT(DENS)<
+ZZ1==0
+IRP DENS,<
+IFIDN <DENS> <6250> <ZZ1==ZZ1!UG.D62>
+IFIDN <DENS> <1600> <ZZ1==ZZ1!UG.D16>
+IFIDN <DENS> <800> <ZZ1==ZZ1!UG.D8>
+IFIDN <DENS> <556> <ZZ1==ZZ1!UG.D5>
+IFIDN <DENS> <200> <ZZ1==ZZ1!UG.D2>
+>;END IRP
+>;END DENBIT
+
+DENSTB:	DENMAC		;GENERATE TABLE
+	0		;ENDS WITH ZERO.
+
+SUBTTL COMMAND SCANNER
+
+;ENTER WITH COMMAND NAME IN T1, AOBJN TO TABLE IN T4
+;SMASHES T2-T4, S
+;NON-SKIP IF BAD COMMAND OR AMBIGUOUS COMMAND, MESSAGE PRINTED ON TERMINAL
+;SKIP IF COMMAND FOUND, INDEX INTO TABLE GIVEN IN C(T4) RETURNED IN T4
+
+COMMAN:	PUSH	P,T4		;SAVE SO CAN CALCULATE OFFSET IF COMMAND IS FOUND
+	MOVE	T3,T1		;COPY COMMAND IN T3
+	SETO	T2,		;MASK
+	SETZ	S,		;CLEAR FLAG
+	LSH	T2,-6		;AT LEAST 1 CHAR MUST BE PRESENT
+	LSH	T3,6		;MAKE A TDZ MASK
+	JUMPN	T3,.-2
+COM1:	MOVE	T3,(T4)		;GET NEXT COMMAND NAME
+	CAMN	T1,T3		;MATCH?
+	  JRST	COMFND		;YES, RETURN INDEX
+	TDZ	T3,T2		;MASK TABLE ENTRY DOWN TO NUMBER OF CHARS IN TYPED COMMAND
+	CAME	T1,T3		;MATCHES NOW?
+	  JRST	NXTCOM		;NO, GO FOR NEXT ENTRY
+	TROE	S,1		;FLAG SEEN 1. IF ALREADY SEEN ONE,
+	  TRO	S,2		;MARK IT.
+	HRL	S,T4		;AND SAVE ADDRESS
+NXTCOM:	AOBJN	T4,COM1		;CONTINUE
+	TRNE	S,2		;IF SAW TWO OR MORE,
+	  JRST	[MSG (<Ambiguous command >)
+		 JRST NOCOM]
+	TRNN	S,1		;OK, SKIP IF HAVE A COMMAND
+	  JRST	[MSG (<Unknown command >)
+		 JRST NOCOM]
+	HLRZ	T4,S		;RESTORE PROPER TABLE ADDRESS
+COMFND:	POP	P,T3		;GET ORIGINAL AOBJN POINTER
+	TLZ	T4,-1		;CLEAR OUT COUNT
+	SUBI	T4,(T3)		;GET COMMAND NUMBER
+CPOPJ1:	AOS	(P)		;AND SKIP RETURN
+CPOPJ:	POPJ	P,		;BYE.
+
+NOCOM:	PUSHJ	P,SIXOUT	;PRINT COMMAND
+	MSG	<>,CRLF
+	PUSHJ	P,BRKEAT	;EAT REST OF LINE
+	POP	P,(P)		;GET SAVED AOBJN POINTER OFF STACK
+	POPJ	P,		;AND RETURN.
+
+
+SUBTTL	DECIMAL I/O
+
+DECOUT:	IDIVI	T1,^D10
+	HRLM	T2,(P)
+	SKIPE	T1
+	PUSHJ	P,DECOUT
+	HLRZ	T1,(P)
+	OUTCHI	"0"(T1)		;OUTPUT AS ASCII.
+	POPJ	P,
+
+DECIN:	SETZ	T1,		;CLEAR RESULT
+	PUSHJ	P,ISBRK		;WAS LAST SEP CHAR A BREAK?
+	  POPJ	P,		;YES, FIELD IS BLANK
+DECIN0:	PUSHJ	P,GTCHR		;SCAN TO FIRST DIGIT IF ANY
+	PUSHJ	P,ISBRK		;IS IT BLANK?
+	  POPJ	P,		;YES, ERROR
+	CAIL	CH,"0"		;IS IT NUMERIC
+	CAILE	CH,"9"
+	JRST	DECIN0		;NO, SKIP THE NUMBERS
+	SKIPA			;OK, HAVE FIRST ONE.
+DECIN1:	PUSHJ	P,GTCHR		;GET CHAR
+	CAIL	CH,"0"		;MUST BE NUMBER
+	CAILE	CH,"9"
+	JRST	CPOPJ1
+	IMULI	T1,^D10
+	ADDI	T1,-"0"(CH)	;GET IT IN
+	JRST	DECIN1		;AND GO FOR MORE
+
+SUBTTL	OCTAL I/O
+
+OCTIN:	SETZ	T1,		;CLEAR RESULT
+	PUSHJ	P,ISBRK		;WAS LAST SEP CHAR A BREAK?
+	  POPJ	P,		;YES, FIELD IS BLANK
+OCTIN0:	PUSHJ	P,GTCHR		;SCAN TO FIRST DIGIT IF ANY
+	PUSHJ	P,ISBRK		;IS IT BLANK?
+	  POPJ	P,		;YES, ERROR
+	CAIL	CH,"0"		;IS IT NUMERIC
+	CAILE	CH,"7"
+	JRST	OCTIN0		;NO, SKIP THE NUMBERS
+	SKIPA			;OK, HAVE FIRST ONE.
+OCTIN1:	PUSHJ	P,GTCHR		;GET CHAR
+	CAIL	CH,"0"		;MUST BE NUMBER
+	CAILE	CH,"7"
+	JRST	CPOPJ1
+	LSH	T1,3		;SLIDE WORD OVER
+	ADDI	T1,-"0"(CH)	;GET IT IN
+	JRST	OCTIN1		;AND GO FOR MORE
+
+
+BRKEAT:	PUSHJ	P,ISBRK		;IS IT BREAK TIME YET?
+	  JRST	BRKEA1		;GO CLEAR CH AND RETURN
+	PUSHJ	P,GTCHR
+	JRST	BRKEAT
+BRKEA1:	MOVEI	CH,-1		;SO SCANNERS DONT GIVE ERROR NEXT TIME
+	POPJ	P,		;AND RETURN.
+
+OCTOUT:	JUMPE	T1,OCTOU1	;Zero, so skip this
+	JUMPG	T1,OCTOU0	;Positive, so go on
+OCTHWO:	PUSH	P,T1		;Negative or half-word, save number
+	HLRZ	T1,(P)		;Get left half
+	PUSHJ	P,OCTOU0	;  and print it
+	MSG	<,,>		;  use half-word designation
+	POP	P,T1		;Get right half
+	TLZ	T1,-1		;Clear left
+OCTOU0:	IDIVI	T1,10		;Print number
+	HRLM	T2,(P)		;  using established
+	SKIPE	T1		;  routine from the
+	PUSHJ	P,OCTOU0	;  software notebooks
+	HLRZ	T1,(P)		;  examples.
+OCTOU1:	OUTCHI	"0"(T1)		; Immediate mode outchr
+	POPJ	P,		; Return
+
+SUBTTL	Sepcial purpose octal output routines
+
+OCTSIX:	PUSH	P,T4		;Working register
+	MOVEI	T4,6		;Halfword
+OCTSI0:	ROT	T1,3		;Shift around
+	LDB	T2,[Point 3,T1,35]
+	OUTCHI	"0"(T2)		;Print
+	SOJG	T4,OCTSI0	;Loop
+	MOVEI	T4," "		;Add spacing
+	SKIPE	OSTARS		;Is a star wanted?
+	  MOVEI	T4,"*"		;Yes, use that
+	OUTCHR	T4		;Print spacing
+	SETZM	OSTARS		;And clear for later
+	MOVEI	T4,6		;Halfword
+OCTSI1:	ROT	T1,3		;Shift around
+	LDB	T2,[Point 3,T1,35]
+	OUTCHI	"0"(T2)		;Print
+	SOJG	T4,OCTSI1	;Loop
+	POP	P,T4		;Restore
+	POPJ	P,		;Return
+
+OCTWNO:	IDIVI	T1,10		;One digit
+	PUSH	P,T2		;Save it
+	IDIVI	T1,10		;Second digit
+	OUTCHI	"0"(T1)		;First digit printing
+	OUTCHI	"0"(T2)		;Second digit printing
+	POP	P,T2		;Get digit
+	OUTCHI	"0"(T2)		;Last digit printing
+	POPJ	P,		;Done
+
+SUBTTL	SIXBIT I/O
+
+;RETURN NEXT SIXBIT TOKEN IN T1, BREAK CHAR IN CH
+; SCANS PAST BLANKS AND CONTROL CHARS FIRST.
+SIXIN:	MOVE	T3,[POINT 6,T1]
+	SETZ	T1,
+	PUSHJ	P,ISBRK		;WAS LAST CHAR A BREAK?
+	  POPJ	P,		;GIVE ERROR RETURN.
+SIXIN1:	PUSHJ	P,GTCHR
+	CAILE	CH," "		;IF BLANK OR CONTROL,
+	PUSHJ	P,ISBRK		;BREAK?
+	  JRST	SIXIN3		;SEE IF COLLECTED ANYTHING
+SIXIN2:	TLNN	T3,770000	;ANY MORE ROOM?
+	JRST	SIXIN1		;NO, JUST IGNORE THE REST
+	CAIL	CH,"a"		;CONVERT LOWER TO UPPER CASE
+	CAILE	CH,"z"		;
+	JRST	.+2
+	SUBI	CH,"a"-"A"
+	SUBI	CH," "
+	IDPB	CH,T3
+	JRST	SIXIN1		;NO, CONTINUE
+SIXIN3:	JUMPN	T1,CPOPJ1	;IF COLLECTED ANYTHING, RETURN SKIP
+	CAIN	CH," "		; ELSE IF SPACE
+	  JRST	SIXIN1		;       LOOK FOR MORE
+	POPJ	P,		;ELSE ERROR RETURN.
+
+SIXOUT:	MOVE	T2,[POINT 6,T1]
+SIXOU1:	ILDB	T3,T2
+	JUMPE	T3,CPOPJ
+	OUTCHI	"0"-'0'(T3)
+	TLNE	T2,770000
+	JRST	SIXOU1
+	POPJ	P,
+
+ISBRK:	CAIE	CH,176
+	CAIG	CH,37
+	POPJ	P,
+	JRST	CPOPJ1
+
+GTCHR:	INCHWL	CH		;GET IT
+	CAIN	CH,15		;IGNORE CR
+	JRST	GTCHR
+	POPJ	P,		;AND RETURN WITH IT IN CH
+
+OBUF:	BLOCK	3
+PDL:	BLOCK	PDLLEN
+PTRBUF:	BLOCK	1		;AOBJN POINTER TO WRAP AROUND TO FIRST BUFFER
+LASBUF:	BLOCK	1		;AOBJN POINTER TO LAST BUFFER ON SAVE AND RESTORE.
+LASOER:	0			;LAST REC NUMBER OF OUTPUT ERROR
+LASOEC:	BLOCK	1		;NUMBER OF TIMES TRIED TO OUTPUT SAME REC
+OECMAX:	BLOCK	1		;MAX TIMES TO TRY SET HERE.
+SRCLEN:	BLOCK	1		;NUMBER OF TIMES TO TRY TO FIND GOOD RECORD ON RESTORE RESYNC
+RESTDP:	BLOCK	1		;IF NON-ZERO, SAYS WHERE TO START A SAVE.
+RESTTP:	BLOCK	1		;IF NON-ZERO, SAYS WHICH TAPE NUMBER TO CALL IT.
+RESDAT:	BLOCK	1		;WHERE TO GET DATE ON A RESTART
+RESTIM:	BLOCK	1		;WHERE TO GET TIME ON A RESTART
+CMPFLG:	BLOCK	1		;COMPARE FLAG.
+CMPCNT:	BLOCK	1		;COUNT OF COMPARE ERRORS.
+VERFLG:	BLOCK	1		;VERIFY FLAG.
+BUFSIZ:	BLOCK	1		;SIZE OF BUFFER IN WORDS
+BUFPAG:	BLOCK	1		;SIZE OF BUFFER IN PAGES
+VERBOSE:BLOCK	1		;TYPE OF COMPARE MESSAGES.
+OSTARS:	BLOCK	1		;PRINT XXXXXX*XXXXXX FOR OCTSIX FLAG
+STSTYP:	BLOCK	1		;TYPE OF STATUS BEING CHECKED
+STRMXP:	BLOCK	1		;MAX PAGES PER STR STORED HERE.
+STRTYP:	BLOCK	1		;TYPE OF REQUEST 0=STR, 1=LOG, 2=PHY
+STRMSG:	[ASCIZ	\structure \]	;MESSAGE TO PRINT FOR EACH TYPE
+	[ASCIZ	\logical unit \]
+	[ASCIZ	\physical unit \]
+
+    DSKCHS==24
+DSKCHB:	BLOCK	DSKCHS		;DSKCHR BLOCK
+DEBNAM:	3
+	0
+	SIXBIT	/TAPE/
+	SIXBIT	/DMP/
+
+TAPDTB:	0			;ADDRESS OF DENSITY BLOCK FOR TAPE UNIT
+CODNAM:	SIXBIT	/ASP/
+TAPNUM:	BLOCK	1		;CURRENT TAPE NUMBER
+TAPBAS:	BLOCK	1		;RECORD NUMBER THIS TAPE STARTED WITH
+CNTPRO:	0			;PLACE TO KEEP RECORD COUNT WE EXPECT ON RESTORE
+
+PROBUF:	PHASE	0
+PROCOD:!0			;READ OR WRITE CODE HERE
+PROCNT:!0			;COUNT GOES HERE
+	DEPHASE
+	PROLEN==.-PROBUF
+OPNTAP:	EXP 17
+OPNTNM:	0
+	0
+OPNSTR:	17
+STRNAM:	SIXBIT	/DSKB/
+	0			;THIS IS AN OPEN BLOCK
+STRHID:	BLOCK	1		;HOME BLOCK ID
+STRNMU:	BLOCK	1		;NUMBER OF UNITS IN STRUCTURE
+
+FIRDAT:	BLOCK	1		;FIRST DATE SEEN ON RESTORE
+FIRTIM:	BLOCK	1		;FIRST TIME SEEN ON RESTORE
+	END	ST
+@\Ê

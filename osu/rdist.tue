@@ -1,0 +1,723 @@
+.:logfile rdist.log
+:define $substitution=$true
+sysno
+TYMSHARE F33-P035/E 3-2-89
+.daytime
+31-OCT-1989 06:19:46 PST
+
+.run (xexec)minit
+
+.rdist *.*/master:33/host:74,32/check
+Master host: 33
+561 files on master system.
+Slave hosts: 74,32
+Checking host 74
+(OSU         :  74) CMD.REL       14 07-Sep-88 20:38 -- extra not on master
+(OSU         :  74) LOGINN.CKS     2 19-Sep-89 18:32 -- bad checksum ZEWCUY
+                           should be 10-Dec-87 16:36 HUYMOL  ALL  RD  NO
+(OSU         :  74) LOGINN.SHR     5 19-Sep-89 18:32 -- protection ALL RUN RUN
+                           should be 10-Dec-87 16:36 QAQNAH  ALL  RD RUN 147010
+(OSU         :  74) LOGINN.LOG     2 19-Sep-89 18:32 -- bad checksum ZAMFOF
+                           should be 10-Dec-87 16:36 MUTVAW  ALL  RD  NO
+(OSU         :  74) LOGINN.702    28 10-Dec-87 16:36 -- extra not on master
+(OSU         :  74) RPGMAI.MAC    13 16-Jan-87 02:24 -- bad checksum SUGMAV
+                           should be 16-Jan-87 02:24 HOLSUX  ALL  RD  NO
+(OSU         :  74) MAIN0A.VUE    52 05-Sep-88 01:02 -- extra not on master
+(OSU         :  74) MAIN37.VUE    52 06-Sep-88 19:20 -- extra not on master
+(OSU         :  74) LOGINN.INF     4 19-Sep-89 18:31 -- bad checksum LICKEF
+                           should be 10-Dec-87 16:23 POHWIW  ALL  RD  NO
+(OSU         :  74) LOGINN.CTL     2 19-Sep-89 18:33 -- bad checksum LAMVOH
+                           should be 10-Dec-87 16:25 XIYKUF  ALL  RD  NO
+(OSU         :  74) ASH.DDT       12 29-Jan-87 22:23 -- bad checksum NUFXIR
+                           should be 03-Sep-88 19:23 MEQNES  ALL  RD  NO
+(OSU         :  74) CHKPNT.SAV     5 10-Feb-87 17:40 -- protection ALL  RD  NO
+                           should be 10-Feb-87 17:36 BIGSIS  ALL  RD RUN
+(OSU         :  74) ASH12.MAC     15 03-Sep-88 19:17 -- extra not on master
+(OSU         :  74) ASH.REL        6 13-Mar-89 15:08 -- extra not on master
+(OSU         :  74) ASP12.SAV      7 13-Jan-87 14:22 -- extra not on master
+(OSU         :  74) ASP.DDT       16 11-Feb-87 20:00 -- bad checksum HIRNUD
+                           should be 23-Apr-87 21:06 WIDGUH  ALL  RD  NO
+(OSU         :  74) ASP.SAV        7 26-May-88 13:43 -- protection ALL  RD  NO
+                           should be 24-May-88 14:18 DAJXUH  ALL  RD RUN  64017
+(OSU         :  74) ASP.SAV        7 26-May-88 13:43 -- bad license 
+                           should be 24-May-88 14:18 DAJXUH  ALL  RD RUN  64017
+(OSU         :  74) UUO.REL        6 07-Sep-88 20:43 -- extra not on master
+(OSU         :  74) ASP.VUE       29 04-Sep-88 23:53 -- extra not on master
+(OSU         :  74) MAIN1B.VUE    52 06-Sep-88 21:15 -- extra not on master
+(OSU         :  74) RDIST.LOG      8 28-Oct-89 05:49 -- bad checksum PAQMUV
+                           should be 31-Oct-89 06:19 POQCOR  ALL  RD  NO
+(OSU         :  74) ASP12D.SAV    15 13-Jan-87 14:21 -- extra not on master
+(OSU         :  74) TAP.CAB       53 13-Sep-88 01:09 -- bad checksum RUTROJ
+                           should be 12-Sep-88 23:32 TOVHUM  ALL  RD  NO
+(OSU         :  74) TAP.REL       17 07-Sep-88 23:27 -- extra not on master
+(OSU         :  74) MAIN33.VUE    52 12-Sep-88 23:32 -- extra not on master
+(OSU         :  74) GFD.SAV        3 19-Sep-89 18:50 -- bad checksum LEQJEH
+                           should be 31-Jan-89 19:47 XOKRAW  ALL  RD RUN
+(OSU         :  74) GFD.LOG        3 19-Sep-89 18:50 -- bad checksum MIMJES
+                           should be 20-Nov-86 18:23 BOCKOC  ALL  RD  NO
+(OSU         :  74) GFD.SCM        2 19-Sep-89 18:50 -- bad checksum QARSAF
+                           should be 20-Nov-86 18:25 CEJMUB  ALL  RD  NO
+(OSU         :  74) GFD.MAC       12 19-Sep-89 18:43 -- bad checksum DEZMIP
+                           should be 31-Jan-89 19:45 BIVVUT  ALL  RD  NO
+(OSU         :  74) GFD.INF        2 19-Sep-89 18:44 -- bad checksum MAJTEG
+                           should be 20-Nov-86 15:42 FUFTUX  ALL  RD  NO
+(OSU         :  74) GFD.LST       33 19-Sep-89 18:50 -- extra not on master
+(OSU         :  74) GFD.BAK        2 19-Sep-89 18:47 -- bad checksum PUGLEL
+                           should be 31-Jan-89 19:34 LEFHOQ  ALL  RD  NO
+(OSU         :  74) GFD.CTL        2 19-Sep-89 18:49 -- bad checksum NEVJOB
+                           should be 20-Nov-86 17:03 LUCGUQ  ALL  RD  NO
+(OSU         :  74) SYSTAT.LOW     2 27-Oct-88 19:15 -- protection ALL  RD  NO
+                           should be 27-Oct-88 19:07 KUTXUJ  ALL  RD RUN
+(OSU         :  74) SYSTAT.SHR    18 27-Oct-88 19:15 -- protection ALL  RD  NO
+                           should be 27-Oct-88 19:07 XAWZEN  ALL  RD RUN
+(OSU         :  74) INITIA.OLD    11 19-Feb-87 17:36 -- extra not on master
+(OSU         :  74) MAIN01.VUE    52 07-Sep-88 23:13 -- extra not on master
+(OSU         :  74) INITIA.25      4 29-May-87 20:20 -- extra not on master
+(OSU         :  74) INITIA.MAC    12 20-Mar-89 10:31 -- bad checksum XUVXUF
+                           should be 24-Aug-89 17:35 DIMVIK  ALL  RD  NO
+(OSU         :  74) GETVER.REL     2 07-Sep-88 20:40 -- extra not on master
+(OSU         :  74) DSKCLN.SAV     8 18-Feb-89 22:41 -- bad checksum SUWREP
+                           should be 20-Jun-89 16:17 KOBYIM  ALL  RD  NO
+(OSU         :  74) DSKCLN.LOG     2 10-Feb-88 12:58 -- extra not on master
+(OSU         :  74) DSKCLN.MAC    41 18-Feb-89 22:38 -- bad checksum KIKSAC
+                           should be 20-Jun-89 16:14 ZAYNOF  ALL  RD  NO
+(OSU         :  74) MAIN09.VUE    51 05-Sep-88 21:43 -- extra not on master
+(OSU         :  74) TITOXX.TS1    39 07-Sep-88 23:24 -- extra not on master
+(OSU         :  74) TRW.WHR                          -- missing on slave
+(OSU         :  74) CROSS.MAC                        -- missing on slave
+(OSU         :  74) CROSS.OLD                        -- missing on slave
+(OSU         :  74) CROSS.CMD                        -- missing on slave
+(OSU         :  74) CROSS.NEW                        -- missing on slave
+(OSU         :  74) CROSS.SAV                        -- missing on slave
+(OSU         :  74) CROSS.SWT                        -- missing on slave
+(OSU         :  74) CROSS.LST                        -- missing on slave
+(OSU         :  74) DSKCLN.LST                       -- missing on slave
+(OSU         :  74) DSKCLN.REL                       -- missing on slave
+(OSU         :  74) TRAPS.LST                        -- missing on slave
+(OSU         :  74) DEVTB.REL                        -- missing on slave
+(OSU         :  74) ERROR.REL                        -- missing on slave
+(OSU         :  74) XYPLOT.REL                       -- missing on slave
+(OSU         :  74) TRAPS.REL                        -- missing on slave
+(OSU         :  74) ALPHI.REL                        -- missing on slave
+(OSU         :  74) POWTAB.REL                       -- missing on slave
+(OSU         :  74) MONO.REL                         -- missing on slave
+(OSU         :  74) DEVTB.MAC                        -- missing on slave
+(OSU         :  74) ERROR.MAC                        -- missing on slave
+(OSU         :  74) XYPLOT.MAC                       -- missing on slave
+(OSU         :  74) TRAPS.MAC                        -- missing on slave
+(OSU         :  74) DATBS.MAC                        -- missing on slave
+(OSU         :  74) ALPHI.MAC                        -- missing on slave
+(OSU         :  74) POWTAB.MAC                       -- missing on slave
+(OSU         :  74) MONO.MAC                         -- missing on slave
+(OSU         :  74) DSKCLN.BAK                       -- missing on slave
+(OSU         :  74) DSKCLN.110                       -- missing on slave
+(OSU         :  74) FINDIT.TEC                       -- missing on slave
+(OSU         :  74) INITIA.REL                       -- missing on slave
+(OSU         :  74) 033TEL.OUT                       -- missing on slave
+(OSU         :  74) 033TEL.COM                       -- missing on slave
+(OSU         :  74) RTFORT.REL                       -- missing on slave
+(OSU         :  74) ALPHO.REL                        -- missing on slave
+(OSU         :  74) TPFCN.REL                        -- missing on slave
+(OSU         :  74) MCHAIN.REL                       -- missing on slave
+(OSU         :  74) RTFORT.MAC                       -- missing on slave
+(OSU         :  74) ALPHO.MAC                        -- missing on slave
+(OSU         :  74) TPFCN.MAC                        -- missing on slave
+(OSU         :  74) MCHAIN.MAC                       -- missing on slave
+(OSU         :  74) INITIA.23                        -- missing on slave
+(OSU         :  74) INITIA.15                        -- missing on slave
+(OSU         :  74) INITIA.118                       -- missing on slave
+(OSU         :  74) INITIA.930                       -- missing on slave
+(OSU         :  74) INITIA.95                        -- missing on slave
+(OSU         :  74) INITIA.21                        -- missing on slave
+(OSU         :  74) INITIA.20                        -- missing on slave
+(OSU         :  74) INITIA.16                        -- missing on slave
+(OSU         :  74) INITIA.17                        -- missing on slave
+(OSU         :  74) INITIA.21A                       -- missing on slave
+(OSU         :  74) INITIA.DIR                       -- missing on slave
+(OSU         :  74) INITIA.M22                       -- missing on slave
+(OSU         :  74) INITIA.M10                       -- missing on slave
+(OSU         :  74) INITIA.M17                       -- missing on slave
+(OSU         :  74) INITIA.22                        -- missing on slave
+(OSU         :  74) INITIA.M15                       -- missing on slave
+(OSU         :  74) INITIA.M16                       -- missing on slave
+(OSU         :  74) INITIA.M21                       -- missing on slave
+(OSU         :  74) INITIA.SCM                       -- missing on slave
+(OSU         :  74) LIB40.CMD                        -- missing on slave
+(OSU         :  74) DUMMIO.REL                       -- missing on slave
+(OSU         :  74) EXER1.REL                        -- missing on slave
+(OSU         :  74) LINT.REL                         -- missing on slave
+(OSU         :  74) FLIRT.REL                        -- missing on slave
+(OSU         :  74) DUMMIO.MAC                       -- missing on slave
+(OSU         :  74) EXER1.MAC                        -- missing on slave
+(OSU         :  74) LINT.MAC                         -- missing on slave
+(OSU         :  74) FLIRT.MAC                        -- missing on slave
+(OSU         :  74) GFD.REL                          -- missing on slave
+(OSU         :  74) (CARL).TS1                       -- missing on slave
+(OSU         :  74) TAP.SPD                          -- missing on slave
+(OSU         :  74) LOUT.REL                         -- missing on slave
+(OSU         :  74) OCTI.REL                         -- missing on slave
+(OSU         :  74) DEF40.REL                        -- missing on slave
+(OSU         :  74) LOUT.MAC                         -- missing on slave
+(OSU         :  74) OCTI.MAC                         -- missing on slave
+(OSU         :  74) DEF40.MAC                        -- missing on slave
+(OSU         :  74) CROSSF.146                       -- missing on slave
+(OSU         :  74) F40CHN.REL                       -- missing on slave
+(OSU         :  74) DOUBLE.REL                       -- missing on slave
+(OSU         :  74) FILE.REL                         -- missing on slave
+(OSU         :  74) OCTO.REL                         -- missing on slave
+(OSU         :  74) PDUMP.REL                        -- missing on slave
+(OSU         :  74) ALLIO.REL                        -- missing on slave
+(OSU         :  74) FDEBUG.REL                       -- missing on slave
+(OSU         :  74) DYNARY.REL                       -- missing on slave
+(OSU         :  74) DOUBLE.MAC                       -- missing on slave
+(OSU         :  74) FORSE.MAC                        -- missing on slave
+(OSU         :  74) FILE.MAC                         -- missing on slave
+(OSU         :  74) OCTO.MAC                         -- missing on slave
+(OSU         :  74) PDUMP.MAC                        -- missing on slave
+(OSU         :  74) ALLIO.MAC                        -- missing on slave
+(OSU         :  74) FDEBUG.MAC                       -- missing on slave
+(OSU         :  74) DYNARY.MAC                       -- missing on slave
+(OSU         :  74) PAUSE.REL                        -- missing on slave
+(OSU         :  74) MSPR.REL                         -- missing on slave
+(OSU         :  74) MBSR.REL                         -- missing on slave
+(OSU         :  74) TFMT.REL                         -- missing on slave
+(OSU         :  74) DUMMY.REL                        -- missing on slave
+(OSU         :  74) PAUSE.MAC                        -- missing on slave
+(OSU         :  74) MSPR.MAC                         -- missing on slave
+(OSU         :  74) MBSR.MAC                         -- missing on slave
+(OSU         :  74) TFMT.MAC                         -- missing on slave
+(OSU         :  74) DUMMY.MAC                        -- missing on slave
+(OSU         :  74) MAIN1A.VUE                       -- missing on slave
+(OSU         :  74) 017TEL.OUT                       -- missing on slave
+(OSU         :  74) 017TEL.COM                       -- missing on slave
+(OSU         :  74) EXIT.REL                         -- missing on slave
+(OSU         :  74) INTO.REL                         -- missing on slave
+(OSU         :  74) MONI.REL                         -- missing on slave
+(OSU         :  74) SIMTTY.REL                       -- missing on slave
+(OSU         :  74) EXIT.MAC                         -- missing on slave
+(OSU         :  74) INTO.MAC                         -- missing on slave
+(OSU         :  74) MONI.MAC                         -- missing on slave
+(OSU         :  74) SIMTTY.MAC                       -- missing on slave
+(OSU         :  74) ACCESS.BAK                       -- missing on slave
+Checking host 32
+(OSU         :  32) LOGINN.SHR     5 10-Dec-87 16:36 -- protection ALL RUN RUN
+                           should be 10-Dec-87 16:36 QAQNAH  ALL  RD RUN 147010
+(OSU         :  32) INIAXG.SAV     3 01-Sep-81 20:44 -- protection ALL  RD  NO
+                           should be 01-Sep-81 20:44 BEXXIT  ALL  RD RUN
+(OSU         :  32) TPRD.SAV       9 30-Jun-81 11:58 -- protection ALL  RD  NO
+                           should be 30-Jun-81 11:58 VEJGER  ALL  RD RUN
+(OSU         :  32) CABLNK.SHR   101 21-Jan-82 02:49 -- protection ALL  RD  NO
+                           should be 21-Jan-82 02:49 HONKEQ  ALL  RD RUN
+(OSU         :  32) CABLNK.LOW     8 21-Jan-82 02:48 -- protection ALL  RD  NO
+                           should be 21-Jan-82 02:48 BUVQIK  ALL  RD RUN
+(OSU         :  32) ONCALL.SAV    31 23-Jan-86 02:07 -- protection ALL  RD  NO
+                           should be 23-Jan-86 02:07 QUWDED  ALL  RD RUN
+(OSU         :  32) RPG.SHR       14 16-Jan-87 02:37 -- protection ALL  RD  NO
+                           should be 16-Jan-87 02:37 RAKYIJ  ALL  RD RUN
+(OSU         :  32) RPG.NFO        9 20-May-87 15:43 -- protection ALL  RD  RD
+                           should be 20-May-87 15:43 SOBWEB  ALL  RD  NO
+(OSU         :  32) CMD.BAK       33 08-Sep-88 00:20 -- extra not on master
+(OSU         :  32) CMD.REL       14 08-Sep-88 02:36 -- extra not on master
+(OSU         :  32) ASH11.MAC     15 08-Jun-88 13:24 -- extra not on master
+(OSU         :  32) FRECOR.SAV    17 25-Sep-84 02:25 -- protection ALL  RD  NO
+                           should be 25-Sep-84 02:25 FUMVEV  ALL  RD RUN
+(OSU         :  32) INIELB.SAV     3 01-Sep-81 20:43 -- protection ALL  RD  NO
+                           should be 01-Sep-81 20:43 PAXFED  ALL  RD RUN
+(OSU         :  32) INIORG.SAV     3 01-Sep-81 20:42 -- protection ALL  RD  NO
+                           should be 01-Sep-81 20:42 DODBUD  ALL  RD RUN
+(OSU         :  32) OCRSHI.SAV    22 24-Jul-80 16:06 -- protection ALL  RD  NO
+                           should be 24-Jul-80 16:06 ZETJED  ALL  RD RUN
+(OSU         :  32) FRECHK.SAV    17 13-Oct-84 19:50 -- protection ALL  RD  NO
+                           should be 13-Oct-84 19:50 ZEBZOM  ALL  RD RUN
+(OSU         :  32) OLOGIN.SHR     5 15-Jul-82 17:19 -- protection ALL  RD  NO
+                           should be 15-Jul-82 17:19 NELQUM  ALL  RD RUN
+(OSU         :  32) CHKPNT.SAV     5 10-Feb-87 17:36 -- protection ALL  RD  NO
+                           should be 10-Feb-87 17:36 BIGSIS  ALL  RD RUN
+(OSU         :  32) ASP4.SAV       5 13-May-80 16:55 -- protection ALL RUN  NO
+                           should be 13-May-80 16:55 HUNNUG  ALL  RD RUN  64017
+(OSU         :  32) MORT.SAV      12 19-Aug-82 22:52 -- protection ALL RUN RUN
+                           should be 19-Aug-82 22:52 JOQROK  ALL  RD RUN
+(OSU         :  32) ASHCPY.MAC    15 08-Jun-88 13:41 -- extra not on master
+(OSU         :  32) CHKPNT.REL     7 23-Feb-87 22:41 -- extra not on master
+(OSU         :  32) CHKPNT.CBB    24 23-Feb-87 22:34 -- extra not on master
+(OSU         :  32) ASH.DDT       12 29-Jan-87 22:56 -- bad checksum NUFXIR
+                           should be 03-Sep-88 19:23 MEQNES  ALL  RD  NO
+(OSU         :  32) TAKEIT.SAV    45 09-May-87 04:27 -- protection ALL RUN RUN
+                           should be 09-May-87 04:27 PUQVUZ  ALL  RD RUN 441000
+(OSU         :  32) SAP12.SAV      7 09-Jan-87 18:50 -- protection ALL  RD  NO
+                           should be 09-Jan-87 18:50 NUNHAP  ALL  RD RUN
+(OSU         :  32) ASP.SAV        7 26-May-88 13:44 -- protection ALL  RD  NO
+                           should be 24-May-88 14:18 DAJXUH  ALL  RD RUN  64017
+(OSU         :  32) ASP.SAV        7 26-May-88 13:44 -- bad license 
+                           should be 24-May-88 14:18 DAJXUH  ALL  RD RUN  64017
+(OSU         :  32) HLP.SHR        3 29-May-87 21:12 -- protection ALL  RD  NO
+                           should be 29-May-87 21:12 FACJIC  ALL  RD RUN
+(OSU         :  32) TAKEIT.LOG     3 13-May-89 02:27 - checksum REZYUF
+                           should be 04-Apr-88 22:29 YICVOB  ALL  RD  NO
+(OSU         :  32) ASP.DDT       16 11-Feb-87 19:49 -- bad checksum HIRNUD
+                           should be 23-Apr-87 21:06 WIDGUH  ALL  RD  NO
+(OSU         :  32) UUO.REL        6 08-Sep-88 02:37 -- extra not on master
+(OSU         :  32) ASP.MAC       30 31-May-88 14:16 -- bad checksum MOXKIK
+                           should be 24-May-88 13:52 TONJIP  ALL  RD  NO
+(OSU         :  32) ASP.REL       10 31-May-88 14:21 -- extra not on master
+(OSU         :  32) RDIST.OUT     20 25-Oct-89 04:23 -- bad checksum NUYVUR
+                           should be 28-Oct-89 05:48 ZIXZIN  ALL  RD  NO
+(OSU         :  32) RDIST.LOG     23 25-Oct-89 04:24 -- bad checksum VAYHIR
+                           should be 31-Oct-89 06:19 POQCOR  ALL  RD  NO
+(OSU         :  32) RDIST.SAT     22 07-Oct-89 04:37 -- bad checksum SOKTUK
+                           should be 28-Oct-89 05:48 CUHCET  ALL  RD  NO
+(OSU         :  32) INIBAK.SAV     3 01-Sep-81 20:42 -- protection ALL  RD  NO
+                           should be 01-Sep-81 20:42 BEXXIT  ALL  RD RUN
+(OSU         :  32) CRSUPD.SAV     2 08-Jul-80 13:27 -- protection ALL RUN RUN
+                           should be 08-Jul-80 13:27 NEDYUM  ALL  RD RUN   1000
+(OSU         :  32) XLOGIN.SAV     2 14-Oct-86 19:47 -- protection ALL  RD  NO
+                           should be 14-Oct-86 19:14 TIYZAX  ALL  RD RUN   1000
+(OSU         :  32) XLOGIN.SAV     2 14-Oct-86 19:47 -- bad license 
+                           should be 14-Oct-86 19:14 TIYZAX  ALL  RD RUN   1000
+(OSU         :  32) SZRPT.SAV      4 23-Sep-86 18:33 -- protection ALL  RD  NO
+                           should be 23-Sep-86 18:33 XIRWUZ  ALL  RD RUN
+(OSU         :  32) Q              3 17-Oct-86 12:33 -- bad checksum JEXMIQ
+                           should be 17-Oct-86 12:55 FUCBEG  ALL  RD  NO
+(OSU         :  32) TAP.REL       17 13-Sep-88 01:01 -- extra not on master
+(OSU         :  32) TAP.BAK       53 12-Sep-88 23:41 -- extra not on master
+(OSU         :  32) TAP.CAB       53 13-Sep-88 01:01 -- bad checksum RUTROJ
+                           should be 12-Sep-88 23:32 TOVHUM  ALL  RD  NO
+(OSU         :  32) DARREN.MAI     2 13-Jul-84 03:38 -- extra not on master
+(OSU         :  32) GFD.SAV        3 31-Jan-89 19:51 -- protection ALL  RD  NO
+                           should be 31-Jan-89 19:47 XOKRAW  ALL  RD RUN
+(OSU         :  32) CRSHID.SAV    40 27-Feb-85 16:33 -- protection ALL  RD  NO
+                           should be 27-Feb-85 16:33 PEWJEC  ALL  RD RUN   1410
+(OSU         :  32) BACKUP.SHR    11 01-Feb-77 18:54 -- protection ALL RUN RUN
+                           should be 01-Feb-77 18:54 BOMPOH  ALL  RD RUN
+(OSU         :  32) BACKUP.LOW     8 01-Feb-77 18:53 -- protection ALL RUN RUN
+                           should be 01-Feb-77 18:53 NIDHIT  ALL  RD RUN
+(OSU         :  32) SYMAUX.SHR     3 23-Apr-81 22:28 -- protection ALL  RD  NO
+                           should be 23-Apr-81 22:28 TAKLAD  ALL  RD RUN 641400
+(OSU         :  32) SA10NW.SAV    91 17-May-86 04:14 -- protection ALL  RD  NO
+                           should be 17-May-86 04:14 BOZCIH  ALL  RD RUN
+(OSU         :  32) L36.SAV        7 22-Jan-87 16:27 -- protection ALL  RD  NO
+                           should be 22-Jan-87 16:27 FOGTIB  ALL  RD RUN
+(OSU         :  32) HELP.SHR       3 29-May-87 21:19 -- protection ALL  RD  NO
+                           should be 29-May-87 21:19 YUPYON  ALL  RD RUN
+(OSU         :  32) Y              3 17-Oct-86 12:32 -- bad checksum JEXMIQ
+                           should be 17-Oct-86 12:53 FUCBEG  ALL  RD  NO
+(OSU         :  32) COM.BAK        2 08-Sep-88 00:22 -- extra not on master
+(OSU         :  32) LOGOUT.SHR     4 14-Oct-86 19:47 -- protection ALL  RD  NO
+                           should be 14-Oct-86 19:12 NIWSEG  ALL  RD RUN 547000
+(OSU         :  32) LOGOUT.SHR     4 14-Oct-86 19:47 -- bad license   2000
+                           should be 14-Oct-86 19:12 NIWSEG  ALL  RD RUN 547000
+(OSU         :  32) RUN.SAV        9 16-Dec-80 10:04 -- protection ALL  RD  NO
+                           should be 16-Dec-80 10:04 BAQPER  ALL  RD RUN
+(OSU         :  32) SYSTAT.LOW     2 27-Oct-88 19:15 -- protection ALL  RD  NO
+                           should be 27-Oct-88 19:07 KUTXUJ  ALL  RD RUN
+(OSU         :  32) SYSTAT.SHR    18 27-Oct-88 19:15 -- protection ALL  RD  NO
+                           should be 27-Oct-88 19:07 XAWZEN  ALL  RD RUN
+(OSU         :  32) LOGTMP.SHR     5 15-Nov-79 14:48 -- protection ALL  RD  NO
+                           should be 15-Nov-79 14:48 DAKNOB  ALL  RD RUN
+(OSU         :  32) INITIA.MAC    12 15-Mar-89 17:11 -- bad checksum RAWXIN
+                           should be 24-Aug-89 17:35 DIMVIK  ALL  RD  NO
+(OSU         :  32) TITOP.SAV     18 08-Sep-88 03:27 -- bad checksum POKSIM
+                           should be 07-Sep-88 23:14 BEYMUB  ALL  RD  NO
+(OSU         :  32) MAIL.BOX      17 10-Oct-82 00:53 -- extra not on master
+(OSU         :  32) NONAME.LOW     2 01-Apr-89 01:14 -- extra not on master
+(OSU         :  32) NONAME.SHR    21 01-Apr-89 01:14 -- extra not on master
+(OSU         :  32) INIMAC.SAV     3 01-Sep-81 20:41 -- protection ALL  RD  NO
+                           should be 01-Sep-81 20:41 VUPVIL  ALL  RD RUN
+(OSU         :  32) ERRCHK.SAV     9 14-Mar-80 17:54 -- protection ALL  RD  NO
+                           should be 14-Mar-80 17:54 CUWMOB  ALL  RD RUN   2000
+(OSU         :  32) LNN.SAV        2 22-Feb-80 08:53 -- protection ALL  RD  NO
+                           should be 22-Feb-80 08:53 VEFPAD  ALL  RD RUN
+(OSU         :  32) CRSTAB.SAV     3 25-Feb-85 23:57 -- protection ALL RUN RUN
+                           should be 25-Feb-85 23:57 HACWIT  ALL  RD RUN
+(OSU         :  32) TITO.SAV      18 04-Jun-87 19:02 -- protection ALL RUN RUN
+                           should be 04-Jun-87 19:02 WOCVEV  ALL  RD RUN
+(OSU         :  32) INFRED.NFO     2 23-Feb-79 14:25 -- protection ALL  RD  RD
+                           should be 23-Feb-79 14:25 YOVYAG  ALL  RD  NO
+(OSU         :  32) DSKCLN.SAV     8 18-Feb-89 22:37 -- bad checksum SUWREP
+                           should be 20-Jun-89 16:17 KOBYIM  ALL  RD  NO
+(OSU         :  32) DSKCLN.BAK    41 18-Feb-89 10:49 -- bad checksum QADHOW
+                           should be 18-Feb-89 20:14 KIKSAC  ALL  RD  NO
+(OSU         :  32) DSKCLN.103     8 12-Aug-87 19:08 -- bad checksum MEXBUV
+                           should be 02-Feb-87 12:38 QIGHER  ALL  RD  NO
+(OSU         :  32) DSKCLN.S36     7 03-Feb-82 15:27 -- bad license  45017
+                           should be 03-Feb-82 15:27 FOGTIB  ALL  RD  NO
+(OSU         :  32) GETVER.REL     2 08-Sep-88 00:53 -- extra not on master
+(OSU         :  32) DSKCLN.REL    12 18-Feb-89 11:10 -- bad checksum FENTEV
+                           should be 20-Jun-89 16:16 GIPVEN  ALL  RD  NO
+(OSU         :  32) DSKCLN.DDT    18 05-Nov-88 01:30 -- extra not on master
+(OSU         :  32) DSKCLN.MAC    41 18-Feb-89 22:34 -- bad checksum KIKSAC
+                           should be 20-Jun-89 16:14 ZAYNOF  ALL  RD  NO
+(OSU         :  32) CROSS.MAC     19 25-Feb-88 17:35 -- bad checksum YUVVAS
+                           should be 20-Jun-89 17:16 CAQVAY  ALL  RD  NO
+(OSU         :  32) TRW.WHR                          -- missing on slave
+(OSU         :  32) CROSS.NEW                        -- missing on slave
+(OSU         :  32) DSKCLN.LST                       -- missing on slave
+(OSU         :  32) SSJOBS.MAC                       -- missing on slave
+(OSU         :  32) SSFILE.MAC                       -- missing on slave
+(OSU         :  32) SSLOW.MAC                        -- missing on slave
+(OSU         :  32) MACTEN.UNV                       -- missing on slave
+(OSU         :  32) DRWSPR.TXT                       -- missing on slave
+(OSU         :  32) DRWSPR.BIN                       -- missing on slave
+(OSU         :  32) DSKCLN.CTL                       -- missing on slave
+(OSU         :  32) DSKCLN.110                       -- missing on slave
+(OSU         :  32) RPGUNV.MAC                       -- missing on slave
+(OSU         :  32) ASP104.MAC                       -- missing on slave
+(OSU         :  32) SZRPTF.103                       -- missing on slave
+(OSU         :  32) CREFRM                           -- missing on slave
+(OSU         :  32) DSKB.RAT                         -- missing on slave
+(OSU         :  32) TITO.BUG                         -- missing on slave
+(OSU         :  32) TITO.MEM                         -- missing on slave
+(OSU         :  32) TITO.RNO                         -- missing on slave
+(OSU         :  32) TITO.MAI                         -- missing on slave
+(OSU         :  32) TITO.CKS                         -- missing on slave
+(OSU         :  32) TITO.CTL                         -- missing on slave
+(OSU         :  32) TITO.LOG                         -- missing on slave
+(OSU         :  32) TITO.INF                         -- missing on slave
+(OSU         :  32) TITO.SWM                         -- missing on slave
+(OSU         :  32) DIRIT.INI                        -- missing on slave
+(OSU         :  32) 620CHK.MAC                       -- missing on slave
+(OSU         :  32) INFRED.HLP                       -- missing on slave
+(OSU         :  32) INFRED.CMD                       -- missing on slave
+(OSU         :  32) INFRED.MAC                       -- missing on slave
+(OSU         :  32) DDBCHN.CMD                       -- missing on slave
+(OSU         :  32) CRSHIF.31                        -- missing on slave
+(OSU         :  32) CRSHIF.240                       -- missing on slave
+(OSU         :  32) CRSHIF.45                        -- missing on slave
+(OSU         :  32) CKSUM.SAI                        -- missing on slave
+(OSU         :  32) CRSTAB.SAI                       -- missing on slave
+(OSU         :  32) CRSTAB.INF                       -- missing on slave
+(OSU         :  32) ERRCHK.KS                        -- missing on slave
+(OSU         :  32) LNN.000                          -- missing on slave
+(OSU         :  32) PD3330.MAC                       -- missing on slave
+(OSU         :  32) ERRCHK.A21                       -- missing on slave
+(OSU         :  32) LNN.MAC                          -- missing on slave
+(OSU         :  32) ERRCHK.MAC                       -- missing on slave
+(OSU         :  32) INITST.MAC                       -- missing on slave
+(OSU         :  32) DSKCLN.106                       -- missing on slave
+(OSU         :  32) DSKCLN.105                       -- missing on slave
+(OSU         :  32) DSKCLN.104                       -- missing on slave
+(OSU         :  32) DSKCLN.RIB                       -- missing on slave
+(OSU         :  32) DSKCLN.033                       -- missing on slave
+(OSU         :  32) DSKCLN.102                       -- missing on slave
+(OSU         :  32) DSKCLN.101                       -- missing on slave
+(OSU         :  32) DSKCLN.136                       -- missing on slave
+(OSU         :  32) DSKCLN.S33                       -- missing on slave
+(OSU         :  32) DSKCLN.S17                       -- missing on slave
+(OSU         :  32) DSKCLN.S20                       -- missing on slave
+(OSU         :  32) DSKCLN.S26                       -- missing on slave
+(OSU         :  32) DSKCLN.S32                       -- missing on slave
+(OSU         :  32) DSKCLN.36Y                       -- missing on slave
+(OSU         :  32) DSKCLN.36X                       -- missing on slave
+(OSU         :  32) DSKCLN.32A                       -- missing on slave
+(OSU         :  32) DSKCLN.32S                       -- missing on slave
+(OSU         :  32) DSKCLN.S34                       -- missing on slave
+(OSU         :  32) DSKCLN.X32                       -- missing on slave
+(OSU         :  32) DSKCLN.4P                        -- missing on slave
+(OSU         :  32) DSKCLN.036                       -- missing on slave
+(OSU         :  32) DSKCLN.36J                       -- missing on slave
+(OSU         :  32) DSKCLN.CBH                       -- missing on slave
+(OSU         :  32) DSKCLN.36G                       -- missing on slave
+(OSU         :  32) DSKCLN.RSV                       -- missing on slave
+(OSU         :  32) DSKCLN.HOL                       -- missing on slave
+(OSU         :  32) DSKCLN.XXX                       -- missing on slave
+(OSU         :  32) DSKCLN.VER                       -- missing on slave
+(OSU         :  32) DSKCLN.TXT                       -- missing on slave
+(OSU         :  32) DSKCLN.DIR                       -- missing on slave
+(OSU         :  32) DSKCLN.030                       -- missing on slave
+(OSU         :  32) DSKCLN.031                       -- missing on slave
+(OSU         :  32) DSKCLN.032                       -- missing on slave
+(OSU         :  32) DSKCLN.TC6                       -- missing on slave
+(OSU         :  32) DSKCLN.034                       -- missing on slave
+(OSU         :  32) DSKCLN.107                       -- missing on slave
+(OSU         :  32) FINDIT.TEC                       -- missing on slave
+(OSU         :  32) INITIA.REL                       -- missing on slave
+(OSU         :  32) 033TEL.OUT                       -- missing on slave
+(OSU         :  32) 033TEL.COM                       -- missing on slave
+(OSU         :  32) SYSTAT.LOG                       -- missing on slave
+(OSU         :  32) SYSTAF.618                       -- missing on slave
+(OSU         :  32) SYSTAT.FIL                       -- missing on slave
+(OSU         :  32) SYSTAT.CTL                       -- missing on slave
+(OSU         :  32) SYSTAF.616                       -- missing on slave
+(OSU         :  32) SYSTAF.617                       -- missing on slave
+(OSU         :  32) SYSTAT.DIF                       -- missing on slave
+(OSU         :  32) SYSTAT.CMD                       -- missing on slave
+(OSU         :  32) SYSTAT.MAC                       -- missing on slave
+(OSU         :  32) SYSTAT.PUB                       -- missing on slave
+(OSU         :  32) LOGOUF.471                       -- missing on slave
+(OSU         :  32) LOGOUT.CTL                       -- missing on slave
+(OSU         :  32) LOGOUF.472                       -- missing on slave
+(OSU         :  32) INITIA.23                        -- missing on slave
+(OSU         :  32) CARDS.DAT                        -- missing on slave
+(OSU         :  32) ASP103.MAC                       -- missing on slave
+(OSU         :  32) WIPOUT.SAI                       -- missing on slave
+(OSU         :  32) FLEXIT                           -- missing on slave
+(OSU         :  32) INITIA.15                        -- missing on slave
+(OSU         :  32) INITIA.118                       -- missing on slave
+(OSU         :  32) INITIA.930                       -- missing on slave
+(OSU         :  32) INITIA.95                        -- missing on slave
+(OSU         :  32) INITIA.21                        -- missing on slave
+(OSU         :  32) INITIA.20                        -- missing on slave
+(OSU         :  32) INITIA.16                        -- missing on slave
+(OSU         :  32) INITIA.17                        -- missing on slave
+(OSU         :  32) TITOF1.510                       -- missing on slave
+(OSU         :  32) TITOF1.513                       -- missing on slave
+(OSU         :  32) INITIA.21A                       -- missing on slave
+(OSU         :  32) LOGOUT.LOG                       -- missing on slave
+(OSU         :  32) LOGOUT.SCM                       -- missing on slave
+(OSU         :  32) INITIA.DIR                       -- missing on slave
+(OSU         :  32) INITIA.M22                       -- missing on slave
+(OSU         :  32) AUG85.CAL                        -- missing on slave
+(OSU         :  32) DOER.TEC                         -- missing on slave
+(OSU         :  32) MONCOP.1                         -- missing on slave
+(OSU         :  32) MONCOP.MAC                       -- missing on slave
+(OSU         :  32) SYMSRC.MAC                       -- missing on slave
+(OSU         :  32) TRUTST.MAC                       -- missing on slave
+(OSU         :  32) INITIA.M10                       -- missing on slave
+(OSU         :  32) SFUDGE.MAC                       -- missing on slave
+(OSU         :  32) SPAWN.MAC                        -- missing on slave
+(OSU         :  32) SEFUDG.MAC                       -- missing on slave
+(OSU         :  32) INITIA.M17                       -- missing on slave
+(OSU         :  32) INITIA.22                        -- missing on slave
+(OSU         :  32) INITIA.M15                       -- missing on slave
+(OSU         :  32) INITIA.M16                       -- missing on slave
+(OSU         :  32) BIOBAS.PAT                       -- missing on slave
+(OSU         :  32) BIOBAS.REM                       -- missing on slave
+(OSU         :  32) INITIA.M21                       -- missing on slave
+(OSU         :  32) BIOBAS.MAC                       -- missing on slave
+(OSU         :  32) INITIA.SCM                       -- missing on slave
+(OSU         :  32) LOGOUT.441                       -- missing on slave
+(OSU         :  32) LOGOUT.451                       -- missing on slave
+(OSU         :  32) LOGOUT.47                        -- missing on slave
+(OSU         :  32) LOGOUT.MAC                       -- missing on slave
+(OSU         :  32) GFD.MAC                          -- missing on slave
+(OSU         :  32) GFD.REL                          -- missing on slave
+(OSU         :  32) GFD.BAK                          -- missing on slave
+(OSU         :  32) SSUDB.MAC                        -- missing on slave
+(OSU         :  32) SSCMD.MAC                        -- missing on slave
+(OSU         :  32) SSIO.MAC                         -- missing on slave
+(OSU         :  32) SYST.DOC                         -- missing on slave
+(OSU         :  32) SSDSPL.MAC                       -- missing on slave
+(OSU         :  32) (CARL).TS1                       -- missing on slave
+(OSU         :  32) COM.164                          -- missing on slave
+(OSU         :  32) HELP.MAC                         -- missing on slave
+(OSU         :  32) ASP102.MAC                       -- missing on slave
+(OSU         :  32) MAC                              -- missing on slave
+(OSU         :  32) COM.DIF                          -- missing on slave
+(OSU         :  32) GFD.146                          -- missing on slave
+(OSU         :  32) GFD.CTL                          -- missing on slave
+(OSU         :  32) GFD.SCM                          -- missing on slave
+(OSU         :  32) GFD.LOG                          -- missing on slave
+(OSU         :  32) CRSHID.CMD                       -- missing on slave
+(OSU         :  32) CRSHID.LG                        -- missing on slave
+(OSU         :  32) CRSHID.31                        -- missing on slave
+(OSU         :  32) CRSHID.DCL                       -- missing on slave
+(OSU         :  32) CRSHID.CTL                       -- missing on slave
+(OSU         :  32) CRSHID.ALL                       -- missing on slave
+(OSU         :  32) CRSHID.DOC                       -- missing on slave
+(OSU         :  32) CRSHID.45                        -- missing on slave
+(OSU         :  32) CRSHID.V30                       -- missing on slave
+(OSU         :  32) CRSHID.V42                       -- missing on slave
+(OSU         :  32) SYMAUX.MAC                       -- missing on slave
+(OSU         :  32) FEB86.CAL                        -- missing on slave
+(OSU         :  32) MONITR.QUE                       -- missing on slave
+(OSU         :  32) MCH.RPT                          -- missing on slave
+(OSU         :  32) DEVLST.CMD                       -- missing on slave
+(OSU         :  32) CAT                              -- missing on slave
+(OSU         :  32) COLD.PUB                         -- missing on slave
+(OSU         :  32) COLD.DOC                         -- missing on slave
+(OSU         :  32) COLD.SEC                         -- missing on slave
+(OSU         :  32) BREAK.CTL                        -- missing on slave
+(OSU         :  32) CRSHID.CM0                       -- missing on slave
+(OSU         :  32) CRSHID.DAT                       -- missing on slave
+(OSU         :  32) CRSHID.100                       -- missing on slave
+(OSU         :  32) CRSHID.SAI                       -- missing on slave
+(OSU         :  32) CRSHID.LOG                       -- missing on slave
+(OSU         :  32) CPRRDW.MAC                       -- missing on slave
+(OSU         :  32) MAGWRT.MAC                       -- missing on slave
+(OSU         :  32) DADD.MAC                         -- missing on slave
+(OSU         :  32) VTEST.MAC                        -- missing on slave
+(OSU         :  32) GFD.143                          -- missing on slave
+(OSU         :  32) GFD.144                          -- missing on slave
+(OSU         :  32) GFD.145                          -- missing on slave
+(OSU         :  32) SSDISK.MAC                       -- missing on slave
+(OSU         :  32) SCNMAC.UNV                       -- missing on slave
+(OSU         :  32) TAP.164                          -- missing on slave
+(OSU         :  32) PIPF.200                         -- missing on slave
+(OSU         :  32) ASP101.MAC                       -- missing on slave
+(OSU         :  32) SZRPT.M82                        -- missing on slave
+(OSU         :  32) SZRPT.M83                        -- missing on slave
+(OSU         :  32) SZRPT.CTL                        -- missing on slave
+(OSU         :  32) SZRPT.M73                        -- missing on slave
+(OSU         :  32) SZRPT.M75                        -- missing on slave
+(OSU         :  32) SZRPT.T1                         -- missing on slave
+(OSU         :  32) SZRPT.M71                        -- missing on slave
+(OSU         :  32) SZRPT.WHR                        -- missing on slave
+(OSU         :  32) SZRPT.DOC                        -- missing on slave
+(OSU         :  32) SZRPT.SCM                        -- missing on slave
+(OSU         :  32) SZRPT.MAC                        -- missing on slave
+(OSU         :  32) GUDSYS.TDR                       -- missing on slave
+(OSU         :  32) END.MAC                          -- missing on slave
+(OSU         :  32) ASP13.MAC                        -- missing on slave
+(OSU         :  32) HOLE.D25                         -- missing on slave
+(OSU         :  32) TAP.161                          -- missing on slave
+(OSU         :  32) TAP.163                          -- missing on slave
+(OSU         :  32) XLOGIN.MAC                       -- missing on slave
+(OSU         :  32) HOTMO.MEM                        -- missing on slave
+(OSU         :  32) CUSPS.CMD                        -- missing on slave
+(OSU         :  32) CUSPS.QUE                        -- missing on slave
+(OSU         :  32) BGCOP.BIN                        -- missing on slave
+(OSU         :  32) MONMAK.100                       -- missing on slave
+(OSU         :  32) MONMAK.101                       -- missing on slave
+(OSU         :  32) MONMAK.102                       -- missing on slave
+(OSU         :  32) MONMAK.MAC                       -- missing on slave
+(OSU         :  32) VFYMON.SAI                       -- missing on slave
+(OSU         :  32) KOSTM.MA0                        -- missing on slave
+(OSU         :  32) KOSTM.MAC                        -- missing on slave
+(OSU         :  32) CRSUPD.MAC                       -- missing on slave
+(OSU         :  32) PROJEC.MAC                       -- missing on slave
+(OSU         :  32) IFOID.MAC                        -- missing on slave
+(OSU         :  32) TYFOON.MAC                       -- missing on slave
+(OSU         :  32) TEMP.MAC                         -- missing on slave
+(OSU         :  32) CROSSF.146                       -- missing on slave
+(OSU         :  32) SSCAN.MAC                        -- missing on slave
+(OSU         :  32) UUOTYM.UNV                       -- missing on slave
+(OSU         :  32) JOBDAT.UNV                       -- missing on slave
+(OSU         :  32) ASP.WHR                          -- missing on slave
+(OSU         :  32) XFER.CTL                         -- missing on slave
+(OSU         :  32) RPGINI.155                       -- missing on slave
+(OSU         :  32) RPGINI.MAC                       -- missing on slave
+(OSU         :  32) CHK.INF                          -- missing on slave
+(OSU         :  32) ASP12.MAC                        -- missing on slave
+(OSU         :  32) ASP.CHK                          -- missing on slave
+(OSU         :  32) KERCHN                           -- missing on slave
+(OSU         :  32) FOO                              -- missing on slave
+(OSU         :  32) NFICHE.CMD                       -- missing on slave
+(OSU         :  32) ASP.107                          -- missing on slave
+(OSU         :  32) ASP.FDM                          -- missing on slave
+(OSU         :  32) TELCHK.LOG                       -- missing on slave
+(OSU         :  32) TITOF.510                        -- missing on slave
+(OSU         :  32) TITOF.162                        -- missing on slave
+(OSU         :  32) TITOF.FDM                        -- missing on slave
+(OSU         :  32) TITOF.163                        -- missing on slave
+(OSU         :  32) CIDSYM.SAI                       -- missing on slave
+(OSU         :  32) CIDSYM.REQ                       -- missing on slave
+(OSU         :  32) JAN86.CAL                        -- missing on slave
+(OSU         :  32) INFSND.MAC                       -- missing on slave
+(OSU         :  32) CPUTYP                           -- missing on slave
+(OSU         :  32) SEP85.CAL                        -- missing on slave
+(OSU         :  32) TAKEIT.DIC                       -- missing on slave
+(OSU         :  32) TAKEIT.CMD                       -- missing on slave
+(OSU         :  32) TAKEIT.PUB                       -- missing on slave
+(OSU         :  32) TAKEIT.MEM                       -- missing on slave
+(OSU         :  32) TAKEIT.SAI                       -- missing on slave
+(OSU         :  32) TAKEIT.47                        -- missing on slave
+(OSU         :  32) TAKEIT.DOC                       -- missing on slave
+(OSU         :  32) TAKEIT.INF                       -- missing on slave
+(OSU         :  32) TAKEIT.FIL                       -- missing on slave
+(OSU         :  32) CPTYMC.MAC                       -- missing on slave
+(OSU         :  32) KSFEFS.MAC                       -- missing on slave
+(OSU         :  32) BTXN.MAC                         -- missing on slave
+(OSU         :  32) F3FUDG.MAC                       -- missing on slave
+(OSU         :  32) TAKEIT.666                       -- missing on slave
+(OSU         :  32) MAIN1A.VUE                       -- missing on slave
+(OSU         :  32) SSPRAM.MAC                       -- missing on slave
+(OSU         :  32) SSHELP.MAC                       -- missing on slave
+(OSU         :  32) UUOSYM.UNV                       -- missing on slave
+(OSU         :  32) ASH.CRF                          -- missing on slave
+(OSU         :  32) FILCOM.MAC                       -- missing on slave
+(OSU         :  32) CHKPNT.BLK                       -- missing on slave
+(OSU         :  32) CHKPNT.313                       -- missing on slave
+(OSU         :  32) ASH.OLD                          -- missing on slave
+(OSU         :  32) ASH.CTL                          -- missing on slave
+(OSU         :  32) CENTER.DOC                       -- missing on slave
+(OSU         :  32) MAKCRE.FIL                       -- missing on slave
+(OSU         :  32) 620DIR.TXT                       -- missing on slave
+(OSU         :  32) QUEUE.SAI                        -- missing on slave
+(OSU         :  32) PDP11.M                          -- missing on slave
+(OSU         :  32) PDP11.M2                         -- missing on slave
+(OSU         :  32) RES                              -- missing on slave
+(OSU         :  32) DELETE.CMD                       -- missing on slave
+(OSU         :  32) MYSAIL.DEF                       -- missing on slave
+(OSU         :  32) MONMK1.MAC                       -- missing on slave
+(OSU         :  32) BOTSUB.SAI                       -- missing on slave
+(OSU         :  32) BEG.MAC                          -- missing on slave
+(OSU         :  32) VALID.MAC                        -- missing on slave
+(OSU         :  32) INIT                             -- missing on slave
+(OSU         :  32) FRECOR.LOG                       -- missing on slave
+(OSU         :  32) DAYTIM.REQ                       -- missing on slave
+(OSU         :  32) DAYTIM.SAI                       -- missing on slave
+(OSU         :  32) FRECOR.SAI                       -- missing on slave
+(OSU         :  32) 017TEL.OUT                       -- missing on slave
+(OSU         :  32) 017TEL.COM                       -- missing on slave
+(OSU         :  32) ACCESS.BAK                       -- missing on slave
+(OSU         :  32) SSTITL.MAC                       -- missing on slave
+(OSU         :  32) LOGINN.701                       -- missing on slave
+(OSU         :  32) CMD.164                          -- missing on slave
+(OSU         :  32) RPG.154                          -- missing on slave
+(OSU         :  32) RPGMAI.154                       -- missing on slave
+(OSU         :  32) RPGMAI.155                       -- missing on slave
+(OSU         :  32) RPG.INF                          -- missing on slave
+(OSU         :  32) RPG.MFS                          -- missing on slave
+(OSU         :  32) RPG.CMD                          -- missing on slave
+(OSU         :  32) RPG.CTL                          -- missing on slave
+(OSU         :  32) RPG.155                          -- missing on slave
+(OSU         :  32) RPG.FIL                          -- missing on slave
+(OSU         :  32) RPGMAI.MAC                       -- missing on slave
+(OSU         :  32) RPG.MAC                          -- missing on slave
+(OSU         :  32) ASP105.MAC                       -- missing on slave
+(OSU         :  32) CONTEN.TEC                       -- missing on slave
+(OSU         :  32) BADRIB.TXT                       -- missing on slave
+(OSU         :  32) LOGINN.MAC                       -- missing on slave
+(OSU         :  32) LOGINN.CTL                       -- missing on slave
+(OSU         :  32) LOGINN.677                       -- missing on slave
+(OSU         :  32) LOGINN.676                       -- missing on slave
+(OSU         :  32) LOGINN.674                       -- missing on slave
+(OSU         :  32) ONCALL.RES                       -- missing on slave
+(OSU         :  32) ONCALL.SCH                       -- missing on slave
+(OSU         :  32) ONCALL.SAI                       -- missing on slave
+(OSU         :  32) ONCALL.001                       -- missing on slave
+(OSU         :  32) PDSIM.CMD                        -- missing on slave
+(OSU         :  32) DDBPTR.HND                       -- missing on slave
+(OSU         :  32) DUSAGE.TXT                       -- missing on slave
+(OSU         :  32) BOTSI1.CMD                       -- missing on slave
+(OSU         :  32) BOTSIM.CMD                       -- missing on slave
+(OSU         :  32) ONCALL.S01                       -- missing on slave
+(OSU         :  32) ONCALL.FDM                       -- missing on slave
+(OSU         :  32) ONCALL.MEM                       -- missing on slave
+(OSU         :  32) KOST.F0                          -- missing on slave
+(OSU         :  32) KOST.F4                          -- missing on slave
+(OSU         :  32) INFO.NFO                         -- missing on slave
+(OSU         :  32) DOERL.TEC                        -- missing on slave
+(OSU         :  32) EXPAND.SAI                       -- missing on slave
+(OSU         :  32) IFADF.MAC                        -- missing on slave
+(OSU         :  32) DSKSTS.CMD                       -- missing on slave
+(OSU         :  32) LOGINN.621                       -- missing on slave
+(OSU         :  32) LOGINN.631                       -- missing on slave
+(OSU         :  32) LOGINN.640                       -- missing on slave
+(OSU         :  32) LOGINN.650                       -- missing on slave
+(OSU         :  32) LOGINN.660                       -- missing on slave
+(OSU         :  32) LOGINN.661                       -- missing on slave
+(OSU         :  32) LOGINN.670                       -- missing on slave
+(OSU         :  32) LOGINN.671                       -- missing on slave
+(OSU         :  32) LOG.MOR                          -- missing on slave
+(OSU         :  32) LOGINN.672                       -- missing on slave
+(OSU         :  32) LOGINN.FIL                       -- missing on slave
+(OSU         :  32) LOGINN.673                       -- missing on slave
+(OSU         :  32) LOGINN.LOG                       -- missing on slave
+(OSU         :  32) LOGINN.CKS                       -- missing on slave
+
+End of SAIL execution
+.copy rdist.log,rdist.out
+
+.mung findit,rdist.out
+
+FINDIT.TEC V5 - Clean up log from MHX+(SPL)FINDIT and sort by file name
+601
+R SORT
+rdist.out=rdist.out/R80/K21.10/K54.6/K1.20
+SORTED 601 RECORDS
+
+EXIT
+
+.copy rdist.log,rdist.Tuesday
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             yz}S

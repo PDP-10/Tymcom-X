@@ -1,0 +1,733 @@
+
+
+
+                     ******************************
+                            REFERENCE MANUAL
+                                  FOR
+                                 SYSTAT
+                                   ON
+                                TYMCOM X
+
+                              January 1983
+                     ******************************
+
+
+
+                           Table of Contents                             
+
+
+
+
+
+Section                                                             Page
+
+
+
+
+1.     DESCRIPTION            .  .  .  .  .  .  .  .  .  .  .  .  .  . 1
+
+
+2.     GENERAL INSTRUCTIONS   .  .  .  .  .  .  .  .  .  .  .  .  .  . 1
+
+       2.1    Calling the program   .  .  .  .  .  .  .  .  .  .  .  . 1
+
+       2.2    System commands which access SYSTAT  .  .  .  .  .  .  . 1
+
+
+3.     VALID COMMANDS         .  .  .  .  .  .  .  .  .  .  .  .  .  . 2
+
+       3.1    Search commands .  .  .  .  .  .  .  .  .  .  .  .  .  . 2
+
+       3.2    Job status report control commands   .  .  .  .  .  .  . 2
+
+       3.3    System information display control commands   .  .  .  . 3
+
+       3.4    Listing control commands .  .  .  .  .  .  .  .  .  .  . 5
+
+       3.5    Commands which don't combine with other options  .  .  . 5
+
+       3.6    Executive or Monitor level commands  .  .  .  .  .  .  . 5
+
+       3.7    Obtaining HELP information  .  .  .  .  .  .  .  .  .  . 7
+
+
+4.     CLARIFICATION OF OUTPUT DISPLAYS   .  .  .  .  .  .  .  .  .  . 7
+
+       4.1    Special characters .  .  .  .  .  .  .  .  .  .  .  .  . 7
+
+       4.2    Job status fields  .  .  .  .  .  .  .  .  .  .  .  .  . 7
+
+       4.3    System information displays .  .  .  .  .  .  .  .  .  . 9
+
+
+5.     NOTES ON OPERATION     .  .  .  .  .  .  .  .  .  .  .  .  .   11
+
+       5.1    Effects of user license on status reports  .  .  .  .   11
+
+
+
+
+
+
+10 March 1983           SYSTAT REFERENCE MANUAL                   page i
+
+
+
+1    DESCRIPTION     
+
+
+SYSTAT is a versatile Tymshare utility program on the TYMCOM-X system.
+It displays at a terminal extensive and detailed information about
+activity on the TYMCOM-X system at any time.
+
+This document supersedes all other Tymshare documentation of SYSTAT and
+all DEC documentation of SYSTAT which has been used by Tymshare.
+
+
+
+
+2    GENERAL INSTRUCTIONS      
+
+
+
+2.1    Calling the program         
+
+SYSTAT is called from the Monitor or Executive mode with a command in
+the following general form:
+
+-SYSTAT [search command] [job status control command(s)]
+        [system information control command(s)]
+
+where the bracketed portions are any of those commands listed in Section
+3.  Any SYSTAT command can be abbreviated to the shortest form which
+distinguishes it from any other SYSTAT command.  In this manual, a
+carriage return completes a command unless stated otherwise.
+
+SYSTAT will, in general, print a preamble followed by a summary of
+activity and then return to the executive.  The various commands given
+to SYSTAT when calling it as well as the license of the user determine
+the type and quantity of information which is printed.  The SYSTAT
+program leaves the terminal in the Executive or Monitor mode throughout
+the operation of the program.  The activity summary is a combination of
+the optional reports that can be obtained from SYSTAT.  These are a job
+status display and numerous other system information displays that are
+selected by the user.
+
+
+
+2.2    System commands which access SYSTAT           
+
+The following commands to the Monitor also access SYSTAT:
+        PSP
+        SYSNO
+        USERS
+        WHERE [names (user or device)]
+        WHO
+
+These commands are explained in Section 3.6.
+
+
+
+
+10 March 1983           SYSTAT REFERENCE MANUAL                   page 1
+
+
+
+3    VALID COMMANDS      
+
+
+
+3.1    Search commands        
+
+The following commands (options) select the jobs about which information
+will be printed.  Normally, all jobs which the user is authorized to see
+will be listed.  Using a search command causes a job status display to
+be done (without headings) subject to the options selected.
+
+Command                 Meaning                 
+
+[GAN,UUN]               List all jobs under the specified global
+                        account number and universal user
+                        number.  Either the GAN or the UUN may
+                        be replaced by an asterisk designating a
+                        wild half; for example: [6], [7,*],
+                        [*,122], [1,21].
+
+job number              Prints the specified job number.
+
+<program>               List all jobs running the specified
+                        specified program; for example:  <SYSTAT>.
+
+#teletype number        List job associated with the specified
+                        teletype number; for example:  #52.
+
+(user name)             List all jobs under the specified user
+                        name.
+
+
+
+3.2    Job status report control commands           
+
+The following commands indicate which fields in the job status report
+are to be printed.  One or more of these commands may be entered at a
+time, and the fields listed will be an IOR combination of the ones
+requested.  The default option is NORMAL.  The job numbers are always
+listed in the first column.  Some of the commands also affect the other
+reports available from SYSTAT and are described again in Section 3.3.
+
+Command                 Meaning                 
+
+PPN                     List GAN-UUN.
+
+TYMNET                  List TYMNET information.
+
+PROGRAM                 List program name.
+
+SIZE                    List job size in pages.
+
+STATE                   Print job state information.
+
+
+
+10 March 1983           SYSTAT REFERENCE MANUAL                   page 2
+
+
+
+TRU                     Print TRU count.
+
+WHO                     List user name.
+
+LICENSE                 List job license information.
+
+OWNER                   List owner of program run by each job.
+
+DSKIO                   List DSK I/O count.
+
+CHARIO                  List TTY I/O count.
+
+TTY                     List TTY status information.
+
+CONNECT                 List TTY connect time.
+
+EVERYTHING              A combination of all job status
+                        fields except PPN.
+
+NORMAL                  A combination of TYMNET, PROGRAM,
+                        SIZE, STATE, TRU, CONNECT, TRU,
+                        and WHO fields.
+
+OLD                     A combination of PPN, TYMNET, PROGRAM,
+                        STATE, TRU, and WHO fields.
+
+TELETYPE                A combination of TYMNET, PROGRAM,
+                        SIZE, STATE, TRU, CONNECT, and WHO fields.
+
+NOHEAD                  Exclude preamble and heading before
+                        job status information.
+
+SHORT                   A combination of TYMNET, PROGRAM,
+                        SIZE, and WHO fields.
+
+CHRONIC                 A combination of PROGRAM, SIZE,
+                        STATE, and WHO fields.
+
+JOB                     Same as NORMAL.
+
+
+
+3.3    System information display control commands           
+
+The following commands select the desired optional displays available
+from SYSTAT.  One or more of these commands may be entered at a time,
+and the displays listed will, in general, be an IOR combination of only
+the ones requested with exceptions as noted.  To obtain information
+about the system, the user must have SY license (see also Section
+5.1).
+
+Command                 Meaning                 
+
+SWAP                    List swapper information. [OBSOLETE]
+
+
+10 March 1983           SYSTAT REFERENCE MANUAL                   page 3
+
+
+
+BUSY                    List busy device information.
+
+DEVICE                  Same as BUSY.
+
+DORMANT                 List dormant segment status.
+
+ERRORS                  List system error information.
+
+STRUCTURE               List system file structure
+                        information.
+
+FILES                   List open file information.
+
+DISK                    List disk information.
+
+APR                     Print serial number of the PDP-10
+                        control processor.
+
+VERSION                 Print SYSTAT version numbers.
+
+PERFOR                  List system performance data.
+
+EVERYTHING              List all displays.  (Exception:
+                        This does not combine as an IOR with
+                        other system information command
+                        options.)
+
+NORMAL                  Job status display and, if search
+                        command is used, FILES and BUSY,
+                        otherwise PERFOR and shared segment
+                        information.
+
+OLD                     Same as NORMAL.
+
+TELETYPE                List all displays.
+
+SHORT                   List job status only.
+
+CHRONIC                 Same as short.
+
+JOB                     Same as NORMAL.
+
+DISPAT                  List dispatch base status information.
+
+GENERAL                 A combination of STRUCTURE and PERFOR.
+
+NONJOB                  A combination of STRUCTURE, DISK,
+                        PERFOR and DISPAT.
+
+NOTE:  In general, when a search command is used, BUSY and FILES options
+will be included automatically.  The exceptions are when the GENERAL
+command or one of the individual job field commands are used.  PERFOR
+and shared segment information (which can't be requested specifically)
+
+
+
+10 March 1983           SYSTAT REFERENCE MANUAL                   page 4
+
+
+
+is printed when no search command is used and one or more of the job
+status commands for individual fields are used.
+
+
+
+3.4    Listing control commands         
+
+LPT                     Output to device LPT:
+
+DPY                     Indicates to SYSTAT that the
+                        user is at a display device.
+
+CONTINUOUS              Requests SYSTAT to repeat its report
+                        continuously (until the user interrupts it
+                        with an escape).
+
+:number                 Gives time in seconds to wait before
+                        repeating continuous report.
+
+
+
+3.5    Commands which don't combine with other options             
+
+The following commands must be given to SYSTAT (not the executive), but
+they are treated as if they were separate monitor level calls.
+
+SYSTAT UP               Gives system up time.
+
+SYSTAT ME               Does a WHO command on the user's
+                        job (see Section 3.6).
+
+
+
+3.6    Executive or Monitor level commands           
+
+The following commands, which access SYSTAT, are given at the Executive
+level.  A question mark can be typed following any of the commands
+listed below in order to obtain help.
+
+
+3.6.1    PSP         
+
+This command lists all errors on the system (Prints System Problems).                                                         
+
+
+3.6.2    SYSNO         
+
+This command prints name of system, monitor number, and date the system
+was generated.
+
+
+
+
+
+
+
+10 March 1983           SYSTAT REFERENCE MANUAL                   page 5
+
+
+
+3.6.3    USERS         
+
+This command prints information about any users on the system in the
+following format:
+
+Users=A Det=B [C,D], Queues: RUN=E DIO=F, TIO=G IO=H SPC=I
+
+where:  A = number of jobs logged into the system
+        B = number of jobs logged in that are detached
+        C = number of jobs logged in with user's global account
+        D = number of jobs logged in under your user name
+        E = jobs running (monitor states:  RN WS TS DS)
+        F = jobs doing disk I/O (MQ DA CB DI MO)
+        G = jobs doing TTY I/O or idle (TI ^C)
+        H = jobs doing non-disk/TTY I/O (DT DC MT IO)
+        I = jobs in special queues (SL AX)
+
+
+
+3.6.4    WHERE         
+
+This command prints information about a specified device or user name.
+If a user name is given, SYSTAT verifies if the user is logged in and
+prints the job number; if a TTY, SYSTAT names the job which is attached
+to the TTY.
+
+Arguments to the WHERE command are separated by commas and may be any of
+the following:
+
+        device name:
+        user name
+        TTYnn:          (where nn is a number)
+        OPR:
+
+Information is reported in corresponding order to the arguments.  If the
+user forgets to use arguments or leaves a trailing comma, SYSTAT will
+prompt for the information by typing "ENTER NAME:  ".
+
+
+3.6.5    WHO         
+
+This command lists all users on the system about whom the user is
+authorized to obtain information.  Arguments to the command are:
+
+nnn             Given job number.
+nnn-nnn         Any range of job numbers.
+.               List the user's name and number.
+*               Same as "."
+
+The default case is to list all users.
+
+
+
+
+
+
+10 March 1983           SYSTAT REFERENCE MANUAL                   page 6
+
+
+
+3.7    Obtaining HELP information         
+
+SYSTAT and the Monitor level calls which access SYSTAT accept the
+command "?" which gives a brief set of instructions and indicates how
+more information may be obtained.  To get a copy of all HELP
+documentation available, use the command "?HELP".
+
+
+
+
+4    CLARIFICATION OF OUTPUT DISPLAYS        
+
+
+
+4.1    Special characters        
+
+At the end of each line of the job status report, SYSTAT may print any
+of the following special characters as messages.
+
+Character       Meaning       
+
+#               Non-system high segment
+$               User running RUN ONLY program
+*               MAIL WAITING message waiting to be typed
++               Tymshare in-house user
+!               Controlled user
+
+In addition, SYSTAT prints a "*" immediately following the job number of
+the user on a job status printout.
+
+
+
+4.2    Job status fields         
+
+
+4.2.1    TYMNET FIELD          
+
+This field identifies the node from which the associated job originated.
+It contains the node name followed by the user's terminal number.
+
+
+4.2.2    STATE field          
+
+This field, part of the job status summary, may contain any of the
+following 32 abbreviations, in two columns, describing the condition of
+the listed job.  There is always an entry in the first column, showing
+the program condition; there will be an entry in the second column only
+when applicable.  This second entry gives additional detail about the
+program condition.
+
+AC              Accounting buffer wait
+AX              Auxcircuit wait
+BP              Block input/output port wait
+^C              Stop state (not doing anything)
+
+
+10 March 1983           SYSTAT REFERENCE MANUAL                   page 7
+
+
+
+CB              Core block wait
+CM              Command wait
+CW              Context page write lock queue
+DA              Disk storage allocation wait
+FC              Free core wait
+FL              Atomic file lock wait
+FR              Fragmented on disk, not swapped out
+IL              Club interlock wait
+IO              Input/output wait
+M2              2 pcbs wait
+MB              Monitor buffer wait
+ML              pcb LOACK QUEUE WAIT
+MT              Magnetic tape control wait
+NU              Null state
+OW              Trouble wait for input/output device
+PR              Rib primary pcb wait
+PS              Sat primary pcb wait
+RI              Rib primiary pcb input io off wait
+RN              Running
+SI              Sat primiary pcb input io off wait
+SL              Sleep wait
+SS              Swapper wait satisfied
+SW              Swapped out
+TI              Terminal input wait
+TO              Terminal output wait
+TS              Terminal input/output wait satisfied
+^W             Operator wait
+WS              Input/output wait satisfied
+
+
+4.2.3    TTY field          
+
+
+This field is part of the job status summary.  Any of the following
+abbreviations may appear.
+
+IM              Image input/output (8-level)
+BK              Breaking on all characters
+IX              TYMCOM-IX (XEXEC) mode
+S$              Suppressing $ on Alt Mode Escape
+NE              Not echoing
+AC              Full character transmission set
+
+In addition, two numbers are included within this field, the first of
+which is the TTY data transmission mode (see PDP-10 Monitor Quick
+Reference Guide, Section 29), and the second of which is the position of
+the TTY on the line.
+
+
+4.2.4    LICENSE field          
+
+This field is also included in the job status summary.  Within this
+field, a series of abbreviations may appear.  Any information which is
+
+
+
+10 March 1983           SYSTAT REFERENCE MANUAL                   page 8
+
+
+
+common to both the program and the user's job is listed after the
+notation BH in parentheses.  Any information which is in the job field
+only is listed after the notation JB in parentheses.  The following list
+shows all valid abbreviations and their meanings:
+
+TY              XEXEC Mode
+TP              Tymshare Proprietary
+HF              Home File access; read and write in SYS
+AS              Account Supervisor
+RP              Read in Project
+RF              Read Files
+RA              Read Absolute
+WP              Write in Project
+WF              Write Files
+WA              Write Absolute; disk only
+WC              Write in Core
+RC              Read in Core
+OP              OPerator license
+SY              SYSTAT license; system information
+GD              Get Devices
+TD              Transfer Devices
+ST              Fiddle with STructures
+JL              JACCT-LOGIN; accounting bit
+AC              Auxilary Circuit
+XC         Transaction Charge
+
+
+
+4.3    System information displays         
+
+
+4.3.1    DISK command          
+
+This switch permits users with SYSTAT license to obtain a summary of the
+system's file structures.  Printed out are the names of each pack (both
+logical and pack identification), the number of blocks free on each
+pack, the number of reads and writes performed on that pack, and the
+errors (if any) which the Monitor has detected on that pack.  The
+following table describes the various errors that can be reported and
+their corresponding abbreviations:
+
+The following unit types are recognized:
+
+        FH - (1) RC10 Controller with RD10 or RM10B drum
+        DP - (2) RP10 Controller with RP01, RP02 or RP03 disk pack
+        BP - (4) SA10 Controller with 3330 disk pack
+
+SYSTAT will output a series of short messages followed by numbers
+(except as noted below).  These messages are as follows:
+
+HDEV            Number of Hard Device errors
+HDAT            Number of Hard Data errors
+HCONI           CONI status returned from the last Hard error
+HDATAI          DATAI status returned from the last Hard error
+
+
+10 March 1983           SYSTAT REFERENCE MANUAL                   page 9
+
+
+
+HLBN            Last logical block number of the last Hard error
+SDEV            Number of Soft Device errors
+SDAT            Number of Soft Data errors
+SCONI           CONI status returned fron the last Soft error
+SDATAI          DATAI status returned fron the last Soft error
+SLBN            Last logical block number of the last Soft error
+RET             Number of retries on last error
+SATFAIL         Number of SAT failures (software)
+RIBERR          Number of RIB errors (software)
+CKSERR          Number of Checksum errors (software)
+THUNG           Number of times unit hung in transfer
+HUNG            Number of times unit hung (other than THUNG)
+
+When a hard or soft CONI error is reported, SYSTAT will output a "(" and
+then print a series of self-explanatory messages which "decipher" the
+CONI.
+
+When a hard or soft LBN (logical block # of last error) is reported,
+SYSTAT will output a "(" and then print a series of messages which
+"decipher" the LBN.  The messages which are not self-explanatory are
+detailed below.
+
+        FH
+TRACK:#        Track last error occurred on
+SECTOR:#       Sector last error occurred on
+
+        DP
+CYL:#          Cylinder last error occurred on
+HEAD:#         Head adr last error occurred on
+SECTOR:#       Record last error occurred on
+
+        BP
+CYL:#          Cylinder last error occurred on
+HEAD:#         Head adr last error occurred on
+RECORD:#       Record last error occurred on
+
+When a hard or soft DATAI error is reported, SYSTAT will output a "("
+and then print a series of messages which "decipher" the DATAI.  The
+messages which are not self-explanatory are detailed below.
+
+        FH
+PARREG:#       Contents of Controller PARITY register
+UNIT:#         Unit number of offending drum
+SECTOR:#       Contents of Controller SECTOR register
+
+        DP
+DRV:#          Drive number of offending drive
+CYL:#          Cylinder within offending drive
+SECTOR CNTR:#  Sector within cylinder
+ATTN:#         Contents of Controller ATTENTION register
+
+        BP
+CTRL:#         Controller as per storage control/drive interface card
+DRV:#          Drive address (A,B,C,D,E,F OR G)
+
+
+10 March 1983           SYSTAT REFERENCE MANUAL                  page 10
+
+
+
+<message>      Controller command response (Self-explanatory)
+
+Should you be confused, the following documents may help you further
+understand what is going on:
+
+IBM: GA-26-1592-3 File no. S360/370-07
+        Reference manual for 3830 storage control
+DEC: DEC-10-HGAE-D
+        System reference manual
+
+
+4.3.2    FILES command          
+
+The summary of information printed by the FILES command is divided into
+five fields.  The following is an explanation of the four possible modes
+which could appear in the MODE field.
+
+Mode            Explanation
+
+DUMP            The file is opened without any Input/Output
+                buffers.
+IN              File is opened with just an input buffer.
+OUT             File is opened with just an output buffer.
+UPD             File is opened with both input and
+                output buffers (UPDATE mode).
+
+
+
+
+5    NOTES ON OPERATION       
+
+
+
+5.1    Effects of user license on status reports             
+
+SYSTAT license is required to obtain some of the system information such
+as complete disk status reports and to get a job status report on jobs
+outside one's own GAN.  Performance statistics that are reported will
+not reflect the total system load if the user has inadequate license to
+obtain the necessary information.
+
+Read files license is necessary to obtain all the file information (such
+as shared directories).
+
+
+
+
+
+
+
+
+
+
+
+
+
+10 March 1983           SYSTAT REFERENCE MANUAL                  page 11
+  C-Kn3

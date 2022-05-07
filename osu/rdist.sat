@@ -1,0 +1,233 @@
+.:logfile rdist.log
+:define $substitution=$true
+sysno
+TYMSHARE F33-P035/E 3-2-89
+.daytime
+28-OCT-1989 05:14:17 PDT
+
+.run (xexec)minit
+
+.rdist *.*/master:33/host:74,32/check
+Master host: 33
+561 files on master system.
+Slave hosts: 74,32
+Checking host 74
+(OSU         :  74) CMD.REL       14 07-Sep-88 20:38 -- extra not on master
+(OSU         :  74) LOGINN.CKS     2 19-Sep-89 18:32 -- bad checksum ZEWCUY
+                           should be 10-Dec-87 16:36 HUYMOL  ALL  RD  NO
+(OSU         :  74) LOGINN.SHR     5 19-Sep-89 18:32 -- protection ALL RUN RUN
+                           should be 10-Dec-87 16:36 QAQNAH  ALL  RD RUN 147010
+(OSU         :  74) LOGINN.LOG     2 19-Sep-89 18:32 -- bad checksum ZAMFOF
+                           should be 10-Dec-87 16:36 MUTVAW  ALL  RD  NO
+(OSU         :  74) LOGINN.702    28 10-Dec-87 16:36 -- extra not on master
+(OSU         :  74) RPGMAI.MAC    13 16-Jan-87 02:24 -- bad checksum SUGMAV
+                           should be 16-Jan-87 02:24 HOLSUX  ALL  RD  NO
+(OSU         :  74) MAIN0A.VUE    52 05-Sep-88 01:02 -- extra not on master
+(OSU         :  74) MAIN37.VUE    52 06-Sep-88 19:20 -- extra not on master
+(OSU         :  74) LOGINN.INF     4 19-Sep-89 18:31 -- bad checksum LICKEF
+                           should be 10-Dec-87 16:23 POHWIW  ALL  RD  NO
+(OSU         :  74) LOGINN.CTL     2 19-Sep-89 18:33 -- bad checksum LAMVOH
+                           should be 10-Dec-87 16:25 XIYKUF  ALL  RD  NO
+(OSU         :  74) ASH.DDT       12 29-Jan-87 22:23 -- bad checksum NUFXIR
+                           should be 03-Sep-88 19:23 MEQNES  ALL  RD  NO
+(OSU         :  74) CHKPNT.SAV     5 10-Feb-87 17:40 -- protection ALL  RD  NO
+                           should be 10-Feb-87 17:36 BIGSIS  ALL  RD RUN
+(OSU         :  74) ASH12.MAC     15 03-Sep-88 19:17 -- extra not on master
+(OSU         :  74) ASH.REL        6 13-Mar-89 15:08 -- extra not on master
+(OSU         :  74) ASP12.SAV      7 13-Jan-87 14:22 -- extra not on master
+(OSU         :  74) ASP.DDT       16 11-Feb-87 20:00 -- bad checksum HIRNUD
+                           should be 23-Apr-87 21:06 WIDGUH  ALL  RD  NO
+(OSU         :  74) ASP.SAV        7 26-May-88 13:43 -- protection ALL  RD  NO
+                           should be 24-May-88 14:18 DAJXUH  ALL  RD RUN  64017
+(OSU         :  74) ASP.SAV        7 26-May-88 13:43 -- bad license 
+                           should be 24-May-88 14:18 DAJXUH  ALL  RD RUN  64017
+(OSU         :  74) UUO.REL        6 07-Sep-88 20:43 -- extra not on master
+(OSU         :  74) ASP.VUE       29 04-Sep-88 23:53 -- extra not on master
+(OSU         :  74) MAIN1B.VUE    52 06-Sep-88 21:15 -- extra not on master
+(OSU         :  74) RDIST.LOG     22 25-Oct-89 04:21 -- bad checksum WAZPIB
+                           should be 28-Oct-89 05:14 QADSUZ  ALL  RD  NO
+(OSU         :  74) ASP12D.SAV    15 13-Jan-87 14:21 -- extra not on master
+(OSU         :  74) TAP.CAB       53 13-Sep-88 01:09 -- bad checksum RUTROJ
+                           should be 12-Sep-88 23:32 TOVHUM  ALL  RD  NO
+(OSU         :  74) TAP.REL       17 07-Sep-88 23:27 -- extra not on master
+(OSU         :  74) MAIN33.VUE    52 12-Sep-88 23:32 -- extra not on master
+(OSU         :  74) GFD.SAV        3 19-Sep-89 18:50 -- bad checksum LEQJEH
+                           should be 31-Jan-89 19:47 XOKRAW  ALL  RD RUN
+(OSU         :  74) GFD.LOG        3 19-Sep-89 18:50 -- bad checksum MIMJES
+                           should be 20-Nov-86 18:23 BOCKOC  ALL  RD  NO
+(OSU         :  74) GFD.SCM        2 19-Sep-89 18:50 -- bad checksum QARSAF
+                           should be 20-Nov-86 18:25 CEJMUB  ALL  RD  NO
+(OSU         :  74) GFD.MAC       12 19-Sep-89 18:43 -- bad checksum DEZMIP
+                           should be 31-Jan-89 19:45 BIVVUT  ALL  RD  NO
+(OSU         :  74) GFD.INF        2 19-Sep-89 18:44 -- bad checksum MAJTEG
+                           should be 20-Nov-86 15:42 FUFTUX  ALL  RD  NO
+(OSU         :  74) GFD.LST       33 19-Sep-89 18:50 -- extra not on master
+(OSU         :  74) GFD.BAK        2 19-Sep-89 18:47 -- bad checksum PUGLEL
+                           should be 31-Jan-89 19:34 LEFHOQ  ALL  RD  NO
+(OSU         :  74) GFD.CTL        2 19-Sep-89 18:49 -- bad checksum NEVJOB
+                           should be 20-Nov-86 17:03 LUCGUQ  ALL  RD  NO
+(OSU         :  74) SYSTAT.LOW     2 27-Oct-88 19:15 -- protection ALL  RD  NO
+                           should be 27-Oct-88 19:07 KUTXUJ  ALL  RD RUN
+(OSU         :  74) SYSTAT.SHR    18 27-Oct-88 19:15 -- protection ALL  RD  NO
+                           should be 27-Oct-88 19:07 XAWZEN  ALL  RD RUN
+(OSU         :  74) INITIA.OLD    11 19-Feb-87 17:36 -- extra not on master
+(OSU         :  74) MAIN01.VUE    52 07-Sep-88 23:13 -- extra not on master
+(OSU         :  74) INITIA.25      4 29-May-87 20:20 -- extra not on master
+(OSU         :  74) INITIA.MAC    12 20-Mar-89 10:31 -- bad checksum XUVXUF
+                           should be 24-Aug-89 17:35 DIMVIK  ALL  RD  NO
+(OSU         :  74) GETVER.REL     2 07-Sep-88 20:40 -- extra not on master
+(OSU         :  74) DSKCLN.SAV     8 18-Feb-89 22:41 -- bad checksum SUWREP
+                           should be 20-Jun-89 16:17 KOBYIM  ALL  RD  NO
+(OSU         :  74) DSKCLN.LOG     2 10-Feb-88 12:58 -- extra not on master
+(OSU         :  74) DSKCLN.MAC    41 18-Feb-89 22:38 -- bad checksum KIKSAC
+                           should be 20-Jun-89 16:14 ZAYNOF  ALL  RD  NO
+(OSU         :  74) MAIN09.VUE    51 05-Sep-88 21:43 -- extra not on master
+(OSU         :  74) TITOXX.TS1    39 07-Sep-88 23:24 -- extra not on master
+(OSU         :  74) TRW.WHR                          -- missing on slave
+(OSU         :  74) CROSS.MAC                        -- missing on slave
+(OSU         :  74) CROSS.OLD                        -- missing on slave
+(OSU         :  74) CROSS.CMD                        -- missing on slave
+(OSU         :  74) CROSS.NEW                        -- missing on slave
+(OSU         :  74) CROSS.SAV                        -- missing on slave
+(OSU         :  74) CROSS.SWT                        -- missing on slave
+(OSU         :  74) CROSS.LST                        -- missing on slave
+(OSU         :  74) DSKCLN.LST                       -- missing on slave
+(OSU         :  74) DSKCLN.REL                       -- missing on slave
+(OSU         :  74) TRAPS.LST                        -- missing on slave
+(OSU         :  74) DEVTB.REL                        -- missing on slave
+(OSU         :  74) ERROR.REL                        -- missing on slave
+(OSU         :  74) XYPLOT.REL                       -- missing on slave
+(OSU         :  74) TRAPS.REL                        -- missing on slave
+(OSU         :  74) ALPHI.REL                        -- missing on slave
+(OSU         :  74) POWTAB.REL                       -- missing on slave
+(OSU         :  74) MONO.REL                         -- missing on slave
+(OSU         :  74) DEVTB.MAC                        -- missing on slave
+(OSU         :  74) ERROR.MAC                        -- missing on slave
+(OSU         :  74) XYPLOT.MAC                       -- missing on slave
+(OSU         :  74) TRAPS.MAC                        -- missing on slave
+(OSU         :  74) DATBS.MAC                        -- missing on slave
+(OSU         :  74) ALPHI.MAC                        -- missing on slave
+(OSU         :  74) POWTAB.MAC                       -- missing on slave
+(OSU         :  74) MONO.MAC                         -- missing on slave
+(OSU         :  74) DSKCLN.BAK                       -- missing on slave
+(OSU         :  74) DSKCLN.110                       -- missing on slave
+(OSU         :  74) FINDIT.TEC                       -- missing on slave
+(OSU         :  74) INITIA.REL                       -- missing on slave
+(OSU         :  74) 033TEL.OUT                       -- missing on slave
+(OSU         :  74) 033TEL.COM                       -- missing on slave
+(OSU         :  74) RTFORT.REL                       -- missing on slave
+(OSU         :  74) ALPHO.REL                        -- missing on slave
+(OSU         :  74) TPFCN.REL                        -- missing on slave
+(OSU         :  74) MCHAIN.REL                       -- missing on slave
+(OSU         :  74) RTFORT.MAC                       -- missing on slave
+(OSU         :  74) ALPHO.MAC                        -- missing on slave
+(OSU         :  74) TPFCN.MAC                        -- missing on slave
+(OSU         :  74) MCHAIN.MAC                       -- missing on slave
+(OSU         :  74) INITIA.23                        -- missing on slave
+(OSU         :  74) INITIA.15                        -- missing on slave
+(OSU         :  74) INITIA.118                       -- missing on slave
+(OSU         :  74) INITIA.930                       -- missing on slave
+(OSU         :  74) INITIA.95                        -- missing on slave
+(OSU         :  74) INITIA.21                        -- missing on slave
+(OSU         :  74) INITIA.20                        -- missing on slave
+(OSU         :  74) INITIA.16                        -- missing on slave
+(OSU         :  74) INITIA.17                        -- missing on slave
+(OSU         :  74) INITIA.21A                       -- missing on slave
+(OSU         :  74) INITIA.DIR                       -- missing on slave
+(OSU         :  74) INITIA.M22                       -- missing on slave
+(OSU         :  74) INITIA.M10                       -- missing on slave
+(OSU         :  74) INITIA.M17                       -- missing on slave
+(OSU         :  74) INITIA.22                        -- missing on slave
+(OSU         :  74) INITIA.M15                       -- missing on slave
+(OSU         :  74) INITIA.M16                       -- missing on slave
+(OSU         :  74) INITIA.M21                       -- missing on slave
+(OSU         :  74) INITIA.SCM                       -- missing on slave
+(OSU         :  74) LIB40.CMD                        -- missing on slave
+(OSU         :  74) DUMMIO.REL                       -- missing on slave
+(OSU         :  74) EXER1.REL                        -- missing on slave
+(OSU         :  74) LINT.REL                         -- missing on slave
+(OSU         :  74) FLIRT.REL                        -- missing on slave
+(OSU         :  74) DUMMIO.MAC                       -- missing on slave
+(OSU         :  74) EXER1.MAC                        -- missing on slave
+(OSU         :  74) LINT.MAC                         -- missing on slave
+(OSU         :  74) FLIRT.MAC                        -- missing on slave
+(OSU         :  74) GFD.REL                          -- missing on slave
+(OSU         :  74) (CARL).TS1                       -- missing on slave
+(OSU         :  74) TAP.SPD                          -- missing on slave
+(OSU         :  74) LOUT.REL                         -- missing on slave
+(OSU         :  74) OCTI.REL                         -- missing on slave
+(OSU         :  74) DEF40.REL                        -- missing on slave
+(OSU         :  74) LOUT.MAC                         -- missing on slave
+(OSU         :  74) OCTI.MAC                         -- missing on slave
+(OSU         :  74) DEF40.MAC                        -- missing on slave
+(OSU         :  74) CROSSF.146                       -- missing on slave
+(OSU         :  74) F40CHN.REL                       -- missing on slave
+(OSU         :  74) DOUBLE.REL                       -- missing on slave
+(OSU         :  74) FILE.REL                         -- missing on slave
+(OSU         :  74) OCTO.REL                         -- missing on slave
+(OSU         :  74) PDUMP.REL                        -- missing on slave
+(OSU         :  74) ALLIO.REL                        -- missing on slave
+(OSU         :  74) FDEBUG.REL                       -- missing on slave
+(OSU         :  74) DYNARY.REL                       -- missing on slave
+(OSU         :  74) DOUBLE.MAC                       -- missing on slave
+(OSU         :  74) FORSE.MAC                        -- missing on slave
+(OSU         :  74) FILE.MAC                         -- missing on slave
+(OSU         :  74) OCTO.MAC                         -- missing on slave
+(OSU         :  74) PDUMP.MAC                        -- missing on slave
+(OSU         :  74) ALLIO.MAC                        -- missing on slave
+(OSU         :  74) FDEBUG.MAC                       -- missing on slave
+(OSU         :  74) DYNARY.MAC                       -- missing on slave
+(OSU         :  74) PAUSE.REL                        -- missing on slave
+(OSU         :  74) MSPR.REL                         -- missing on slave
+(OSU         :  74) MBSR.REL                         -- missing on slave
+(OSU         :  74) TFMT.REL                         -- missing on slave
+(OSU         :  74) DUMMY.REL                        -- missing on slave
+(OSU         :  74) PAUSE.MAC                        -- missing on slave
+(OSU         :  74) MSPR.MAC                         -- missing on slave
+(OSU         :  74) MBSR.MAC                         -- missing on slave
+(OSU         :  74) TFMT.MAC                         -- missing on slave
+(OSU         :  74) DUMMY.MAC                        -- missing on slave
+(OSU         :  74) MAIN1A.VUE                       -- missing on slave
+(OSU         :  74) 017TEL.OUT                       -- missing on slave
+(OSU         :  74) 017TEL.COM                       -- missing on slave
+(OSU         :  74) EXIT.REL                         -- missing on slave
+(OSU         :  74) INTO.REL                         -- missing on slave
+(OSU         :  74) MONI.REL                         -- missing on slave
+(OSU         :  74) SIMTTY.REL                       -- missing on slave
+(OSU         :  74) EXIT.MAC                         -- missing on slave
+(OSU         :  74) INTO.MAC                         -- missing on slave
+(OSU         :  74) MONI.MAC                         -- missing on slave
+(OSU         :  74) SIMTTY.MAC                       -- missing on slave
+(OSU         :  74) ACCESS.BAK                       -- missing on slave
+Checking host 32
+
+?unable to build circuit to OSU:32
+?host unavailable
+
+?unable to build circuit to OSU:32
+?host unavailable
+
+?unable to build circuit to OSU:32
+?host unavailable
+
+?unable to build circuit to OSU:32
+?host unavailable
+
+?unable to build circuit to OSU:32
+?host unavailable
+Creaux failed to OSU:32
+
+End of SAIL execution
+.copy rdist.log,rdist.out
+
+.mung findit,rdist.out
+
+FINDIT.TEC V5 - Clean up log from MHX+(SPL)FINDIT and sort by file name
+162
+R SORT
+rdist.out=rdist.out/R80/K21.10/K54.6/K1.20
+SORTED 162 RECORDS
+
+EXIT
+
+.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       

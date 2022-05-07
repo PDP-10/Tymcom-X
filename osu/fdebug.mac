@@ -1,0 +1,2468 @@
+DEBSPC==10	;DEBUG SPECIFICATION NUMBER
+DEBREL==2	;DEBUG RELEASE NUMBER
+
+%DEBVR==:<DEBSPC,,DEBREL>
+
+DEFINE TITL(SP,VR)<
+TITLE FDEBUG VERSION SP'.'VR>
+TITL(\DEBSPC,\DEBREL)
+SUBTTL YES, SOME PRIMITIVE PEOPLES STILL BELIEVE THIS MYTH
+
+ENTRY DEBUG.
+INTERN DEBCH.,FRSTM.,NXTCT.,NXTFL.,TRPFL.
+EXTERN JOBSA,JOBSYM,JOBREN,JOBOPC,EXIT
+EXTERN FORSE.,FOBPDP,SAVEAC,SAVFAC,PDLST.,NMLST.,TPFCN.,ALLIO.,UUOH.
+SEXTERN %CCSFL,.NODB.
+
+DEBBAS:
+
+              ;ACCUMULATORS
+       CHRPTR=0               ;POINTS AT THE CURRENT CHAR IN INPUT STRING
+       A=1    ;UTILITY
+       B=2    ;UTILITY
+       C=3    ;.
+       D=4    ;.
+       E=5    ;.
+       F=6    ;
+       G=7    ;.
+       H=10   ;UTILITY
+       SKPCT=11               ;SKIP COUNT
+       SW1=12                 ;SECONDARY FLAG REG
+       SW2=13                 ;PRIMARY FLAG REG
+       I=14   ;UNUSED
+       FMTPTR=15              ;POINTS AT THE LAST CHAR STORED
+       ;16 MAY NOT BE USED BECAUSE IT ISNT SAVED
+       P=17   ; PDP
+
+
+
+              ;GENERAL
+
+
+
+
+       SETSZ.=^D75            ;NO. OF CHARS ALLOWED PER GRP
+       LSTSZ.=^D15            ;NO. OF VARS THAT MAY BE VAL TRACED
+
+
+
+
+        LOC     74
+        JRST    0       ;KLUDGE TO KEEP SYMBOLS AFTER LOADING
+        RELOC
+
+
+       R501M=147              ;RADIX50 0,1M
+TEN1M: XWD 100000,147          ;RADIX50 10,1M
+
+BADSD1: JSR TOMANY, BAD1
+
+              ;FORTRN UUO DEFINITIONS
+              ;(MAY NOT BE USED DIRECTLY AS OP CODES)
+
+
+       STL=014000
+       IN=016000
+       OUT=017000
+       DATA=020000
+       FIN=021000
+
+DBUUO.=:14B8	;DEFINE DEBUG UUO FOR DDT PRINTOUT
+
+       CORUUO=11
+       ACBITS=000740          ;AC FLD OF INSTR
+       INDEX=000017           ;INDEX FLD
+
+
+
+              ;TRPFL FLAGS
+
+       VTFL.=400000           ;VALUE TRACE FLAG
+       FTFL.=200000           ;FLOW TRACE FLAG
+       PERFL.=100000          ;PERFORM FLAG
+       NXTFL.=040000          ;NEXT FLAG
+       FRSTM.=020000          ;FIRST TIME FLAG
+
+
+              ;CONSTANTS AND POINTERS
+
+IMATPT:POINT 7,FMT1.+2,13
+
+PLEASE:        ASCIZ  "PLEASE CORRECT YOUR COMPILER DETECTED ERRORS
+ BEFORE PROCEEDING"
+       PLESIZ=.-PLEASE
+
+
+
+FMT5:  ASCII   .(/' YOUR FILES HAVE BEEN CLOSED').
+FMT3:  ASCII .(' DEBUG!').
+FMT6:   ASCII .(' BREAK POINT REMOVED').
+FMT4:  ASCII  .(/' I SUGGEST THAT YOU TAKE A BREAK!').
+STRBEG:POINT 7,STRIN.,6
+F13PTR:POINT 7,FMT13.,6
+
+              ;FUNCTION DECODER
+
+DEFINE FUNGEN (A) <
+COMTAB:
+IRP A <ASCII  /A/
+  >   
+       TBLSIZ=.-COMTAB
+
+DISTAB:
+IRP A <EXP A
+>>
+
+
+      BYTCT=5                ;MAX NO OF SIG CHARS IN COMMAND KEY WORD-MAY NOT BE INCREASED
+TBLPTR:POINT 7,COMTAB+TBLSIZ(D),6
+
+
+              ;SET/DISPLAY
+
+       CFLG=20000             ;COMPLEX
+       CMPLX=7                       ;COMPLEX TYPE FOR DATA. UUO
+       DIGITS=040000          ;DIGIT SEEN FLAG
+       PLUS="+"               ;+
+       MINUS="-"
+       TAB=11
+       FLTPT=2
+       CMAFLG=100000          ;COMMA FLAG
+       LOGIC=3                ;LOGICAL TYPE
+              DOUBLE=6       ;DOUBLE TYPE
+       SETFLG=400000          ;SET COMMAND
+       DISET=200000           ;GROUP IS BEING DIPLAYED
+       ZERO=0                 ;STRING TERMINATOR SINCE FORSE DOESNT HAND OVER CR
+       CR=0
+
+
+FMTTBL:EXP "I"                 ;INTEGER
+       Z       ;UNUSED
+       EXP "F"                ;REAL
+       EXP "L"                ;LOGICAL
+       EXP "O"                ;OCTAL
+       EXP "A"                ;HOLLERITH
+       EXP "D"                ;DOUBLE PRECISION
+       EXP "G"                ;COMPLEX
+
+
+
+
+              ;BREAK
+       BPTLN.=5
+
+
+
+
+       BPMAX=^D8              ;NO. OF BREAKPOINTS DESIRED.
+
+
+ASC=1          ;START OF ASCII STORAGE AREA IN BREAK TABLE
+BPTPTR:POINT 7,ASC(B)          ;POINTS TO ZEROTH 
+
+                             ;BYTE OF FIRST ASCII STORAGE LOC IN BP TABLE
+BPNO:ASCIZ  "BP"
+
+
+              ;PERFORM
+       MVEM15=202640          ;MOVEM 15, .....
+
+              ;EVAL
+       LOCAL=100000
+       PNAME=740000
+       DELI=200000
+
+              ;SAV AND GET MACROS
+DEFINE SAVM(A,B)<
+       JSA 16,SAVAC.
+       XWD A-B-1,A     >  ;SAVES ACS A THROUGH B INCLUSIVE
+
+DEFINE GETM(A,B)<
+       JSA 16,GETAC.
+       XWD A-B+1,A
+
+>
+
+
+              ;BAD1 ERROR CODES
+              ;CALL:  JSR ERROR CODE, BAD1
+
+;   ERROR CODE   VALUE    CALLED FROM          MEANING
+       NONAME=0          ;LOCIN,BREAK-  STMT NOT FOUND
+   NOSTMT=NONAME        ;NAME           -DOES NOT NAME A LOADED PROG
+         ILLBP=1        ;BREAK,STATUS-ILLEGAL BP NO. OR NONE AVAIL
+         ILLSET=2      ;SET/DISPLA,DEFINE-ILLEGAL GROUP IDENT
+         NOSUCH=3      ;SET/DISPLA-NOT A VAR IN NAMED PROG
+         NOTSET=4     ;SET/DIPLA-ILLEGAL SET ARG IN DIPLA COMMAND
+                      ;OR VICE VERSA
+      ILCHAR=NOTSET     ;ALL-GENERAL SYNTAX ERROR
+         BADTYP=5       ;SET/DIPLAY-WRONG VAR TYPE
+         ILLSW=6        ;SET/DISPLAY-ILLEGAL OVERRIDE SW
+         ILLCOM=^D7     ;FUN-ILLEGAL COMMAND
+         NOTBRK=^D8     ;GO-ATTEMPT TO SET PROCEED CT OR AUTO
+                         ;PROCEED SW WITH "GO" COMMAND WHEN
+                         ;EXECUTION WAS NOT HALTED BY BREAKPOINT
+         GOPROB=^D9     ;GO-ATTEMPTED GO INTO SUBPROGRAM OR 
+                        ;DO LOOP
+         TOMANY=^D10    ;DEFINE,SET/DISPLAY,BREAK-TOO MANY VARS
+       INUSE=^D11             ;THIS GRP IS IN USE BY VALUE TRACE
+       NOSYM=^D12             ;NO SYMBOL TABLE?
+       NOCALL=^D13            ;ARRAY DUMMY REFERENCED BEFORE FIRST CALL
+        ILLABS=^D14
+         ;^D15  UNUSED
+
+
+ENT1:  HRRZ A, UUOH.          ;GET LOC OF LAST TRAP
+	CAIL A,DEBBAS		;WAS LAST TRAP IN DEBUG?
+	CAILE A,DEBTOP
+       CAMGE A, F40LO.        ;NO, WAS IT BELOW THE LOWEST F40 PROG?
+       JRST   ENT2           ;YES
+ENTX1:         LDB B, [POINT 9,-1(A),8]
+       CAIE B, 14             ;AN STL?
+       SOJA A, ENTX1          ;NO, LOOK FARTHER
+       MOVEM A, SAVRE.
+       JRST   ENT2
+
+
+PAGE
+
+IFNDEF SHARE,<                 ;NON-SHARABLE TRAP HANDLER
+
+
+DEBUG.:        LDB I, [POINT 4,A,12]
+       SKIPN B,  TRPFL.       ;FLGS IN LH
+       JRST   BPCHK
+       HRRZ A, UUOH.
+       MOVEM A, SAVRE.
+       MOVE P, FOBPDP         ;INIT OPSYS/DEBUG PDP
+       JUMPL B, VALTR.        ;VALUE TRACE FLAG SET?
+DE1:   TLNE B, FTFL.          ;FLOW TRACE FLAG SET?
+       PUSHJ P, FLOTR.        ;YES
+       TLNE B, PERFL.         ;PERFORM FLAG SET?
+       PUSHJ P, PERTR.        ;YES
+       SOSN   NXTCT.         ;HAVE WE COUNTED THE NXTCTR TO 0?
+       JRST   NEXTR.         ;YES, STOP
+       JUMPG I, BRPTR2
+
+EXIT2.:        SETZM          CURBP.
+EXIT3.:        MOVE P, PDLST.
+       JRSTF  @SAVRE.
+
+
+
+
+
+
+
+>
+
+PAGE
+
+              ;FIRST TIME THROUGH AND "NEXT" ENTRY
+
+
+NEXTR.:        MOVSI A, NXTFL.+FRSTM.
+       ANDCAM A, TRPFL.       ;ZERO BOTH FLAGS
+       TLNN B, FRSTM.         ;FIRST TIME THROUGH?
+       JRST   ENT2           ;NO, DO IMAT AND GET A COMMAND
+       MOVEI A, ENT1          ;YES, MAKE ENT1 THE DDT ENTRY
+       MOVEM A, JOBREN
+
+
+DEBUG2:        PUSHJ P,SETSTL
+       SETZM  CURBP.
+       MOVEI A, 20
+       MOVEM A, ERRCT.
+	SKIPE [.NODB.]
+	SKIPN .NODB.
+	SKIPA A,[RADIX50 0,MAIN.]
+	MOVE A,[RADIX50 0,.DEB.]
+	PUSHJ P,SETNM1	;SET PROPER INITIAL CURRENT PROGRAM
+	JUMPN I,NXTCM.
+	SKIPE [.NODB.]
+	SKIPN .NODB.  	;IF THIS IS LOADED AND SET, NO MESSAGE
+	JRST .+2
+	JRST EXIT2.
+	MOVEI C,FMT3
+	PUSHJ P,PUTSTR
+	JRST NXTCM.
+
+              ;ENTRY FROM LIB40 ERROR ROUTINE
+
+DEBG1.:MOVE 16,SAVEAC+16       ;WE GOT HERE FROM FORSE
+       HRLI  B, -30           ;STL SEARCH LENGTH
+       HRR  B, UUOH.          ;SEARCH ORIGIN
+STLSER:        AOBJP B, SFXIT
+       LDB A, [POINT 9,(B),8]         ;OP CODE FLD
+       CAIE A, 14             ;AN STL?
+       JRST   STLSER         ;NO,LOOK FURTHER
+       LDB A, [POINT 5,(B),17]        ;GET INDEX FLD AND IND BIT
+       CAIN A, 17
+SFXIT:         CALLI   12     ;CURRENT PROGRAM HAS NO STLS SO EXIT
+       ADDI B, 1              ;POINT AT THE LOC AFTER THE STL
+       MOVEM B, SAVRE.
+       MOVE F, TRPFL.
+       MOVE G, NXTCT.
+       RESET.                        ;RESET AND CLOSE ALL IO
+       MOVEM F, TRPFL.        ;RESTORE ALL FLAGS
+       MOVEM G, NXTCT.        ;RESTORE NEXT COUNTER
+       MOVEI C, FMT5
+       PUSHJ P, PUTSTR        ;WARN THAT FILES ARE CLOSED
+
+
+
+
+              ;ALL OTHER ENTRIES-EG.,DDT COMMAND,
+              ;NEXT,BREAKPOINTS,PERFORM,ETC
+
+ENT2:  MOVE P,FOBPDP          ;INIT DEBUG/OPSYS PDP
+       PUSHJ P,IMAT           ;TYPE A STMT IDENT AND PROG NAME
+
+NXTCM.:PUSHJ P,GETSTR         ;GET A COMMAND STRING
+
+PAGE
+
+              ;FUNCTION DECODER
+FUN:   MOVE FMTPTR,F13PTR
+       MOVNI D,TBLSIZ         ;INIT TABLE ROW COUNTER
+       MOVE CHRPTR,STRBEG     ;INIT CHARACTER POINTER
+              MOVE H,TBLPTR  ;INIT TABLE POINTER
+       SETO SW2,
+       MOVNI E,BYTCT          ;NEG OF MAX BYTE CT
+       SETZ SW1,
+       MOVEI SKPCT,1          ;INIT SKIP COUNT
+       PUSHJ P,SKPBKS         ;PASS ANY LEADING BLANKS-INCR
+                             ;SKIP COUNT IF NECCESSARY
+       JRST   NXTCM.         ;HE DIDNT TYPE ANYTHING!!
+       LDB F,CHRPTR           ;GET FIRST CHAR OF INPUT STRING
+              LDB G,H        ;GET FIRST CHAR OF TABLE(D)
+                             ;IE,FIRST CHAR OF FIRST COMMAND SYMBOL IN THE TABLE
+COMPAR:CAMN G,F                ;SAME AS CHAR TYPED?
+       TLO SW1,400000         ;YES,SET BIT 0
+NXTROW:ROT SW1,1               ;MAKE THE NEXT BIT POSITION
+                             ;AVAILABLE
+       AOJE D,NXTCOL          ;HAVE ALL COMMAND SYMBOLS BEEN EXAMINED?
+RESCAN:LDB G,H                 ;NO,GET A CHAR FROM THE NEXT KEY WORD
+       JUMPE G,NXTROW         ;HAVE WE EXAMINED ALL NON-ZERO
+                             ;CHARS IN THIS KEY WORD?
+       JRST    COMPAR        ;NO,SEE IF THE PRESENT KEY WORD
+                             ;CHAR MATCHES THE TYPED COMMAND CHAR
+
+
+NXTCOL:ILDB F,CHRPTR           ;GET THE NEXT INPUT STR CHAR
+       AOS    SKPCT          ;INCR THE SKIP CT
+       AND SW2,SW1            ;LEAVE WHATS IN COMMON IN SW2
+       SETZ SW1,              ;RESET SW1
+       CAIL F,"A"             ;ARE WE AT THE END OF
+       CAILE F,"Z"            ;THE TYPED COMMAND KEY WORD YET?
+       JRST   CHKSW          ;YES,GO CHK THE SW.WERE DONE
+       AOJE E,CHKSW           ;NO,HAVE ALL COLUMNS
+                             ;IN THE TABLE BEEN CHECKED?
+       IBP    H                     ;NO,POINT AT THE NEXT COL AND
+                             ;CHECK THE TABLE AGAIN,TOP TO BOTTOM
+       MOVNI D,TBLSIZ         ;REINIT ROW COUNTER
+       JRST   RESCAN         ;EXAMINE THE NEXT CHAR
+                             ;OF EACH KEY WORD IN THE TABLE
+
+CHKSW:         ROT SW2,-TBLSIZ        ;PREPARE TO COUNT LEADING
+                             ;ZEROS
+       JFFO SW2,ATLST1        ;IS AT LEAST ONE BIT SET?
+NOFUN:         JSR ILLCOM,BAD1        ;NO
+ATLST1:LSH SW2,1(SW2+1)        ;GET RID OF THE
+                             ;LEADING 1 THEN SEE IF IT WAS THE ONLY
+                             ;BIT SET IN SW2
+       JUMPN SW2,NOFUN        ;DID WHAT WAS TYPED MATCH MORE THAN
+                             ;ONE KEY WORD FROM THE TABLE?
+SKALPH:CAIG F,"Z"              ;IS IT
+       CAIGE F, "A"           ;ALPHA?
+       JRST   FUNDON         ;NO,COMMAND KEY WORD IS
+                             ;LEGIT AND COMPLETE
+       ILDB F,CHRPTR          ;YES,SKIP OVER THESE
+       AOS    SKPCT          ;EXTRA CHARS
+       JRST   SKALPH
+
+FUNDON:PUSHJ P,@DISTAB(SW2+1)  ;DISPATCH
+                             ;AND COME BACK FOR ANOTHER COMMAND
+                             ;WHEN FINISHED
+       JRST   NXTCM.
+
+
+FUNGEN <TYPE,SELEC,DISPL,SET,PERFO,GO,NAME,DEFIN,BREAK,STATU,VALUE,START,FLOW,NEXT,GROUP,WHERE,EDIT,QUIT>;
+
+QUIT:   JSA     16,EXIT         ;CLC:02-07-74 ADD QUIT COMMAND
+EDIT:   POP     P,(P)
+        SKIPN   [%CCSFL]
+        JRST    NOFUN           ;ILLEGAL IF NO CCS
+        MOVE    [1,,CCSRUN]
+        RUN
+        HALT
+
+CCSRUN: SIXBIT/SYS/
+        SIXBIT/CFORTR/
+        EXP     0,0,0,0
+
+
+
+
+
+                             ;NAME
+                             ;CALLED WITH CHAR PTR AT FIRST CHAR OF NAME
+SELEC:
+NAME:  PUSHJ P, SKPBKS
+       SKIPA A, [RADIX50 0,MAIN. ]
+       PUSHJ P,GETSYM         ;RETURNS RADIX 50SYM IN A
+SETNM1:        SAVM A,D ;SUB CALL ENTRY
+        HLRE    B,JOBSYM
+        MOVN    B,B
+        ADD     B,JOBSYM
+        HRRZ    B,B             ;POINTER TO TOP OF SYMBOL TABLE
+SET1:   CAMN    B,JOBSYM
+        JRST    UNDEF           ;RAN OUT
+        SUB     B,[2,,2]        ;OK, DECREMENT IT
+        MOVE    D,(B)           ;GET NAME
+        CAMN    D,[-1]
+        JRST    [SKIPE B,1(B)   ;LINK, GET NEXT
+                JRST SET1       ;OK
+                JRST UNDEF]     ;NO GOOD
+        CAME    D,A             ;CHECK NAME
+        JRST    SET1            ;NOT A MATCH
+        MOVEM   B,PRGM.         ;FINALLY FOUND IT
+       MOVEM A,R50NM.         ;SAVE R50PROG NAME
+       MOVEI A,R501M          ;SEARCH FOR
+                             ;BEG OF PROGRAM
+       PUSHJ P,EVAL           ;RETURN ADDRESS OF FIRST EXECUTABLE STL
+	JRST [	MOVE A,[RADIX50 0,.DEB..]
+		PUSHJ P,EVAL
+		JRST UNDEF
+		JRST .+1]
+       MOVEM A,PROGL.         ;SAVE THE ADDRESS
+       MOVE A,D               ;PROGRAM NAME
+       TLO A,LOCAL            ;FORCE A GLOBAL SEARCH
+       PUSHJ P,EVAL           ;RETURN ENTRY POINT
+       HALT                         ;(FOLLOWS LAST EXECUTABLE STL)
+       MOVEM A,PROGH.         ;SAVE IT
+SETNX:         GETM D,A
+       POPJ P,                ;RETURN FOR ANNOTHER COMMAND
+UNDEF: JSR NONAME,BAD1
+
+
+
+
+
+
+
+PAGE
+                             ;SET/DISPLAY
+
+TYPE:
+DISPL:
+DISPLA:        TDZA SW2,SW2   ;ZERO SW2 AND SKIP
+SET:   MOVSI SW2,SETFLG
+       SAVM   A,FMTPTR
+SD88:  MOVE FMTPTR,F13PTR
+SD89:  SETOM  SIZT.
+       MOVSI C,-LSTSZ.        ;FOR AOB WORD
+SD:    PUSHJ P, SKPBKS        ;PASS BY ANY BLANKS
+       JRST   SDCR           ;PARSE COMPLETE
+       CAIE A, "/"            ;A SWITCH COMING?
+
+       JRST   SD1
+       ADDI SKPCT, 2
+       ILDB A, CHRPTR         ;GET IT
+       HRRM A, SW2            ;AND SAVE IT
+       IBP    CHRPTR         ;AND PASS IT BY
+       PUSHJ P, SKPBKS
+       JRST   SDCR
+
+
+SD1:   MOVE SW1, SW2
+       MOVE E, CHRPTR         ;SAVE POINTER TO "(" OR FIRST
+                                        ;CHAR OF SYMBOL
+       CAIE A, "("            ;A SUBSCRIPT ALREADY?
+
+      JRST   SD7
+       SKIPG  DIMCT.
+       JSR ILCHAR, BAD1
+       MOVE D, BASAD.
+       JRST   SD6
+
+
+SD7:   SETZM  DIMCT.
+       PUSHJ P, GETSYM        ;RETURNS R50 SYM IN A,LEAVING CHRPTR AT
+                             ;THE DELIMITER
+       CAIG A, 1
+       JRST  SDX7
+       CAIG A, SETS.+1        ;LEGAL GROUP IDENT?
+       JRST   SD2            ;YES
+SDX7:  PUSHJ P, EVAL          ;NO,A VAR IDENT.RETURNS WITH ADR
+                             ;IN RH OF A,TYPE IN BITS 9-12
+       JSR NOSUCH, BAD1       ;NOT A VAR IN THIS PROG
+       TLZ A, 777000          ;ZERO THE "JUMP" OPCODE
+       HRRZ D, A              ;SAV ADRESS
+       LDB B,E                       ;**TEMPORARY FIX TO GIVE FOOTRAN II DEFAULTS
+       CAILE B,"H"            ;IS FIRST LETTER I-N?
+       CAIL B,"O"
+       TLO A,100              ;AC FIELD CODE FOR REAL TYPE IS 2
+       HLLM A,BASAD.          ;SAVE VAR TYPE
+                             ;END OF FIX
+       MOVE B,  [RADIX50 0,MAIN.]
+       CAME B, R50NM.         ;MAIN PROGRAM?
+       SKIPGE                 INHIB.      ;ARE WE ONLY CHECKING SYNTAX?
+       JRST   SDX9           ;YES, NO DUMMIES HERE
+       MOVE A,  [RADIX50 0, TEMP.]
+       PUSHJ P, EVAL          ;A FOOTRAN SUB?
+       JRST   SDX9           ;NO, MUST BE A MACRO SUB
+       CAIG D, (A)            ;MAYBE, DOES OUR VARIABLE COME AFTER "TEMP."?
+       JRST   SDX9           ;NO, ITS A MACRO SUB AFTER ALL
+       MOVE A, [RADIX50 0,%TEMP.]
+       PUSHJ P, EVAL          ;IS "%TEMP." IN THIS SUB?
+       JRST   SDX9           ;NO, A MACRO SUB AFTER ALL
+       CAIL D, (A)            ;IS OUR VAR BEFORE "%TEMP."?
+       JRST   SDX9           ;NO, ITS AN F40 SUB BUT OUR VAR ISNT A DUMMY
+       MOVE A, R50NM.         ;YES,ITS A DUMMY. MAKE SURE THE SUB HAS
+                             ;BEEN CALLED AT LEAST ONCE
+       TLO A, LOCAL           ;SET FLAG FOR GLOBAL SEARCH
+       PUSHJ P, EVAL          ;GET SUB ENTRY POINT
+       HALT                  ;DONT WORRY, WE WONT GET HERE(HO,HO,HO)
+       HLRZ B, (A)           ;GET ENTRY LOCATION
+       CAIN B, 320000         ;HAS A RETURN BEEN STORED?
+       JSR NOCALL, BAD1       ;NO,ERROR RETURN
+       PUSH P, CHRPTR         ;YES,THIS SUB HAS BEEN CALLED BEFORE
+       PUSHJ P, SKPBKS        ;SEARCH FOR A NON-BLANK CHAR
+       JRST   SDX10          ;NOT SUBSCRIPTED SO IRRELEVANT IF DUMMY
+       CAIN A, "("            ;SUBSCRIPTS COMING?
+       HRR D, @D              ;YES, OUR VAR IS AN ARRAY DUMMY SO GET
+                             ;THE TRUE BASE ADDRESS
+SDX10:         POP P, CHRPTR
+SDX9:  HRRM D, BASAD.         ;SAVE TRUE BASE ADDRESS AND VAR TYPE
+       MOVE F, CHRPTR
+SD6:   AOBJP C, BADSD1;TOO MANY VARS?
+       LDB G, [POINT 4,BASAD.,12]     ;SAVE TYPE FOR USE LATER
+      TLO D, DATA            ;GET OP CODE
+       MOVEM D, LIST.+1(C)    ;PUT USER UUO IN THE LIST
+                            ;THE FIRST DATA. UUO GOES IN LIST.+2
+                             ;(LIST.)=MOVEM P,SAVFAC+P
+                             ;(LIST.+1)=IN. OR OUT. UUO
+       PUSHJ P, SKPBKS        ;EITHER WE ARE LOOKING AT A "("
+                             ;AND ARE USING THE PREVIOUS BASAD
+                             ;OR WE ARE LOOKING AT THE DELIMITER
+                             ;OF A VAR WHICH MAY OR MAY NOT BE
+                             ;SUBSCRIPTED
+       JRST   SDX1           ;OK IF DISPLAY COMMAND(LINE IS 
+                             ;TERMINATED)
+       CAIE A, "("            ;SUBSRIPTS COMING?
+       JRST   SDX1           ;NO,SCALAR
+       PUSHJ P, GETSS         ;RETURN ADR MODIFIER IN A
+                             ;LEAVE CHRPTR AT "]",OR ")
+                             ;PREVIOUS BASAD USED
+       ADDI SKPCT, 1
+       ADDM A, LIST.+1(C)     ;MODIFY BASE ADRESS
+       IBP    CHRPTR         ;PASS THE "]" OR ")"
+SDX1:  JUMPGE SW2, SDX3       ;DISPLAY COMMAND?
+       PUSHJ P, SKPBKS        ;NO,PASS TO THE VALUE OR "="
+       JSR ILCHAR, BAD1       ;SHOULDN'T FIND A CR HERE
+       CAIN A, "="            ;EXPLICIT = ?
+       ILDB A, CHRPTR         ;YES,MOVE PAST IT
+       JRST    SKPDIG         ;SKIP OVER THE VALUE
+
+
+
+SDX3:  SKIPE A, NEWVA.        ;VAL TRACE IN PROGRESS?
+       CAIN A, (C)            ;YES,SHALL WE SKIP THIS VAR?
+       JRST   SD31           ;NO,GO PUT THE VAR NAME IN FMT13
+       MOVSI A, 255000        ;YES, JFCL THIS ONE
+       MOVEM A, LIST.+1(C)
+       JRST   SD             ;SEE IF THE NEXT VAR IS THE ONE
+                             ;TO OUTPUT
+
+
+
+
+PAGE
+              ;PUT VAR NAME AND FMT CHAR IN FMT
+
+              ;FMTPTR POINTS TO THE LAST CHAR
+              ;STORED IN FMT13
+
+              ;E POINTS TO FIRST CHAR OF SYMBOL
+
+              ;F POINTS TO LAST CHAR OF SYMBOL
+
+              ;PUTS THE FOLLOWING STRING IN
+              ;FMT13:
+              ;'SYMBOL=',
+
+SD31:  PUSHJ P, FMTTST
+       PUSHJ P, QUOUT         ;DEPOSIT SINGLE QUOUTE IN FMT13
+       PUSHJ P, BLOUT
+ST2:   LDB A, E               ;GET A CHAR
+       IDPB A, FMTPTR         ;AND PUT IT IN FMT13
+       IBP    E
+       CAME E, F              ;ARE WE FINISHED?
+       JRST   ST2
+
+ST1:   MOVEI A, "="
+       IDPB A, FMTPTR
+       PUSHJ P, QUOUT
+       PUSHJ P, COMOUT
+
+PAGE
+
+              ;PUT THE CORRECT FMT CHAR IN FMT13
+              ;FOR ALL BUT G FORMAT IT IS THE FORMAT
+              ;CHAR AND NOT THE AC FLD OF THE DATA UUO
+              ;THAT OVERRIDES
+
+
+              ;DATUM TYPE FROM SYMBOL TBL IS IN RH OF G
+
+              ;OVERRIDE SW CHAR IS IN RH OF SW2
+
+SD4:   PUSHJ P, FMTTST        ;SEE IF WE HAVE OVERFLOWED FMT13
+       HRRZ B, SW1
+       JUMPG B, STOF2         ;IS THERE AN OVERRIDE SW?
+       MOVE B, FMTTBL(G)      ;NO, SO FMT CHAR DEPENDS
+                             ;ON DATUM TYPE FROM SYMBOL TABLE
+       CAIE B, "G"            ;COMPLEX?
+       JRST   STOF4          ;NO
+STOF5:         IDPB B, FMTPTR         ;YES, STORE THE FIRST G
+       PUSHJ P, COMOUT        ;FOLLOWED BY A COMMA
+
+STOF4:         IDPB B, FMTPTR         ;DEPOSIT FORMAT CHAR IN FMT13
+              ;CHECK LEGALITY OF WHAT WEVE JUST DEPOSITED
+       CAIN B, "A"            ;ALPHA?
+       JRST   ASW            ;YES
+       CAIN B, "L"            ;NO, LOGICAL?
+       JRST   LSW            ;YES
+       CAIE B, "D"            ;DOUBLE PRE W/D EXP?
+       CAIN B, "E"            ;OR SNGLE PRE W/E EXP?
+       JRST   STOF3          ;YES
+       CAIE   B, "F"         ;SNGLE PRE FLT PT OR
+       CAIN   B, "G"         ;GENERAL?
+       JRST   STOF3          ;YES
+       CAIE B, "I"            ;INTEGER OR
+       CAIN B, "O"            ;OCTAL?
+       JRST   STOF3          ;YES
+       JSR ILLSW, BAD1        ;ILLEGAL SWITCH
+
+
+
+STOF2:         CAIE B, "C"
+       JRST   STOF4
+       MOVSI B,340            ;AC FIELD OF 7 FOR DATA. UUO
+       ORM B,LIST.+1(C)
+       MOVEI B, "G"
+       JRST   STOF5
+
+
+ASW:   SETZ A,
+       CAIL G, DOUBLE         ;IS IT DOUBLE OR COMPLEX?
+       ADDI A, 5              ;YES ACCOUNT FOR 5 MORE CHARS
+       ADDI A, 5              ;5 CHARS
+       JRST   STOF1          ;GO PUT OUT THE FIELD WIDTH
+
+
+LSW:   MOVEI A, 1             ;FIELD WIDTH FOR LOGICAL IS 1
+STOF1:         PUSHJ P, INTOUT        ;STORE THE FIELD WIDTH IN FMT13
+       MOVEI A, ","
+       SKIPL  SW2            ;"SET" COMMAND?
+       MOVEI A, "/"
+       IDPB A, FMTPTR         ;YES, DEPOSIT COMMA
+       PUSHJ P, FMTTST        ;MAKE SURE WE HAVENT OVERFLOWED
+                             ;THE FORMAT SPACE
+       JRST   SD             ;LOOK FOR ANOTHER VAR IF WE'RE OK
+
+
+
+STOF3:         MOVEI A, ",";ENTRY FOR VARIABLE FIELD WIDTH FORMATS
+                             ;(IE, NOT L OR A FORMATS)
+       SKIPL  SW2            ;SET COMMAND?
+       MOVEI A, "/"           ;NO,"DISPLAY"
+       IDPB A, FMTPTR
+       PUSHJ P, FMTTST
+       JRST   SD
+
+
+PAGE
+
+
+SD2:   SKIPE  DEFSW.         ;ARE WE BEING USED BY "DEFINE"?
+       JSR ILCHAR, BAD1       ;YES, A GRP ID ISNT ALLOWED HERE
+       SUBI A, 1
+       TLNE SW2, SETFLG       ;SET COMMAND?
+       JSR NOTSET, BAD1       ;YES, TOO BAD FOR YOU
+       PUSH P, CHRPTR         ;SAVE CHRPTR IN PDL
+       MOVE CHRPTR, SETTB.(A)         ;GET A PTR TO FIRST CHAR OF
+                                    ;THE GROUP
+       TLO SW2, DISET         ;SET FLAG INDICATING THAT A
+                             ;GROUP IS BEING DISPLAYED
+       MOVE D, ["PRG '"]      ;MESSAGE
+SSD2:  IDPB D, FMTPTR         ;DEPOSIT A MESSAGE CHAR IN FORMAT
+       LSH D, -7              ;BRING THE NEXT CHAR INTO POSITION
+       JUMPN D, SSD2          ;LAST CHAR OF "' GRP" OUT YET?
+       PUSHJ P, INTOUT        ;DEPOSIT THE GROUP IDENTIFIER
+       PUSHJ P, QUOUT         ;AND A SNGLE QUOTE
+       PUSHJ P, SLOUT         ;AND A SLASH
+       IBP    CHRPTR
+       JRST   SD             ;AND GO WORK ON THE GROUP
+
+
+
+
+FMTTST:        SETO B,
+       CAME B, SIZT.
+       JSR TOMANY, BAD1       ;FMT13 HAS SPILLED INTO SIZT.
+       POPJ P, ;RETURN
+
+
+PAGE
+
+              ;WE ONLY GET TO THIS SECTION IF THE
+              ;COMMAND IS SET
+SKPDIG:        HRRZ B, SW1    ;GET AN OVERRIDE SW IF THERE IS ONE
+       CAIE B,"C"             ;COMPLEX SWITCH?
+       CAIN G, CMPLX          ;OR TYPE FROM THE SYMBOL TABLE?
+       TLO SW2,CFLG           ;FLAG SO WE PICK UP BOTH PARTS
+       TLZ SW2, DIGITS        ;INIT DIGIT SEEN FLAG
+       CAIN B, "A"            ;ALPHA SW?
+       JRST DOALPH            ;YES
+       CAIE B, "L"            ;L SW SET?
+       CAIN G, LOGIC          ;LOGICAL TYPE?(G HAS DATUM TYPE FROM
+                             ;SYMBOL TABLE
+       JRST   SKLOG          ;YES
+SKD6:  CAIE A, "D"            ;A D?(A HAS CURRENT COMMAND STRING CHAR)
+       CAIN A, "E"            ;NO, AN E?
+       JRST   NXDIG          ;YES
+       CAIL A, "0"            ;DIG IT?
+       CAILE A, "9"           ;DIG IT?
+       JRST   SKD7           ;NO,TEST FOR A "+"
+       TLO SW2, DIGITS        ;SET DIGIT SEEN FLAG
+NXDIG:         ILDB A, CHRPTR         ;GET NEXT CHAR(NOTE THAT WE DONT
+                             ;INCREMENT SKIP COUNT
+       JRST   SKD6           ;AND EXAMINE
+
+
+SKD7:  CAIE A, "+"            ;A PLUS?
+       CAIN A, "-"            ;NO, A MINUS?
+       JRST   NXDIG          ;YES,GET AND EXAMINE THE NEXT CHAR
+       CAIN A, "."            ;A DECIMAL POINT?
+       JRST   NXDIG          ;YES
+SKD13:         CAIN A, " "    ;A BLANK?
+       JRST SKD14             ;YES, SEE IF ITS LEADING
+       CAIE A, TAB            ;TAB?
+       JRST   SKD9           ;NEITHER BLANK NOR TAB
+SKD14:         TLZE SW2, DIGITS       ;DIGIT SEEN YET?
+       TLZE SW2,CFLG          ;HAVE WE THE FIRST PART OF A COMPLEX VAR?
+       JRST NXDIG             ;YES,IF WEVE SEEN A DIGIT
+       JRST   INSKFD         ; THE VALUE IS IN
+
+
+
+
+SKD9:  CAIE A, ",";A COMMA?
+       JRST   SKD10          ;NO, SEE IF ITS A CARRIAGE RETURN
+       TLO SW2, CMAFLG        ;SET COMMA SW
+       JRST   INSKFD
+
+
+SKD10:         JUMPE A, SDCR  ;END OF STRING?
+       JSR ILCHAR, BAD1       ;NO, ILLEGAL CHAR
+
+
+
+SKLOG:         CAIN A, " "    ;A BLANK?
+       JRST   SKL1           ;YES
+       CAIN A, "T"            
+       JRST   SKL1
+       CAIE A, "F"
+       JSR ILCHAR, BAD1
+SKL1:  TLO SW2, DIGITS        ;T, F, OR BLANK. SET DIGIT SEEN FLG
+       ILDB A, CHRPTR         ;GET THE NEXT CHAR
+       JRST SKD13             ;AND SEE IF IT PROPERLY DELIMITS
+                             ;THE LOGICAL VALUE
+
+
+
+DOALPH:        SETZ A,
+       CAIL G, DOUBLE         ;DOUBLE WORD?
+       ADDI A, 5              ;YES
+       ADDI A, 5              ;NO
+SKPALF:        IBP            CHRPTR      ;PASS BY AN ALPHA
+       SOJG A, SKPALF         ;HAVE WE SKIPED ALL THE ALPHAS YET?
+
+INSKFD:        MOVE A, SKPCT  ;YES
+       PUSHJ P, INTOUT        ;PUT SKP CT IN THE FORMAT
+       MOVEI A, "X"           ;SKIP FLD FORMAT CHAR
+       IDPB A, FMTPTR
+       PUSHJ P, COMOUT
+       SETZ SKPCT,;RESET SKIP COUNT
+      JRST   SD4            ;GO PUT THE FORMAT CHAR IN
+
+
+             PAGE
+
+
+              ;CARRIAGE RETURN HANDLER-SET/DISPLAY
+
+SDCR:  SKIPE  INHIB.         ;IS THE I/O INHIBIT FLG SET?
+       JRST   SDCR1
+       PUSHJ P, FMTTST        ;SEE IF FMT13 HAS OVERFLOWED
+IFNDEF CONT,< JUMPGE SW2, FINFD  >
+IFDEF CONT,<
+       JUMPL SW2, FINFS       ;SET COMMAND?
+       TLZN SW2, CMAFLG       ;NO, DISPLAY. COMMA FLAG SET?
+       JRST   FINFD          ;NO, FIX UP THE FORMAT AND OUTPUT
+       SETZ A,                       ;STOP GETSTR FROM OUTPUTTING A *
+       PUSHJ P, GETSTR        ;GET A STRING
+       MOVE CHRPTR, STRBEG    ;POINT AT THE BEGINNING
+       JRST   SD             ;CONTINUE PARSING     
+      >
+
+
+FINFS:	SKIPA A,[33040,,^D100]	;DECODE UUO
+FINFD:         MOVE A, [OUT. A,-1]    ;OUT. UUO CLC:02-07-74 BR 24185 WAS 5
+       MOVEM A, LIST.+1       ;PLACE I/O UUO AT HEAD OF LIST
+       MOVSI A, FIN           ;LIST TERMINATOR
+       MOVEM A, LIST.+2(C)
+       POPJP=263740           ;POPJ P, .......
+       MOVSI A, POPJP
+       MOVEM A, LIST.+3(C)    ;PLACE THE RETURN
+       MOVEI A, " "           ;
+       DPB A,FMTPTR           ;BLANK OUT THE NEXT COMMA
+       TLNN SW2, SETFLG
+       PUSHJ P, SLOUT
+       PUSHJ P, RTPOUT        ;TERMINATE THE FORMAT WITH A ")"
+	MOVEI A,STRIN.
+	MOVEM A,VADDR.##	;FOR DECODE
+       MOVEI A, FMT13.        ;FORMAT FOR THE LIST
+       SKIPGE                 TRACE.
+       HRRZM C, VALSZ.
+       PUSHJ P, LIST.         ;DO  THE I/O
+SDCR1:         TLZN SW2, DISET        ;IS A GROUP BEING DISPLAYED?
+       JRST   SDXIT          ;NO, EXIT
+       POP P, CHRPTR          ;YES, GET THE SAVED POINTER AND CONTINUE
+       AOSE   TRACE.
+       JRST   SD88           ;PARSING THE ORIGINAL COMMAND STRING
+
+
+
+SDXIT:         SETZM          INHIB.
+       TLZE SW2, DISET
+       POP P, CHRPTR
+       GETM FMTPTR, A         ;NO, RESTORE THE ACS
+       POPJ P,                ;AND EXIT NORMALLY
+
+
+
+
+
+PAGE
+
+              ;GETSS
+
+              ;RETURNS ADRESS MODIFIER IN A
+              ;RETURNS PTR TO ")" IN F FOR STOSYM
+              ;RETURNS WITH CHRPTR AT "]" OR ")"
+
+GETSS:         SAVM B,E
+       PUSH P, SW2            ;SAVE SW2 BECAUSE GETSYM WILL RESET CMAFLG
+       MOVEM CHRPTR,E         ;SAVE PTR TO "("
+       MOVEI B, ")"
+       PUSHJ P, CTCHAR        ;COUNT CHARS UNTIL ")" IS ENCOUNTERED
+       MOVEM CHRPTR, F        ;SAVE A PTR FOR STOSYM
+       IBP    F
+       SKIPE  DIMCT.         ;SAME VAR AS BEFORE?
+       JRST   GSS            ;YES, USE THE OLD MULTIPLIERS
+       IBP    CHRPTR         ;PASS THE  ")"
+       AOS    SKPCT
+       PUSHJ P, SKPBKS        ;PASS ANY BLANKS BETWEEN THE SUBSCRIPTS
+                             ;AND THE DIMENSIONS
+       JSR    ILCHAR, BAD1   ;CR WHERE IT DOESNT BELONG
+       CAIE A, "["            ;IS IT "["?
+ILCXIT:JSR ILCHAR, BAD1        ;
+       PUSH P, CHRPTR
+       MOVEI B, "]"           ;SET THE DEL
+       PUSHJ P, CTCHAR        ;SEARCH FOR IT AND COUNT
+       POP P, CHRPTR          ;RESET CHARACTER POINTER TO THE "["
+       PUSH P, SKPCT          ;SAVE THE NEW SKIP COUNT
+       SETZB C, OFFST.        ;INIT THE DIMENSION CT AND OFFSET
+       IBP    CHRPTR         ;PASS THE DELIMITER, IE, "[" 
+NXTDIM:        PUSHJ P, INTIN         ;GET A DIM IN A
+       MOVE B,  A
+       PUSHJ P, SKPBKS
+       JSR ILCHAR, BAD1
+       CAIN A, "/"            ;EXPLICIT LOWER BOUND SEEN?
+       JRST   NXTD1          ;YES
+       MOVE A, B              ;NO, ASSUME DEL IS "," OR "]"
+       MOVEI B, 1             ;SET UP IMPLICIT LOWER BOUND OF 1
+       JRST   NXTD2
+
+
+NXTD1:         IBP            CHRPTR      ;PASS THE "/"
+       PUSHJ P, INTIN         ;AND GET THE UPPER BOUND
+NXTD2:         SUB A,  B      ;
+       AOSG   A               ;UPPER>=LOWER?
+       JSR ILCHAR, BAD1       ;NO
+       IMUL A, MULS.(C)       ;P(I)=P(I-1)*(U(I)-L(I)+1)
+                             ;(MULS.)=1
+       MOVEM A, MULS.+1(C)
+       MOVEM A, ADRCK.        ;EVENTUALLY STORE P(N) IN ADDRESS CHECK LOC
+       IMUL B, MULS.(C)       ;P(I-1)*L(I)
+       ADDM B, OFFST.         ;ACCUMULATE OFFSET
+       AOS C,  DIMCT.
+       PUSHJ P, SKPBKS        ;GET THE NEXT DEL
+       JSR ILCHAR, BAD1       ;CR SEEN BEFORE "]"
+       CAIE A, "]"            ;MORE DIMENSIONS?
+       JRST NXTDIM            ;YES
+       CAIA                  ;SKPCT HAS ALREADY BEEN PUSHED
+
+GSS:   PUSH P, SKPCT          ;IF WE SAVE SKPCT HERE, THE CHAR SCAN
+                             ;(AND SKIP COUNT) STOPPED AT THE ")"
+       SETZ B,
+       MOVN D, DIMCT.
+       HRLZS  D              ;MAKE D AN AOB WORD
+       EXCH CHRPTR, E         ;SEND THE PTR (POINTING TO "(" ) IN E
+                             ;TO CHRPTR. SEND THE PTR IN CHRPTR
+                             ;(POINTING TO ")" OR
+                             ;"]" DEPENDING ON WHETHER WERE USING
+                             ;OLD MULTIPLIERS) TO E
+
+
+              ;GET A SINGLE SUBSCRIPT
+       IBP    CHRPTR         ;POINT PAST THE "("
+NXTSS:         PUSHJ P, SKPBKS        ;DELIMITER RETURNED IN A
+       JSR ILCHAR, BAD1
+       CAIN A, ")"
+       JSR ILCHAR, BAD1
+       PUSHJ P, ALFCHK        ;SKIP IF NOT ALPHA
+       JRST   VAR            ;ALPHA, SO SUBSCRIPT MUST BE A VARIABLE
+NUM:   PUSHJ P, INTIN
+
+PAGE
+
+
+              ;CALCULATE THE ADDRESS MODIFIER
+GOTIT:         IMUL A, MULS.(D)       ;A(I)*P(I-1)
+       ADD B, A               ;ACCUMULATE THE ADDRESS MODIFIER
+       AOBJN D, NXTSS         ;GET A SS IF THERE IS ONE
+       PUSHJ P, SKPBKS
+       JSR ILCHAR, BAD1       ;EOL FND BEFORE RT PAREN
+       CAIE A, ")"            ;DO WE HAVE A RT PAREN
+       JSR ILCHAR, BAD1       ;NO, SO FAIL
+       SUB B, OFFST.
+       JUMPL B, OUTBND        ;TOO LOW?
+       CAML B, ADRCK.         ;NO, TOO HI?
+       JRST OUTBND
+GOTIT1:        HRRZ A, SW1    ;GET OVERRIDE SW
+       CAIE A, "C"            ;C OR D SW?
+       CAIN A, "D"            
+       CAIA                  ;YES, MUL MODIFIER BY 2
+       CAIL G, 6              ;DOUBLE OR COMPLEX?
+       ASH B, 1               ;YES
+GSSXIT:        POP P, SKPCT   ;RESTORE OLD SKPCT
+       MOVE CHRPTR, E         ;GET SAVED PTR TO "]" OR ")"
+       MOVE A, B
+       POP P, SW2             
+       GETM E,B
+       POPJ P,                ;RETURN WITH ADRESS MODIFIER IN A
+
+
+
+VAR:   PUSHJ P, GETSYM
+       PUSHJ P, EVAL
+       JSR NOSUCH, BAD1
+       TLNE A, 77             ;IS IT INTEGER TYPE?
+       JSR BADTYP, BAD1       ;NO, SUBSCRIPTS MUST BE INTEGER
+       MOVE A, @A             ;GET ITS VALUE
+       JRST   GOTIT
+
+
+OUTBND:        SKIPGE         INHIB.
+       JRST   GOTIT1
+       MOVE CHRPTR, [POINT 7, OBM.]   ;PTR TO MESS
+       MOVE FMTPTR, F13PTR    ;BEG OF FMT
+       PUSHJ P, QUOUT
+OB1:   ILDB A, CHRPTR         ;GET A MESS CHAR
+       IDPB A, FMTPTR
+       JUMPN A, OB1
+       MOVE CHRPTR, -2(P)     ;PTR TO FIRST CHAR OF VAR 
+                             ;WAS IN E
+                             ;(P)=SKPCT
+                             ;(P)-1=SW2
+                             ;(P)-2=E
+       LDB A, CHRPTR
+       IDPB A, FMTPTR
+OB2:   ILDB A,CHRPTR
+       IDPB A,FMTPTR
+       CAME CHRPTR, E         ;STOP WHEN A "]" OR ")" HAS BEEN 
+                             ;STASHED IN THE FORMAT
+       JRST   OB2            ;MORE TO GO
+       PUSHJ P, QUOUT
+       PUSHJ P, RTPOUT        ;TERMINATE THE FMT
+       MOVEI C, FMT13.        ;FOR PUTSTR
+       PUSHJ P, PUTSTR        ;OUTPUT THE MESSAGE
+       SETZM  INHIB.
+       SETZM  TRACE.
+       SETZM  DEFSW.
+       SETZM  NEWVA.
+       MOVE P, FOBPDP
+       JRST   NXTCM.
+
+
+
+
+CTCHAR:        ILDB A, CHRPTR
+       AOS    SKPCT
+       JUMPE A, ILCXIT        ;CR SEEN BEFORE ")" OR "]"?
+       CAME A, B              ;NO, HAVE WE SEEN DEL YET?
+       JRST   CTCHAR         ;NO, LOOK AT NEXT CHAR
+       POPJ P, ;YES, EXIT
+
+
+                            ;BREAK
+
+BREAK:         SETZB SW1, INHIB.
+       LDB A, CHRPTR
+       CAIL A, "0"            ;IS IT A 
+       CAILE A, "9"           ;DIGIT?
+       JRST FINDBP            ;NO, BREAKPOINT NO. NOT SPECIFIED
+                             ;GO ASS IGN A FREE ONE IF POSSIBLE
+       PUSHJ P, INTIN         ;YES,GET THE NO.
+       MOVE D, A
+       CAIL D, 1              ;LEGAL BP
+       CAILE D, BPMAX         ;NUMBER?
+       JSR ILLBP, BAD1        ;NO
+;GOTBP:         PUSHJ P, CLEAR         ;YES,REMOVE PRESENT BP AND CLEAR TABLE
+                             ;CALLED WITH BP NUM IN D
+GOTBP:         PUSHJ P, SKPBKS
+       JRST BRREM1
+        MOVEM   B,TTTT
+        LDB     B,CHRPTR
+        CAIL    B,"0"
+        CAILE   B,"9"
+        JSR     ILLABS,BAD1
+        MOVE    B,TTTT
+        PUSHJ   P,CLEAR         ;CLEAR THAT DAMN BREAKPOINT NOW.
+       PUSHJ P, LOCIN         ;ADDRESS RETURNED IN B
+                             ;CALLED WITH
+                             ;CHRPTR TO FIRST CHAR OF LOC
+       LDB E, [POINT 4, (B), 12]      ;GET THE AC FIELD OF THE
+                             ;LOCATION WE ARE SETTING THE BREAKPOINT IN
+       EXCH E, D
+       CAIE D, 0              ;IS A BP ALREADY THERE?
+       PUSHJ P, CLEAR         ;YES, REMOVE IT
+       DPB E, [POINT 4,(B),12]        ;SET THE NEW BP
+       HRLM B, MASTB.(E)      ;PUT THE BREAKPOINT ADDRESS
+                             ;INTO ITS TABLE
+       HRRZ B, MASTB.(E)      ;GET THE TABLE LOC
+       MOVE FMTPTR, BPTPTR    ;FOR STORING VAR NAMES IN THE TABLE
+SCNXT:         MOVE D, CHRPTR
+SCNTHS:        ILDB A, CHRPTR
+       JUMPE A, LINEND
+BR1:   CAIN A, "@"            ;PROCEED CT IDENT?
+       JRST   SETPRC
+       CAIN A, "!"            ;AUTO PROCEED?
+       JRST   AUTO           ;YES, SET SW
+       MOVNI C, <<BPTLN.-ASC>*5>-2
+       SETZ SW2,
+       PUSHJ P, BRKSTO
+       SETOM  INHIB.         ;SET INHIB FLAG SO DISPLAY JUST CHKS SYNTAX
+       JRST   LINEND
+BRREM1: PUSHJ   P,CLEAR         ;CLEAR THAT DAMN BPT
+        JRST    BR2
+
+
+SETPRC:        IBP            CHRPTR
+       PUSHJ P, INTIN         ;GET PROCEED COUNT
+       MOVEM A, (B)           ;AND SET IT INTO THE TABLE
+       JRST   SCNXT          ;SCAN NXT CHAR
+
+
+
+
+
+
+GRPSTO:        TLZ SW2,  400000
+DEF1:  AOJG C,  BADSD1
+DEF4:  ILDB A, CHRPTR
+BRKSTO:        SKIPN A
+       POPJ P,
+       CAIN A, ","
+       JRST   DEF6
+       CAIE A, " "
+       CAIN A, TAB
+       JRST   DEF5
+       TLZA SW2, 400000
+DEF6:  TLO SW2, 400000
+       IDPB A, FMTPTR
+       JRST   DEF1
+
+DEF5:  JUMPL SW2,  DEF4
+       JRST   DEF6
+
+AUTO:         MOVEI A, 1
+       IORM A, ASC(B)         ;SET BIT 35 OF FIRST ASCII STORAGE WD
+       MOVE D, CHRPTR
+       IBP    D
+       JRST   SCNTHS         ;SCAN THE NEXT CHAR
+
+
+
+LINEND:        PUSHJ P, BLOUT         ;ENSURE A TRAILING BLANK
+       IDPB SW1, FMTPTR       ;STORE A ZERO BYTE AS TERMINATOR
+       SKIPL  INHIB.         ;DUMMY DISPLAY?
+       JRST   MESTST         ;NO
+       MOVE CHRPTR, D
+       PUSHJ P, DISPLAY       ;DUMMY DISPLAY TO CHECK LEG
+                             ;ALITY OF VARS
+
+
+MESTST:        JUMPGE SW1, BREXIT     ;SHALL WE SHOW THE BR NO.?
+       MOVE FMTPTR, F7PTR.    ;YES,GET A PTR TO WHERE THE
+                             ;NO. SHALL GO
+       MOVE A, E
+       PUSHJ P, INTOUT        ;PUT BP NO. IN FMT
+       PUSHJ P,BLOUT
+       MOVEI C, FMT7.
+       PUSHJ P, PUTSTR
+BREXIT:        POPJ P,        ;RETURN
+
+
+FINDBP: MOVEI D, 1
+LP1:   HLRZ A, MASTB.(D)      ;BP IN USE?
+       JUMPE A, FREEBP        ;NO, ITS FREE
+       CAMG D, BPMAX          ;CHECKED THEM ALL?
+       AOJA D, LP1            ;NOT YET
+       PUSHJ P, SKPBKS
+       JRST   BR22           ;NOTHING MORE TO THE COMMAND SO
+                             ;REMOVE ALL THE BREAKPOINTS
+       JSR ILLBP, BAD1        ;NONE AVAIL
+
+
+FREEBP:        TLO SW1, 400000        ;FREE BP FOUND
+       JRST   GOTBP          ;SO GO ASSIGN IT
+
+
+
+
+
+PAGE
+              ;CALLED WITH THE BP NO. IN D
+
+CLEAR:         SAVM  A,C
+       MOVS A, MASTB.(D)      ;GET LOC OF BP IN F40 PROG
+       HRRZS B, MASTB.(D)
+       SETZB C, @MASTB.(D)
+       TRNE A, -1
+       DPB C, [POINT 4, (A), 12 ]
+       HRRI A, 1(B)
+       BLT A, BPTLN.-1(B)
+       GETM  C,A;RESTORE
+       POPJ P,                ;AND RETURN
+
+
+
+BR2:   JUMPGE SW1, BREXIT     ;WAS A SPECIFIC BP REMOVED?
+BR22:  MOVEI D, BPMAX         ;NO, REMOVE ALL
+BR3:   PUSHJ P, CLEAR         ;ONE AT A TIME
+       SOJG D, BR3            ;MORE TO REMOVE?
+       JRST   BREXIT         ;NO, RETURN
+PAGE
+
+IFNDEF SHARE, <
+
+BPCHK:         JUMPE I,@UUOH.         ;NO BREAKPOINT SO EXIT
+BRPTR1:        HRRZ A, UUOH.  ;SAVE RETURN SINCE
+       MOVEM A, SAVRE.        ;TWAS NOT DONE EARLIER
+       MOVE P, FOBPDP         ;REFRESH PDP
+
+BRPTR2:	CAIN I,17
+	JRST NXTCM.	;SPECIAL BREAKPOINT, NO MESSAGE
+	MOVEM I,CURBP.
+       HRRZ B, MASTB.(I)
+       SOSLE  (B)            ;ACTIVE PROCEED COUNT?
+       JRST   EXIT2.         ;YES, DONT STOP YET
+       PUSHJ P, IMAT          ;TYPE THE LOCATION AND BP NO.
+       HLL CHRPTR, STRBEG     ;BUILD A PTR
+       HRRI CHRPTR, ASC(B)    ;TO THE FIRST ASCII STORAGE LOC
+       MOVE A, ASC(B)         ;GET FIRST WORD OF ASCII STORAGE
+       TLNE A, -1             ;ANY ASCII IN STORAGE?
+       PUSHJ P, DISPL         ;YES, DISPLAY ALL OF IT
+       TRNN A, 1              ;NO, AUTO PROCEED MODE?
+       JRST   NXTCM.         ;NO, GET A NEW COMMAND
+       JRST   EXIT2.         ;YES, BE ON OUR WAY
+
+
+>
+
+PAGE
+
+              ;STATUS
+
+STATU:         MOVE D,R50NM.  ;SAVE PROGRAM NAME
+STAT1:         MOVE FMTPTR, F13PTR
+       PUSHJ P,QUOUT          ;
+       PUSHJ P,SKPBKS
+       JRST   STAT2
+       PUSHJ P,INTIN          ;A BP N0.
+       CAIL A,1               ;LEGAL? A NONDIGIT WILL
+       CAILE A,BPMAX          ;CAUSE INTIN TO RETURN
+       JSR ILLBP,BAD1         ;A ZERO RESULTING IN ILLBP
+       MOVE E,A               ;
+       HLRZ C,MASTB.(E)       ;BP LOC
+       JUMPE C,STAT1          ;IS IT ASSIGNED?
+       EXCH E,CURBP.
+       ADDI C, 1              ;POINT AT THE LOC AFTER THE STL
+       EXCH C,SAVRE.          ;   LOCOUT NEEDS IT
+       PUSHJ P,  BLOUT
+       PUSHJ P,LOCOUT         ;PUTS STATMT IDENT AND BP NO. IN FMT
+       EXCH E,CURBP.          ;RESTORE
+       MOVEM C,SAVRE.         ;RESTORE
+       MOVEI C, " "
+       IDPB C, FMTPTR
+       PUSHJ P,PUTSYM         ;PROGRAM NAME IN FMT
+       PUSHJ P,BLOUT          ;SPACE
+       HRRZ C,MASTB.(E)       ;TABLE LOC
+       SKIPG A,(C)            ;PROC CT POS?
+       SETZ A,
+       PUSHJ P,INTOUT         ;PROC CT IN FMT
+       PUSHJ P,QUOUT
+       PUSHJ P, RTPOUT
+       MOVEI C,FMT13.
+       PUSHJ P,PUTSTR
+       JRST   STAT1
+
+
+
+STAT2:         MOVE A,D
+       PUSHJ P,SETNM1         ;RESET ORIGINAL NAME
+       POPJ P,                ;RETURN
+
+PAGE
+
+              ;GROUP, DEFINE
+
+GROUP:
+DEFIN: PUSHJ P, INTIN          ;GRP ID
+       MOVNI C, SETSZ.-2      ;
+       CAIL A, 1
+       CAILE A, SETS.
+       JSR ILLSET, BAD1       ;ILLEGAL GRP IDENT
+       CAMN A, VALST.         ;IS THIS GRP IN USE BY VAL TRACE?
+       JSR INUSE, BAD1        ;YES, IT CANT BE MODIFYED
+       SETZ SW2,
+       MOVE FMTPTR, SETTB.(A)         ;STORAGE AREA
+DEF2:  MOVE D, CHRPTR
+       PUSHJ P, GRPSTO
+
+
+DEF3:  SETOM  INHIB.
+       SETOM  DEFSW.         ;MAKE GROUP IDENTIFIERS FAIL
+       MOVE CHRPTR, D
+       PUSHJ P, DISPL         ;DUMMY DISPLAY TO CHECK SYNTAX
+       SETZM  DEFSW.
+IFDEF CONT,<   LDB A, FMTPTR
+       CAIE A, ","
+       JRST   DEFXIT
+       SETZ A,                       ;INHIBIT ASTERISC
+       PUSHJ P, GETSTR        ;GET A STR, AND NOTE THAT (A)=0
+                             ;TO INHIBIT OUT PUT OF AN ASTERISC
+       MOVE CHRPTR, STRBEG
+       JRST   DEF2      >
+
+
+DEFXIT:        PUSHJ P, BLOUT         ;ENSURE A TRAILING BLANK
+       IDPB SW2, FMTPTR       ;AND A ZERO BYTE
+       POPJ P,
+
+PAGE
+
+              ;NEXT
+NEXT:  MOVSI A, NXTFL.
+       IORM A, TRPFL.
+       MOVEI B, 1
+       PUSHJ P, SKPBKS
+       SKIPA A, B
+       PUSHJ P, INTIN
+       MOVEM A, NXTCT.        ;SET "NEXT" COUNTER
+       JUMPG A, EXIT2.
+       JSR ILCHAR, BAD1
+
+PAGE
+                             ;PERFORM
+                             ;DOLO IS FIRST STL IN DO LOOP
+                             ;DOHI IS LAST STL IN DOLOOP
+PERFO:  PUSHJ P, SKPBKS
+       JSR NOSTMT, BAD1
+       PUSHJ P,LOCIN          ;GET ADDRESS IN B
+       MOVEM B,DOLO.          ;LOC OF PRECEEDING STL
+                             ;LOWER LIMIT OF POSSIBLE DO LOOP
+                             ;PRGHI CONTAINS LOC OF HIGHEST
+                             ;STL IN PROGRAM
+                             ;PRGLO CONTAINS LOC OF LOWEST
+       ADDI B, 1              ;GET PAST THE STL.
+       EXCH B,SAVRE.          ;FOR EXIT
+       MOVEM B,PERRE.         ;PRGHI AND PRGLO ARE BOTH
+                             ;SET BY NAME 
+       MOVE B,DOLO.
+                             ;SEARCH FOR A MOVEM 15,....
+PER1:  HLRZ A,1(B)            ;GET THE LOCAAFTER THESTL
+                             ;THE FIRST TIME THRU
+       CAIN A,MVEM15          ;MOVEM 15,...?
+       JRST   SEEK1          ;YES,LOOK FOR A JUMPXTO THE
+                             ;MOVEM 15,...
+PER2:  TRZ A,ACBITS           ;BITS 9-L2
+       CAIE A,STL             ;014000
+       AOJA B,PER1
+       JRST   NODO
+SEEK1:         MOVEI D,1(B)   ;SAVE LOC OF MOVEM 15
+SEEKTR:        MOVE C,(B)     ;GET AN INSTRUCTION
+                             ;FIRST TIMETHRU WE GET THE 
+                             ;ONE BEFORE THE MOVEM 15
+       CAIE D,(C)             ;DOES THE ADDRESS FIELD 
+                             ;REFERENCE THE MOVEM?
+       AOJA B,SEEKTR          ;NO.TRY THE NEXT
+PER3:  HLRZS                  C      ;YES,SET UP TO EXAMIN LH
+       CAIN C,254000          ;JRST INSTRUCTION?
+       JRST   YESDO          ;YES
+       TRZ C,ACBITS+007000    ;DROP HC FIELD 
+                             ;AND LAST 3 BITS OF OP CODE
+       TRNN C,410037          ;AS IT UNINDEXED,DIRECT
+                             ;AND COULD IT BE THE JUMP GROUP?
+       CAIG C,310000          ;COULD BE,IS IT A JUMPX
+                             ;AOJX,SOJX
+       AOJA B,SEEKTR          ;NO,THE OP CODE IS TOO SMALL
+                             ;ITS PROBABLY A FORMAT
+       LDB C,[POINT 9,1(B),8]         ;YES,GET THE OP
+                             ;CODE FIELD OF THE NEXT LOC
+       CAIE C,14              ;IS IT AN STL?
+       CAIN C,21              ;NO,A FIN?
+       JRST   YESDO          ;BELIEVE THE OP CODE
+       HALT                  ;SOME THING IS HAPPENIN HERE
+                             ;WHAT IT IS AINT EXACTLY CLEAR
+NODO:  SETZB                  B,DOHI.     ;DONT TREAT AS A DO
+YESDO:         MOVEM B,DOHI.  ;LAST LOOP LOC 
+                             ;(PRECEEDS STL)
+       MOVE B,PROGH.
+       MOVEM B,PERPH.
+       MOVE B,PROGL.
+       MOVEM B,PERPL.
+       MOVSI B,PERFL.         ;SET PERFORM FLG
+       ORM B,TRPFL.           ;INTO TRAP FLAG LOC
+       MOVE B,R50NM.
+       MOVEM B,PERPN.
+       MOVE B,NXTCT.
+       MOVEM B,OLDNX.
+       SETOM                  NXTCT.
+       JRST   EXIT3.         ;EXIT WITHOUT CLEARING
+                             ;CURBPN
+PERTR.:        MOVE B,SAVRE.
+       CAML B,PERPL.
+       CAMLE B,PERPH.
+       POPJ P,                ;RETURN TO TRAP HANDLER
+                             ;WE MUST BE IN A SUBPROGRAM
+       CAMLE B,DOLO.          ;IS
+       CAMLE B,DOHI.          ;A DO LOOP BEING"PERFORMED"?
+       JRST   PT1            ;JO,STOP
+       POPJ P,                ;YES,DONT STOP NOW
+                             ;RETURN TO TRAP HANDLER
+PT1:   MOVE B,PERRE.
+       MOVEM B,SAVRE.         ;RESTORE ORIGINAL RETURN
+       POP P,                 ;ACCOUNT FOR PUCHJ FROM TRAPHANDLER
+       MOVSI B,PERFL.
+       XORM B,TRPFL.          ;RESET PERFLG
+       MOVE A,PERPN.          ;GET ORIG PROG NAME
+       PUSHJ P,SETNM1         ;AND SET IT
+       MOVE A,OLDNX.
+       MOVEM A,NXTCT.
+       JRST   NXTCM.         ;FINISHED GET ANOTHER COMAND
+
+
+
+PAGE
+                             ;VALUE TRACE
+                             ;ASSUMES DATA+1 IS ADDR OF OTHER PART
+                             ;OF DOUBLE PREC VARS
+VALTR.:PUSH P, B
+       SETZB E, NEWVA.
+       MOVE C,VALSZ.
+VT3:   MOVE D,ADRSV.-1(C)     ;GET AN ADDRESS AND
+       MOVE A,(D)             ;THE DATUM FROM PROGRAM
+       CAMN A,VALSV.(E)       ;DOES IT EQUAL THE SAVED ONE?
+       JRST   VT5            ;YES
+       MOVEM A,VALSV.(E);NO, UPDATE
+       MOVEM C,NEWVA.         ;OUR COPY OF THE VAR
+                             ;CONTINUE TO UPDATE ALLVARS IN
+                             ;VALSAV EVEN THOUGH WE ONLY 
+                             ;TYPE ONE
+VT5:   TLNN D,000300          ;YES,IS IT A DOUBLE WORD VA?
+       AOJA E,VT2             ;NO,JUST INCR E BY 1
+       MOVE A,                1(D)
+       CAMN A,VALSV.+1(E)
+       JRST   VT6
+       MOVEM A,VALSV.+1(E)
+       MOVEM C,NEWVA.
+VT6:   ADDI E,2
+VT2:   SOJG C,VT3
+       SKIPG  NEWVA.
+       JRST   VTXIT          ;NO DIFERENCES RETURN TO
+                             ;TRAP HANDLER
+       PUSHJ P,IMAT           ;TYPES THE CURRENT LOC
+       MOVE F,VALST.          ;NO OF THE SET BEING TRACED
+       MOVE CHRPTR,SETTB.(F)  ;SET UP FOR DISPLAY
+       IBP    CHRPTR
+       MOVE A, NAMSV.         ;GET THE NAME OF THE PROG IN WHICH THE
+                             ;GRP WAS DEFINED
+       CAME A, R50NM.         ;IS IT THE SAME AS THE CURRENT PROG?
+       PUSHJ P, SETNM1        ;NO, RENAME THE CURRENT PROG
+       PUSHJ P,DISPL          ;DISPLA TH VARIABLE THAT
+                                    ;WAS DIFFERENT FROM BEFORE
+       SETZM                  NEWVA.      ;RESET TRACE FLAG SO DISPLA
+                             ;WILL WORK NORMALLY
+VTXIT:         POP P,B        ;RESTORE B
+       JRST   DE1                   ;RETURN TO THE TRAP HANDLER
+
+
+
+VALUE:         MOVE B,CHRPTR  ;SAVE CHRPTR FOR DISPLA
+       PUSHJ P,SKPBKS
+       JRST   VALOFF
+       PUSHJ P,INTIN          ;GET THE SET NO.
+       CAIL A,1               ;IF IT IS
+       CAILE A,SETS.          ;ONE!
+       JSR ILLSET,BAD1        ;IT ISNT
+       SETOM  TRACE.
+VAL1:  MOVE CHRPTR,B          ;RESTORE CHRPTR FOR DISPLA
+       MOVEM A,VALST.         ;SSVE SET NO FOR INTERUPT PART
+       PUSHJ P,DISPL
+       MOVE A, R50NM.         ;IF WE MADE IT THIS FAR ALL THE VARS
+                             ;IN THE GROUP ARE DEFINED IN THE CURRENT
+                             ;PROGRAM
+       MOVEM A, NAMSV.        ;SO SAVE THE CURRENT PROGRAM NAME
+       SETZ E,
+       MOVE C,VALSZ.          ;SAVE NO OF VARS
+       MOVE F,C               ;SAVE C
+VAL3:  LDB B,[POINT 4,LIST.+1(C),12]  ;DATUM TYPE
+       MOVE D,LIST.+1(C)      ;GET DATUM ADRES
+       MOVE A,(D)             ;GET ONE DATUM WORD
+       MOVEM A,VALSV.(E)      ;SAVE IT
+       CAIGE B,6              ;DOUBLE WORD?
+       AOJA E,VAL2
+       MOVE A,1(D)            ;GET OTHER PART
+                             ;IF ANY VARIABLES ARE =,
+                             ;THEN ALL GET DISPLAYED
+                             ;ONLY SETS ARE ALLOWED
+       MOVEM A,VALSV.+1(E)
+       ADDI E,2
+VAL2:  SOJG C,VAL3
+                             ;BLT ALL THE ADRESES +.ADRSAV BLOCK
+       MOVE A,[XWD LIST.+2,ADRSV.]
+       BLT A,ADRSV.-1(F)
+       MOVSI A, VTFL.
+       IORM A, TRPFL.
+       POPJ P,                ;RETURN
+
+
+
+VALOFF:        MOVSI A,VTFL.
+       SETZM  VALST.
+       ANDCAM A,TRPFL.        ;RESET
+       POPJ P,                ;RETURN
+
+
+
+PAGE
+                             ;FLOW
+FLOW:  MOVSI B,FTFL.
+       ANDCAM B,TRPFL.        ;TURN OFF FLO TRAC FLG
+       SETZM                  ALLFL.      ;ALSO ALLFLG
+       PUSHJ P,SKPBKS         ;SKIP TO AN ARG
+       POPJ P,                ;EXIT WITH FLO TRACE OFF
+       IORM B,TRPFL.
+       CAIN A,"P"             ;PROGRAMMER LABELS ONLY?
+       POPJ P,                ;YES,EXIT WITH ALLFLG OFF
+       CAIE A,"A"             ;ALL STATEMENTS?
+       JSR ILCHAR,BAD1        ;NONE OF THE ABOVE
+       SETOM ALLFL.           ;YES,TRACE ALL
+       POPJ P,
+
+
+
+FLOTR.:     SETZ C,
+       MOVE A,SAVRE.
+       CAML A,PROGL.
+       CAMLE A,PROGH.
+       SETO C,
+
+
+
+FT1:        HRRZ A,-1(A)   ;GET STL ADR FLD
+       JUMPG A,FT2
+       SKIPL                  ALLFL.      ;SHALL WE TYPE AN IDENTIFIER
+       POPJ P,;NO
+FT2:   TLNE B,FRSTM.
+       POPJ P,                       ;FORGET FIRST STMT OF NEW CHAIN LINK
+       MOVE FMTPTR,F13PTR
+       PUSHJ P, SLOUT
+       PUSHJ P,QUOUT
+       PUSHJ P,BLOUT
+       PUSHJ P,LOCOUT         ;PUTS OUT CURRENT LABEL
+       SKIPE  C              ;DIFFERENT NAME FROM BEFORE?
+       PUSHJ P, PUTSYM        ;YES, TYPE IT OUT
+       PUSHJ P,QUOUT
+       PUSHJ P,RTPOUT         ;RIGHT PAREN AND ZERO
+       MOVEI C,FMT13.
+       PUSHJ P,PUTSTR 
+       POPJ P,                ;RETURN TO TRAP HANDLER
+PAGE
+                             ;GO
+
+
+
+
+
+GO:    IBP    CHRPTR
+       PUSHJ P,SKPBKS
+       JRST EXIT2.            ;CONTINUE EXECUTION
+       CAIE A,"@"             ;ALTERING THE PROCEED COUNT?
+       CAIN A, "!"
+       JRST   GO2
+
+
+
+              ;DETERMINE IF REQUESTED TRANSFER IS ALLOWED
+
+
+GO3:         PUSHJ P,ALFCHK         ;SKIP RETT IF NOT ALFA
+       JRST   GO5            ;PROBABLY"GO START"COMMAND
+       MOVE C, SAVRE.
+       MOVE A,[RADIX50 0,MAIN.]
+       CAMN A,R50NM.          ;MAIN PROGRAM?
+       JRST   GO1            ;YES,CHECK FOR DO
+                             ;WE CAN ALWAYS TRANSFER
+                             ;FROM A SUBPROGRAM TO 
+                             ;THE MAIN PROGRAM
+                             ;NO, ENSURE THAT EXECUTION LAST
+                             ;OCCURRED IN THE PRESENTLY
+                             ;NAMED SUBPROGRAM
+       CAML C,PROGL.
+       CAMLE C,PROGH.
+       JSR GOPROB,BAD1        ;INTRA PROGRAM TRANFERS
+                             ;ARE IILLEGAL
+
+
+          ;COMMAND NEEDS A STATEMEET IDENTIFIER
+
+              ;WE MAY NOT TRANFER INTO A DO LOOP FROM
+              ;OUTSIDE IT OR TRANSFER INTO A SUBPROGRM
+GO1:   PUSHJ P,LOCIN          ;GET TARGET ADDRESS IN B
+IFDEF DONOGO,<                            ;DETERMINE WHETHER WE TRANSFER INTO
+                             ;A  DO LOOP GOING FROM(SAVRE)TO(B)
+       MOVE E, B              ;SAV EXIT ADR
+       MOVE D,P               ;FOR THE FIRST TIME THRU
+                             ;D IS A POINTER TO THE 
+                             ;TARGET ADDRESS NOW.D WILL BE
+                             ;A POINTER TO THE MOVEM 15...MOST
+                             ;RECENTLY STORED
+       CAMGE C,B              ;(SAVRET)LESS THAN(TARGET)?
+       EXCH C,B               ;YES,START AT SAVRET ,WORK TOWARDS
+                             ;TARGET.ALWAYS WORK TOWARDS HIGHER ADDRESS
+
+
+
+           ;SCAN FOR MOVEM 15,...S AND 
+              ;REFERENCES TO THEM
+GO7:   CAMG C,B               ;NO,WORK FROM TARGET TOWD SAVRET
+       JRST   GO6            ;WEVE ARRIVED.SEE IF WE'VE
+                             ;HAD AN ILLEGAL DO BOUNDRY CROSSING
+
+              ;LOOK FOR REFERENCE TO MOVEM15
+       HRRZ A,(B)             ;GET ADR FLD OF AN INSTRUCTION
+       CAMN A,(D)             ;DOES THE PRESENT LOC REFERNC
+                             ;THE LAST MOVEM 15 ENCOUNTERED?
+       JRST   GO9            ;YES,SEE IF IT IS A JRST ORJUMP
+                            ;GROUP INTRUCTION
+
+
+
+                             ;LOOK FOR A MOVEM 15
+GO8:   HLRZ A,(B)             ;GET OP CODE OF PROG LOC
+       CAIN A,MVEM15          ;FIND A MOVEM15..?
+       PUSH D,B               ;YES,STORE THE  ADS OFANOTHER MOVEM15
+GO10:  AOJA B,GO7             ;NO,KEEP LOOKIN FOR
+                             ;MOVEM 15 AND REFERENCES TO ONES THAT
+                             ;HAVE BEEN FOUND
+
+
+
+
+
+
+
+          ;DETERMINE WHETHER THE LOC WHOSE RH
+              ;REFERENCES A PREVIOUSLY FOUND 
+              ;MOVEM 15,... IS AN INSTRUCTION
+              ;THAT TERMINATES A DO
+GO9:   HLRZ A,(B)             ;INSTR FLD
+       CAIN A,254000          ;A JRST?
+       JRST   GO11           ;YES
+       TRNE A,007000          ;3RD DIGIT 0?
+       TRNE A,410037          ;INDEXED,INDDIRECT
+                             ;2ND DIGIT ODD?
+                             ;OR OP CODE TOO BIG?
+       JRST   GO10           ;YES,CANT TERMINATE
+                             ;A DO LOOP MUST HAVE
+                             ;BEEN FORMAT OR DATA?
+       CAILE A,300000         ;IN THE JUMP GROUP?
+GO11:  POP D,A                       ;YES,AFTER ALL THIS 
+                             ;CHECKING IT MUST BE ONE OF THE
+                             ;ONES WE WANT -SHORTEN THE LIST
+       JRST   GO10           ;GO CHECKTHE NEXT LOC
+
+
+
+GO6:   CAMGE D,P              ;DID WE POP MORE THAN*
+                             ;WE PUSHED?
+                             ;TAKE THESE OUT EVENTUALLY*
+       HALT                  ;YES,WE SHOULD GET HERE*
+       CAME D,P               ;NO,DID WE POP AS MANY
+                             ;AS WE PUSHED?
+       JSR GOPROB,BAD1        ;NO,WE ARE TRYING
+                             ;TO TRANSFER INTO A DO LOOP
+       MOVEM E, SAVRE.
+
+>
+IFNDEF DONOGO,<MOVEM B, SAVRE.>
+       JRST   EXIT2.         ;CONTINUE EXECU OF THE 
+                             ;FOOTRAN PROGRAM
+
+
+GO2:         SKIPG D, CURBP.
+       JSR NOTBRK, BAD1
+       HRRZ D, MASTB.(D)      ;GET TBL LOC FOR THIS BP
+       CAIE A, "!"            ;ARE WE SETTING AUTO PROCEED?
+       JRST   GO4            ;NO, ASSUME A PROCEED COUNT
+       MOVEI A,  1
+       IORM A,  ASC(D)
+       JRST   GO
+
+
+GO4:   IBP    CHRPTR         ;PASS THE "@"
+       PUSHJ P, INTIN         ;AND GET THE PROCEED COUNT
+       MOVEM A, (D)           ;AND SET IT INTO THE TABLE
+       JRST   GO
+
+GO5:  CAIE A,"S"
+       JSR ILCHAR,BAD1
+       JRST   START
+
+
+PAGE
+              ;START
+START:  MOVE    A,TRPFL.
+        MOVEM   A,CURBP.        ;SAVE IT WHILE WE RESET FOOTRAN
+               RESET.
+        MOVE    A,CURBP.
+        MOVEM   A,TRPFL.
+       SETZM  CURBP.
+       SETZM   NXTCT.          ;TO BYPASS NORMAL DEBUG ENTRY FROM START
+       HRRZ A,JOBSA           ;GET NORMAL STARTING ADDRESS
+       JRST   1(A)           ;SKIP THE RESET SO WE WONT
+                             ;STOP AT THE FIRST STL AND VAMOOSE
+
+
+PAGE
+
+              ;WHERE
+
+WHERE:         PUSHJ P, IMAT
+       POPJ P,
+PAGE
+
+              ;LOCIN
+
+LOCIN:         SAVM C,D
+       SETZ D,                ;UPWARDS
+       LDB B, CHRPTR
+       CAIN B, "."            ;IS IT A PERIOD?
+       JRST   PROPER
+       MOVE C, CHRPTR         ;NO, SET UP C SO WE CAN
+                             ;EXAMINE THE NEXT SYMBOL WITHOUT
+                             ;DISTURBING CHRPTR
+LOC1:  CAIL B, 0
+       CAILE B, "9"
+       JRST   IVADEL         ;NO, DELIMITER OF BASE PART ,CHECK IT
+       ILDB B, C              ;YES, GET NEXT CHAR THROUGH TEMP CHAR PTR
+        CAMN    C,[POINT 7,STRNN.,6]    ;PAST END OF STRN.?
+        JRST    IVAD1                   ;YEP SURE ARE
+       JRST   LOC1           ;NO DELIMITER SEEN YET, KEEP LOOKING
+
+
+
+IVADEL:        CAIN B, "P"    ;IS DEL A "P"?
+       JRST   IVA1
+IVAD1: MOVE B, PROGL.         ;NO, MUST BE AN UNLABELED ABSOLUTE STMT CT
+       PUSHJ P, INTIN
+       MOVN C, A
+       AOJA C, AMATCH
+
+
+IVA1:  PUSHJ P, GETSYM        ;GET THE STATEMENT LABEL
+       PUSHJ P, EVAL          ;AND THE ADDRESS
+       JSR NOSTMT, BAD1
+       MOVE B, A
+LOC2:  LDB A, CHRPTR
+       CAIN A, "+"
+       JRST   RELI1
+       CAIE A, "-"
+       JRST    AM1
+       SETOM  D              ;FLAG FOR DOWNWARD SEARCH
+RELI1:         IBP            CHRPTR      ;GET PAST THE PLUS OR MINUS
+
+              ;B NOW HAS THE BASE PART, EITHER FROM
+              ;A LABEL OR "."
+              ;RELATIVIZED IDENTIFIERS DROP DOWN FROM
+              ;ABOVE WHILE AN ABSOLUTE STATEMENT COUNT
+              ;CAUSES A JRST HERE
+RELI:  PUSHJ P, INTIN         ;GET THE RELATIVE PART(OR ABS STMT CT)
+       MOVN C, A              ;NEGATE IT FOR THE AOJ LOOP
+GETOPC:        CAMGE B, PROGH.
+       CAMGE B, PROGL.
+       JSR NOSTMT, BAD1       ;WE HAVE SEARCHED BEYOND THE
+                             ;PROGRAM AREA WITHOUT FINDING THE
+                             ;STL WE WANTED
+       HLRZ A, (B)            ;GET OP CODE
+       TRZ A, ACBITS
+       CAME B, PROGL.
+       CAIN A, STL            ;AN STL?
+       JRST   AMATCH         ;YES
+TRYNXT:        SKIPL          D      ;ARE WE SEARCHING UPWARD OR DOWNWARD?
+       AOJA B, GETOPC         ;UPWARD
+       SOJA B, GETOPC         ;DOWNWARD(REL PART NEG)
+
+
+
+PROPER:        HRRZ B, SAVRE.
+       SUBI B, 1
+       CAMGE B, PROGH.
+       CAMGE B, PROGL.
+       JSR NONAME, BAD1
+       IBP    CHRPTR         ;POINT PAST THE "."
+       JRST   LOC2           ;GET THE REST OF THE IDENTIFIER
+
+
+AMATCH:        AOJLE C, TRYNXT        ;LOOK FOR ANOTHER UNLESS WE HAVE ENOUGH
+AM1:   GETM D,C
+       POPJ P,                ;RETURN
+
+PAGE
+                             ;LOCOUT
+                                    ;BLANKS THE PART OF THE FORM WE ARE
+                             ;GOING TO USE
+                             ;CALLED WITH FMTPTR POINTING TO
+                             ;THE LAST CH AR STORED
+                             ;RETURNS R50 PROG NAME IN A
+                             ;DOES NAME COMMAND
+
+
+LOCOUT:        SAVM B,D
+       HRRZ B,SAVRE.
+
+              ;SEARCH FOR THE FIRST EXECU
+              ;STL OF THE PROGRAM WERE IN
+LOCO5:         HLRZ A,(B)     ;GET LH OF A PROG LOC
+       TRZ A,ACBITS           ;ZERO A POSSIBL BP NO.
+       CAIE A,STL+INDEX       ;IS IT AN STL WITH 17
+                             ;IN INDEX FLD?
+       SOJA B,LOCO5           ;NO,TRY ANOTHER
+        HLRE    C,JOBSYM
+        MOVN    C,C
+        ADD     C,JOBSYM
+        HRRZ    C,C             ;TOP OF SYMBOLS
+LOCO6:  SUB     C,[2,,2]        ;MOVE DOWN ONE
+        MOVE    A,(C)           ;GET NAME
+        CAMN    A,[-1]
+        JRST    [SKIPE C,1(C)   ;LINK, GET NEXT
+                JRST LOCO6
+                HALT]
+        CAMN    B,1(C)          ;CHECK FOR RIGHT LOC
+        CAME    A,TEN1M         ;AND A 1M LABEL
+        JRST    LOCO6           ;NOT YET
+        MOVE    A,2(C)
+        TLNE    A,PNAME
+        MOVE    A,4(C)          ;GET PROGRAM NAME
+       MOVE D, A              ;SAVE FOR THE RETURN
+       PUSHJ P,SETNM1         ;IMPLICIT NAME COMMAND
+
+
+
+
+
+                             ;COUNT STLS BACK TIL A LABELED
+                             ;ONE CAN BE FOUND
+       HRRZ C,SAVRE.          ;ADR +1 OF LAST STL TRAPED
+       SETZ B,                ;ZERO THE STMT COUNT
+                             ;NOTE THE FIRST OP CODE
+                             ;WE GET WILL BE FROM 
+                             ;LOC AFTER THE TRAPED STL
+LOCO1:         LDB A, [POINT 9,-1(C),8]    ;GET A OP CODE CANDIDATE 
+       CAIE A,14              ;AN STL?
+LOCO2:         SOJA C,LOCO1   ;NO,LOOK AGAIN
+       HRRZ A, -1(C)          ;YES,EXAMIN THE ADR FLD
+       JUMPN A,LBLPLS         ;ANYTHING HERE?
+       LDB A,[POINT 5,-1(C),17]       ;NO,GET INDEX FLD
+                             ;AND INDIRECT LOCATION
+       CAIE A,17              ;IS IT AT "1M"?
+       AOJA B,LOCO2           ;NO,BUT COUNT THE ONES
+                             ;WE FOUND + KEEP LOOKING
+       AOJA B,ABSNO           ;YES,PUT OUT AN ABSOLUT
+                             ;NO. OF STMTS FROM THE BEGININ
+
+
+
+LBLPLS:     PUSHJ P,INTOUT         ;MAKE LABEL ASC
+       MOVEI A,"P"            ;AND PUT IT IN FMT
+       IDPB A,FMTPTR          ;PUT A "P"IN FMT
+       JUMPE B, ABSNO1
+       MOVEI A,"+"
+       IDPB A,FMTPTR          ;PUT"+"IN FMT
+
+
+
+ABSNO:      MOVE A,B;GET THE STATEMENT COUNT
+       PUSHJ P,INTOUT         ;PUT STMT COUNT IN FMT
+ABSNO1:        SKIPG          CURBP.
+       JRST   LOCOX
+       MOVEI A, " "
+                             ;LEAVE BLK IN A
+       MOVE B,[POINT 7,BPNO]; POINTER TO 
+                             ;MESSAGE "BPNO"
+LOCO9:         IDPB A,FMTPTR  ;"BPNO"
+       ILDB A,B               ;GET A CHAR OF THE MESS
+       JUMPG A,LOCO9
+       MOVE A, CURBP.
+       PUSHJ P,INTOUT
+LOCOX:         PUSHJ P, BLOUT
+       MOVE A, D              ;RETURN WITH R50 NAME IN A
+       GETM D,B
+       POPJ P,
+PAGE
+
+              ;SKPBKS
+
+       ;SKIPS BLANKS, TABS, AND COMMAS. SETS A FLAG WHEN
+       ;ENCOUNTERING COMMAS
+       ;NORMAL RETURN IS A SKIP, NO SKIP IF CR SEEN
+       ;LEAVES CHRPTR AT THE LAST CHAR SEEN WITH THE CHAR
+       ;IN A
+       ;CHRPTR SHOULD INITIALLY BE AT THE FIRST CHAR
+       ;TO BE INSPECTED
+       ;RESETS RH OF SW2 WHEN A COMMA IS SEEN
+       ;INTERPRETS A ZERO BYTE AS A CARRIAGE RETURN
+
+
+IGNOR1:        TLZ SW2, CMAFLG
+IGNORE: AOS    SKPCT          ;INCR SKIP COUNT
+       IBP    CHRPTR
+SKPBKS: LDB A, CHRPTR
+       JUMPE A, CRXIT         ;END OF STRING?
+       CAIE A, " "            ;NO, A BLANK?
+       CAIN A, TAB            ;NO, A TAB?
+       JRST   IGNOR1         ;YES, BLANK OR TAB
+       CAIE A, ",";A COMMA/
+       JRST   XIT            ;NO ,MUST BE SOMETHING WORTH STOPPING
+                             ;FOR
+       TLO SW2, CMAFLG        ;YES, SET COMMA FLAG
+       HLLZS  SW2            ;TURN OFF THE OVER RIDE SW
+       JRST   IGNORE         ;GET ANOTHER CHAR
+
+
+
+XIT:   AOS    (P)
+CRXIT:         POPJ P,
+
+PAGE
+
+              ;INTIN
+       
+
+       ;INPUTS SIGNED AND UNSIGNED INTEGERS FROM STRIN
+       ;FIRST DOES A PUSHJ P, SKPBKS
+       ;RETURNS CHR IN A, WITH CHRPTR AT THE DELIMITER
+       ;INCREMENTS SKIP CT ONCE FOR EACH CHAR READ EXCEPT
+       ;THE FIRST AND THE DELIMITER AT THE END
+
+INTIN:         SAVM B, C
+       PUSHJ P, SKPBKS        ;SKIP ANY LEADING BLANKS
+       JSR ILCHAR, BAD1
+       SETZB B, C             ;B IS A FLAG, THE NUMBER IS BUILT IN C
+GET:   LDB A, CHRPTR          ;GET A CHAR
+       PUSHJ P, DIGCHK        ;A DIGIT?
+       TLOA B, 400000         ;YES, SET FLAG
+       JRST   ACH            ;NOT DIGIT
+       SUBI A, 60             ;GET THE ACTUAL NUMBER
+FRMBLK: IMULI C, 12            ;FORM AN
+       ADD C, A               ;INTEGER
+GET1:  IBP    CHRPTR         ;POINT AT THE NEXT CHAR
+       AOS    SKPCT
+       JRST   GET
+
+
+
+
+
+ACH:   JUMPL B, INTFIN        ;FIRST DIGIT IN?
+       CAIN A, "-"            ;IS CHAR "-"?
+       TLOA B, 200000         ;YES, SET FLG
+       CAIN A, "+"            ;IS CHAR  "+"?
+       JRST   GET1           ;YES, GET THE NEXT CHAR
+INTFIN: TLZ C, 400000          ;MAKE SURE CHAR IS POSITIVE
+       TLNE B, 200000         ;NEGATIVE?
+       MOVNS  C              ;YES, NEGATE INTEGER
+       MOVE A, C
+       GETM C, B
+       POPJ P,                ;EXIT
+
+
+PAGE
+
+              ;INTOUT
+
+              ;CALLED WITH INTEGER IN A
+
+INTOUT: PUSH P, B
+       SETZ B,
+       PUSH P, B
+MAKDEC: IDIVI A, 12
+       ADDI B, 60
+       PUSH P, B
+       JUMPN A, MAKDEC
+       JRST   UNWIND
+
+PAGE
+
+              ;GETSYM
+
+GETSYM: SAVM B, C
+       SETZ B,                ;INIT B
+       TLZ SW2, CMAFLG
+       MOVEI C, 6             ;SIX SIGNIFICANT CHARS PER SYMBOL
+NXTLET: LDB A, CHRPTR
+       PUSHJ P, ALFCHK        ;ALPHA?
+       JRST   STOLET         ;YES
+       PUSHJ P, DIGCHK        ;DIGIT?
+       JRST   STOLET         ;YES
+
+
+OV:    MOVE A, B
+       GETM C, B
+       POPJ P,                ;EXIT
+
+
+
+STOLET: IBP    CHRPTR
+       AOS    SKPCT
+       SOJL C, NXTLET         ;HAVE SIX CHARS BEEN ACCUMULATED?
+       IMULI B, 50            ;NO, SHIFT THE PARTIALLY COMPLETED
+                             ;RADIX 50 SYMBOL
+       CAILE A, "9"           ;DIGIT?
+       SUBI A, 7              ;NO
+       SUBI A, 57
+       ADD B, A               ;ADD IN THE NEW CHAR
+       JRST NXTLET            ;GET ANOTHER CHAR
+
+
+
+
+PAGE
+
+              ;EVAL
+
+              ;TO FORCE A GLOBAL SEARCH SET 10 INTO
+              ;THE CODE BITS
+              ;SKIP RETURN WITH ADDRESS IN A UNLESS 
+              ;SYMBOL NOT FOUND, THEN NO-SKIP
+              ;LH OF PRGM HAS NEG WD CT OF SYMBOL 
+              ;TABLE SEARCH AREA
+              ;RH OF PRGM HAS START OF SYMBOL TABLE 
+              ;SEARCH AREA
+
+
+EVAL:  SAVM B, E
+       MOVE B, PRGM.          ;INIT SYMBOL TABLE POINTER
+EVAL0:         HRLOI C, 237777        ;MASK
+       TLZE A, LOCAL
+       TLO C, LOCAL
+EVAL1:  CAME    B,JOBSYM
+        JRST    EVAL2A
+EVAL2:  HLRE    B,JOBSYM        ;RAN OUT OF SYMBOLS, START AT TOP
+        MOVN    B,B
+        ADD     B,JOBSYM
+        HRRZ    B,B
+EVAL2A: SUB     B,[2,,2]        ;MOVE DOWN ONE
+        CAMN    B,PRGM.
+        JRST    CPOPJ           ;RAN OUT
+        MOVE    E,(B)           ;GET NAME
+        CAMN    E,[-1]
+        JRST    [SKIPE B,1(B)   ;LINK
+                JRST EVAL1
+                JRST EVAL2]
+EVAL3: XOR E, A               ;ZERO WHATS IN COMMON
+       TLNN E, PNAME          ;A PROGRAM NAME?(IE, CODE BITS =0)
+       TLOA C, LOCAL          ;YES, FROM NOW ON PASS BY LOCAL
+                             ;SYMBOLS AND SKIP THIS ONE TOO
+                             ;(C)=337777
+       TDNE E, C              ;NO, IS THE PRESENT TABLE SYMBOL
+                             ;AND THE TENTATIVE SYMBOL THE SAME?
+                             ;(C)=237777
+       JRST   EVAL1          ;NO, TRY ANOTHER, THIS IS
+                             ;NOT THE SYMBOL WE WANT
+       TLNN E, 340000         ;YES, IS THE SYMBOL EITHER GLOBAL OR 
+                             ;LOCAL
+
+       JRST   EVAL1          ;NO, TRY ANOTHER
+       MOVE A, 1(B)           ;YES, GET ITS VALUE FROM THE TABLE
+CPOPJ1: GETM E, B
+       SKIPE  A
+       AOS    (P)            ;FOUND SYMBOL, SET UP SKIP RETURN
+       POPJ P,
+
+
+CPOPJ:         SETZ A,
+       JRST   CPOPJ1
+
+PAGE
+
+              ;PUTSYM
+              ;CALLED WITH R50 SYMBOL IN A
+
+PUTSYM: PUSH P, B
+       SETZ B,
+       PUSH P, B
+       TLZ A, 740000
+PUT1:  IDIVI A, 50
+       CAIN B, 45
+       SETO B,
+       CAILE B, 12
+       ADDI B, 7
+       ADDI B, 57
+       PUSH P, B
+       JUMPN A, PUT1
+
+UNWIND: POP P, A
+       JUMPE A, UNXIT
+       IDPB A, FMTPTR
+       JRST   UNWIND
+UNXIT:         POP P, B
+       POPJ P,
+
+
+
+
+PAGE
+              ;ALFCHK
+              ;SKIP RETURN IF NOT ALPHA
+
+ALFCHK: CAIL A, "A"
+       CAILE A, "Z"
+       AOS    (P)            ;NOT ALPHA
+       POPJ P,
+
+
+
+              ;DIGCHK
+              ;SKIP RETURN IF NOT DIGIT
+
+DIGCHK: CAIL A, "0"
+       CAILE A, "9"
+       AOS    (P)            ;NOT A DIGIT
+       POPJ P,
+
+
+PAGE
+
+
+              ;UTILITY ROUTINES FOR PUTTING CERTAIN
+              ;ASCII CHARS INTO FORMATS
+              ;ALL ARE CALLED WITH A FREE
+
+QUOUT:         MOVEI A, "'"   ;SINGLE QUOTE
+       JRST DELOUT
+
+
+RTPOUT: MOVEI A, ")"           ;RT PAREN
+       IDPB A, FMTPTR
+       SETZ A,
+       JRST   DELOUT
+
+
+BLOUT:         MOVEI A, " "   ;SINGLE BLANK
+       JRST   DELOUT
+
+
+COMOUT: MOVEI A, ",";COMMA
+       JRST   DELOUT
+
+
+SLOUT:         MOVEI A, "/"   ;SLASH
+DELOUT:        IDPB A, FMTPTR
+       POPJ P,
+
+
+
+PAGE
+
+              ;IMAT
+
+IMAT:  MOVE FMTPTR, IMATPT
+       PUSHJ P, LOCOUT        ;PUTS IDENT OF CURRENT STMT IN FMT
+                             ;DOES IMPLICIT NAME COMMAND AND RETURNS
+                             ;R 50 NAME IN A
+       MOVEI C, " "
+       IDPB C, FMTPTR
+       PUSHJ P, PUTSYM        ;PUTS R50 NAME IN FMT (IN ASCII)
+       PUSHJ P, QUOUT
+       PUSHJ P, RTPOUT
+       MOVEI C, FMT1.
+       PUSHJ P, PUTSTR
+       POPJ P,
+
+PAGE
+
+              ;PUTSTR
+
+PUTSTR: MOVEM P, SAVFAC+P      ;UPDATES THE PDP USED BY FORSE
+       OUT. C,-1              ;DO OUTPUT TO TTY CLC:02-07-74 BR 24185 WAS 5
+       FIN. 0,0
+       POPJ P,
+
+PAGE
+              ;GET STR
+
+
+GETSTR:	PUSH	P,C
+	PUSH	P,D
+	OUTSTR	ASTER.		;TYPE *
+	MOVE	C,[ASCII/     /]
+	MOVEM	C,STRIN.
+	MOVE	C,[STRIN.,,STRIN.+1]
+	BLT	C,STRNN.	;ZAP BUFFER
+	SKIPA	D,[POINT 7,STRIN.]
+GTSTR1:	IDPB	C,D		;PUT CHARACTER INTO STRING
+GTSTR2:	INCHWL	C		;GET CHARACTER FROM TTY
+	CAIE	C,15		;IGNORE CR
+	CAMN	D,[POINT 7,STRNN.,6] ;IGNORE IF TOO LONG
+	JRST	GTSTR2
+	CAIE	C,12
+	JRST	GTSTR1		;GO STORE CHARACTER IF NOT LF
+	POP	P,D		;DONE IF LF
+	POP	P,C
+	POPJ	P,
+
+
+PAGE
+;MIGHTYCHAIN CALLS THIS ROUTINE WITH AC1=HIGHEST UNCHANGED LOCATION.
+;AC0-AC5 CAN BE CLOBBERED.
+
+DEBCH.: MOVEI   B,BPMAX
+DEBCH1: MOVS    C,MASTB.(B)     ;CHECK BREAKPOINTS
+        CAIL    A,(C)
+        JRST    DEBCH2
+        HRRZS   D,MASTB.(B)     ;BREAKPOINT IS GONE, ZAP ITS ENTRY
+        SETZM   (D)
+        HRRI    C,1(D)
+        BLT     C,BPTLN.-1(D)   ;ZAP STORAGE AREA
+DEBCH2: SOJG    B,DEBCH1
+;FALL THROUGH TO SETSTL
+
+              ;FIRST TIME THROUGH
+              ;SET UP FIRST EXECUTABLE STL OF EACH SUBPROGRAM
+              ;WITH 17 IN THE INDEX FIELD
+
+SETSTL:        SETZM  TRACE.
+        MOVSI A, 17           ;ONES FOR THE INDEX FLD
+        HLRE    B,JOBSYM
+        MOVN    B,B
+        ADD     B,JOBSYM
+        HRRZ    B,B             ;POINT TO TOP OF SYMBOLS
+DD1:    CAMN    B,JOBSYM
+        JRST    DD2             ;DONE
+        SUB     B,[2,,2]        ;MOVE DOWN ONE
+        MOVE    C,(B)
+        CAMN    C,[-1]
+        JRST    [SKIPE B,1(B)   ;LINK
+                JRST DD1
+                JRST DD2]
+        CAME    C,TEN1M         ;LOOK FOR 1M LABEL
+        JRST    DD1
+       LDB D, [POINT 9,@1(B),8]
+       CAIE D, 14             ;AN STL?
+       JRST    DD1            ;NO, SKIP IT
+       IORM A, @1(B)          ;YES, MAKE IT AN STL  (17)
+       MOVE D, 1(B)           ;GET A 1M ADDRESS
+       HRRZM D, F40LO.        ;UPDATE LOWEST F40 LOC
+       SETOM  TRACE.
+        JRST    DD1
+DD2:   AOSN  TRACE.
+       POPJ P, ;YES, WEVE FIXED EM ALL UP
+DEATH:         TTCALL 3, NOSYT.
+       CALLI  12             ;EXIT IRRETURNABLY
+
+
+PAGE
+                             ;BAD-ERROR HANDLER
+BAD1:	0
+	MOVE FMTPTR,F13PTR
+       MOVEI C, ^D65
+       SETZM  INHIB.
+       SETZM  TRACE.
+       SETZM  DEFSW.
+       SETZM  NEWVA.
+       MOVE B,STRBEG          ;THIS WILL ONLY WORK IF
+                             ;THE STUFF BEING PARSED IS IN STRING
+       PUSHJ P,QUOUT
+       PUSHJ P,BLOUT
+BD1:   SOJLE C, BD3           ;JUMP IF WERE GOING OFF THE END
+       IBP    B
+       IDPB A,FMTPTR
+       CAME B,CHRPTR
+       JRST   BD1
+BD2:   MOVEI A,"^"
+       IDPB A,FMTPTR
+       MOVE C,BAD1
+       LDB A,[POINT 4,-1(C),12]       ;ERROR CODE
+       PUSHJ P,INTOUT         ;PUT IT IN THE FORMAT TOO
+       PUSHJ P,QUOUT          ;TERMINATE THE LITERAL STRING
+       PUSHJ P,RTPOUT         ;TERMINATE THE FORMAT
+       MOVE P,FOBPDP          ;START A FRESH PDL
+       MOVEI C,FMT13.;
+       PUSHJ P,PUTSTR
+       SOSLE  ERRCT.
+       JRST   NXTCM.
+       MOVEI C, 30
+       MOVEM C, ERRCT.
+       MOVEI C, FMT4
+       PUSHJ P, PUTSTR
+       JRST   NXTCM.
+
+
+BD3:   MOVE FMTPTR, F13PTR
+       PUSHJ P, QUOUT
+       PUSHJ P, BLOUT
+       JRST   BD2
+DEBSW.:BLOCK 1
+
+F40LO.:BLOCK 1
+ERRCT.:BLOCK 1
+
+
+
+
+
+
+
+
+PAGE
+
+
+       ;INITIALIZATION
+
+NOSYT.:        ASCIZ          " /S LOADER SWITCH OR /X COMPILER SWITCH NEEDED"
+
+
+FMT1.:         ASCIZ          .(/' I AM AT                        
+       ').
+
+ASTER.:        ASCIZ          .
+*.
+
+       ;TRAP HANDLER CONSTANTS
+
+TRPFL.:0       ;TRAP FLAG SW
+SAVRE.:        0              ;RETURN SAVE
+CURBP.:        0              ;CURRENT BP NO.
+
+
+
+       ;NAME
+
+
+R50NM.:0       ;R50 PROG NAME
+PRGM.:0        ;ORIGIN FOR SYM        TAB SEARCH
+PROGL.:0       ;LOWEST EXECUTABLE STL
+PROGH.:0       ;JUST PAST HIGHEST EX STL
+
+
+
+
+
+PAGE
+
+       ;SET/DISPLAY
+       ;(DO NOT SEPARATE)
+
+       F13SIZ=^D30
+       LENGT.=^D21            ;LENGTH OF COMMAND STR
+
+       ;ACTUAL I/O FOR DISPLAY/SET OCCURS HERE
+
+       LIST.:                 MOVEM P, SAVFAC+P     ;UPDATE OPSYS PDP
+       BLOCK LSTSZ.
+
+FMT13.:        ASCIZ .(.      ;THIS FMT GETS BUILT FROM
+       BLOCK F13SIZ           ;PARSE OF COMMAND STRING
+SIZT.:         EXP -1         ;THIS LOC TESTED FOR -1 OCCASIONALLY
+STRIN.:        BLOCK LENGT.
+STRNN.=.-1
+
+
+
+TRACE.:0
+NEWVA.:0
+INHIB.:0
+
+
+       ;GETSS
+
+
+       DIMMAX=^D10
+
+OFFST.:0
+BASAD.:0
+DIMCT.:0
+MULS.: 1
+       BLOCK DIMMAX           ;DONT SEPARATE FROM MULS.
+
+ADRCK.:0
+OBM.:  ASCIZ  . 
+ SUBSCRIPT OUT OF BOUNDS IN .
+
+
+PAGE
+
+
+       ;BREAK
+
+DEFINE BPTGEN (A)<
+       IRP A<
+BP'A:  BLOCK  BPTLN.
+       >
+
+MASTB.=.-1
+       IRP A<
+       EXP    BP'A
+       >>     ;END OF BREAK TABLE GENERATOR
+
+
+       BPTLN.=5               ;TABLE LENGTH OF EACH BREAKPOINT
+       BPMAX=^D8              ;NO. OF BREAKPOINTS,ALSO DEF IN HI SEG
+
+
+
+       BPTGEN                 <1,2,3,4,5,6,7,8>;    GENERATE THE BREAKPOINT TABLES
+
+
+       ;DATA LAYOUT WITHIN TABLE
+       ;1ST LOC: PROCEED COUNT
+      ;2ND LOC: ASCII STORAGE BEGINS
+       ;AUTO PROCEED SW IS BIT 35 OF 2ND LOC ON IF
+       ;AUTO PROCEED DESIRED
+
+FMT7.:         ASCII          .(' BP      ASSIGNED').
+F7PTR.:        POINT 7, FMT7.+1
+
+
+
+PAGE
+
+
+       ;GROUP, DEFINE
+
+       DEFSW.:BLOCK 1
+
+DEFINE GRPGEN (A)<
+       IRP A<
+GRP'A:         BLOCK          SSIZE
+       >
+
+GRPTBL: IRP A<
+       POINT 7,GRP'A
+       >
+       SETTB.=GRPTBL-1
+       >
+
+
+
+       ;END OF GRP            GENERATORS
+
+
+
+       SETS.=^D8              ;NO. OF GROUPS
+       SSIZE=^D16             ;NO. OF STORAGE LOCS PER GRP
+       GRPGEN <1,2,3,4,5,6,7,8>;      GENERATE THE GROUPS
+
+
+
+PAGE
+
+
+       ;NEXT
+
+NXTCT.:0       ;NEXT COUNTER
+
+       ;PERFORM
+
+DOLO.:0        ;STL JUST BEFORE THE DO STMT
+DOHI.:0        ;TRNSFR INSTRUCTION AT END OF RANGE
+PERRE.:0       ;RET SAV FOR PERFORM
+OLDNX.:0       ;SAVED NEXT COUNTER
+PERPH.:0       ;INITIAL PROGH.
+PERPL.:0       ;INITIAL PROGL.
+PERPN.:0       ;INITIAL PROG NAME (RADIX 50)
+
+
+       ;VALUE TRACE
+
+NAMSV.:0       ;NAME AT TIME THE GRP WAS DEFINED
+VALST.:0       ;GRP NO. WE ARE VALUE TRACING ON
+VALSZ.:0       ;NO. OF VARS WE ARE TRACING
+VALSV.: BLOCK 2*LSTSZ.         ;STORAGE AREA FOR TEMP VARS
+       ;DURING VALUE TRACE
+ADRSV.: BLOCK LSTSZ.           ;PROGRAM ADDRESSES OF VARS WE ARE
+       ;TRACING
+
+
+       ;FLOW
+
+ALLFL.:0       ;WHEN SET TO -1, ALL STMT IDENTS WILL
+       ;BE TYPED
+
+
+       PAGE
+
+       ;IMPURE UTLILITY ROUTINES
+
+SAVAC.: 0
+       MOVEM 16, TTTT
+       MOVE 16, (16)
+SAC1:  PUSH P, (16)
+       AOBJN 16, SAC1
+       JRST   SAGEXT
+
+GETAC.: 0
+       MOVEM 16, TTTT
+       MOVE 16, (16)          ;GET THE ARGS
+GAC1:  POP P, (16)            ;POP THE HIGHEST FIRST
+       SUB 16, [XWD 1,1]      ;POINT AT NXT    AC AND CT DOWN
+       TLNE 16, -1            ;DONE?
+       JRST   GAC1           ;NO, POP ANOTHER ONE
+SAGEXT:        MOVE 16, TTTT     ;YES
+       JRA 16, 1(16)
+
+TTTT:   0
+
+	XLIST	;THE LITERALS
+	LIT
+	LIST
+DEBTOP:	END
+  H@*
